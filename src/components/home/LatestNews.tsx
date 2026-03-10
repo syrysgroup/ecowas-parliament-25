@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, Calendar } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import AnimatedSection from "@/components/shared/AnimatedSection";
 import { Button } from "@/components/ui/button";
 
@@ -10,6 +10,7 @@ const placeholderNews = [
     excerpt: "The ECOWAS Parliament celebrates 25 years with a multi-country commemorative programme spanning January to November 2026.",
     date: "2 March 2026",
     category: "Press Release",
+    image: "/announcement/1.jpg",
   },
   {
     id: "2",
@@ -17,6 +18,7 @@ const placeholderNews = [
     excerpt: "Dignitaries and media gather at Onomo Allure Abuja for the official media launch of the @25 programme.",
     date: "28 February 2026",
     category: "Event",
+    image: "/announcement/3.jpg",
   },
   {
     id: "3",
@@ -24,6 +26,7 @@ const placeholderNews = [
     excerpt: "Duchess NL, CMD Tourism & Trade, and Borderless Trade & Investment join as implementing partners.",
     date: "25 February 2026",
     category: "Announcement",
+    image: "/announcement/7.jpg",
   },
 ];
 
@@ -38,7 +41,7 @@ const LatestNews = () => {
             </h2>
             <p className="mt-2 text-muted-foreground">Stay updated on programme activities</p>
           </div>
-          <Button asChild variant="outline" className="mt-4 sm:mt-0">
+          <Button asChild variant="outline" className="mt-4 sm:mt-0 border-primary text-primary hover:bg-primary hover:text-primary-foreground font-semibold shadow-sm">
             <Link to="/news">
               View All News <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
@@ -49,8 +52,13 @@ const LatestNews = () => {
           {placeholderNews.map((article, i) => (
             <AnimatedSection key={article.id} delay={i * 100}>
               <div className="group rounded-xl border border-border bg-card overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-                <div className="h-40 bg-gradient-to-br from-primary/20 to-ecowas-yellow/10 flex items-center justify-center">
-                  <Calendar className="h-10 w-10 text-primary/40" />
+                <div className="h-48 overflow-hidden">
+                  <img
+                    src={article.image}
+                    alt={article.title}
+                    loading="lazy"
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  />
                 </div>
                 <div className="p-5">
                   <div className="flex items-center gap-2 mb-3">

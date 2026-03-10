@@ -16,6 +16,7 @@ const Parliament = () => (
     countries={["Côte d'Ivoire", "Nigeria"]}
     accentColor="bg-ecowas-red/20 text-ecowas-red"
     icon={<Building2 className="h-6 w-6" />}
+    heroImage="/announcement/15.jpg"
   />
 );
 

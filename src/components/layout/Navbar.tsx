@@ -84,8 +84,8 @@ const Navbar = () => {
           {/* Mobile Menu */}
           <Sheet>
             <SheetTrigger asChild className="lg:hidden">
-              <Button variant="ghost" size="icon">
-                <Menu className="h-5 w-5" />
+              <Button variant="outline" size="icon" className="border-primary/30 hover:bg-primary/10">
+                <Menu className="h-5 w-5 text-foreground" />
               </Button>
             </SheetTrigger>
             <SheetContent side="right" className="w-72">

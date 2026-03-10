@@ -16,6 +16,7 @@ const Youth = () => (
     countries={["Nigeria", "Ghana", "Côte d'Ivoire", "Senegal", "Cabo Verde", "Togo", "Sierra Leone"]}
     accentColor="bg-ecowas-yellow/20 text-ecowas-yellow"
     icon={<Lightbulb className="h-6 w-6" />}
+    heroImage="/announcement/9.jpg"
   />
 );
 

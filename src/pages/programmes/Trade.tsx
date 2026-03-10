@@ -16,6 +16,7 @@ const Trade = () => (
     countries={["Côte d'Ivoire", "Ghana", "Togo", "Sierra Leone", "Nigeria"]}
     accentColor="bg-primary/20 text-primary"
     icon={<TrendingUp className="h-6 w-6" />}
+    heroImage="/announcement/11.jpg"
   />
 );
 

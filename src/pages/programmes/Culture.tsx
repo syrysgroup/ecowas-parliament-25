@@ -16,6 +16,7 @@ const Culture = () => (
     countries={["Cabo Verde", "Nigeria", "Ghana", "Côte d'Ivoire", "Senegal"]}
     accentColor="bg-ecowas-lime/20 text-ecowas-lime"
     icon={<Palette className="h-6 w-6" />}
+    heroImage="/announcement/21.jpg"
   />
 );
 

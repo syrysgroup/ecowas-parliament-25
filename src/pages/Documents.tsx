@@ -15,8 +15,9 @@ const documents = [
 const Documents = () => {
   return (
     <Layout>
-      <section className="bg-gradient-hero text-primary-foreground py-20">
-        <div className="container">
+      <section className="relative bg-gradient-hero text-primary-foreground py-20 overflow-hidden">
+        <div className="absolute inset-0 bg-cover bg-center opacity-15" style={{ backgroundImage: "url('/announcement/19.jpg')" }} />
+        <div className="container relative">
           <AnimatedSection>
             <h1 className="text-4xl md:text-5xl font-black">Documents & Reports</h1>
             <p className="mt-4 text-lg text-primary-foreground/70 max-w-2xl">
@@ -43,7 +44,7 @@ const Documents = () => {
                       <span className="text-xs text-muted-foreground">· {doc.size}</span>
                     </div>
                   </div>
-                  <Button variant="outline" size="sm" className="flex-shrink-0">
+                  <Button size="sm" className="flex-shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold shadow-md">
                     <Download className="h-4 w-4 mr-1" />
                     Download
                   </Button>
