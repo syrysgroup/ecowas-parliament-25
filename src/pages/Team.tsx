@@ -1,18 +1,18 @@
 import Layout from "@/components/layout/Layout";
 import AnimatedSection from "@/components/shared/AnimatedSection";
-import { User } from "lucide-react";
 
 const teamMembers = [
-  { name: "Dr. Victoria Akai IIPM", role: "CEO, Duchess NL", org: "Implementing Partner" },
-  { name: "Dr. Olori Boye-Ajayi", role: "Managing Partner, Borderless Trade & Investment", org: "Implementing Partner" },
-  { name: "Blessing Okpale", role: "Lead, CMD Tourism & Trade Enterprises", org: "Implementing Partner" },
+  { name: "Dr. Victoria Akai IIPM", role: "CEO, Duchess NL", org: "Implementing Partner", photo: "/announcement/30.jpg" },
+  { name: "Dr. Olori Boye-Ajayi", role: "Managing Partner, Borderless Trade & Investment", org: "Implementing Partner", photo: "/announcement/31.jpg" },
+  { name: "Blessing Okpale", role: "Lead, CMD Tourism & Trade Enterprises", org: "Implementing Partner", photo: "/announcement/28.jpg" },
 ];
 
 const Team = () => {
   return (
     <Layout>
-      <section className="bg-gradient-hero text-primary-foreground py-20">
-        <div className="container">
+      <section className="relative bg-gradient-hero text-primary-foreground py-20 overflow-hidden">
+        <div className="absolute inset-0 bg-cover bg-center opacity-15" style={{ backgroundImage: "url('/announcement/25.jpg')" }} />
+        <div className="container relative">
           <AnimatedSection>
             <h1 className="text-4xl md:text-5xl font-black">Implementation Team</h1>
             <p className="mt-4 text-lg text-primary-foreground/70 max-w-2xl">
@@ -24,27 +24,38 @@ const Team = () => {
 
       <section className="py-16">
         <div className="container">
-          <AnimatedSection className="mb-10">
-            <p className="text-muted-foreground text-center max-w-2xl mx-auto">
-              Team photos will be uploaded soon. The implementation team works across all seven Member States
-              to deliver this year-long commemorative programme.
-            </p>
-          </AnimatedSection>
-
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-4xl mx-auto">
             {teamMembers.map((member, i) => (
               <AnimatedSection key={member.name} delay={i * 100}>
-                <div className="p-6 rounded-xl bg-card border border-border shadow-sm text-center hover:shadow-lg transition-shadow">
-                  <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-to-br from-primary/20 to-ecowas-yellow/10 flex items-center justify-center">
-                    <User className="h-10 w-10 text-primary/50" />
+                <div className="rounded-xl bg-card border border-border shadow-sm overflow-hidden hover:shadow-lg transition-shadow">
+                  <div className="h-56 overflow-hidden">
+                    <img
+                      src={member.photo}
+                      alt={member.name}
+                      loading="lazy"
+                      className="w-full h-full object-cover"
+                    />
                   </div>
-                  <h3 className="font-bold text-card-foreground">{member.name}</h3>
-                  <p className="text-sm text-primary mt-1">{member.role}</p>
-                  <p className="text-xs text-muted-foreground mt-1">{member.org}</p>
+                  <div className="p-5 text-center">
+                    <h3 className="font-bold text-card-foreground">{member.name}</h3>
+                    <p className="text-sm text-primary mt-1">{member.role}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{member.org}</p>
+                  </div>
                 </div>
               </AnimatedSection>
             ))}
           </div>
+
+          {/* Event photos */}
+          <AnimatedSection className="mt-16">
+            <h2 className="text-2xl font-bold text-foreground text-center mb-8">From the Announcement Event</h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {["/announcement/33.jpg", "/announcement/35.jpg", "/announcement/37.jpg", "/announcement/39.jpg",
+                "/announcement/40.jpg", "/announcement/42.jpg", "/announcement/44.jpg", "/announcement/46.jpg"].map((src, i) => (
+                <img key={i} src={src} alt="Announcement event" loading="lazy" className="w-full h-40 object-cover rounded-xl border border-border shadow-sm" />
+              ))}
+            </div>
+          </AnimatedSection>
         </div>
       </section>
     </Layout>

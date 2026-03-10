@@ -16,6 +16,7 @@ const Women = () => (
     countries={["Nigeria", "Ghana", "Côte d'Ivoire", "Senegal", "Togo", "Sierra Leone"]}
     accentColor="bg-secondary/20 text-secondary"
     icon={<Heart className="h-6 w-6" />}
+    heroImage="/announcement/13.jpg"
   />
 );
 

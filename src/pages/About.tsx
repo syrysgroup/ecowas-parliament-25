@@ -6,8 +6,9 @@ const About = () => {
   return (
     <Layout>
       {/* Hero */}
-      <section className="bg-gradient-hero text-primary-foreground py-20">
-        <div className="container">
+      <section className="relative bg-gradient-hero text-primary-foreground py-20 overflow-hidden">
+        <div className="absolute inset-0 bg-cover bg-center opacity-15" style={{ backgroundImage: "url('/announcement/15.jpg')" }} />
+        <div className="container relative">
           <AnimatedSection>
             <h1 className="text-4xl md:text-5xl font-black">About the Programme</h1>
             <p className="mt-4 text-lg text-primary-foreground/70 max-w-2xl">
@@ -27,6 +28,15 @@ const About = () => {
               women's inclusion, and youth participation. Rather than organising a single ceremonial event, a strategic,
               multi-country programme has been designed to showcase tangible impact and bring the Parliament closer to its citizens.
             </p>
+          </AnimatedSection>
+
+          {/* Photo break */}
+          <AnimatedSection>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 rounded-2xl overflow-hidden">
+              {["/announcement/5.png", "/announcement/17.jpg", "/announcement/21.jpg"].map((src, i) => (
+                <img key={i} src={src} alt="Programme highlight" loading="lazy" className="w-full h-40 md:h-52 object-cover" />
+              ))}
+            </div>
           </AnimatedSection>
 
           <AnimatedSection>
@@ -58,6 +68,13 @@ const About = () => {
                   </div>
                 </div>
               ))}
+            </div>
+          </AnimatedSection>
+
+          {/* Photo break */}
+          <AnimatedSection>
+            <div className="rounded-2xl overflow-hidden shadow-lg">
+              <img src="/announcement/23.jpg" alt="ECOWAS Parliament partners" loading="lazy" className="w-full h-64 md:h-80 object-cover" />
             </div>
           </AnimatedSection>
 

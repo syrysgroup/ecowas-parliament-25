@@ -16,6 +16,7 @@ const Civic = () => (
     countries={["Nigeria", "Ghana", "Côte d'Ivoire", "Senegal", "Cabo Verde", "Togo", "Sierra Leone"]}
     accentColor="bg-ecowas-blue/20 text-ecowas-blue"
     icon={<Megaphone className="h-6 w-6" />}
+    heroImage="/announcement/17.jpg"
   />
 );
 
