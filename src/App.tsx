@@ -10,6 +10,7 @@ import News from "./pages/News";
 import Documents from "./pages/Documents";
 import Stakeholders from "./pages/Stakeholders";
 import Team from "./pages/Team";
+import Gallery from "./pages/Gallery";
 import Youth from "./pages/programmes/Youth";
 import Trade from "./pages/programmes/Trade";
 import Women from "./pages/programmes/Women";
@@ -34,6 +35,7 @@ const App = () => (
           <Route path="/documents" element={<Documents />} />
           <Route path="/stakeholders" element={<Stakeholders />} />
           <Route path="/team" element={<Team />} />
+          <Route path="/gallery" element={<Gallery />} />
           <Route path="/programmes/youth" element={<Youth />} />
           <Route path="/programmes/trade" element={<Trade />} />
           <Route path="/programmes/women" element={<Women />} />

@@ -1,24 +1,22 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import AnimatedSection from "@/components/shared/AnimatedSection";
-import { X } from "lucide-react";
+import { X, ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const galleryImages = [
-  { src: "/announcement/1.jpg", alt: "ECOWAS Parliament @25 Announcement Event" },
-  { src: "/announcement/2.jpg", alt: "Dignitaries at the media launch" },
-  { src: "/announcement/3.jpg", alt: "Programme presentation" },
-  { src: "/announcement/4.png", alt: "Event highlight" },
-  { src: "/announcement/5.png", alt: "Stakeholder engagement" },
-  { src: "/announcement/7.jpg", alt: "Media briefing" },
-  { src: "/announcement/9.jpg", alt: "Panel discussion" },
-  { src: "/announcement/11.jpg", alt: "Anniversary celebration" },
-  { src: "/announcement/13.jpg", alt: "Partnership signing" },
-  { src: "/announcement/15.jpg", alt: "Guest speakers" },
-  { src: "/announcement/17.jpg", alt: "Event proceedings" },
-  { src: "/announcement/19.jpg", alt: "Programme overview" },
-  { src: "/announcement/21.jpg", alt: "Cultural moment" },
-  { src: "/announcement/23.jpg", alt: "Dignitaries" },
-  { src: "/announcement/25.jpg", alt: "Group photo" },
-  { src: "/announcement/27.jpg", alt: "Event attendees" },
+  { src: "/announcement/1.jpg", alt: "Rt. Hon. Speaker at the launch", category: "Dignitaries" },
+  { src: "/announcement/3.jpg", alt: "Programme presentation to media", category: "Media" },
+  { src: "/announcement/5.png", alt: "Cultural performance", category: "Cultural" },
+  { src: "/announcement/7.jpg", alt: "Press conference", category: "Media" },
+  { src: "/announcement/9.jpg", alt: "Panel discussion", category: "Panel" },
+  { src: "/announcement/11.jpg", alt: "Anniversary panel", category: "Panel" },
+  { src: "/announcement/13.jpg", alt: "Partnership signing", category: "Dignitaries" },
+  { src: "/announcement/15.jpg", alt: "Guest speakers", category: "Dignitaries" },
+  { src: "/announcement/21.jpg", alt: "Cultural moment", category: "Cultural" },
+  { src: "/announcement/25.jpg", alt: "Group photo", category: "Group" },
+  { src: "/announcement/27.jpg", alt: "Event attendees", category: "Highlights" },
+  { src: "/announcement/19.jpg", alt: "Programme overview", category: "Panel" },
 ];
 
 const AnnouncementGallery = () => {
@@ -53,6 +51,15 @@ const AnnouncementGallery = () => {
             </AnimatedSection>
           ))}
         </div>
+
+        <AnimatedSection className="text-center mt-10">
+          <Button asChild size="lg" className="font-bold shadow-lg">
+            <Link to="/gallery">
+              View Full Gallery
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
+          </Button>
+        </AnimatedSection>
       </div>
 
       {/* Lightbox */}
