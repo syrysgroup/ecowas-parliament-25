@@ -1,54 +1,51 @@
 
 
-# Plan: Enhance Stakeholders Page, Improve Programme Pages & Verify Site
+# Project Review & Implementation Plan
 
-## 1. Stakeholders Page Enhancement
+## Current State
 
-The current `Stakeholders.tsx` uses generic `User` icons instead of photos. Will redesign with:
+The project is a well-structured ECOWAS Parliament @25 anniversary website with:
+- 13 pages (Home, About, Timeline, News, Documents, Stakeholders, Team, 6 Programme pages)
+- ECOWAS-themed design system (green/gold/red)
+- All content is hardcoded placeholder data
+- **The connected Supabase database has no tables** -- it's completely empty
+- **50 announcement pictures** exist in `Announcement Pictures/` folder but are unused
+- **Duplicate "Implementing Partners" section** appears both in the `PartnersStrip` component on the homepage AND inside the `Footer` -- this is the repetition the user flagged earlier
 
-- **Hero section**: Add a background photo from the announcement event (`/announcement/1.jpg`)
-- **Leadership section**: Replace icon placeholders with announcement photos showing dignitaries (e.g., `/announcement/2.jpg`, `/announcement/3.jpg`, `/announcement/7.jpg`)
-- **Partners section**: Add a photo gallery strip below partners showing event moments
-- **New "Event Highlights" section**: Grid of 6-8 announcement photos showing key dignitaries and partners at the event, with captions
+## Plan
 
-**File**: `src/pages/Stakeholders.tsx`
+### 1. Fix Duplicate Implementing Partners
+Remove `PartnersStrip` from the homepage `Index.tsx` since the Footer already shows implementing partners on every page. This eliminates the repetition.
 
-## 2. Programme Pages Design Upgrade
+### 2. Create Announcement Pictures Gallery on Homepage
+Add a new `AnnouncementGallery` component to the homepage that displays a curated grid of the announcement pictures (using images from the `Announcement Pictures/` folder). These will be imported as static assets and displayed in a visually appealing masonry/grid layout with hover effects.
 
-The current `ProgrammePageTemplate` is minimal — just text sections with bullet points. Will significantly enhance it:
+### 3. Use Announcement Pictures Across Pages
+- **Hero sections**: Replace gradient placeholders with actual event photos as background images
+- **News cards**: Use announcement photos instead of the Calendar icon placeholder
+- **Team page**: Use relevant photos for team member avatars
+- **About page**: Add imagery to break up text content
+- **Programme pages**: Add relevant photos to each programme pillar page
 
-### Template Changes (`ProgrammePageTemplate.tsx`):
-- **Hero**: Increase hero image opacity from 15% to 25%, add a gradient overlay for depth, increase padding
-- **New "Key Highlights" section**: Accept `highlights` prop — array of `{icon, title, description}` rendered as a visually rich 2-column card grid
-- **Photo gallery strip**: Accept `galleryImages` prop — array of 3-4 photos displayed in a horizontal strip between sections
-- **CTA section**: Add a closing call-to-action with a "Back to Programmes" link and related programme links
-- **Objectives**: Style as numbered cards instead of plain bullet list
-- **Countries**: Add flag emoji or color-coded badges
+### 4. Improve Button Visibility
+Audit all buttons across the site:
+- Ensure CTA buttons have strong contrast (gold on dark, green on light)
+- Add visible borders/shadows to outline-variant buttons
+- Make the "Download" buttons on Documents page more prominent
+- Ensure mobile nav trigger button is clearly visible
 
-### Each Programme Page Updates:
-Add `highlights` and `galleryImages` props with relevant content and photos:
+### 5. Database Setup (Optional -- No Tables Exist)
+Since the Supabase database is empty, all current content will remain as static data (which is appropriate for a commemorative programme site with fixed content). If dynamic content management is needed later, tables can be added.
 
-- **Women.tsx**: Photos `/announcement/13.jpg`, `/announcement/30.jpg`, `/announcement/42.jpg`; highlights about trade platforms, workshops, networking
-- **Trade.tsx**: Photos `/announcement/11.jpg`, `/announcement/28.jpg`, `/announcement/40.jpg`; highlights about B2B forums, trade corridors, policy dialogue
-- **Youth.tsx**: Photos `/announcement/9.jpg`, `/announcement/33.jpg`, `/announcement/44.jpg`; highlights about Smart Challenge, mentorship, regional finale
-- **Culture.tsx**: Photos `/announcement/21.jpg`, `/announcement/35.jpg`, `/announcement/46.jpg`; highlights about festivals, creative industries, cultural showcase
-- **Civic.tsx**: Photos `/announcement/17.jpg`, `/announcement/37.jpg`, `/announcement/48.jpg`; highlights about Caravan, TV Game Show, digital outreach
-- **Parliament.tsx**: Photos `/announcement/15.jpg`, `/announcement/31.jpg`, `/announcement/50.jpg`; highlights about simulation, youth reports, institutional pathway
-
-## 3. Button Visibility Audit
-
-- Lightbox close button: Add a visible background (`bg-white/20 rounded-full p-2`) for better contrast
-- Lightbox navigation: Add left/right arrow buttons to navigate between images
-- Mobile nav hamburger: Already has border — verify it renders well
-
-## Files to Modify
-1. `src/components/shared/ProgrammePageTemplate.tsx` — Major redesign with new props and sections
-2. `src/pages/Stakeholders.tsx` — Add photos, event highlights gallery
-3. `src/pages/programmes/Women.tsx` — Add highlights + gallery images
-4. `src/pages/programmes/Trade.tsx` — Add highlights + gallery images
-5. `src/pages/programmes/Youth.tsx` — Add highlights + gallery images
-6. `src/pages/programmes/Culture.tsx` — Add highlights + gallery images
-7. `src/pages/programmes/Civic.tsx` — Add highlights + gallery images
-8. `src/pages/programmes/Parliament.tsx` — Add highlights + gallery images
-9. `src/components/home/AnnouncementGallery.tsx` — Add lightbox navigation arrows + better close button
+### Files to Modify
+- `src/pages/Index.tsx` -- Remove PartnersStrip, add AnnouncementGallery
+- `src/components/home/AnnouncementGallery.tsx` -- New photo gallery component
+- `src/components/home/HeroSection.tsx` -- Add announcement photo background
+- `src/components/home/LatestNews.tsx` -- Use announcement photos on news cards
+- `src/pages/About.tsx` -- Add photos between content sections
+- `src/pages/Team.tsx` -- Use photos for team members
+- `src/pages/News.tsx` -- Use photos on news cards
+- `src/components/shared/ProgrammePageTemplate.tsx` -- Add photo support
+- Various programme pages -- Add relevant images
+- Button styling updates across multiple components
 

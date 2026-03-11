@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Menu } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import ecowasLogo from "@/assets/ecowas-parliament-logo.png";
@@ -18,7 +18,6 @@ const navLinks = [
     { label: "Youth Parliament", to: "/programmes/parliament" },
   ]},
   { label: "Timeline", to: "/timeline" },
-  { label: "Gallery", to: "/gallery" },
   { label: "News", to: "/news" },
   { label: "Documents", to: "/documents" },
   { label: "Stakeholders", to: "/stakeholders" },
@@ -85,8 +84,8 @@ const Navbar = () => {
           {/* Mobile Menu */}
           <Sheet>
             <SheetTrigger asChild className="lg:hidden">
-              <Button variant="outline" size="icon" className="border-primary text-primary bg-primary/5 hover:bg-primary/15 shadow-md">
-                <Menu className="h-5 w-5" />
+              <Button variant="outline" size="icon" className="border-primary/30 hover:bg-primary/10">
+                <Menu className="h-5 w-5 text-foreground" />
               </Button>
             </SheetTrigger>
             <SheetContent side="right" className="w-72">

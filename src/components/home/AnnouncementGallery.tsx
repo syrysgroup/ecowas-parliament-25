@@ -1,26 +1,34 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
 import AnimatedSection from "@/components/shared/AnimatedSection";
-import { X, ArrowRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { X, ChevronLeft, ChevronRight } from "lucide-react";
 
 const galleryImages = [
-  { src: "/announcement/1.jpg", alt: "Rt. Hon. Speaker at the launch", category: "Dignitaries" },
-  { src: "/announcement/3.jpg", alt: "Programme presentation to media", category: "Media" },
-  { src: "/announcement/5.png", alt: "Cultural performance", category: "Cultural" },
-  { src: "/announcement/7.jpg", alt: "Press conference", category: "Media" },
-  { src: "/announcement/9.jpg", alt: "Panel discussion", category: "Panel" },
-  { src: "/announcement/11.jpg", alt: "Anniversary panel", category: "Panel" },
-  { src: "/announcement/13.jpg", alt: "Partnership signing", category: "Dignitaries" },
-  { src: "/announcement/15.jpg", alt: "Guest speakers", category: "Dignitaries" },
-  { src: "/announcement/21.jpg", alt: "Cultural moment", category: "Cultural" },
-  { src: "/announcement/25.jpg", alt: "Group photo", category: "Group" },
-  { src: "/announcement/27.jpg", alt: "Event attendees", category: "Highlights" },
-  { src: "/announcement/19.jpg", alt: "Programme overview", category: "Panel" },
+  { src: "/announcement/1.jpg", alt: "ECOWAS Parliament @25 Announcement Event" },
+  { src: "/announcement/2.jpg", alt: "Dignitaries at the media launch" },
+  { src: "/announcement/3.jpg", alt: "Programme presentation" },
+  { src: "/announcement/4.png", alt: "Event highlight" },
+  { src: "/announcement/5.png", alt: "Stakeholder engagement" },
+  { src: "/announcement/7.jpg", alt: "Media briefing" },
+  { src: "/announcement/9.jpg", alt: "Panel discussion" },
+  { src: "/announcement/11.jpg", alt: "Anniversary celebration" },
+  { src: "/announcement/13.jpg", alt: "Partnership signing" },
+  { src: "/announcement/15.jpg", alt: "Guest speakers" },
+  { src: "/announcement/17.jpg", alt: "Event proceedings" },
+  { src: "/announcement/19.jpg", alt: "Programme overview" },
+  { src: "/announcement/21.jpg", alt: "Cultural moment" },
+  { src: "/announcement/23.jpg", alt: "Dignitaries" },
+  { src: "/announcement/25.jpg", alt: "Group photo" },
+  { src: "/announcement/27.jpg", alt: "Event attendees" },
 ];
 
 const AnnouncementGallery = () => {
   const [lightbox, setLightbox] = useState<number | null>(null);
+
+  const navigate = (dir: number) => {
+    if (lightbox === null) return;
+    const next = (lightbox + dir + galleryImages.length) % galleryImages.length;
+    setLightbox(next);
+  };
 
   return (
     <section className="py-20 bg-muted/30">
@@ -51,15 +59,6 @@ const AnnouncementGallery = () => {
             </AnimatedSection>
           ))}
         </div>
-
-        <AnimatedSection className="text-center mt-10">
-          <Button asChild size="lg" className="font-bold shadow-lg">
-            <Link to="/gallery">
-              View Full Gallery
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
-        </AnimatedSection>
       </div>
 
       {/* Lightbox */}
@@ -70,10 +69,25 @@ const AnnouncementGallery = () => {
         >
           <button
             onClick={() => setLightbox(null)}
-            className="absolute top-6 right-6 text-background hover:text-accent transition-colors"
+            className="absolute top-6 right-6 bg-background/20 hover:bg-background/40 rounded-full p-2 transition-colors"
           >
-            <X className="h-8 w-8" />
+            <X className="h-6 w-6 text-background" />
           </button>
+
+          <button
+            onClick={(e) => { e.stopPropagation(); navigate(-1); }}
+            className="absolute left-4 md:left-8 bg-background/20 hover:bg-background/40 rounded-full p-2 transition-colors"
+          >
+            <ChevronLeft className="h-6 w-6 text-background" />
+          </button>
+
+          <button
+            onClick={(e) => { e.stopPropagation(); navigate(1); }}
+            className="absolute right-4 md:right-8 bg-background/20 hover:bg-background/40 rounded-full p-2 transition-colors"
+          >
+            <ChevronRight className="h-6 w-6 text-background" />
+          </button>
+
           <img
             src={galleryImages[lightbox].src}
             alt={galleryImages[lightbox].alt}

@@ -6,11 +6,11 @@ import borderlessLogo from "@/assets/borderless-trade-logo.png";
 const Footer = () => {
   return (
     <footer className="bg-gradient-hero text-primary-foreground">
-      {/* Co-Organisers strip */}
-      <div className="border-b border-primary-foreground/10 py-10">
+      {/* Partners strip */}
+      <div className="border-b border-primary-foreground/10 py-8">
         <div className="container">
-          <p className="text-center text-xs font-bold tracking-wider uppercase mb-4 text-primary-foreground/50">
-            Programme Co-Organisers
+          <p className="text-center text-sm font-semibold tracking-wider uppercase mb-6 text-primary-foreground/60">
+            Implementing Partners
           </p>
           <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12">
             <img src={duchessLogo} alt="Duchess NL" className="h-12 w-auto brightness-0 invert opacity-80 hover:opacity-100 transition-opacity" />
@@ -23,6 +23,7 @@ const Footer = () => {
       {/* Footer content */}
       <div className="container py-12">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {/* About */}
           <div>
             <h3 className="text-lg font-bold mb-4">ECOWAS Parliament @25</h3>
             <p className="text-sm text-primary-foreground/70 leading-relaxed">
@@ -31,13 +32,13 @@ const Footer = () => {
             </p>
           </div>
 
+          {/* Quick Links */}
           <div>
             <h3 className="text-lg font-bold mb-4">Quick Links</h3>
             <nav className="flex flex-col gap-2">
               {[
                 { label: "About the Programme", to: "/about" },
                 { label: "Timeline", to: "/timeline" },
-                { label: "Photo Gallery", to: "/gallery" },
                 { label: "News & Updates", to: "/news" },
                 { label: "Documents", to: "/documents" },
                 { label: "Stakeholders", to: "/stakeholders" },
@@ -53,6 +54,7 @@ const Footer = () => {
             </nav>
           </div>
 
+          {/* Contact */}
           <div>
             <h3 className="text-lg font-bold mb-4">Contact</h3>
             <div className="text-sm text-primary-foreground/70 space-y-2">
