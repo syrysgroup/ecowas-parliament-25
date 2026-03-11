@@ -1,66 +1,70 @@
-## ECOWAS Parliament @25 — Full Implementation Plan
-
-### 1. Revamp Announcement Gallery with Category Filters
-
-Replace the current flat gallery with a **categorized, filterable gallery page/section**:
-
-- **Categories**: "Dignitaries & Leadership", "Media Briefing", "Panel Discussions", "Cultural Moments", "Group Photos", "Event Highlights"
-- Show a **curated selection** (not all 50) on the homepage (~12-16 images), with a "View Full Gallery" button linking to a dedicated gallery page
-- Add **tab/filter buttons** at the top to switch between categories
-- Keep the lightbox for full-size viewing
-- Create a new `/gallery` route for the full gallery experience
-
-### 2. Tiered Sponsors Section
-
-Build a new **SponsorsSection** component on the homepage (replacing the old PartnersStrip) with **four tiers**, each visually distinct:
-
-- **Implementing Partners** (largest logos, premium placement — Duchess NL, CMD, Borderless Trade)
-- **Platinum Sponsors** (large logos — demo: 2-3 placeholder sponsors)
-- **Gold Sponsors** (medium logos — demo: 3-4 placeholder sponsors)
-- **Sponsors** (smaller logos in a row — demo: 4-6 placeholder sponsors)
-
-Each tier gets a label, appropriate sizing, and generated placeholder logos. The Footer will also be updated to reflect the tiered structure.
-
-### 3. Update Stakeholders Page with Sponsor Tiers
-
-Expand the Stakeholders page to include the full sponsor directory, organized by tier with descriptions and contact-style cards for each.
-
-### 4. Improve Button Visibility Across the Site
-
-- Make all CTA buttons more prominent with **stronger contrast, shadows, and clear borders**
-- Ensure the mobile hamburger menu button is clearly visible
-- Make Download buttons on Documents page bolder
-- Add hover effects and consistent styling to all filter buttons (News, Gallery)
-
-### 5. Better Image Usage Across Pages
-
-- Use **more varied announcement photos** across News, About, Team, and Programme pages
-- Add announcement photos to the **Timeline page** (one per event where appropriate)
-- Ensure all hero sections use relevant background images from the announcement folder
-
-### 6. Polish & Completeness
-
-- Add the Gallery link to the navigation menu
-- Ensure responsive design works well across all new sections
-- Populate all demo data with realistic placeholder content  
 
 
-7. Stakeholders
-  Add image place holders for all the stakeholders 
+## Implementation Plan
+
+### Part A: Restructure Implementing Partners vs Sponsors
+
+The key distinction: **Implementing Partners are co-owners**, not sponsors. They need a completely different visual treatment.
+
+**SponsorsSection.tsx** — Split into two distinct sections:
+1. **"Implementing Partners"** section with a premium, co-branding look: larger cards with descriptions, gold/green accent border, "Co-Organizer" badge rather than "Sponsor" treatment
+2. **"Sponsors"** section below with three tiers (Platinum, Gold, Sponsors) keeping the current tiered card layout
+
+**Footer.tsx** — Rename "Implementing Partners" label to something like "Programme Co-Organisers" to reinforce distinction
+
+**Stakeholders.tsx** — Same distinction: Implementing Partners get a dedicated hero-adjacent section, sponsors grouped below
+
+### Part B: Generate Better SVG Logos for All Sponsors
+
+Replace the placeholder PNG logos with inline **SVG-based logo components** rendered directly in React. Each sponsor gets a unique, colorful, professional-looking generated logo with initials/icon and brand color. This avoids broken image issues and looks polished.
+
+Create: `src/components/shared/SponsorLogo.tsx` — a component that renders unique SVG logos based on sponsor name and a color prop.
+
+### Part C: Rebuild Parliament Page — Full Custom Page
+
+Replace the simple `ProgrammePageTemplate` usage with a **fully custom, robust page** at `/programmes/parliament`. This is the centerpiece.
+
+**New file: `src/pages/programmes/Parliament.tsx`** — Complete rewrite with these sections:
+
+1. **Hero Section** — Dramatic hero with parliament chamber imagery, ECOWAS Youth Parliament branding, animated stats (115 total seats, 15 countries)
+
+2. **Overview & Vision** — Speaker's vision statement, programme description, key dates
+
+3. **Interactive Hemicycle Seating Chart** — The visual centerpiece:
+   - SVG-based semicircular parliament seating arrangement
+   - Color-coded by country with the exact seat allocation:
+     - Benin: 5, Cape Verde: 5, Gambia: 5, Ghana: 8, Guinea: 6, Guinea-Bissau: 5, Ivory Coast: 7, Liberia: 5, Nigeria: 35, Senegal: 6, Sierra Leone: 5, Togo: 5
+   - Total: 115 seats
+   - Hover to see country name, click to see country delegation details
+   - Legend showing each country's color and seat count
+   - Built as a new component: `src/components/parliament/HemicycleChart.tsx`
+
+4. **Country Delegations Grid** — Cards for each of the 15 member states showing:
+   - Country flag emoji, name, number of seats
+   - "Nomination Status" badge (demo: mix of Open/Closed/Coming Soon)
+   - Representative slots (filled/vacant indicator)
+
+5. **Nomination & Voting Process** — Step-by-step timeline showing:
+   - Step 1: Country nominations open
+   - Step 2: Youth apply/get nominated
+   - Step 3: Voting/selection process
+   - Step 4: Delegates announced
+   - Step 5: Simulated Parliament session
+   - CTA button: "Apply as Youth Representative"
+
+6. **Programme Agenda** — Key sessions/debates planned for the simulated parliament
+
+7. **Objectives Section** — Reuse existing objectives in a modern card grid
 
 ### Files to Create
-
-- `src/pages/Gallery.tsx` — Full gallery page with categories
-- `src/components/home/SponsorsSection.tsx` — Tiered sponsors component
+- `src/components/parliament/HemicycleChart.tsx` — SVG hemicycle seating chart component
+- `src/components/parliament/CountryDelegationCard.tsx` — Country delegation card component
+- `src/components/parliament/NominationTimeline.tsx` — Step-by-step nomination process
+- `src/components/shared/SponsorLogo.tsx` — Generated SVG logos for sponsors
 
 ### Files to Modify
+- `src/pages/programmes/Parliament.tsx` — Complete rewrite to custom page
+- `src/components/home/SponsorsSection.tsx` — Separate implementing partners from sponsors, use SVG logos
+- `src/components/layout/Footer.tsx` — Update partner/sponsor labeling
+- `src/pages/Stakeholders.tsx` — Update partner/sponsor distinction, use SVG logos
 
-- `src/pages/Index.tsx` — Add SponsorsSection, update gallery to show curated subset
-- `src/components/home/AnnouncementGallery.tsx` — Add category filters, curate selection, add "View Full Gallery" link
-- `src/components/layout/Navbar.tsx` — Add Gallery to navigation
-- `src/components/layout/Footer.tsx` — Update partner section to reflect sponsor tiers
-- `src/pages/Stakeholders.tsx` — Add sponsor tiers
-- `src/pages/Timeline.tsx` — Add event images
-- `src/App.tsx` — Add /gallery route
-- `src/components/ui/button.tsx` — Enhance visibility with stronger default styles
-- Various programme/page files — Better image usage
