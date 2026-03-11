@@ -5,7 +5,7 @@ import PillarsGrid from "@/components/home/PillarsGrid";
 import CountriesSection from "@/components/home/CountriesSection";
 import QuoteStrip from "@/components/home/QuoteStrip";
 import LatestNews from "@/components/home/LatestNews";
-import PartnersStrip from "@/components/home/PartnersStrip";
+import SponsorsSection from "@/components/home/SponsorsSection";
 
 const Index = () => {
   return (
@@ -16,7 +16,7 @@ const Index = () => {
       <CountriesSection />
       <QuoteStrip />
       <LatestNews />
-      <PartnersStrip />
+      <SponsorsSection />
     </Layout>
   );
 };
