@@ -1,14 +1,14 @@
 import Layout from "@/components/layout/Layout";
 import AnimatedSection from "@/components/shared/AnimatedSection";
-import { User, Building2 } from "lucide-react";
+import { Building2 } from "lucide-react";
 import duchessLogo from "@/assets/duchess-logo.png";
 import cmdLogo from "@/assets/cmd-logo.png";
 import borderlessLogo from "@/assets/borderless-trade-logo.png";
 
 const leadership = [
-  { name: "Rt. Hon. Hadja Mémounatou Ibrahima", title: "Speaker of the ECOWAS Parliament" },
-  { name: "Mrs. Uche Duru", title: "Chief Communication Officer, ECOWAS Parliament" },
-  { name: "Dr. Kabeer Garba", title: "Ag. Director, Department of Parliamentary Affairs" },
+  { name: "Rt. Hon. Hadja Mémounatou Ibrahima", title: "Speaker of the ECOWAS Parliament", photo: "/announcement/2.jpg" },
+  { name: "Mrs. Uche Duru", title: "Chief Communication Officer, ECOWAS Parliament", photo: "/announcement/3.jpg" },
+  { name: "Dr. Kabeer Garba", title: "Ag. Director, Department of Parliamentary Affairs", photo: "/announcement/7.jpg" },
 ];
 
 const partners = [
@@ -17,14 +17,28 @@ const partners = [
   { name: "CMD Tourism & Trade Enterprises", lead: "Blessing Okpale", role: "Lead", logo: cmdLogo, description: "Tourism and trade enterprise development across West Africa." },
 ];
 
+const eventHighlights = [
+  { src: "/announcement/1.jpg", caption: "Official media announcement" },
+  { src: "/announcement/5.png", caption: "Stakeholder engagement" },
+  { src: "/announcement/9.jpg", caption: "Panel discussion" },
+  { src: "/announcement/11.jpg", caption: "Anniversary celebration" },
+  { src: "/announcement/15.jpg", caption: "Guest speakers" },
+  { src: "/announcement/19.jpg", caption: "Programme overview" },
+  { src: "/announcement/23.jpg", caption: "Dignitaries" },
+  { src: "/announcement/25.jpg", caption: "Group photo" },
+];
+
 const Stakeholders = () => {
   return (
     <Layout>
-      <section className="bg-gradient-hero text-primary-foreground py-20">
-        <div className="container">
+      {/* Hero */}
+      <section className="relative bg-gradient-hero text-primary-foreground py-24 md:py-32 overflow-hidden">
+        <div className="absolute inset-0 bg-cover bg-center opacity-20" style={{ backgroundImage: "url('/announcement/1.jpg')" }} />
+        <div className="absolute inset-0 bg-gradient-to-t from-primary/90 via-primary/60 to-primary/40" />
+        <div className="container relative">
           <AnimatedSection>
-            <h1 className="text-4xl md:text-5xl font-black">Stakeholders & Partners</h1>
-            <p className="mt-4 text-lg text-primary-foreground/70 max-w-2xl">
+            <h1 className="text-4xl md:text-6xl font-black">Stakeholders & Partners</h1>
+            <p className="mt-4 text-lg md:text-xl text-primary-foreground/80 max-w-2xl">
               Leadership and strategic partners driving the 25th anniversary programme.
             </p>
           </AnimatedSection>
@@ -40,12 +54,14 @@ const Stakeholders = () => {
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {leadership.map((person, i) => (
               <AnimatedSection key={person.name} delay={i * 100}>
-                <div className="p-6 rounded-xl bg-card border border-border shadow-sm text-center">
-                  <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
-                    <User className="h-8 w-8 text-primary" />
+                <div className="rounded-xl bg-card border border-border shadow-sm overflow-hidden hover:shadow-lg transition-shadow">
+                  <div className="aspect-[4/3] overflow-hidden">
+                    <img src={person.photo} alt={person.name} className="w-full h-full object-cover" />
                   </div>
-                  <h3 className="font-bold text-card-foreground">{person.name}</h3>
-                  <p className="text-sm text-muted-foreground mt-1">{person.title}</p>
+                  <div className="p-6 text-center">
+                    <h3 className="font-bold text-card-foreground">{person.name}</h3>
+                    <p className="text-sm text-muted-foreground mt-1">{person.title}</p>
+                  </div>
                 </div>
               </AnimatedSection>
             ))}
@@ -67,6 +83,26 @@ const Stakeholders = () => {
                   <h3 className="font-bold text-card-foreground">{partner.name}</h3>
                   <p className="text-sm text-primary font-medium mt-1">{partner.lead} — {partner.role}</p>
                   <p className="text-sm text-muted-foreground mt-2">{partner.description}</p>
+                </div>
+              </AnimatedSection>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Event Highlights */}
+      <section className="py-16">
+        <div className="container">
+          <AnimatedSection className="text-center mb-10">
+            <h2 className="text-2xl font-bold text-foreground">Event Highlights</h2>
+            <p className="text-muted-foreground mt-2">Moments from the official announcement event.</p>
+          </AnimatedSection>
+          <div className="columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4">
+            {eventHighlights.map((img, i) => (
+              <AnimatedSection key={i} delay={i * 60}>
+                <div className="break-inside-avoid overflow-hidden rounded-xl border border-border shadow-sm">
+                  <img src={img.src} alt={img.caption} loading="lazy" className="w-full h-auto object-cover" />
+                  <p className="text-xs text-muted-foreground p-2 text-center">{img.caption}</p>
                 </div>
               </AnimatedSection>
             ))}

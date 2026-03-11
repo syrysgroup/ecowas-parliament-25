@@ -1,6 +1,6 @@
 import { useState } from "react";
 import AnimatedSection from "@/components/shared/AnimatedSection";
-import { X } from "lucide-react";
+import { X, ChevronLeft, ChevronRight } from "lucide-react";
 
 const galleryImages = [
   { src: "/announcement/1.jpg", alt: "ECOWAS Parliament @25 Announcement Event" },
@@ -23,6 +23,12 @@ const galleryImages = [
 
 const AnnouncementGallery = () => {
   const [lightbox, setLightbox] = useState<number | null>(null);
+
+  const navigate = (dir: number) => {
+    if (lightbox === null) return;
+    const next = (lightbox + dir + galleryImages.length) % galleryImages.length;
+    setLightbox(next);
+  };
 
   return (
     <section className="py-20 bg-muted/30">
@@ -63,10 +69,25 @@ const AnnouncementGallery = () => {
         >
           <button
             onClick={() => setLightbox(null)}
-            className="absolute top-6 right-6 text-background hover:text-accent transition-colors"
+            className="absolute top-6 right-6 bg-background/20 hover:bg-background/40 rounded-full p-2 transition-colors"
           >
-            <X className="h-8 w-8" />
+            <X className="h-6 w-6 text-background" />
           </button>
+
+          <button
+            onClick={(e) => { e.stopPropagation(); navigate(-1); }}
+            className="absolute left-4 md:left-8 bg-background/20 hover:bg-background/40 rounded-full p-2 transition-colors"
+          >
+            <ChevronLeft className="h-6 w-6 text-background" />
+          </button>
+
+          <button
+            onClick={(e) => { e.stopPropagation(); navigate(1); }}
+            className="absolute right-4 md:right-8 bg-background/20 hover:bg-background/40 rounded-full p-2 transition-colors"
+          >
+            <ChevronRight className="h-6 w-6 text-background" />
+          </button>
+
           <img
             src={galleryImages[lightbox].src}
             alt={galleryImages[lightbox].alt}

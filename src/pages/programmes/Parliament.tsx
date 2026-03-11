@@ -1,4 +1,4 @@
-import { Building2 } from "lucide-react";
+import { Building2, Users, FileText, Award } from "lucide-react";
 import ProgrammePageTemplate from "@/components/shared/ProgrammePageTemplate";
 
 const Parliament = () => (
@@ -17,6 +17,13 @@ const Parliament = () => (
     accentColor="bg-ecowas-red/20 text-ecowas-red"
     icon={<Building2 className="h-6 w-6" />}
     heroImage="/announcement/15.jpg"
+    galleryImages={["/announcement/15.jpg", "/announcement/31.jpg", "/announcement/50.jpg"]}
+    highlights={[
+      { icon: <Building2 className="h-5 w-5" />, title: "Simulated Parliament", description: "Youth experience real parliamentary debate and procedure." },
+      { icon: <Users className="h-5 w-5" />, title: "Youth Parliament Vision", description: "Launching the pathway to an institutional ECOWAS Youth Parliament." },
+      { icon: <FileText className="h-5 w-5" />, title: "Youth Reports", description: "Documenting proceedings and recommendations from young delegates." },
+      { icon: <Award className="h-5 w-5" />, title: "Civic Leadership", description: "Building parliamentary skills for the next generation." },
+    ]}
   />
 );
 
