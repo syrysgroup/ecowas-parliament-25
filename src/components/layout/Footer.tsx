@@ -2,37 +2,20 @@ import { Link } from "react-router-dom";
 import duchessLogo from "@/assets/duchess-logo.png";
 import cmdLogo from "@/assets/cmd-logo.png";
 import borderlessLogo from "@/assets/borderless-trade-logo.png";
-import waBankLogo from "@/assets/sponsor-wa-bank.png";
-import sahelEnergyLogo from "@/assets/sponsor-sahel-energy.png";
-import africonnectLogo from "@/assets/sponsor-africonnect.png";
 
 const Footer = () => {
   return (
     <footer className="bg-gradient-hero text-primary-foreground">
-      {/* Sponsor tiers strip */}
+      {/* Co-Organisers strip */}
       <div className="border-b border-primary-foreground/10 py-10">
-        <div className="container space-y-8">
-          {/* Implementing Partners */}
-          <div>
-            <p className="text-center text-xs font-bold tracking-wider uppercase mb-4 text-primary-foreground/50">
-              Implementing Partners
-            </p>
-            <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12">
-              <img src={duchessLogo} alt="Duchess NL" className="h-12 w-auto brightness-0 invert opacity-80 hover:opacity-100 transition-opacity" />
-              <img src={cmdLogo} alt="CMD Tourism & Trade" className="h-12 w-auto brightness-0 invert opacity-80 hover:opacity-100 transition-opacity" />
-              <img src={borderlessLogo} alt="Borderless Trade & Investment" className="h-12 w-auto brightness-0 invert opacity-80 hover:opacity-100 transition-opacity" />
-            </div>
-          </div>
-          {/* Platinum */}
-          <div>
-            <p className="text-center text-xs font-bold tracking-wider uppercase mb-3 text-primary-foreground/40">
-              Platinum Sponsors
-            </p>
-            <div className="flex flex-wrap items-center justify-center gap-6 md:gap-10">
-              <img src={waBankLogo} alt="West Africa Bank" className="h-9 w-auto brightness-0 invert opacity-60 hover:opacity-100 transition-opacity" />
-              <img src={sahelEnergyLogo} alt="Sahel Energy Group" className="h-9 w-auto brightness-0 invert opacity-60 hover:opacity-100 transition-opacity" />
-              <img src={africonnectLogo} alt="AfriConnect Solutions" className="h-9 w-auto brightness-0 invert opacity-60 hover:opacity-100 transition-opacity" />
-            </div>
+        <div className="container">
+          <p className="text-center text-xs font-bold tracking-wider uppercase mb-4 text-primary-foreground/50">
+            Programme Co-Organisers
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12">
+            <img src={duchessLogo} alt="Duchess NL" className="h-12 w-auto brightness-0 invert opacity-80 hover:opacity-100 transition-opacity" />
+            <img src={cmdLogo} alt="CMD Tourism & Trade" className="h-12 w-auto brightness-0 invert opacity-80 hover:opacity-100 transition-opacity" />
+            <img src={borderlessLogo} alt="Borderless Trade & Investment" className="h-12 w-auto brightness-0 invert opacity-80 hover:opacity-100 transition-opacity" />
           </div>
         </div>
       </div>

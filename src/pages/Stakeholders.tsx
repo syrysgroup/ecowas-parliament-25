@@ -1,19 +1,9 @@
 import Layout from "@/components/layout/Layout";
 import AnimatedSection from "@/components/shared/AnimatedSection";
-import { User } from "lucide-react";
 import duchessLogo from "@/assets/duchess-logo.png";
 import cmdLogo from "@/assets/cmd-logo.png";
 import borderlessLogo from "@/assets/borderless-trade-logo.png";
-import africonnectLogo from "@/assets/sponsor-africonnect.png";
-import waBankLogo from "@/assets/sponsor-wa-bank.png";
-import sahelEnergyLogo from "@/assets/sponsor-sahel-energy.png";
-import atlanticTelecomLogo from "@/assets/sponsor-atlantic-telecom.png";
-import unityInsuranceLogo from "@/assets/sponsor-unity-insurance.png";
-import coastalLogisticsLogo from "@/assets/sponsor-coastal-logistics.png";
-import abujaHotelsLogo from "@/assets/sponsor-abuja-hotels.png";
-import panAfricanMediaLogo from "@/assets/sponsor-pan-african-media.png";
-import greenValleyLogo from "@/assets/sponsor-green-valley.png";
-import accraDigitalLogo from "@/assets/sponsor-accra-digital.png";
+import SponsorLogo from "@/components/shared/SponsorLogo";
 
 const leadership = [
   { name: "Rt. Hon. Hadja Mémounatou Ibrahima", title: "Speaker of the ECOWAS Parliament", image: "/announcement/1.jpg" },
@@ -21,42 +11,39 @@ const leadership = [
   { name: "Dr. Kabeer Garba", title: "Ag. Director, Department of Parliamentary Affairs", image: "/announcement/13.jpg" },
 ];
 
+const implementingPartners = [
+  { name: "Duchess NL", lead: "Dr. Victoria Akai IIPM", role: "CEO", logo: duchessLogo, description: "Leading co-organiser coordinating the year-long programme." },
+  { name: "Borderless Trade & Investment", lead: "Dr. Olori Boye-Ajayi", role: "Managing Partner", logo: borderlessLogo, description: "Expertise in trade facilitation and regional economic integration." },
+  { name: "CMD Tourism & Trade Enterprises", lead: "Blessing Okpale", role: "Lead", logo: cmdLogo, description: "Tourism and trade enterprise development across West Africa." },
+];
+
 const sponsorTiers = [
-  {
-    tier: "Implementing Partners",
-    tierStyle: "bg-primary text-primary-foreground",
-    sponsors: [
-      { name: "Duchess NL", lead: "Dr. Victoria Akai IIPM", role: "CEO", logo: duchessLogo, description: "Leading implementing partner coordinating the year-long programme." },
-      { name: "Borderless Trade & Investment", lead: "Dr. Olori Boye-Ajayi", role: "Managing Partner", logo: borderlessLogo, description: "Expertise in trade facilitation and regional economic integration." },
-      { name: "CMD Tourism & Trade Enterprises", lead: "Blessing Okpale", role: "Lead", logo: cmdLogo, description: "Tourism and trade enterprise development across West Africa." },
-    ],
-  },
   {
     tier: "Platinum Sponsors",
     tierStyle: "bg-accent text-accent-foreground",
     sponsors: [
-      { name: "West Africa Bank", lead: "Financial Partner", role: "", logo: waBankLogo, description: "Providing financial services and banking solutions for the programme." },
-      { name: "Sahel Energy Group", lead: "Energy Partner", role: "", logo: sahelEnergyLogo, description: "Powering sustainable development across the ECOWAS region." },
-      { name: "AfriConnect Solutions", lead: "Technology Partner", role: "", logo: africonnectLogo, description: "Digital infrastructure and technology solutions for the programme." },
+      { name: "West Africa Bank", color: "hsl(220, 65%, 45%)", description: "Financial services and banking solutions for the programme." },
+      { name: "Sahel Energy Group", color: "hsl(35, 80%, 50%)", description: "Powering sustainable development across the ECOWAS region." },
+      { name: "AfriConnect Solutions", color: "hsl(152, 55%, 40%)", description: "Digital infrastructure and technology solutions." },
     ],
   },
   {
     tier: "Gold Sponsors",
     tierStyle: "bg-secondary text-secondary-foreground",
     sponsors: [
-      { name: "Atlantic Telecom", lead: "Telecom Partner", role: "", logo: atlanticTelecomLogo, description: "Telecommunications and connectivity across West Africa." },
-      { name: "Unity Insurance", lead: "Insurance Partner", role: "", logo: unityInsuranceLogo, description: "Risk management and insurance services for programme activities." },
-      { name: "Coastal Logistics", lead: "Logistics Partner", role: "", logo: coastalLogisticsLogo, description: "Transportation and logistics support for programme events." },
-      { name: "Abuja Hotels Group", lead: "Hospitality Partner", role: "", logo: abujaHotelsLogo, description: "Accommodation and hospitality for programme delegates." },
+      { name: "Atlantic Telecom", color: "hsl(200, 65%, 45%)", description: "Telecommunications and connectivity across West Africa." },
+      { name: "Unity Insurance", color: "hsl(340, 60%, 45%)", description: "Risk management and insurance services." },
+      { name: "Coastal Logistics", color: "hsl(190, 50%, 40%)", description: "Transportation and logistics support." },
+      { name: "Abuja Hotels Group", color: "hsl(25, 70%, 45%)", description: "Accommodation and hospitality for delegates." },
     ],
   },
   {
     tier: "Sponsors",
     tierStyle: "bg-muted text-muted-foreground",
     sponsors: [
-      { name: "Pan-African Media Network", lead: "Media Partner", role: "", logo: panAfricanMediaLogo, description: "Media coverage and communication outreach." },
-      { name: "Green Valley Agro", lead: "Agriculture Partner", role: "", logo: greenValleyLogo, description: "Agricultural development and food security initiatives." },
-      { name: "Accra Digital Hub", lead: "Innovation Partner", role: "", logo: accraDigitalLogo, description: "Digital innovation and youth entrepreneurship support." },
+      { name: "Pan-African Media", color: "hsl(260, 50%, 45%)", description: "Media coverage and communication outreach." },
+      { name: "Green Valley Agro", color: "hsl(120, 45%, 40%)", description: "Agricultural development and food security initiatives." },
+      { name: "Accra Digital Hub", color: "hsl(175, 55%, 40%)", description: "Digital innovation and youth entrepreneurship support." },
     ],
   },
 ];
@@ -70,7 +57,7 @@ const Stakeholders = () => {
           <AnimatedSection>
             <h1 className="text-4xl md:text-5xl font-black">Stakeholders & Partners</h1>
             <p className="mt-4 text-lg text-primary-foreground/70 max-w-2xl">
-              Leadership and strategic partners driving the 25th anniversary programme.
+              Leadership, co-organisers, and sponsors driving the 25th anniversary programme.
             </p>
           </AnimatedSection>
         </div>
@@ -100,9 +87,36 @@ const Stakeholders = () => {
         </div>
       </section>
 
+      {/* Implementing Partners — Co-Organisers */}
+      <section className="py-16 bg-muted/50">
+        <div className="container">
+          <AnimatedSection>
+            <div className="flex items-center gap-3 mb-8">
+              <span className="px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-primary text-primary-foreground">
+                Programme Co-Organisers
+              </span>
+            </div>
+          </AnimatedSection>
+          <div className="grid md:grid-cols-3 gap-6">
+            {implementingPartners.map((partner, i) => (
+              <AnimatedSection key={partner.name} delay={i * 100}>
+                <div className="p-6 rounded-xl bg-card border-2 border-primary/20 shadow-md hover:shadow-xl transition-shadow">
+                  <img src={partner.logo} alt={partner.name} className="h-14 w-auto mb-4" />
+                  <h3 className="font-bold text-card-foreground">{partner.name}</h3>
+                  <p className="text-sm text-primary font-medium mt-1">
+                    {partner.lead} — {partner.role}
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-2">{partner.description}</p>
+                </div>
+              </AnimatedSection>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Sponsor Tiers */}
       {sponsorTiers.map((tierGroup, ti) => (
-        <section key={tierGroup.tier} className={ti % 2 === 0 ? "py-16 bg-muted/50" : "py-16"}>
+        <section key={tierGroup.tier} className={ti % 2 === 0 ? "py-16" : "py-16 bg-muted/50"}>
           <div className="container">
             <AnimatedSection>
               <div className="flex items-center gap-3 mb-8">
@@ -115,11 +129,8 @@ const Stakeholders = () => {
               {tierGroup.sponsors.map((partner, i) => (
                 <AnimatedSection key={partner.name} delay={i * 100}>
                   <div className="p-6 rounded-xl bg-card border border-border shadow-sm hover:shadow-lg transition-shadow">
-                    <img src={partner.logo} alt={partner.name} className="h-14 w-auto mb-4" />
+                    <SponsorLogo name={partner.name} color={partner.color} size={64} className="mb-4" />
                     <h3 className="font-bold text-card-foreground">{partner.name}</h3>
-                    <p className="text-sm text-primary font-medium mt-1">
-                      {partner.lead}{partner.role ? ` — ${partner.role}` : ""}
-                    </p>
                     <p className="text-sm text-muted-foreground mt-2">{partner.description}</p>
                   </div>
                 </AnimatedSection>

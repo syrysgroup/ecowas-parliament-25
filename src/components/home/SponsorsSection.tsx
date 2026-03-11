@@ -2,102 +2,135 @@ import AnimatedSection from "@/components/shared/AnimatedSection";
 import duchessLogo from "@/assets/duchess-logo.png";
 import cmdLogo from "@/assets/cmd-logo.png";
 import borderlessLogo from "@/assets/borderless-trade-logo.png";
-import africonnectLogo from "@/assets/sponsor-africonnect.png";
-import waBankLogo from "@/assets/sponsor-wa-bank.png";
-import sahelEnergyLogo from "@/assets/sponsor-sahel-energy.png";
-import atlanticTelecomLogo from "@/assets/sponsor-atlantic-telecom.png";
-import unityInsuranceLogo from "@/assets/sponsor-unity-insurance.png";
-import coastalLogisticsLogo from "@/assets/sponsor-coastal-logistics.png";
-import abujaHotelsLogo from "@/assets/sponsor-abuja-hotels.png";
-import panAfricanMediaLogo from "@/assets/sponsor-pan-african-media.png";
-import greenValleyLogo from "@/assets/sponsor-green-valley.png";
-import accraDigitalLogo from "@/assets/sponsor-accra-digital.png";
+import SponsorLogo from "@/components/shared/SponsorLogo";
 
-const tiers = [
+const implementingPartners = [
   {
-    label: "Implementing Partners",
-    description: "Strategic partners driving the 25th anniversary programme",
-    logoClass: "h-16 md:h-20",
-    containerClass: "gap-10 md:gap-16",
-    sponsors: [
-      { name: "Duchess NL", logo: duchessLogo },
-      { name: "CMD Tourism & Trade Enterprises", logo: cmdLogo },
-      { name: "Borderless Trade & Investment", logo: borderlessLogo },
-    ],
+    name: "Duchess NL",
+    logo: duchessLogo,
+    lead: "Dr. Victoria Akai IIPM",
+    role: "CEO",
+    description: "Leading co-organiser coordinating the year-long commemorative programme.",
   },
   {
+    name: "Borderless Trade & Investment",
+    logo: borderlessLogo,
+    lead: "Dr. Olori Boye-Ajayi",
+    role: "Managing Partner",
+    description: "Expertise in trade facilitation and regional economic integration across ECOWAS.",
+  },
+  {
+    name: "CMD Tourism & Trade",
+    logo: cmdLogo,
+    lead: "Blessing Okpale",
+    role: "Lead",
+    description: "Tourism and trade enterprise development across West Africa.",
+  },
+];
+
+const sponsorTiers = [
+  {
     label: "Platinum Sponsors",
-    description: "Premium programme supporters",
-    logoClass: "h-12 md:h-16",
-    containerClass: "gap-8 md:gap-14",
+    badgeClass: "bg-accent text-accent-foreground",
+    logoSize: 72,
     sponsors: [
-      { name: "West Africa Bank", logo: waBankLogo },
-      { name: "Sahel Energy Group", logo: sahelEnergyLogo },
-      { name: "AfriConnect Solutions", logo: africonnectLogo },
+      { name: "West Africa Bank", color: "hsl(220, 65%, 45%)", secondary: "hsl(45, 80%, 50%)" },
+      { name: "Sahel Energy Group", color: "hsl(35, 80%, 50%)", secondary: "hsl(15, 70%, 45%)" },
+      { name: "AfriConnect Solutions", color: "hsl(152, 55%, 40%)", secondary: "hsl(190, 60%, 45%)" },
     ],
   },
   {
     label: "Gold Sponsors",
-    description: "Major programme contributors",
-    logoClass: "h-10 md:h-14",
-    containerClass: "gap-8 md:gap-12",
+    badgeClass: "bg-secondary text-secondary-foreground",
+    logoSize: 64,
     sponsors: [
-      { name: "Atlantic Telecom", logo: atlanticTelecomLogo },
-      { name: "Unity Insurance", logo: unityInsuranceLogo },
-      { name: "Coastal Logistics", logo: coastalLogisticsLogo },
-      { name: "Abuja Hotels Group", logo: abujaHotelsLogo },
+      { name: "Atlantic Telecom", color: "hsl(200, 65%, 45%)", secondary: "hsl(210, 55%, 55%)" },
+      { name: "Unity Insurance", color: "hsl(340, 60%, 45%)", secondary: "hsl(350, 50%, 55%)" },
+      { name: "Coastal Logistics", color: "hsl(190, 50%, 40%)", secondary: "hsl(170, 45%, 50%)" },
+      { name: "Abuja Hotels Group", color: "hsl(25, 70%, 45%)", secondary: "hsl(40, 75%, 50%)" },
     ],
   },
   {
     label: "Sponsors",
-    description: "Programme supporters",
-    logoClass: "h-8 md:h-12",
-    containerClass: "gap-6 md:gap-10",
+    badgeClass: "bg-muted text-muted-foreground",
+    logoSize: 56,
     sponsors: [
-      { name: "Pan-African Media Network", logo: panAfricanMediaLogo },
-      { name: "Green Valley Agro", logo: greenValleyLogo },
-      { name: "Accra Digital Hub", logo: accraDigitalLogo },
+      { name: "Pan-African Media", color: "hsl(260, 50%, 45%)", secondary: "hsl(280, 45%, 55%)" },
+      { name: "Green Valley Agro", color: "hsl(120, 45%, 40%)", secondary: "hsl(90, 50%, 45%)" },
+      { name: "Accra Digital Hub", color: "hsl(175, 55%, 40%)", secondary: "hsl(200, 50%, 50%)" },
     ],
   },
 ];
 
 const SponsorsSection = () => {
   return (
-    <section className="py-20 bg-muted/30">
+    <section className="py-20">
       <div className="container">
-        <AnimatedSection className="text-center mb-14">
+        {/* Implementing Partners — Co-Organisers */}
+        <AnimatedSection className="text-center mb-6">
           <h2 className="text-3xl md:text-4xl font-black text-foreground">
-            Our <span className="text-primary">Partners & Sponsors</span>
+            Programme <span className="text-primary">Co-Organisers</span>
           </h2>
           <p className="mt-3 text-muted-foreground max-w-xl mx-auto">
+            Strategic implementing partners co-driving the 25th anniversary programme.
+          </p>
+        </AnimatedSection>
+
+        <AnimatedSection>
+          <div className="grid md:grid-cols-3 gap-5 mb-16">
+            {implementingPartners.map((partner) => (
+              <div
+                key={partner.name}
+                className="relative rounded-2xl border-2 border-primary/20 bg-card p-6 hover:shadow-xl hover:border-primary/40 transition-all group"
+              >
+                <div className="absolute top-3 right-3">
+                  <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-primary text-primary-foreground">
+                    Co-Organiser
+                  </span>
+                </div>
+                <img src={partner.logo} alt={partner.name} className="h-14 w-auto mb-4" />
+                <h3 className="font-bold text-card-foreground text-lg">{partner.name}</h3>
+                <p className="text-sm text-primary font-medium mt-1">
+                  {partner.lead} — {partner.role}
+                </p>
+                <p className="text-sm text-muted-foreground mt-2">{partner.description}</p>
+              </div>
+            ))}
+          </div>
+        </AnimatedSection>
+
+        {/* Sponsors */}
+        <AnimatedSection className="text-center mb-8">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground">
+            Our <span className="text-accent-foreground">Sponsors</span>
+          </h2>
+          <p className="mt-2 text-muted-foreground max-w-lg mx-auto">
             Organizations supporting the ECOWAS Parliament 25th anniversary programme.
           </p>
         </AnimatedSection>
 
-        <div className="space-y-12">
-          {tiers.map((tier, tierIndex) => (
-            <AnimatedSection key={tier.label} delay={tierIndex * 100}>
-              <div className={`rounded-2xl border border-border bg-card p-8 ${tierIndex === 0 ? "shadow-lg ring-1 ring-primary/10" : "shadow-sm"}`}>
-                <div className="text-center mb-6">
-                  <span className={`inline-block px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-2 ${
-                    tierIndex === 0 ? "bg-primary text-primary-foreground" :
-                    tierIndex === 1 ? "bg-accent text-accent-foreground" :
-                    tierIndex === 2 ? "bg-secondary text-secondary-foreground" :
-                    "bg-muted text-muted-foreground"
-                  }`}>
+        <div className="space-y-8">
+          {sponsorTiers.map((tier, ti) => (
+            <AnimatedSection key={tier.label} delay={ti * 100}>
+              <div className={`rounded-2xl border border-border bg-card p-6 ${ti === 0 ? "shadow-md ring-1 ring-accent/20" : "shadow-sm"}`}>
+                <div className="text-center mb-5">
+                  <span className={`inline-block px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${tier.badgeClass}`}>
                     {tier.label}
                   </span>
-                  <p className="text-sm text-muted-foreground">{tier.description}</p>
                 </div>
-                <div className={`flex flex-wrap items-center justify-center ${tier.containerClass}`}>
+                <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12">
                   {tier.sponsors.map((sponsor) => (
-                    <div key={sponsor.name} className="flex flex-col items-center gap-2 group">
-                      <img
-                        src={sponsor.logo}
-                        alt={sponsor.name}
-                        className={`${tier.logoClass} w-auto grayscale hover:grayscale-0 opacity-70 hover:opacity-100 transition-all duration-300`}
+                    <div key={sponsor.name} className="flex flex-col items-center gap-1 group/s">
+                      <SponsorLogo
+                        name={sponsor.name}
+                        color={sponsor.color}
+                        secondaryColor={sponsor.secondary}
+                        size={tier.logoSize}
+                        className="opacity-80 group-hover/s:opacity-100 transition-opacity"
                       />
-                      <span className="text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">{sponsor.name}</span>
+                      <span className="text-xs text-muted-foreground opacity-0 group-hover/s:opacity-100 transition-opacity">
+                        {sponsor.name}
+                      </span>
                     </div>
                   ))}
                 </div>
