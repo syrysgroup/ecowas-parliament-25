@@ -1,4 +1,4 @@
-import { Heart, Users, ShoppingBag, Handshake, GraduationCap } from "lucide-react";
+import { Heart } from "lucide-react";
 import ProgrammePageTemplate from "@/components/shared/ProgrammePageTemplate";
 
 const Women = () => (
@@ -16,14 +16,6 @@ const Women = () => (
     countries={["Nigeria", "Ghana", "Côte d'Ivoire", "Senegal", "Togo", "Sierra Leone"]}
     accentColor="bg-secondary/20 text-secondary"
     icon={<Heart className="h-6 w-6" />}
-    heroImage="/announcement/13.jpg"
-    galleryImages={["/announcement/13.jpg", "/announcement/30.jpg", "/announcement/42.jpg"]}
-    highlights={[
-      { icon: <ShoppingBag className="h-5 w-5" />, title: "Trade Platforms", description: "Dedicated marketplaces connecting women entrepreneurs across borders." },
-      { icon: <GraduationCap className="h-5 w-5" />, title: "Capacity Building", description: "Workshops and training for women-led SMEs in the region." },
-      { icon: <Users className="h-5 w-5" />, title: "Networking", description: "Cross-border networking events building lasting business relationships." },
-      { icon: <Handshake className="h-5 w-5" />, title: "Policy Advocacy", description: "Championing policies that support women's economic participation." },
-    ]}
   />
 );
 
