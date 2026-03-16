@@ -6,6 +6,7 @@ import AnnouncementGallery from "@/components/home/AnnouncementGallery";
 import CountriesSection from "@/components/home/CountriesSection";
 import QuoteStrip from "@/components/home/QuoteStrip";
 import LatestNews from "@/components/home/LatestNews";
+import PartnersStrip from "@/components/home/PartnersStrip";
 
 const Index = () => {
   return (
@@ -17,6 +18,7 @@ const Index = () => {
       <CountriesSection />
       <QuoteStrip />
       <LatestNews />
+      <PartnersStrip />
     </Layout>
   );
 };
