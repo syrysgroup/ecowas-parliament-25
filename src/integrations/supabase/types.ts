@@ -14,13 +14,113 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      applications: {
+        Row: {
+          country: string
+          created_at: string
+          id: string
+          motivation: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          country: string
+          created_at?: string
+          id?: string
+          motivation: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          country?: string
+          created_at?: string
+          id?: string
+          motivation?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "applications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nominations: {
+        Row: {
+          country: string
+          created_at: string
+          id: string
+          nominator_user_id: string
+          nominee_user_id: string
+        }
+        Insert: {
+          country: string
+          created_at?: string
+          id?: string
+          nominator_user_id: string
+          nominee_user_id: string
+        }
+        Update: {
+          country?: string
+          created_at?: string
+          id?: string
+          nominator_user_id?: string
+          nominee_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nominations_nominator_user_id_fkey"
+            columns: ["nominator_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nominations_nominee_user_id_fkey"
+            columns: ["nominee_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          country: string
+          created_at: string
+          date_of_birth: string | null
+          email: string
+          full_name: string
+          id: string
+        }
+        Insert: {
+          country: string
+          created_at?: string
+          date_of_birth?: string | null
+          email: string
+          full_name: string
+          id: string
+        }
+        Update: {
+          country?: string
+          created_at?: string
+          date_of_birth?: string | null
+          email?: string
+          full_name?: string
+          id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_nomination_count: { Args: { nominee_id: string }; Returns: number }
     }
     Enums: {
       [_ in never]: never
