@@ -42,6 +42,8 @@ const App = () => (
           <Route path="/programmes/civic" element={<Civic />} />
           <Route path="/programmes/culture" element={<Culture />} />
           <Route path="/programmes/parliament" element={<Parliament />} />
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/profile" element={<Profile />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

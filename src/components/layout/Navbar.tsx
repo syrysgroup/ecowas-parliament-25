@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Menu, X } from "lucide-react";
+import { Menu, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { supabase } from "@/integrations/supabase/client";
 import ecowasLogo from "@/assets/ecowas-parliament-logo.png";
 import anniversary25Logo from "@/assets/parliament-25-logo.png";
 
@@ -26,20 +27,28 @@ const navLinks = [
 
 const Navbar = () => {
   const [programmesOpen, setProgrammesOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+      setIsLoggedIn(!!session);
+    });
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsLoggedIn(!!session);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
 
   return (
     <header className="sticky top-0 z-50 w-full">
-      {/* Green top bar */}
       <div className="h-1 bg-gradient-ecowas" />
       <nav className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b border-border">
         <div className="container flex h-16 items-center justify-between">
-          {/* Logos */}
           <Link to="/" className="flex items-center gap-3">
             <img src={ecowasLogo} alt="ECOWAS Parliament" className="h-10 w-auto" />
             <img src={anniversary25Logo} alt="25th Anniversary" className="h-10 w-auto" />
           </Link>
 
-          {/* Desktop Nav */}
           <div className="hidden lg:flex items-center gap-1">
             {navLinks.map((link) =>
               link.children ? (
@@ -79,9 +88,14 @@ const Navbar = () => {
                 </Link>
               )
             )}
+            {/* Auth button */}
+            <Button asChild variant={isLoggedIn ? "ghost" : "default"} size="sm" className="ml-2 font-semibold">
+              <Link to={isLoggedIn ? "/profile" : "/auth"}>
+                {isLoggedIn ? <><User className="h-4 w-4 mr-1.5" />Profile</> : "Sign In"}
+              </Link>
+            </Button>
           </div>
 
-          {/* Mobile Menu */}
           <Sheet>
             <SheetTrigger asChild className="lg:hidden">
               <Button variant="outline" size="icon" className="border-primary/30 hover:bg-primary/10">
@@ -118,6 +132,13 @@ const Navbar = () => {
                     </Link>
                   )
                 )}
+                {/* Mobile auth link */}
+                <Link
+                  to={isLoggedIn ? "/profile" : "/auth"}
+                  className="px-3 py-2 text-sm font-semibold text-primary hover:bg-muted rounded-md transition-colors mt-2"
+                >
+                  {isLoggedIn ? "My Profile" : "Sign In"}
+                </Link>
               </nav>
             </SheetContent>
           </Sheet>
