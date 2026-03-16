@@ -40,7 +40,11 @@ const steps = [
   },
 ];
 
-const NominationTimeline = () => {
+interface NominationTimelineProps {
+  onApplyClick?: () => void;
+}
+
+const NominationTimeline = ({ onApplyClick }: NominationTimelineProps) => {
   return (
     <div className="space-y-10">
       <AnimatedSection className="text-center">
@@ -53,7 +57,6 @@ const NominationTimeline = () => {
       </AnimatedSection>
 
       <div className="relative max-w-3xl mx-auto">
-        {/* Vertical line */}
         <div className="absolute left-6 md:left-1/2 top-0 bottom-0 w-0.5 bg-border md:-translate-x-px" />
 
         {steps.map((step, i) => {
@@ -64,10 +67,8 @@ const NominationTimeline = () => {
               <div className={`relative flex items-start gap-4 mb-10 md:mb-14 ${
                 isLeft ? "md:flex-row" : "md:flex-row-reverse"
               }`}>
-                {/* Connector dot */}
                 <div className="absolute left-6 md:left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-primary ring-4 ring-background z-10 mt-6" />
 
-                {/* Content */}
                 <div className={`ml-14 md:ml-0 md:w-[calc(50%-2rem)] ${
                   isLeft ? "md:pr-8 md:text-right" : "md:pl-8"
                 }`}>
@@ -97,7 +98,7 @@ const NominationTimeline = () => {
       </div>
 
       <AnimatedSection className="text-center">
-        <Button size="lg" className="text-base px-8">
+        <Button size="lg" className="text-base px-8" onClick={onApplyClick}>
           Apply as Youth Representative
         </Button>
       </AnimatedSection>

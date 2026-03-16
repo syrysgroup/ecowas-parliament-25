@@ -1,12 +1,13 @@
+import { useState } from "react";
 import Layout from "@/components/layout/Layout";
 import AnimatedSection from "@/components/shared/AnimatedSection";
 import HemicycleChart, { COUNTRIES } from "@/components/parliament/HemicycleChart";
 import CountryDelegationCard from "@/components/parliament/CountryDelegationCard";
 import NominationTimeline from "@/components/parliament/NominationTimeline";
+import ParliamentActionModal from "@/components/parliament/ParliamentActionModal";
 import { Building2, Users, Globe, Target, Calendar, BookOpen, Scale, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-// Demo data for delegation status
 const delegationStatuses: Record<string, { status: "open" | "closed" | "coming_soon"; filled: number }> = {
   NG: { status: "open", filled: 12 },
   GH: { status: "open", filled: 3 },
@@ -43,16 +44,21 @@ const agenda = [
 ];
 
 const Parliament = () => {
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalTab, setModalTab] = useState<"apply" | "nominate">("apply");
   const totalSeats = COUNTRIES.reduce((s, c) => s + c.seats, 0);
   const totalFilled = Object.values(delegationStatuses).reduce((s, d) => s + d.filled, 0);
 
+  const openApplicationModal = (tab: "apply" | "nominate" = "apply") => {
+    setModalTab(tab);
+    setModalOpen(true);
+  };
+
   return (
     <Layout>
-      {/* Hero */}
       <section className="relative min-h-[70vh] flex items-center overflow-hidden">
         <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url('/announcement/15.jpg')" }} />
         <div className="absolute inset-0 bg-gradient-to-br from-primary/90 via-primary/80 to-secondary/70" />
-        {/* Decorative hemicycle arcs */}
         <div className="absolute inset-0 overflow-hidden opacity-10">
           {[200, 280, 360].map((r) => (
             <svg key={r} className="absolute bottom-0 left-1/2 -translate-x-1/2" width={r * 2} height={r} viewBox={`0 0 ${r * 2} ${r}`}>
@@ -99,7 +105,6 @@ const Parliament = () => {
         </div>
       </section>
 
-      {/* Vision */}
       <section className="py-16 bg-muted/30">
         <div className="container max-w-4xl">
           <AnimatedSection>
@@ -117,7 +122,6 @@ const Parliament = () => {
         </div>
       </section>
 
-      {/* Objectives */}
       <section className="py-16">
         <div className="container">
           <AnimatedSection className="text-center mb-10">
@@ -139,14 +143,12 @@ const Parliament = () => {
         </div>
       </section>
 
-      {/* Hemicycle Seating Chart */}
       <section className="py-16 bg-muted/30">
         <div className="container">
           <HemicycleChart />
         </div>
       </section>
 
-      {/* Country Delegations */}
       <section className="py-16">
         <div className="container">
           <AnimatedSection className="text-center mb-10">
@@ -174,14 +176,12 @@ const Parliament = () => {
         </div>
       </section>
 
-      {/* Nomination Timeline */}
       <section className="py-16 bg-muted/30">
         <div className="container">
-          <NominationTimeline />
+          <NominationTimeline onApplyClick={() => openApplicationModal("apply")} />
         </div>
       </section>
 
-      {/* Programme Agenda */}
       <section className="py-16">
         <div className="container max-w-3xl">
           <AnimatedSection className="text-center mb-10">
@@ -207,7 +207,6 @@ const Parliament = () => {
         </div>
       </section>
 
-      {/* CTA */}
       <section className="py-20 bg-gradient-hero text-primary-foreground">
         <div className="container text-center">
           <AnimatedSection>
@@ -218,16 +217,18 @@ const Parliament = () => {
               Represent your country in the first-ever Simulated ECOWAS Youth Parliament. Applications are now open for youth aged 18–35.
             </p>
             <div className="flex flex-wrap gap-4 justify-center mt-8">
-              <Button size="lg" variant="secondary" className="text-base px-8">
+              <Button size="lg" variant="secondary" className="text-base px-8" onClick={() => openApplicationModal("apply")}>
                 Apply Now
               </Button>
-              <Button size="lg" variant="outline" className="text-base px-8 border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10">
-                Learn More
+              <Button size="lg" variant="outline" className="text-base px-8 border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10" onClick={() => openApplicationModal("nominate")}>
+                Nominate a Youth
               </Button>
             </div>
           </AnimatedSection>
         </div>
       </section>
+
+      <ParliamentActionModal open={modalOpen} onOpenChange={setModalOpen} initialTab={modalTab} />
     </Layout>
   );
 };

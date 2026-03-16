@@ -2,7 +2,16 @@ import AnimatedSection from "@/components/shared/AnimatedSection";
 import duchessLogo from "@/assets/duchess-logo.png";
 import cmdLogo from "@/assets/cmd-logo.png";
 import borderlessLogo from "@/assets/borderless-trade-logo.png";
-import SponsorLogo from "@/components/shared/SponsorLogo";
+import waBankLogo from "@/assets/sponsor-wa-bank.png";
+import sahelEnergyLogo from "@/assets/sponsor-sahel-energy.png";
+import africonnectLogo from "@/assets/sponsor-africonnect.png";
+import atlanticTelecomLogo from "@/assets/sponsor-atlantic-telecom.png";
+import unityInsuranceLogo from "@/assets/sponsor-unity-insurance.png";
+import coastalLogisticsLogo from "@/assets/sponsor-coastal-logistics.png";
+import abujaHotelsLogo from "@/assets/sponsor-abuja-hotels.png";
+import panAfricanMediaLogo from "@/assets/sponsor-pan-african-media.png";
+import greenValleyLogo from "@/assets/sponsor-green-valley.png";
+import accraDigitalLogo from "@/assets/sponsor-accra-digital.png";
 
 const implementingPartners = [
   {
@@ -32,32 +41,29 @@ const sponsorTiers = [
   {
     label: "Platinum Sponsors",
     badgeClass: "bg-accent text-accent-foreground",
-    logoSize: 72,
     sponsors: [
-      { name: "West Africa Bank", color: "hsl(220, 65%, 45%)", secondary: "hsl(45, 80%, 50%)" },
-      { name: "Sahel Energy Group", color: "hsl(35, 80%, 50%)", secondary: "hsl(15, 70%, 45%)" },
-      { name: "AfriConnect Solutions", color: "hsl(152, 55%, 40%)", secondary: "hsl(190, 60%, 45%)" },
+      { name: "West Africa Bank", logo: waBankLogo },
+      { name: "Sahel Energy Group", logo: sahelEnergyLogo },
+      { name: "AfriConnect Solutions", logo: africonnectLogo },
     ],
   },
   {
     label: "Gold Sponsors",
     badgeClass: "bg-secondary text-secondary-foreground",
-    logoSize: 64,
     sponsors: [
-      { name: "Atlantic Telecom", color: "hsl(200, 65%, 45%)", secondary: "hsl(210, 55%, 55%)" },
-      { name: "Unity Insurance", color: "hsl(340, 60%, 45%)", secondary: "hsl(350, 50%, 55%)" },
-      { name: "Coastal Logistics", color: "hsl(190, 50%, 40%)", secondary: "hsl(170, 45%, 50%)" },
-      { name: "Abuja Hotels Group", color: "hsl(25, 70%, 45%)", secondary: "hsl(40, 75%, 50%)" },
+      { name: "Atlantic Telecom", logo: atlanticTelecomLogo },
+      { name: "Unity Insurance", logo: unityInsuranceLogo },
+      { name: "Coastal Logistics", logo: coastalLogisticsLogo },
+      { name: "Abuja Hotels Group", logo: abujaHotelsLogo },
     ],
   },
   {
     label: "Sponsors",
     badgeClass: "bg-muted text-muted-foreground",
-    logoSize: 56,
     sponsors: [
-      { name: "Pan-African Media", color: "hsl(260, 50%, 45%)", secondary: "hsl(280, 45%, 55%)" },
-      { name: "Green Valley Agro", color: "hsl(120, 45%, 40%)", secondary: "hsl(90, 50%, 45%)" },
-      { name: "Accra Digital Hub", color: "hsl(175, 55%, 40%)", secondary: "hsl(200, 50%, 50%)" },
+      { name: "Pan-African Media", logo: panAfricanMediaLogo },
+      { name: "Green Valley Agro", logo: greenValleyLogo },
+      { name: "Accra Digital Hub", logo: accraDigitalLogo },
     ],
   },
 ];
@@ -66,7 +72,6 @@ const SponsorsSection = () => {
   return (
     <section className="py-20">
       <div className="container">
-        {/* Implementing Partners — Co-Organisers */}
         <AnimatedSection className="text-center mb-6">
           <h2 className="text-3xl md:text-4xl font-black text-foreground">
             Programme <span className="text-primary">Co-Organisers</span>
@@ -88,7 +93,7 @@ const SponsorsSection = () => {
                     Co-Organiser
                   </span>
                 </div>
-                <img src={partner.logo} alt={partner.name} className="h-14 w-auto mb-4" />
+                <img src={partner.logo} alt={partner.name} className="h-14 w-auto mb-4" loading="lazy" />
                 <h3 className="font-bold text-card-foreground text-lg">{partner.name}</h3>
                 <p className="text-sm text-primary font-medium mt-1">
                   {partner.lead} — {partner.role}
@@ -99,10 +104,9 @@ const SponsorsSection = () => {
           </div>
         </AnimatedSection>
 
-        {/* Sponsors */}
         <AnimatedSection className="text-center mb-8">
           <h2 className="text-2xl md:text-3xl font-black text-foreground">
-            Our <span className="text-accent-foreground">Sponsors</span>
+            Official <span className="text-primary">Sponsors</span>
           </h2>
           <p className="mt-2 text-muted-foreground max-w-lg mx-auto">
             Organizations supporting the ECOWAS Parliament 25th anniversary programme.
@@ -118,19 +122,11 @@ const SponsorsSection = () => {
                     {tier.label}
                   </span>
                 </div>
-                <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 items-stretch">
                   {tier.sponsors.map((sponsor) => (
-                    <div key={sponsor.name} className="flex flex-col items-center gap-1 group/s">
-                      <SponsorLogo
-                        name={sponsor.name}
-                        color={sponsor.color}
-                        secondaryColor={sponsor.secondary}
-                        size={tier.logoSize}
-                        className="opacity-80 group-hover/s:opacity-100 transition-opacity"
-                      />
-                      <span className="text-xs text-muted-foreground opacity-0 group-hover/s:opacity-100 transition-opacity">
-                        {sponsor.name}
-                      </span>
+                    <div key={sponsor.name} className="rounded-2xl border border-border bg-muted/20 p-4 flex flex-col items-center justify-center text-center min-h-36 hover:bg-muted/40 transition-colors">
+                      <img src={sponsor.logo} alt={sponsor.name} className="max-h-14 w-auto object-contain" loading="lazy" />
+                      <span className="mt-3 text-xs font-medium text-muted-foreground">{sponsor.name}</span>
                     </div>
                   ))}
                 </div>

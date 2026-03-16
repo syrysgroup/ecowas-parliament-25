@@ -3,7 +3,16 @@ import AnimatedSection from "@/components/shared/AnimatedSection";
 import duchessLogo from "@/assets/duchess-logo.png";
 import cmdLogo from "@/assets/cmd-logo.png";
 import borderlessLogo from "@/assets/borderless-trade-logo.png";
-import SponsorLogo from "@/components/shared/SponsorLogo";
+import waBankLogo from "@/assets/sponsor-wa-bank.png";
+import sahelEnergyLogo from "@/assets/sponsor-sahel-energy.png";
+import africonnectLogo from "@/assets/sponsor-africonnect.png";
+import atlanticTelecomLogo from "@/assets/sponsor-atlantic-telecom.png";
+import unityInsuranceLogo from "@/assets/sponsor-unity-insurance.png";
+import coastalLogisticsLogo from "@/assets/sponsor-coastal-logistics.png";
+import abujaHotelsLogo from "@/assets/sponsor-abuja-hotels.png";
+import panAfricanMediaLogo from "@/assets/sponsor-pan-african-media.png";
+import greenValleyLogo from "@/assets/sponsor-green-valley.png";
+import accraDigitalLogo from "@/assets/sponsor-accra-digital.png";
 
 const leadership = [
   { name: "Rt. Hon. Hadja Mémounatou Ibrahima", title: "Speaker of the ECOWAS Parliament", image: "/announcement/1.jpg" },
@@ -22,28 +31,28 @@ const sponsorTiers = [
     tier: "Platinum Sponsors",
     tierStyle: "bg-accent text-accent-foreground",
     sponsors: [
-      { name: "West Africa Bank", color: "hsl(220, 65%, 45%)", description: "Financial services and banking solutions for the programme." },
-      { name: "Sahel Energy Group", color: "hsl(35, 80%, 50%)", description: "Powering sustainable development across the ECOWAS region." },
-      { name: "AfriConnect Solutions", color: "hsl(152, 55%, 40%)", description: "Digital infrastructure and technology solutions." },
+      { name: "West Africa Bank", logo: waBankLogo, description: "Financial services and banking solutions for the programme." },
+      { name: "Sahel Energy Group", logo: sahelEnergyLogo, description: "Powering sustainable development across the ECOWAS region." },
+      { name: "AfriConnect Solutions", logo: africonnectLogo, description: "Digital infrastructure and technology solutions." },
     ],
   },
   {
     tier: "Gold Sponsors",
     tierStyle: "bg-secondary text-secondary-foreground",
     sponsors: [
-      { name: "Atlantic Telecom", color: "hsl(200, 65%, 45%)", description: "Telecommunications and connectivity across West Africa." },
-      { name: "Unity Insurance", color: "hsl(340, 60%, 45%)", description: "Risk management and insurance services." },
-      { name: "Coastal Logistics", color: "hsl(190, 50%, 40%)", description: "Transportation and logistics support." },
-      { name: "Abuja Hotels Group", color: "hsl(25, 70%, 45%)", description: "Accommodation and hospitality for delegates." },
+      { name: "Atlantic Telecom", logo: atlanticTelecomLogo, description: "Telecommunications and connectivity across West Africa." },
+      { name: "Unity Insurance", logo: unityInsuranceLogo, description: "Risk management and insurance services." },
+      { name: "Coastal Logistics", logo: coastalLogisticsLogo, description: "Transportation and logistics support." },
+      { name: "Abuja Hotels Group", logo: abujaHotelsLogo, description: "Accommodation and hospitality for delegates." },
     ],
   },
   {
     tier: "Sponsors",
     tierStyle: "bg-muted text-muted-foreground",
     sponsors: [
-      { name: "Pan-African Media", color: "hsl(260, 50%, 45%)", description: "Media coverage and communication outreach." },
-      { name: "Green Valley Agro", color: "hsl(120, 45%, 40%)", description: "Agricultural development and food security initiatives." },
-      { name: "Accra Digital Hub", color: "hsl(175, 55%, 40%)", description: "Digital innovation and youth entrepreneurship support." },
+      { name: "Pan-African Media", logo: panAfricanMediaLogo, description: "Media coverage and communication outreach." },
+      { name: "Green Valley Agro", logo: greenValleyLogo, description: "Agricultural development and food security initiatives." },
+      { name: "Accra Digital Hub", logo: accraDigitalLogo, description: "Digital innovation and youth entrepreneurship support." },
     ],
   },
 ];
@@ -63,7 +72,6 @@ const Stakeholders = () => {
         </div>
       </section>
 
-      {/* Leadership */}
       <section className="py-16">
         <div className="container">
           <AnimatedSection>
@@ -74,7 +82,7 @@ const Stakeholders = () => {
               <AnimatedSection key={person.name} delay={i * 100}>
                 <div className="rounded-xl bg-card border border-border shadow-sm text-center overflow-hidden">
                   <div className="h-48 overflow-hidden">
-                    <img src={person.image} alt={person.name} className="w-full h-full object-cover" />
+                    <img src={person.image} alt={person.name} className="w-full h-full object-cover" loading="lazy" />
                   </div>
                   <div className="p-6">
                     <h3 className="font-bold text-card-foreground">{person.name}</h3>
@@ -87,7 +95,6 @@ const Stakeholders = () => {
         </div>
       </section>
 
-      {/* Implementing Partners — Co-Organisers */}
       <section className="py-16 bg-muted/50">
         <div className="container">
           <AnimatedSection>
@@ -101,7 +108,7 @@ const Stakeholders = () => {
             {implementingPartners.map((partner, i) => (
               <AnimatedSection key={partner.name} delay={i * 100}>
                 <div className="p-6 rounded-xl bg-card border-2 border-primary/20 shadow-md hover:shadow-xl transition-shadow">
-                  <img src={partner.logo} alt={partner.name} className="h-14 w-auto mb-4" />
+                  <img src={partner.logo} alt={partner.name} className="h-14 w-auto mb-4" loading="lazy" />
                   <h3 className="font-bold text-card-foreground">{partner.name}</h3>
                   <p className="text-sm text-primary font-medium mt-1">
                     {partner.lead} — {partner.role}
@@ -114,7 +121,6 @@ const Stakeholders = () => {
         </div>
       </section>
 
-      {/* Sponsor Tiers */}
       {sponsorTiers.map((tierGroup, ti) => (
         <section key={tierGroup.tier} className={ti % 2 === 0 ? "py-16" : "py-16 bg-muted/50"}>
           <div className="container">
@@ -129,8 +135,10 @@ const Stakeholders = () => {
               {tierGroup.sponsors.map((partner, i) => (
                 <AnimatedSection key={partner.name} delay={i * 100}>
                   <div className="p-6 rounded-xl bg-card border border-border shadow-sm hover:shadow-lg transition-shadow">
-                    <SponsorLogo name={partner.name} color={partner.color} size={64} className="mb-4" />
-                    <h3 className="font-bold text-card-foreground">{partner.name}</h3>
+                    <div className="rounded-2xl border border-border bg-muted/20 min-h-28 flex items-center justify-center p-4">
+                      <img src={partner.logo} alt={partner.name} className="max-h-14 w-auto object-contain" loading="lazy" />
+                    </div>
+                    <h3 className="font-bold text-card-foreground mt-4">{partner.name}</h3>
                     <p className="text-sm text-muted-foreground mt-2">{partner.description}</p>
                   </div>
                 </AnimatedSection>
