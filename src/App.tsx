@@ -16,6 +16,8 @@ import Women from "./pages/programmes/Women";
 import Civic from "./pages/programmes/Civic";
 import Culture from "./pages/programmes/Culture";
 import Parliament from "./pages/programmes/Parliament";
+import Auth from "./pages/Auth";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
