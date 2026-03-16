@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import AnimatedSection from "@/components/shared/AnimatedSection";
 
 interface CountryData {
@@ -10,20 +10,17 @@ interface CountryData {
 
 const countries: CountryData[] = [
   { name: "Nigeria", seats: 35, color: "hsl(var(--ecowas-green))", flag: "🇳🇬" },
-  { name: "Ghana", seats: 8, color: "#ce1126", flag: "🇬🇭" },
+  { name: "Ghana", seats: 7, color: "#ce1126", flag: "🇬🇭" },
   { name: "Côte d'Ivoire", seats: 7, color: "#f77f00", flag: "🇨🇮" },
-  { name: "Senegal", seats: 6, color: "#00853f", flag: "🇸🇳" },
   { name: "Guinea", seats: 6, color: "#ce1126", flag: "🇬🇳" },
+  { name: "Guinea-Bissau", seats: 6, color: "#ce1126", flag: "🇬🇼" },
+  { name: "Senegal", seats: 5, color: "#00853f", flag: "🇸🇳" },
   { name: "Benin", seats: 5, color: "#008751", flag: "🇧🇯" },
   { name: "Cape Verde", seats: 5, color: "#003893", flag: "🇨🇻" },
   { name: "Gambia", seats: 5, color: "#3a7728", flag: "🇬🇲" },
-  { name: "Guinea-Bissau", seats: 5, color: "#ce1126", flag: "🇬🇼" },
   { name: "Liberia", seats: 5, color: "#002868", flag: "🇱🇷" },
   { name: "Sierra Leone", seats: 5, color: "#1eb53a", flag: "🇸🇱" },
   { name: "Togo", seats: 5, color: "#006a4e", flag: "🇹🇬" },
-  { name: "Burkina Faso", seats: 5, color: "#ef2b2d", flag: "🇧🇫" },
-  { name: "Mali", seats: 5, color: "#14b53a", flag: "🇲🇱" },
-  { name: "Niger", seats: 3, color: "#e05206", flag: "🇳🇪" },
 ];
 
 const totalSeats = countries.reduce((sum, c) => sum + c.seats, 0);
@@ -61,18 +58,28 @@ const seatPositions = generateSeatPositions();
 
 const HemicycleChart = () => {
   const [hoveredCountry, setHoveredCountry] = useState<number | null>(null);
+  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    setTooltipPos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+  };
+
+  const hoveredData = hoveredCountry !== null ? countries[hoveredCountry] : null;
 
   return (
     <AnimatedSection>
       <div className="bg-card border border-border rounded-2xl p-6 md:p-8">
         <div className="text-center mb-6">
           <h3 className="text-xl font-bold text-foreground">ECOWAS Parliament Hemicycle</h3>
-          <p className="text-sm text-muted-foreground mt-1">{totalSeats} seats across 15 Member States</p>
+          <p className="text-sm text-muted-foreground mt-1">{totalSeats} seats across 12 Member States</p>
         </div>
 
         <div className="flex flex-col lg:flex-row items-center gap-8">
           {/* SVG Hemicycle */}
-          <div className="flex-1 w-full max-w-lg mx-auto">
+          <div className="flex-1 w-full max-w-lg mx-auto relative" ref={containerRef} onMouseMove={handleMouseMove}>
             <svg viewBox="0 0 500 260" className="w-full" aria-label="Hemicycle seating chart">
               {/* Podium */}
               <rect x={210} y={210} width={80} height={30} rx={6} fill="hsl(var(--muted))" stroke="hsl(var(--border))" strokeWidth={1} />
@@ -96,12 +103,28 @@ const HemicycleChart = () => {
                     className="transition-all duration-200 cursor-pointer"
                     onMouseEnter={() => setHoveredCountry(seat.countryIndex)}
                     onMouseLeave={() => setHoveredCountry(null)}
-                  >
-                    <title>{country.name} — {country.seats} seats</title>
-                  </circle>
+                  />
                 );
               })}
             </svg>
+
+            {/* Floating tooltip */}
+            {hoveredData && (
+              <div
+                className="absolute pointer-events-none z-50 px-3 py-2 rounded-lg bg-popover border border-border shadow-lg text-sm"
+                style={{
+                  left: tooltipPos.x,
+                  top: tooltipPos.y,
+                  transform: "translate(-50%, -120%)",
+                }}
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-base">{hoveredData.flag}</span>
+                  <span className="font-semibold text-popover-foreground">{hoveredData.name}</span>
+                </div>
+                <p className="text-muted-foreground text-xs mt-0.5">{hoveredData.seats} seats</p>
+              </div>
+            )}
           </div>
 
           {/* Legend */}
