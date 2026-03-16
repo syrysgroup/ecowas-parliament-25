@@ -1,29 +1,28 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import AnimatedSection from "@/components/shared/AnimatedSection";
 import HemicycleChart from "@/components/parliament/HemicycleChart";
 import CountryDelegationCard from "@/components/parliament/CountryDelegationCard";
 import NominationTimeline from "@/components/parliament/NominationTimeline";
+import ApplicationModal from "@/components/parliament/ApplicationModal";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Building2, Target, Calendar, Users, MapPin } from "lucide-react";
 
 const delegations = [
   { name: "Nigeria", flag: "🇳🇬", seats: 35, status: "open" as const, filled: 12 },
-  { name: "Ghana", flag: "🇬🇭", seats: 8, status: "open" as const, filled: 5 },
+  { name: "Ghana", flag: "🇬🇭", seats: 7, status: "open" as const, filled: 5 },
   { name: "Côte d'Ivoire", flag: "🇨🇮", seats: 7, status: "coming-soon" as const, filled: 0 },
-  { name: "Senegal", flag: "🇸🇳", seats: 6, status: "open" as const, filled: 3 },
   { name: "Guinea", flag: "🇬🇳", seats: 6, status: "coming-soon" as const, filled: 0 },
+  { name: "Guinea-Bissau", flag: "🇬🇼", seats: 6, status: "coming-soon" as const, filled: 0 },
+  { name: "Senegal", flag: "🇸🇳", seats: 5, status: "open" as const, filled: 3 },
   { name: "Benin", flag: "🇧🇯", seats: 5, status: "closed" as const, filled: 5 },
   { name: "Cape Verde", flag: "🇨🇻", seats: 5, status: "coming-soon" as const, filled: 0 },
   { name: "Gambia", flag: "🇬🇲", seats: 5, status: "open" as const, filled: 2 },
-  { name: "Guinea-Bissau", flag: "🇬🇼", seats: 5, status: "coming-soon" as const, filled: 0 },
   { name: "Liberia", flag: "🇱🇷", seats: 5, status: "open" as const, filled: 1 },
   { name: "Sierra Leone", flag: "🇸🇱", seats: 5, status: "coming-soon" as const, filled: 0 },
   { name: "Togo", flag: "🇹🇬", seats: 5, status: "open" as const, filled: 3 },
-  { name: "Burkina Faso", flag: "🇧🇫", seats: 5, status: "coming-soon" as const, filled: 0 },
-  { name: "Mali", flag: "🇲🇱", seats: 5, status: "coming-soon" as const, filled: 0 },
-  { name: "Niger", flag: "🇳🇪", seats: 3, status: "coming-soon" as const, filled: 0 },
 ];
 
 const objectives = [
@@ -44,6 +43,8 @@ const agenda = [
 ];
 
 const Parliament = () => {
+  const [modalOpen, setModalOpen] = useState(false);
+
   return (
     <Layout>
       {/* Hero */}
@@ -77,8 +78,8 @@ const Parliament = () => {
           <AnimatedSection delay={200}>
             <div className="flex flex-wrap gap-8 mt-10">
               {[
-                { icon: <Users className="h-5 w-5" />, value: "115", label: "Total Seats" },
-                { icon: <MapPin className="h-5 w-5" />, value: "15", label: "Countries" },
+                { icon: <Users className="h-5 w-5" />, value: "96", label: "Total Seats" },
+                { icon: <MapPin className="h-5 w-5" />, value: "12", label: "Countries" },
                 { icon: <Calendar className="h-5 w-5" />, value: "May 2026", label: "Target Date" },
               ].map((stat) => (
                 <div key={stat.label} className="flex items-center gap-3">
@@ -122,7 +123,7 @@ const Parliament = () => {
         <div className="container">
           <AnimatedSection className="mb-8">
             <h2 className="text-2xl font-bold text-foreground">Country Delegations</h2>
-            <p className="text-muted-foreground mt-1">Status of nominations across all 15 member states</p>
+            <p className="text-muted-foreground mt-1">Status of nominations across all 12 member states</p>
           </AnimatedSection>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {delegations.map((d, i) => (
@@ -143,7 +144,7 @@ const Parliament = () => {
           </AnimatedSection>
           <NominationTimeline />
           <AnimatedSection delay={400} className="mt-8 text-center">
-            <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90">
+            <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90" onClick={() => setModalOpen(true)}>
               Apply as Youth Representative
             </Button>
           </AnimatedSection>
@@ -193,6 +194,8 @@ const Parliament = () => {
           </div>
         </div>
       </section>
+
+      <ApplicationModal open={modalOpen} onOpenChange={setModalOpen} />
     </Layout>
   );
 };
