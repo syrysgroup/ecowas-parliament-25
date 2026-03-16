@@ -1,4 +1,4 @@
-import { Megaphone, Tv, Bus, Smartphone } from "lucide-react";
+import { Megaphone } from "lucide-react";
 import ProgrammePageTemplate from "@/components/shared/ProgrammePageTemplate";
 
 const Civic = () => (
@@ -17,13 +17,6 @@ const Civic = () => (
     accentColor="bg-ecowas-blue/20 text-ecowas-blue"
     icon={<Megaphone className="h-6 w-6" />}
     heroImage="/announcement/17.jpg"
-    galleryImages={["/announcement/17.jpg", "/announcement/37.jpg", "/announcement/48.jpg"]}
-    highlights={[
-      { icon: <Bus className="h-5 w-5" />, title: "ECOWAS Caravan", description: "Mobile awareness campaign reaching communities across West Africa." },
-      { icon: <Tv className="h-5 w-5" />, title: "TV Game Show", description: "Entertaining civic education broadcast across the region." },
-      { icon: <Smartphone className="h-5 w-5" />, title: "Digital Outreach", description: "Social media and digital platforms amplifying the message." },
-      { icon: <Megaphone className="h-5 w-5" />, title: "Community Engagement", description: "Direct outreach in schools, airports, and public spaces." },
-    ]}
   />
 );
 

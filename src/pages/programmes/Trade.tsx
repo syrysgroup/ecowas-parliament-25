@@ -1,4 +1,4 @@
-import { TrendingUp, Building, Globe, FileText } from "lucide-react";
+import { TrendingUp } from "lucide-react";
 import ProgrammePageTemplate from "@/components/shared/ProgrammePageTemplate";
 
 const Trade = () => (
@@ -17,13 +17,6 @@ const Trade = () => (
     accentColor="bg-primary/20 text-primary"
     icon={<TrendingUp className="h-6 w-6" />}
     heroImage="/announcement/11.jpg"
-    galleryImages={["/announcement/11.jpg", "/announcement/28.jpg", "/announcement/40.jpg"]}
-    highlights={[
-      { icon: <Building className="h-5 w-5" />, title: "B2B Forums", description: "Business-to-business matchmaking across five West African cities." },
-      { icon: <Globe className="h-5 w-5" />, title: "Trade Corridors", description: "Pilot corridors enabling smoother cross-border SME commerce." },
-      { icon: <TrendingUp className="h-5 w-5" />, title: "Policy Dialogue", description: "Direct engagement between entrepreneurs and policymakers." },
-      { icon: <FileText className="h-5 w-5" />, title: "Documentation", description: "Capturing outcomes and recommendations for future policy." },
-    ]}
   />
 );
 
