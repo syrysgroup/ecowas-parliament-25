@@ -1,89 +1,51 @@
 
 
-# Plan: Auth Email Templates, User Profile Page, and Parliament Interactive Features
+# Project Review & Implementation Plan
 
 ## Current State
 
-- **No email domain configured** — a domain must be set up before auth email templates can be scaffolded.
-- **No auth pages exist** — no login, signup, or profile pages anywhere in the app.
-- **Parliament page** is a static programme page using `ProgrammePageTemplate` — no hemicycle visualization, no tooltips, no "Apply as Youth Representative" button, and no auth flow.
-- **Database** has `profiles`, `applications`, and `nominations` tables with RLS policies already configured, but no frontend code uses them.
+The project is a well-structured ECOWAS Parliament @25 anniversary website with:
+- 13 pages (Home, About, Timeline, News, Documents, Stakeholders, Team, 6 Programme pages)
+- ECOWAS-themed design system (green/gold/red)
+- All content is hardcoded placeholder data
+- **The connected Supabase database has no tables** -- it's completely empty
+- **50 announcement pictures** exist in `Announcement Pictures/` folder but are unused
+- **Duplicate "Implementing Partners" section** appears both in the `PartnersStrip` component on the homepage AND inside the `Footer` -- this is the repetition the user flagged earlier
 
----
+## Plan
 
-## 1. Email Domain Setup (Prerequisite)
+### 1. Fix Duplicate Implementing Partners
+Remove `PartnersStrip` from the homepage `Index.tsx` since the Footer already shows implementing partners on every page. This eliminates the repetition.
 
-Before custom auth email templates can be created, an email domain must be configured. The first step is to set up the sender domain through the email setup dialog. Once the domain is configured, templates will be scaffolded and branded with the ECOWAS design system (green primary, gold accent, Source Sans 3 font).
+### 2. Create Announcement Pictures Gallery on Homepage
+Add a new `AnnouncementGallery` component to the homepage that displays a curated grid of the announcement pictures (using images from the `Announcement Pictures/` folder). These will be imported as static assets and displayed in a visually appealing masonry/grid layout with hover effects.
 
-**Action**: Present the email domain setup dialog. After domain configuration completes, scaffold templates and deploy the `auth-email-hook` edge function.
+### 3. Use Announcement Pictures Across Pages
+- **Hero sections**: Replace gradient placeholders with actual event photos as background images
+- **News cards**: Use announcement photos instead of the Calendar icon placeholder
+- **Team page**: Use relevant photos for team member avatars
+- **About page**: Add imagery to break up text content
+- **Programme pages**: Add relevant photos to each programme pillar page
 
----
+### 4. Improve Button Visibility
+Audit all buttons across the site:
+- Ensure CTA buttons have strong contrast (gold on dark, green on light)
+- Add visible borders/shadows to outline-variant buttons
+- Make the "Download" buttons on Documents page more prominent
+- Ensure mobile nav trigger button is clearly visible
 
-## 2. Authentication Pages
+### 5. Database Setup (Optional -- No Tables Exist)
+Since the Supabase database is empty, all current content will remain as static data (which is appropriate for a commemorative programme site with fixed content). If dynamic content management is needed later, tables can be added.
 
-Create login and signup pages so users can authenticate and access their profile.
-
-### Files to create:
-- **`src/pages/Auth.tsx`** — Combined login/signup page with tabs
-  - Email + password login and signup forms
-  - Signup collects: full name, email, country, password (matching `profiles` table)
-  - Uses `supabase.auth.signUp()` with `raw_user_meta_data` for full_name and country (the existing `handle_new_user` trigger auto-creates the profile row)
-  - ECOWAS-branded styling with hero background
-
-### Files to modify:
-- **`src/App.tsx`** — Add routes for `/auth` and `/profile`
-- **`src/components/layout/Navbar.tsx`** — Add login/profile button to nav bar, show user state via `onAuthStateChange`
-
----
-
-## 3. User Profile Page
-
-### File to create:
-- **`src/pages/Profile.tsx`** — Authenticated user dashboard showing:
-  - **Profile info** from `profiles` table (name, email, country, DOB)
-  - **Applications list** from `applications` table with status badges (pending/approved/rejected)
-  - **Nominations received** using the existing `get_nomination_count` RPC function
-  - Edit profile form (name, country, DOB) using the existing UPDATE RLS policy
-  - Logout button
-  - Redirects to `/auth` if not authenticated
-
----
-
-## 4. Parliament Page: Hemicycle & Application Flow
-
-Enhance the Parliament programme page with interactive elements.
-
-### Changes to `src/pages/programmes/Parliament.tsx`:
-- **Hemicycle SVG visualization** — A semicircular arrangement of seats representing ECOWAS member states (15 countries). Each seat is a colored circle with a tooltip showing the country name on hover.
-- **"Apply as Youth Representative" CTA button** — Prominent button in the page content (passed as `children` to `ProgrammePageTemplate`)
-- **Application modal** — Dialog that opens on click:
-  - If not authenticated: shows message with link to `/auth`
-  - If authenticated: shows form with country selector and motivation textarea, submits to `applications` table via Supabase client
-  - Success state shows confirmation message
-
-### New component:
-- **`src/components/parliament/HemicycleChart.tsx`** — SVG hemicycle with 15 country seats, hover tooltips using the existing Tooltip components, color-coded by sub-region
-
----
-
-## 5. Files Summary
-
-| Action | File |
-|--------|------|
-| Create | `src/pages/Auth.tsx` |
-| Create | `src/pages/Profile.tsx` |
-| Create | `src/components/parliament/HemicycleChart.tsx` |
-| Modify | `src/pages/programmes/Parliament.tsx` — add hemicycle + apply button + modal |
-| Modify | `src/App.tsx` — add `/auth` and `/profile` routes |
-| Modify | `src/components/layout/Navbar.tsx` — add auth state button |
-
----
-
-## 6. Auth Email Templates
-
-Dependent on email domain setup. Once a domain is configured:
-- Scaffold all 6 auth email templates
-- Brand with ECOWAS colors: primary `hsl(152, 100%, 26%)`, accent `hsl(50, 87%, 45%)`, font Source Sans 3
-- Email body background: white `#ffffff`
-- Deploy `auth-email-hook` edge function
+### Files to Modify
+- `src/pages/Index.tsx` -- Remove PartnersStrip, add AnnouncementGallery
+- `src/components/home/AnnouncementGallery.tsx` -- New photo gallery component
+- `src/components/home/HeroSection.tsx` -- Add announcement photo background
+- `src/components/home/LatestNews.tsx` -- Use announcement photos on news cards
+- `src/pages/About.tsx` -- Add photos between content sections
+- `src/pages/Team.tsx` -- Use photos for team members
+- `src/pages/News.tsx` -- Use photos on news cards
+- `src/components/shared/ProgrammePageTemplate.tsx` -- Add photo support
+- Various programme pages -- Add relevant images
+- Button styling updates across multiple components
 
