@@ -1,4 +1,4 @@
-import { Lightbulb } from "lucide-react";
+import { Lightbulb, Trophy, Users, Rocket } from "lucide-react";
 import ProgrammePageTemplate from "@/components/shared/ProgrammePageTemplate";
 
 const Youth = () => (
@@ -16,6 +16,14 @@ const Youth = () => (
     countries={["Nigeria", "Ghana", "Côte d'Ivoire", "Senegal", "Cabo Verde", "Togo", "Sierra Leone"]}
     accentColor="bg-ecowas-yellow/20 text-ecowas-yellow"
     icon={<Lightbulb className="h-6 w-6" />}
+    heroImage="/announcement/9.jpg"
+    galleryImages={["/announcement/9.jpg", "/announcement/33.jpg", "/announcement/44.jpg"]}
+    highlights={[
+      { icon: <Trophy className="h-5 w-5" />, title: "Smart Challenge", description: "National competitions identifying the brightest young innovators." },
+      { icon: <Rocket className="h-5 w-5" />, title: "Regional Finale", description: "Winners converge in Accra for the grand showcase." },
+      { icon: <Users className="h-5 w-5" />, title: "Mentorship", description: "Connecting youth with experienced mentors and entrepreneurs." },
+      { icon: <Lightbulb className="h-5 w-5" />, title: "Innovation Hub", description: "Nurturing solutions for West Africa's regional challenges." },
+    ]}
   />
 );
 

@@ -1,9 +1,18 @@
 import Layout from "@/components/layout/Layout";
 import AnimatedSection from "@/components/shared/AnimatedSection";
-import { Calendar, Filter } from "lucide-react";
+import { Filter } from "lucide-react";
 import { useState } from "react";
 
 const categories = ["All", "Press Release", "Event", "Announcement", "Update"];
+
+const newsImages = [
+  "/announcement/1.jpg",
+  "/announcement/3.jpg",
+  "/announcement/7.jpg",
+  "/announcement/9.jpg",
+  "/announcement/11.jpg",
+  "/announcement/13.jpg",
+];
 
 const allNews = [
   { id: "1", title: "ECOWAS Parliament Launches Year-Long 25th Anniversary Programme", excerpt: "The ECOWAS Parliament celebrates 25 years with a multi-country commemorative programme spanning January to November 2026.", date: "2 March 2026", category: "Press Release" },
@@ -20,8 +29,9 @@ const News = () => {
 
   return (
     <Layout>
-      <section className="bg-gradient-hero text-primary-foreground py-20">
-        <div className="container">
+      <section className="relative bg-gradient-hero text-primary-foreground py-20 overflow-hidden">
+        <div className="absolute inset-0 bg-cover bg-center opacity-15" style={{ backgroundImage: "url('/announcement/2.jpg')" }} />
+        <div className="container relative">
           <AnimatedSection>
             <h1 className="text-4xl md:text-5xl font-black">News & Updates</h1>
             <p className="mt-4 text-lg text-primary-foreground/70 max-w-2xl">
@@ -40,10 +50,10 @@ const News = () => {
               <button
                 key={cat}
                 onClick={() => setSelected(cat)}
-                className={`px-3 py-1.5 text-sm rounded-full border transition-colors ${
+                className={`px-4 py-2 text-sm rounded-full border font-medium transition-colors ${
                   selected === cat
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "bg-card text-muted-foreground border-border hover:border-primary/40"
+                    ? "bg-primary text-primary-foreground border-primary shadow-md"
+                    : "bg-card text-muted-foreground border-border hover:border-primary/40 hover:text-foreground"
                 }`}
               >
                 {cat}
@@ -55,8 +65,13 @@ const News = () => {
             {filtered.map((article, i) => (
               <AnimatedSection key={article.id} delay={i * 80}>
                 <div className="group rounded-xl border border-border bg-card overflow-hidden shadow-sm hover:shadow-lg transition-all hover:-translate-y-1">
-                  <div className="h-36 bg-gradient-to-br from-primary/20 to-ecowas-yellow/10 flex items-center justify-center">
-                    <Calendar className="h-8 w-8 text-primary/30" />
+                  <div className="h-44 overflow-hidden">
+                    <img
+                      src={newsImages[parseInt(article.id) - 1] || newsImages[0]}
+                      alt={article.title}
+                      loading="lazy"
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
                   </div>
                   <div className="p-5">
                     <div className="flex items-center gap-2 mb-3">
