@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Lightbulb, TrendingUp, Heart, Megaphone, Palette, Building2 } from "lucide-react";
+import { Lightbulb, TrendingUp, Heart, Megaphone, Palette, Building2, Award } from "lucide-react";
 import AnimatedSection from "@/components/shared/AnimatedSection";
 
 const pillars = [
@@ -44,6 +44,14 @@ const pillars = [
     border: "hover:border-ecowas-lime/40",
   },
   {
+    title: "Parliamentary Awards",
+    description: "Honouring legislative excellence, leadership, and service across ECOWAS Member States.",
+    icon: Award,
+    to: "/programmes/awards",
+    color: "bg-accent/10 text-accent",
+    border: "hover:border-accent/40",
+  },
+  {
     title: "Simulated Youth Parliament",
     description: "Giving young people a seat at the table — launching the ECOWAS Youth Parliament vision.",
     icon: Building2,
@@ -62,8 +70,8 @@ const PillarsGrid = () => {
             Programme <span className="text-primary">Pillars</span>
           </h2>
           <p className="mt-4 text-muted-foreground max-w-2xl mx-auto">
-            Six strategic pillars spanning youth innovation, trade, women's empowerment,
-            civic engagement, culture, and parliamentary simulation.
+            Seven strategic pillars spanning youth innovation, trade, women's empowerment,
+            civic engagement, culture, parliamentary awards, and parliamentary simulation.
           </p>
         </AnimatedSection>
 

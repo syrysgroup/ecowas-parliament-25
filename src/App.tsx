@@ -15,6 +15,7 @@ import Trade from "./pages/programmes/Trade";
 import Women from "./pages/programmes/Women";
 import Civic from "./pages/programmes/Civic";
 import Culture from "./pages/programmes/Culture";
+import Awards from "./pages/programmes/Awards";
 import Parliament from "./pages/programmes/Parliament";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
@@ -40,6 +41,7 @@ const App = () => (
           <Route path="/programmes/women" element={<Women />} />
           <Route path="/programmes/civic" element={<Civic />} />
           <Route path="/programmes/culture" element={<Culture />} />
+          <Route path="/programmes/awards" element={<Awards />} />
           <Route path="/programmes/parliament" element={<Parliament />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="*" element={<NotFound />} />
