@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Lightbulb, TrendingUp, Heart, Megaphone, Palette, Building2 } from "lucide-react";
+import { Lightbulb, TrendingUp, Heart, Megaphone, Palette, Building2, Award } from "lucide-react";
 import AnimatedSection from "@/components/shared/AnimatedSection";
 
 const pillars = [
