@@ -70,8 +70,8 @@ const PillarsGrid = () => {
             Programme <span className="text-primary">Pillars</span>
           </h2>
           <p className="mt-4 text-muted-foreground max-w-2xl mx-auto">
-            Six strategic pillars spanning youth innovation, trade, women's empowerment,
-            civic engagement, culture, and parliamentary simulation.
+            Seven strategic pillars spanning youth innovation, trade, women's empowerment,
+            civic engagement, culture, parliamentary awards, and parliamentary simulation.
           </p>
         </AnimatedSection>
 
