@@ -44,6 +44,14 @@ const pillars = [
     border: "hover:border-ecowas-lime/40",
   },
   {
+    title: "Parliamentary Awards",
+    description: "Honouring legislative excellence, leadership, and service across ECOWAS Member States.",
+    icon: Award,
+    to: "/programmes/awards",
+    color: "bg-accent/10 text-accent",
+    border: "hover:border-accent/40",
+  },
+  {
     title: "Simulated Youth Parliament",
     description: "Giving young people a seat at the table — launching the ECOWAS Youth Parliament vision.",
     icon: Building2,

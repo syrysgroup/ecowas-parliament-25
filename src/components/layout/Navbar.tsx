@@ -15,6 +15,7 @@ const navLinks = [
     { label: "Women's Empowerment", to: "/programmes/women" },
     { label: "Civic Education", to: "/programmes/civic" },
     { label: "Culture & Creativity", to: "/programmes/culture" },
+    { label: "Parliamentary Awards", to: "/programmes/awards" },
     { label: "Youth Parliament", to: "/programmes/parliament" },
   ]},
   { label: "Timeline", to: "/timeline" },
