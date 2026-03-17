@@ -15,6 +15,7 @@ import Trade from "./pages/programmes/Trade";
 import Women from "./pages/programmes/Women";
 import Civic from "./pages/programmes/Civic";
 import Culture from "./pages/programmes/Culture";
+import Awards from "./pages/programmes/Awards";
 import Parliament from "./pages/programmes/Parliament";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
