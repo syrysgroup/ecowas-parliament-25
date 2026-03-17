@@ -3,6 +3,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import ProtectedRoute from "@/components/admin/ProtectedRoute";
 import Index from "./pages/Index";
 import About from "./pages/About";
 import Timeline from "./pages/Timeline";
@@ -18,6 +19,7 @@ import Culture from "./pages/programmes/Culture";
 import Awards from "./pages/programmes/Awards";
 import Parliament from "./pages/programmes/Parliament";
 import Auth from "./pages/Auth";
+import AdminDashboard from "./pages/admin/AdminDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -44,6 +46,7 @@ const App = () => (
           <Route path="/programmes/awards" element={<Awards />} />
           <Route path="/programmes/parliament" element={<Parliament />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

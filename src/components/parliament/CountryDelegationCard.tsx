@@ -1,48 +1,55 @@
 import { Badge } from "@/components/ui/badge";
-import { User } from "lucide-react";
+import { CheckCircle2, FileText, Medal, Vote } from "lucide-react";
 
 interface CountryDelegationCardProps {
   name: string;
   flag: string;
   seats: number;
-  status: "open" | "closed" | "coming-soon";
-  filled: number;
+  applications: number;
+  nominees: number;
+  representatives: number;
 }
 
-const statusConfig = {
-  open: { label: "Nominations Open", className: "bg-primary/10 text-primary border-primary/20" },
-  closed: { label: "Closed", className: "bg-muted text-muted-foreground border-border" },
-  "coming-soon": { label: "Coming Soon", className: "bg-accent/10 text-accent-foreground border-accent/20" },
-};
-
-const CountryDelegationCard = ({ name, flag, seats, status, filled }: CountryDelegationCardProps) => {
-  const cfg = statusConfig[status];
+const CountryDelegationCard = ({ name, flag, seats, applications, nominees, representatives }: CountryDelegationCardProps) => {
+  const fillRate = Math.min((representatives / seats) * 100, 100);
+  const statusLabel = representatives >= seats ? "Delegation filled" : representatives > 0 ? "Seats being filled" : "Open for submissions";
 
   return (
-    <div className="p-5 rounded-xl bg-card border border-border shadow-sm hover:shadow-lg transition-shadow">
-      <div className="flex items-start justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <span className="text-2xl">{flag}</span>
-          <h3 className="font-bold text-card-foreground">{name}</h3>
+    <div className="rounded-3xl border border-border bg-card p-5 shadow-sm transition-transform duration-300 hover:-translate-y-1">
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <div>
+          <p className="text-2xl">{flag}</p>
+          <h3 className="text-xl font-black text-card-foreground">{name}</h3>
+          <p className="text-sm text-muted-foreground">{seats} parliamentary seats</p>
         </div>
-        <Badge variant="outline" className={cfg.className}>
-          {cfg.label}
-        </Badge>
+        <Badge className="bg-primary/10 text-primary">{statusLabel}</Badge>
       </div>
-      <p className="text-sm text-muted-foreground mb-3">{seats} parliamentary seats</p>
-      <div className="flex flex-wrap gap-1.5">
-        {Array.from({ length: seats }).map((_, i) => (
-          <div
-            key={i}
-            className={`w-7 h-7 rounded-full flex items-center justify-center ${
-              i < filled
-                ? "bg-primary/15 text-primary"
-                : "bg-muted text-muted-foreground/40"
-            }`}
-          >
-            <User className="h-3.5 w-3.5" />
-          </div>
-        ))}
+
+      <div className="mb-4 h-2 rounded-full bg-muted">
+        <div className="h-2 rounded-full bg-primary transition-all" style={{ width: `${fillRate}%` }} />
+      </div>
+
+      <div className="grid grid-cols-3 gap-2 text-sm">
+        <div className="rounded-2xl bg-muted/50 p-3">
+          <FileText className="mb-2 h-4 w-4 text-primary" />
+          <p className="text-lg font-black text-foreground">{applications}</p>
+          <p className="text-xs text-muted-foreground">Applications</p>
+        </div>
+        <div className="rounded-2xl bg-muted/50 p-3">
+          <Vote className="mb-2 h-4 w-4 text-primary" />
+          <p className="text-lg font-black text-foreground">{nominees}</p>
+          <p className="text-xs text-muted-foreground">Nominees</p>
+        </div>
+        <div className="rounded-2xl bg-muted/50 p-3">
+          <Medal className="mb-2 h-4 w-4 text-primary" />
+          <p className="text-lg font-black text-foreground">{representatives}</p>
+          <p className="text-xs text-muted-foreground">Verified</p>
+        </div>
+      </div>
+
+      <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
+        <CheckCircle2 className="h-4 w-4 text-primary" />
+        <span>{Math.max(seats - representatives, 0)} seat(s) still available for this delegation.</span>
       </div>
     </div>
   );

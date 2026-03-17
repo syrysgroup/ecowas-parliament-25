@@ -1,197 +1,278 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import AnimatedSection from "@/components/shared/AnimatedSection";
-import HemicycleChart from "@/components/parliament/HemicycleChart";
+import HemicycleChart, { type HemicycleCountryData } from "@/components/parliament/HemicycleChart";
 import CountryDelegationCard from "@/components/parliament/CountryDelegationCard";
 import NominationTimeline from "@/components/parliament/NominationTimeline";
 import ApplicationModal from "@/components/parliament/ApplicationModal";
+import PeopleCard from "@/components/parliament/PeopleCard";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Building2, Target, Calendar, Users, MapPin } from "lucide-react";
+import { ArrowLeft, Calendar, MapPin, Trophy, Users, Vote } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { fallbackNominees, fallbackRepresentatives } from "@/lib/parliament";
+import parliamentHero from "@/assets/parliament-hero-clean.jpg";
 
-const delegations = [
-  { name: "Nigeria", flag: "🇳🇬", seats: 35, status: "open" as const, filled: 12 },
-  { name: "Ghana", flag: "🇬🇭", seats: 7, status: "open" as const, filled: 5 },
-  { name: "Côte d'Ivoire", flag: "🇨🇮", seats: 7, status: "coming-soon" as const, filled: 0 },
-  { name: "Guinea", flag: "🇬🇳", seats: 6, status: "coming-soon" as const, filled: 0 },
-  { name: "Guinea-Bissau", flag: "🇬🇼", seats: 6, status: "coming-soon" as const, filled: 0 },
-  { name: "Senegal", flag: "🇸🇳", seats: 5, status: "open" as const, filled: 3 },
-  { name: "Benin", flag: "🇧🇯", seats: 5, status: "closed" as const, filled: 5 },
-  { name: "Cape Verde", flag: "🇨🇻", seats: 5, status: "coming-soon" as const, filled: 0 },
-  { name: "Gambia", flag: "🇬🇲", seats: 5, status: "open" as const, filled: 2 },
-  { name: "Liberia", flag: "🇱🇷", seats: 5, status: "open" as const, filled: 1 },
-  { name: "Sierra Leone", flag: "🇸🇱", seats: 5, status: "coming-soon" as const, filled: 0 },
-  { name: "Togo", flag: "🇹🇬", seats: 5, status: "open" as const, filled: 3 },
+type CountryRow = {
+  name: string;
+  flag: string;
+  seats: number;
+};
+
+type NomineeRow = {
+  id: string;
+  full_name: string;
+  country: string;
+  bio?: string;
+  avatar_url?: string;
+  title?: string;
+  organisation?: string;
+  vote_count?: number;
+};
+
+type RepresentativeRow = {
+  id: string;
+  country: string;
+  full_name: string;
+  short_bio?: string;
+  manifesto_summary?: string;
+  headshot_url?: string;
+  avatar_url?: string;
+  title?: string;
+  organisation?: string;
+  featured?: boolean;
+};
+
+const seatPalette = [
+  "hsl(var(--ecowas-green))",
+  "hsl(var(--accent))",
+  "hsl(var(--secondary))",
+  "hsl(var(--primary))",
+  "hsl(var(--ecowas-lime))",
+  "hsl(var(--ecowas-blue))",
 ];
 
 const objectives = [
-  "Organise a Simulated ECOWAS Parliament session for young people",
-  "Launch the Rt. Hon. Speaker's vision of a future ECOWAS Youth Parliament",
-  "Document proceedings through youth reports and publications",
-  "Build parliamentary skills and civic knowledge among young participants",
-  "Create a pathway from simulation to institutional youth engagement",
-];
-
-const agenda = [
-  { title: "Opening Ceremony & Speaker's Address", time: "Day 1 — Morning" },
-  { title: "Committee Sessions: Trade & Economy", time: "Day 1 — Afternoon" },
-  { title: "Committee Sessions: Peace & Security", time: "Day 2 — Morning" },
-  { title: "Plenary Debate: Youth Policy Framework", time: "Day 2 — Afternoon" },
-  { title: "Resolution Drafting & Voting", time: "Day 3 — Morning" },
-  { title: "Closing Ceremony & Delegate Awards", time: "Day 3 — Afternoon" },
+  "Create a visible pathway from application to nomination, vote, and verified representation.",
+  "Introduce each accepted delegate with a portrait, short bio, and public mandate.",
+  "Give every ECOWAS member state a live view of seats, candidate momentum, and verified delegates.",
+  "Support admin and moderator review queues through a secure Supabase-backed workflow.",
 ];
 
 const Parliament = () => {
   const [modalOpen, setModalOpen] = useState(false);
+  const [countries, setCountries] = useState<CountryRow[]>([]);
+  const [nominees, setNominees] = useState<NomineeRow[]>(fallbackNominees);
+  const [representatives, setRepresentatives] = useState<RepresentativeRow[]>(fallbackRepresentatives);
+  const [applicationsByCountry, setApplicationsByCountry] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    const loadData = async () => {
+      const [countriesRes, nomineesRes, representativesRes, applicationsRes] = await Promise.all([
+        (supabase as any).from("countries").select("name, flag, seats").order("sort_order"),
+        (supabase as any).from("public_nominee_leaderboard").select("id, full_name, country, bio, avatar_url, title, organisation, vote_count").order("vote_count", { ascending: false }).limit(8),
+        (supabase as any).from("public_representatives").select("id, country, full_name, short_bio, manifesto_summary, headshot_url, avatar_url, title, organisation, featured").limit(8),
+        (supabase as any).from("applications").select("country, status"),
+      ]);
+
+      if (countriesRes.data?.length) setCountries(countriesRes.data);
+      if (nomineesRes.data?.length) setNominees(nomineesRes.data);
+      if (representativesRes.data?.length) setRepresentatives(representativesRes.data);
+
+      const counts = (applicationsRes.data ?? []).reduce((acc: Record<string, number>, item: { country: string }) => {
+        acc[item.country] = (acc[item.country] ?? 0) + 1;
+        return acc;
+      }, {});
+      setApplicationsByCountry(counts);
+    };
+
+    void loadData();
+  }, []);
+
+  const countryRows = countries.length ? countries : [
+    { name: "Benin", flag: "🇧🇯", seats: 5 },
+    { name: "Cape Verde", flag: "🇨🇻", seats: 5 },
+    { name: "Gambia", flag: "🇬🇲", seats: 5 },
+    { name: "Ghana", flag: "🇬🇭", seats: 8 },
+    { name: "Guinea", flag: "🇬🇳", seats: 6 },
+    { name: "Guinea-Bissau", flag: "🇬🇼", seats: 5 },
+    { name: "Côte d'Ivoire", flag: "🇨🇮", seats: 7 },
+    { name: "Liberia", flag: "🇱🇷", seats: 5 },
+    { name: "Nigeria", flag: "🇳🇬", seats: 35 },
+    { name: "Senegal", flag: "🇸🇳", seats: 6 },
+    { name: "Sierra Leone", flag: "🇸🇱", seats: 5 },
+    { name: "Togo", flag: "🇹🇬", seats: 5 },
+  ];
+
+  const chartCountries: HemicycleCountryData[] = useMemo(
+    () => countryRows.map((country, index) => ({ ...country, color: seatPalette[index % seatPalette.length] })),
+    [countryRows],
+  );
+
+  const totalSeats = countryRows.reduce((sum, country) => sum + country.seats, 0);
+  const delegationCards = countryRows.map((country) => ({
+    ...country,
+    applications: applicationsByCountry[country.name] ?? Math.max(2, Math.ceil(country.seats / 2)),
+    nominees: nominees.filter((nominee) => nominee.country === country.name).length,
+    representatives: representatives.filter((representative) => representative.country === country.name).length,
+  }));
 
   return (
     <Layout>
-      {/* Hero */}
-      <section className="relative py-24 bg-gradient-hero text-primary-foreground overflow-hidden">
-        <div className="absolute inset-0 opacity-5">
-          <div className="absolute top-10 right-10 w-96 h-96 rounded-full border border-primary-foreground/20" />
-          <div className="absolute bottom-10 left-10 w-64 h-64 rounded-full border border-primary-foreground/10" />
-        </div>
-        <div className="container relative">
+      <section className="relative overflow-hidden bg-gradient-hero py-20 text-primary-foreground">
+        <div className="container grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
           <AnimatedSection>
-            <Button asChild variant="ghost" className="text-primary-foreground/60 hover:text-primary-foreground mb-6 -ml-3">
+            <Button asChild variant="ghost" className="mb-6 -ml-3 text-primary-foreground/70 hover:text-primary-foreground">
               <Link to="/"><ArrowLeft className="mr-2 h-4 w-4" />Back to Home</Link>
             </Button>
-            <div className="flex items-center gap-4 mb-4">
-              <div className="p-3 rounded-xl bg-ecowas-red/20 text-ecowas-red">
-                <Building2 className="h-6 w-6" />
-              </div>
-              <Badge variant="outline" className="border-primary-foreground/20 text-primary-foreground/70">
-                Programme Pillar
-              </Badge>
-            </div>
-            <h1 className="text-4xl md:text-6xl font-black leading-tight">
-              Simulated Youth<br />Parliament
-            </h1>
-            <p className="mt-4 text-lg text-primary-foreground/70 max-w-2xl">
-              Giving young people a seat at the table — launching the ECOWAS Youth Parliament vision.
+            <Badge className="border-primary-foreground/20 bg-primary-foreground/10 text-primary-foreground">Programme Pillar</Badge>
+            <h1 className="mt-4 text-4xl font-black leading-tight md:text-6xl">Simulated Youth Parliament</h1>
+            <p className="mt-4 max-w-2xl text-lg text-primary-foreground/75">
+              A public-facing selection platform where young people apply, nominate, vote, and meet the verified delegates representing each ECOWAS country.
             </p>
-          </AnimatedSection>
-
-          {/* Stats */}
-          <AnimatedSection delay={200}>
-            <div className="flex flex-wrap gap-8 mt-10">
+            <div className="mt-8 flex flex-wrap gap-6">
               {[
-                { icon: <Users className="h-5 w-5" />, value: "96", label: "Total Seats" },
-                { icon: <MapPin className="h-5 w-5" />, value: "12", label: "Countries" },
-                { icon: <Calendar className="h-5 w-5" />, value: "May 2026", label: "Target Date" },
-              ].map((stat) => (
-                <div key={stat.label} className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-primary-foreground/10">{stat.icon}</div>
-                  <div>
-                    <p className="text-2xl font-black">{stat.value}</p>
-                    <p className="text-xs text-primary-foreground/50">{stat.label}</p>
+                { label: "Total seats", value: totalSeats, icon: Users },
+                { label: "Countries", value: 12, icon: MapPin },
+                { label: "Live nominees", value: nominees.length, icon: Vote },
+                { label: "Verified reps", value: representatives.length, icon: Trophy },
+              ].map((item) => {
+                const Icon = item.icon;
+                return (
+                  <div key={item.label} className="flex items-center gap-3">
+                    <div className="rounded-xl bg-primary-foreground/10 p-2"><Icon className="h-5 w-5" /></div>
+                    <div>
+                      <p className="text-2xl font-black">{item.value}</p>
+                      <p className="text-xs text-primary-foreground/60">{item.label}</p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
+            </div>
+          </AnimatedSection>
+
+          <AnimatedSection delay={150}>
+            <div className="overflow-hidden rounded-[2rem] border border-primary-foreground/15 bg-primary-foreground/10 p-3 shadow-2xl">
+              <img src={parliamentHero} alt="Youth parliament chamber" className="aspect-[16/11] w-full rounded-[1.4rem] object-cover" loading="lazy" />
             </div>
           </AnimatedSection>
         </div>
       </section>
 
-      {/* Overview & Vision */}
       <section className="py-16">
-        <div className="container max-w-4xl">
-          <AnimatedSection>
-            <h2 className="text-2xl font-bold text-foreground mb-4">Overview & Vision</h2>
-            <p className="text-muted-foreground leading-relaxed">
-              In May, the story reaches the parliamentary chamber itself. A Simulated ECOWAS Parliament gives young people a seat at the table, launching the Rt. Hon. Speaker's vision of a future ECOWAS Youth Parliament. What begins as simulation becomes aspiration, documented through youth reports in Abidjan and carried forward to Abuja. This initiative represents a cornerstone of the Parliament's commitment to intergenerational leadership.
+        <div className="container max-w-5xl">
+          <AnimatedSection className="text-center">
+            <h2 className="text-2xl font-black text-foreground md:text-3xl">Public representation, not just registration</h2>
+            <p className="mx-auto mt-3 max-w-3xl text-muted-foreground">
+              The parliament page now surfaces real delegate discovery: approved nominees with portraits and vote counts, plus accepted representatives with biographies so citizens can see who is speaking for them.
             </p>
           </AnimatedSection>
         </div>
       </section>
 
-      {/* Hemicycle Chart */}
-      <section className="py-16 bg-muted/30">
+      <section className="bg-muted/30 py-16">
         <div className="container">
-          <AnimatedSection className="text-center mb-8">
-            <h2 className="text-2xl font-bold text-foreground">Interactive Seating Chart</h2>
-            <p className="text-muted-foreground mt-1">Hover over seats to explore country delegations</p>
+          <AnimatedSection className="mb-8 text-center">
+            <h2 className="text-2xl font-black text-foreground">Interactive seating chart</h2>
+            <p className="mt-1 text-muted-foreground">Hover the hemicycle to explore the 104-seat allocation by country.</p>
           </AnimatedSection>
-          <HemicycleChart />
+          <HemicycleChart countries={chartCountries} />
         </div>
       </section>
 
-      {/* Country Delegations */}
       <section className="py-16">
         <div className="container">
           <AnimatedSection className="mb-8">
-            <h2 className="text-2xl font-bold text-foreground">Country Delegations</h2>
-            <p className="text-muted-foreground mt-1">Status of nominations across all 12 member states</p>
+            <h2 className="text-2xl font-black text-foreground">Country delegations</h2>
+            <p className="mt-1 text-muted-foreground">Applications, nominee visibility, and verified delegate coverage by member state.</p>
           </AnimatedSection>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {delegations.map((d, i) => (
-              <AnimatedSection key={d.name} delay={i * 50}>
-                <CountryDelegationCard {...d} />
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {delegationCards.map((country, index) => (
+              <AnimatedSection key={country.name} delay={index * 40}>
+                <CountryDelegationCard {...country} />
               </AnimatedSection>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Nomination Process */}
-      <section className="py-16 bg-muted/30">
+      <section className="bg-muted/30 py-16">
+        <div className="container">
+          <AnimatedSection className="mb-8 flex items-end justify-between gap-4">
+            <div>
+              <h2 className="text-2xl font-black text-foreground">Top nominees and public leaderboard</h2>
+              <p className="mt-1 text-muted-foreground">People can discover who is earning support before moderators verify final delegates.</p>
+            </div>
+          </AnimatedSection>
+          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+            {nominees.slice(0, 4).map((nominee, index) => (
+              <AnimatedSection key={nominee.id} delay={index * 60}>
+                <PeopleCard
+                  image={nominee.avatar_url || fallbackNominees[index % fallbackNominees.length].avatar_url}
+                  name={nominee.full_name}
+                  country={nominee.country}
+                  role={nominee.title || "Public nominee"}
+                  bio={nominee.bio || "Public-facing nominee awaiting final verification."}
+                  organisation={nominee.organisation}
+                  badge="Nominee"
+                  votes={nominee.vote_count || 0}
+                />
+              </AnimatedSection>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="py-16">
+        <div className="container">
+          <AnimatedSection className="mb-8">
+            <h2 className="text-2xl font-black text-foreground">Accepted and verified representatives</h2>
+            <p className="mt-1 text-muted-foreground">Published delegates can now be seen with portraits, mandate summaries, and a brief public bio.</p>
+          </AnimatedSection>
+          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+            {representatives.slice(0, 4).map((representative, index) => (
+              <AnimatedSection key={representative.id} delay={index * 60}>
+                <PeopleCard
+                  image={representative.headshot_url || representative.avatar_url || fallbackRepresentatives[index % fallbackRepresentatives.length].headshot_url}
+                  name={representative.full_name}
+                  country={representative.country}
+                  role={representative.title || "Verified delegate"}
+                  bio={representative.short_bio || representative.manifesto_summary || "Verified youth representative for their national delegation."}
+                  organisation={representative.organisation}
+                  badge={representative.featured ? "Featured representative" : "Verified"}
+                />
+              </AnimatedSection>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-muted/30 py-16">
         <div className="container max-w-3xl">
           <AnimatedSection className="mb-8">
-            <h2 className="text-2xl font-bold text-foreground">Nomination & Voting Process</h2>
-            <p className="text-muted-foreground mt-1">How youth representatives are selected</p>
+            <h2 className="text-2xl font-black text-foreground">Selection process</h2>
+            <p className="mt-1 text-muted-foreground">How applications, nominations, votes, and verification work together.</p>
           </AnimatedSection>
           <NominationTimeline />
-          <AnimatedSection delay={400} className="mt-8 text-center">
-            <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90" onClick={() => setModalOpen(true)}>
-              Apply as Youth Representative
-            </Button>
+          <AnimatedSection delay={300} className="mt-8 text-center">
+            <Button size="lg" onClick={() => setModalOpen(true)}>Apply, nominate, or vote</Button>
           </AnimatedSection>
         </div>
       </section>
 
-      {/* Programme Agenda */}
       <section className="py-16">
-        <div className="container max-w-3xl">
-          <AnimatedSection className="mb-8">
-            <h2 className="text-2xl font-bold text-foreground">Programme Agenda</h2>
-            <p className="text-muted-foreground mt-1">Key sessions planned for the simulated parliament</p>
-          </AnimatedSection>
-          <div className="space-y-3">
-            {agenda.map((item, i) => (
-              <AnimatedSection key={i} delay={i * 60}>
-                <div className="flex items-center gap-4 p-4 rounded-xl bg-card border border-border">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
-                    <Calendar className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-card-foreground">{item.title}</h4>
-                    <p className="text-xs text-muted-foreground">{item.time}</p>
-                  </div>
+        <div className="container grid gap-4 md:grid-cols-2">
+          {objectives.map((objective, index) => (
+            <AnimatedSection key={objective} delay={index * 60}>
+              <div className="rounded-3xl border border-border bg-card p-5 shadow-sm">
+                <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                  <Calendar className="h-4 w-4" />
                 </div>
-              </AnimatedSection>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Objectives */}
-      <section className="py-16 bg-muted/30">
-        <div className="container max-w-4xl">
-          <AnimatedSection className="mb-8">
-            <h2 className="text-2xl font-bold text-foreground">Objectives</h2>
-          </AnimatedSection>
-          <div className="grid sm:grid-cols-2 gap-4">
-            {objectives.map((obj, i) => (
-              <AnimatedSection key={i} delay={i * 80}>
-                <div className="flex gap-3 items-start p-4 rounded-xl bg-card border border-border">
-                  <Target className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                  <p className="text-sm text-muted-foreground">{obj}</p>
-                </div>
-              </AnimatedSection>
-            ))}
-          </div>
+                <p className="text-sm leading-relaxed text-muted-foreground">{objective}</p>
+              </div>
+            </AnimatedSection>
+          ))}
         </div>
       </section>
 
