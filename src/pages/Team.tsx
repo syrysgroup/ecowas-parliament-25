@@ -1,50 +1,83 @@
 import Layout from "@/components/layout/Layout";
 import AnimatedSection from "@/components/shared/AnimatedSection";
-import { User } from "lucide-react";
+import teamPortrait1 from "@/assets/team-portrait-1.jpg";
+import teamPortrait2 from "@/assets/team-portrait-2.jpg";
+import teamPortrait3 from "@/assets/team-portrait-3.jpg";
+import teamPortrait4 from "@/assets/team-portrait-4.jpg";
+import representative1 from "@/assets/representative-1.jpg";
+import representative2 from "@/assets/representative-2.jpg";
+import representative3 from "@/assets/representative-3.jpg";
+import representative4 from "@/assets/representative-4.jpg";
+import { Badge } from "@/components/ui/badge";
 
-const teamMembers = [
-  { name: "Dr. Victoria Akai IIPM", role: "CEO, Duchess NL", org: "Implementing Partner" },
-  { name: "Dr. Olori Boye-Ajayi", role: "Managing Partner, Borderless Trade & Investment", org: "Implementing Partner" },
-  { name: "Blessing Okpale", role: "Lead, CMD Tourism & Trade Enterprises", org: "Implementing Partner" },
+const departments = [
+  {
+    name: "Executive leadership",
+    members: [
+      { name: "Dr. Victoria Akai IIPM", role: "Programme Director", org: "Duchess NL", image: teamPortrait1 },
+      { name: "Dr. Olori Boye-Ajayi", role: "Regional Strategy Lead", org: "Borderless Trade & Investment", image: teamPortrait2 },
+      { name: "Blessing Okpale", role: "Operations Lead", org: "CMD Tourism & Trade Enterprises", image: teamPortrait3 },
+      { name: "Amina Toure", role: "Stakeholder Relations Director", org: "Regional Partnerships Desk", image: teamPortrait4 },
+    ],
+  },
+  {
+    name: "Programme delivery",
+    members: [
+      { name: "Kwame Ofori", role: "Parliament Programme Manager", org: "Youth Parliament Secretariat", image: representative2 },
+      { name: "Nene Coker", role: "Community Mobilisation Lead", org: "National Outreach Unit", image: representative3 },
+      { name: "Joseph Toe", role: "Monitoring & Learning Manager", org: "Programme Quality Unit", image: representative4 },
+      { name: "Aissatou Mensah", role: "Volunteer Network Coordinator", org: "Regional Volunteer Corps", image: representative1 },
+    ],
+  },
+  {
+    name: "Communications and media",
+    members: [
+      { name: "Fatou Sarr", role: "Creative Content Lead", org: "Communications Studio", image: teamPortrait4 },
+      { name: "Moussa Diallo", role: "Press & Editorial Coordinator", org: "Media Relations", image: teamPortrait2 },
+      { name: "Elena Doe", role: "Digital Campaign Manager", org: "Audience Growth Desk", image: teamPortrait1 },
+      { name: "Kossi Amouzou", role: "Visual Storytelling Producer", org: "Parliament Media Lab", image: teamPortrait3 },
+    ],
+  },
 ];
 
 const Team = () => {
   return (
     <Layout>
-      <section className="bg-gradient-hero text-primary-foreground py-20">
+      <section className="bg-gradient-hero py-20 text-primary-foreground">
         <div className="container">
           <AnimatedSection>
-            <h1 className="text-4xl md:text-5xl font-black">Implementation Team</h1>
-            <p className="mt-4 text-lg text-primary-foreground/70 max-w-2xl">
-              The dedicated team bringing the ECOWAS Parliament @25 programme to life.
+            <Badge className="border-primary-foreground/20 bg-primary-foreground/10 text-primary-foreground">Expanded Team</Badge>
+            <h1 className="mt-4 text-4xl font-black md:text-5xl">Implementation Team</h1>
+            <p className="mt-4 max-w-3xl text-lg text-primary-foreground/75">
+              A larger cross-functional team now powers stakeholder engagement, parliament operations, communications, curation, and delegate support across the ECOWAS commemorative programme.
             </p>
           </AnimatedSection>
         </div>
       </section>
 
       <section className="py-16">
-        <div className="container">
-          <AnimatedSection className="mb-10">
-            <p className="text-muted-foreground text-center max-w-2xl mx-auto">
-              Team photos will be uploaded soon. The implementation team works across all seven Member States
-              to deliver this year-long commemorative programme.
-            </p>
-          </AnimatedSection>
-
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-4xl mx-auto">
-            {teamMembers.map((member, i) => (
-              <AnimatedSection key={member.name} delay={i * 100}>
-                <div className="p-6 rounded-xl bg-card border border-border shadow-sm text-center hover:shadow-lg transition-shadow">
-                  <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-to-br from-primary/20 to-ecowas-yellow/10 flex items-center justify-center">
-                    <User className="h-10 w-10 text-primary/50" />
-                  </div>
-                  <h3 className="font-bold text-card-foreground">{member.name}</h3>
-                  <p className="text-sm text-primary mt-1">{member.role}</p>
-                  <p className="text-xs text-muted-foreground mt-1">{member.org}</p>
-                </div>
+        <div className="container space-y-14">
+          {departments.map((department, departmentIndex) => (
+            <div key={department.name}>
+              <AnimatedSection>
+                <h2 className="text-2xl font-black text-foreground">{department.name}</h2>
               </AnimatedSection>
-            ))}
-          </div>
+              <div className="mt-6 grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+                {department.members.map((member, index) => (
+                  <AnimatedSection key={member.name} delay={(departmentIndex * 4 + index) * 50}>
+                    <article className="overflow-hidden rounded-3xl border border-border bg-card shadow-sm transition-transform duration-300 hover:-translate-y-1">
+                      <img src={member.image} alt={member.name} className="aspect-[4/4.4] w-full object-cover" loading="lazy" />
+                      <div className="p-5">
+                        <h3 className="text-lg font-black text-card-foreground">{member.name}</h3>
+                        <p className="text-sm text-primary">{member.role}</p>
+                        <p className="mt-2 text-sm text-muted-foreground">{member.org}</p>
+                      </div>
+                    </article>
+                  </AnimatedSection>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       </section>
     </Layout>
