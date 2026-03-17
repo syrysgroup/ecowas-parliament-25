@@ -1,141 +1,138 @@
 import AnimatedSection from "@/components/shared/AnimatedSection";
+import SponsorLogo from "@/components/shared/SponsorLogo";
 import duchessLogo from "@/assets/duchess-logo.png";
 import cmdLogo from "@/assets/cmd-logo.png";
 import borderlessLogo from "@/assets/borderless-trade-logo.png";
-import waBankLogo from "@/assets/sponsor-wa-bank.png";
-import sahelEnergyLogo from "@/assets/sponsor-sahel-energy.png";
-import africonnectLogo from "@/assets/sponsor-africonnect.png";
-import atlanticTelecomLogo from "@/assets/sponsor-atlantic-telecom.png";
-import unityInsuranceLogo from "@/assets/sponsor-unity-insurance.png";
-import coastalLogisticsLogo from "@/assets/sponsor-coastal-logistics.png";
-import abujaHotelsLogo from "@/assets/sponsor-abuja-hotels.png";
-import panAfricanMediaLogo from "@/assets/sponsor-pan-african-media.png";
-import greenValleyLogo from "@/assets/sponsor-green-valley.png";
-import accraDigitalLogo from "@/assets/sponsor-accra-digital.png";
+import { Badge } from "@/components/ui/badge";
 
 const implementingPartners = [
   {
     name: "Duchess NL",
-    logo: duchessLogo,
     lead: "Dr. Victoria Akai IIPM",
     role: "CEO",
-    description: "Leading co-organiser coordinating the year-long commemorative programme.",
+    logo: duchessLogo,
+    description: "Leading implementing partner coordinating the year-long programme.",
   },
   {
     name: "Borderless Trade & Investment",
-    logo: borderlessLogo,
     lead: "Dr. Olori Boye-Ajayi",
     role: "Managing Partner",
-    description: "Expertise in trade facilitation and regional economic integration across ECOWAS.",
+    logo: borderlessLogo,
+    description: "Expertise in trade facilitation and regional economic integration.",
   },
   {
-    name: "CMD Tourism & Trade",
-    logo: cmdLogo,
+    name: "CMD Tourism & Trade Enterprises",
     lead: "Blessing Okpale",
     role: "Lead",
+    logo: cmdLogo,
     description: "Tourism and trade enterprise development across West Africa.",
   },
 ];
 
-const sponsorTiers = [
-  {
-    label: "Platinum Sponsors",
-    badgeClass: "bg-accent text-accent-foreground",
-    sponsors: [
-      { name: "West Africa Bank", logo: waBankLogo },
-      { name: "Sahel Energy Group", logo: sahelEnergyLogo },
-      { name: "AfriConnect Solutions", logo: africonnectLogo },
-    ],
-  },
-  {
-    label: "Gold Sponsors",
-    badgeClass: "bg-secondary text-secondary-foreground",
-    sponsors: [
-      { name: "Atlantic Telecom", logo: atlanticTelecomLogo },
-      { name: "Unity Insurance", logo: unityInsuranceLogo },
-      { name: "Coastal Logistics", logo: coastalLogisticsLogo },
-      { name: "Abuja Hotels Group", logo: abujaHotelsLogo },
-    ],
-  },
-  {
-    label: "Sponsors",
-    badgeClass: "bg-muted text-muted-foreground",
-    sponsors: [
-      { name: "Pan-African Media", logo: panAfricanMediaLogo },
-      { name: "Green Valley Agro", logo: greenValleyLogo },
-      { name: "Accra Digital Hub", logo: accraDigitalLogo },
-    ],
-  },
-];
+const sponsors = {
+  platinum: [
+    { name: "West African Development Bank", color: "#1a6b8a" },
+    { name: "ECOWAS Commission", color: "#008244" },
+  ],
+  gold: [
+    { name: "African Union", color: "#b8860b" },
+    { name: "United Nations Development Programme", color: "#0072bc" },
+    { name: "GIZ West Africa", color: "#c4161c" },
+  ],
+  sponsors: [
+    { name: "Access Bank Group", color: "#e6550d" },
+    { name: "Dangote Foundation", color: "#1a3a5c" },
+    { name: "MTN Group Foundation", color: "#ffcb05" },
+    { name: "Afreximbank", color: "#00305e" },
+  ],
+};
+
+const tierConfig = {
+  platinum: { label: "Platinum", border: "border-ecowas-yellow/40", bg: "bg-accent/5" },
+  gold: { label: "Gold", border: "border-ecowas-yellow/20", bg: "bg-accent/3" },
+  sponsors: { label: "Sponsors", border: "border-border", bg: "bg-muted/30" },
+};
 
 const SponsorsSection = () => {
   return (
-    <section className="py-20">
-      <div className="container">
-        <AnimatedSection className="text-center mb-6">
-          <h2 className="text-3xl md:text-4xl font-black text-foreground">
-            Programme <span className="text-primary">Co-Organisers</span>
-          </h2>
-          <p className="mt-3 text-muted-foreground max-w-xl mx-auto">
-            Strategic implementing partners co-driving the 25th anniversary programme.
-          </p>
-        </AnimatedSection>
+    <>
+      {/* Implementing Partners — premium co-organiser treatment */}
+      <section className="py-16 bg-gradient-to-b from-muted/30 to-background">
+        <div className="container">
+          <AnimatedSection className="text-center mb-10">
+            <Badge className="bg-primary/10 text-primary border-primary/20 mb-3">
+              Programme Co-Organisers
+            </Badge>
+            <h2 className="text-2xl md:text-3xl font-bold text-foreground">
+              Implementing Partners
+            </h2>
+            <p className="mt-2 text-muted-foreground max-w-xl mx-auto">
+              Strategic co-owners driving the 25th anniversary programme across West Africa.
+            </p>
+          </AnimatedSection>
 
-        <AnimatedSection>
-          <div className="grid md:grid-cols-3 gap-5 mb-16">
-            {implementingPartners.map((partner) => (
-              <div
-                key={partner.name}
-                className="relative rounded-2xl border-2 border-primary/20 bg-card p-6 hover:shadow-xl hover:border-primary/40 transition-all group"
-              >
-                <div className="absolute top-3 right-3">
-                  <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-primary text-primary-foreground">
-                    Co-Organiser
-                  </span>
+          <div className="grid md:grid-cols-3 gap-6">
+            {implementingPartners.map((partner, i) => (
+              <AnimatedSection key={partner.name} delay={i * 120}>
+                <div className="relative p-6 rounded-xl bg-card border-2 border-primary/20 shadow-md hover:shadow-xl transition-all group">
+                  <div className="absolute top-3 right-3">
+                    <Badge variant="outline" className="text-[10px] border-primary/30 text-primary">
+                      Co-Organiser
+                    </Badge>
+                  </div>
+                  <img
+                    src={partner.logo}
+                    alt={partner.name}
+                    className="h-14 w-auto mb-4 group-hover:scale-105 transition-transform"
+                  />
+                  <h3 className="font-bold text-card-foreground text-lg">{partner.name}</h3>
+                  <p className="text-sm text-primary font-medium mt-1">
+                    {partner.lead} — {partner.role}
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+                    {partner.description}
+                  </p>
                 </div>
-                <img src={partner.logo} alt={partner.name} className="h-14 w-auto mb-4" loading="lazy" />
-                <h3 className="font-bold text-card-foreground text-lg">{partner.name}</h3>
-                <p className="text-sm text-primary font-medium mt-1">
-                  {partner.lead} — {partner.role}
-                </p>
-                <p className="text-sm text-muted-foreground mt-2">{partner.description}</p>
-              </div>
+              </AnimatedSection>
             ))}
           </div>
-        </AnimatedSection>
+        </div>
+      </section>
 
-        <AnimatedSection className="text-center mb-8">
-          <h2 className="text-2xl md:text-3xl font-black text-foreground">
-            Official <span className="text-primary">Sponsors</span>
-          </h2>
-          <p className="mt-2 text-muted-foreground max-w-lg mx-auto">
-            Organizations supporting the ECOWAS Parliament 25th anniversary programme.
-          </p>
-        </AnimatedSection>
+      {/* Sponsors — tiered layout */}
+      <section className="py-16 bg-muted/40 border-t border-border">
+        <div className="container">
+          <AnimatedSection className="text-center mb-10">
+            <h2 className="text-2xl md:text-3xl font-bold text-foreground">Sponsors & Supporters</h2>
+            <p className="mt-2 text-muted-foreground max-w-xl mx-auto">
+              Organisations supporting the year-long commemorative programme.
+            </p>
+          </AnimatedSection>
 
-        <div className="space-y-8">
-          {sponsorTiers.map((tier, ti) => (
-            <AnimatedSection key={tier.label} delay={ti * 100}>
-              <div className={`rounded-2xl border border-border bg-card p-6 ${ti === 0 ? "shadow-md ring-1 ring-accent/20" : "shadow-sm"}`}>
-                <div className="text-center mb-5">
-                  <span className={`inline-block px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${tier.badgeClass}`}>
-                    {tier.label}
-                  </span>
-                </div>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 items-stretch">
-                  {tier.sponsors.map((sponsor) => (
-                    <div key={sponsor.name} className="rounded-2xl border border-border bg-muted/20 p-4 flex flex-col items-center justify-center text-center min-h-36 hover:bg-muted/40 transition-colors">
-                      <img src={sponsor.logo} alt={sponsor.name} className="max-h-14 w-auto object-contain" loading="lazy" />
-                      <span className="mt-3 text-xs font-medium text-muted-foreground">{sponsor.name}</span>
+          {(Object.keys(sponsors) as Array<keyof typeof sponsors>).map((tier) => {
+            const config = tierConfig[tier];
+            return (
+              <AnimatedSection key={tier} className="mb-10 last:mb-0">
+                <h3 className="text-sm uppercase tracking-wider text-muted-foreground font-semibold mb-4">
+                  {config.label}
+                </h3>
+                <div className="flex flex-wrap gap-4">
+                  {sponsors[tier].map((sponsor) => (
+                    <div
+                      key={sponsor.name}
+                      className={`flex items-center gap-3 px-5 py-3 rounded-xl border ${config.border} ${config.bg} bg-card hover:shadow-md transition-all`}
+                    >
+                      <SponsorLogo name={sponsor.name} color={sponsor.color} size={40} />
+                      <span className="text-sm font-medium text-card-foreground">{sponsor.name}</span>
                     </div>
                   ))}
                 </div>
-              </div>
-            </AnimatedSection>
-          ))}
+              </AnimatedSection>
+            );
+          })}
         </div>
-      </div>
-    </section>
+      </section>
+    </>
   );
 };
 

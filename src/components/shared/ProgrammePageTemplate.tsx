@@ -13,7 +13,6 @@ interface ProgrammePageTemplateProps {
   countries: string[];
   accentColor: string;
   icon: ReactNode;
-  heroImage?: string;
   children?: ReactNode;
 }
 
@@ -25,19 +24,15 @@ const ProgrammePageTemplate = ({
   countries,
   accentColor,
   icon,
-  heroImage,
   children,
 }: ProgrammePageTemplateProps) => {
   return (
     <Layout>
       {/* Hero */}
-      <section className="relative py-20 text-primary-foreground bg-gradient-hero overflow-hidden">
-        {heroImage && (
-          <div className="absolute inset-0 bg-cover bg-center opacity-15" style={{ backgroundImage: `url('${heroImage}')` }} />
-        )}
-        <div className="container relative">
+      <section className={`py-20 text-primary-foreground bg-gradient-hero`}>
+        <div className="container">
           <AnimatedSection>
-            <Button asChild variant="ghost" className="text-primary-foreground/60 hover:text-primary-foreground hover:bg-primary-foreground/10 mb-6 -ml-3 font-semibold">
+            <Button asChild variant="ghost" className="text-primary-foreground/60 hover:text-primary-foreground mb-6 -ml-3">
               <Link to="/"><ArrowLeft className="mr-2 h-4 w-4" />Back to Home</Link>
             </Button>
             <div className="flex items-center gap-4 mb-4">

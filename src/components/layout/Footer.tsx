@@ -6,10 +6,10 @@ import borderlessLogo from "@/assets/borderless-trade-logo.png";
 const Footer = () => {
   return (
     <footer className="bg-gradient-hero text-primary-foreground">
-      {/* Co-Organisers strip */}
-      <div className="border-b border-primary-foreground/10 py-10">
+      {/* Partners strip */}
+      <div className="border-b border-primary-foreground/10 py-8">
         <div className="container">
-          <p className="text-center text-xs font-bold tracking-wider uppercase mb-4 text-primary-foreground/50">
+          <p className="text-center text-sm font-semibold tracking-wider uppercase mb-6 text-primary-foreground/60">
             Programme Co-Organisers
           </p>
           <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12">
@@ -30,14 +30,12 @@ const Footer = () => {
               to the peoples of West Africa. January – November 2026.
             </p>
           </div>
-
           <div>
             <h3 className="text-lg font-bold mb-4">Quick Links</h3>
             <nav className="flex flex-col gap-2">
               {[
                 { label: "About the Programme", to: "/about" },
                 { label: "Timeline", to: "/timeline" },
-                { label: "Photo Gallery", to: "/gallery" },
                 { label: "News & Updates", to: "/news" },
                 { label: "Documents", to: "/documents" },
                 { label: "Stakeholders", to: "/stakeholders" },
@@ -52,7 +50,6 @@ const Footer = () => {
               ))}
             </nav>
           </div>
-
           <div>
             <h3 className="text-lg font-bold mb-4">Contact</h3>
             <div className="text-sm text-primary-foreground/70 space-y-2">
@@ -62,7 +59,6 @@ const Footer = () => {
             </div>
           </div>
         </div>
-
         <div className="mt-12 pt-6 border-t border-primary-foreground/10 text-center">
           <p className="text-sm text-primary-foreground/50">
             © {new Date().getFullYear()} ECOWAS Parliament. All rights reserved.

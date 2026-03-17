@@ -1,172 +1,156 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import AnimatedSection from "@/components/shared/AnimatedSection";
 
-export interface CountryData {
+interface CountryData {
   name: string;
-  code: string;
   seats: number;
-  flag: string;
   color: string;
+  flag: string;
 }
 
-export const COUNTRIES: CountryData[] = [
-  { name: "Nigeria", code: "NG", seats: 35, flag: "🇳🇬", color: "hsl(140, 60%, 35%)" },
-  { name: "Ghana", code: "GH", seats: 8, flag: "🇬🇭", color: "hsl(45, 85%, 50%)" },
-  { name: "Ivory Coast", code: "CI", seats: 7, flag: "🇨🇮", color: "hsl(25, 80%, 50%)" },
-  { name: "Guinea", code: "GN", seats: 6, flag: "🇬🇳", color: "hsl(0, 70%, 50%)" },
-  { name: "Senegal", code: "SN", seats: 6, flag: "🇸🇳", color: "hsl(152, 60%, 40%)" },
-  { name: "Benin", code: "BJ", seats: 5, flag: "🇧🇯", color: "hsl(120, 50%, 40%)" },
-  { name: "Burkina Faso", code: "BF", seats: 5, flag: "🇧🇫", color: "hsl(10, 75%, 45%)" },
-  { name: "Cape Verde", code: "CV", seats: 5, flag: "🇨🇻", color: "hsl(220, 70%, 45%)" },
-  { name: "Gambia", code: "GM", seats: 5, flag: "🇬🇲", color: "hsl(210, 65%, 50%)" },
-  { name: "Guinea-Bissau", code: "GW", seats: 5, flag: "🇬🇼", color: "hsl(50, 70%, 45%)" },
-  { name: "Liberia", code: "LR", seats: 5, flag: "🇱🇷", color: "hsl(230, 55%, 50%)" },
-  { name: "Mali", code: "ML", seats: 5, flag: "🇲🇱", color: "hsl(55, 80%, 45%)" },
-  { name: "Niger", code: "NE", seats: 5, flag: "🇳🇪", color: "hsl(30, 85%, 55%)" },
-  { name: "Sierra Leone", code: "SL", seats: 5, flag: "🇸🇱", color: "hsl(190, 60%, 45%)" },
-  { name: "Togo", code: "TG", seats: 5, flag: "🇹🇬", color: "hsl(165, 55%, 40%)" },
+const countries: CountryData[] = [
+  { name: "Nigeria", seats: 35, color: "hsl(var(--ecowas-green))", flag: "🇳🇬" },
+  { name: "Ghana", seats: 7, color: "#ce1126", flag: "🇬🇭" },
+  { name: "Côte d'Ivoire", seats: 7, color: "#f77f00", flag: "🇨🇮" },
+  { name: "Guinea", seats: 6, color: "#ce1126", flag: "🇬🇳" },
+  { name: "Guinea-Bissau", seats: 6, color: "#ce1126", flag: "🇬🇼" },
+  { name: "Senegal", seats: 5, color: "#00853f", flag: "🇸🇳" },
+  { name: "Benin", seats: 5, color: "#008751", flag: "🇧🇯" },
+  { name: "Cape Verde", seats: 5, color: "#003893", flag: "🇨🇻" },
+  { name: "Gambia", seats: 5, color: "#3a7728", flag: "🇬🇲" },
+  { name: "Liberia", seats: 5, color: "#002868", flag: "🇱🇷" },
+  { name: "Sierra Leone", seats: 5, color: "#1eb53a", flag: "🇸🇱" },
+  { name: "Togo", seats: 5, color: "#006a4e", flag: "🇹🇬" },
 ];
 
-const TOTAL_SEATS = COUNTRIES.reduce((sum, c) => sum + c.seats, 0);
+const totalSeats = countries.reduce((sum, c) => sum + c.seats, 0);
+
+const generateSeatPositions = () => {
+  const seats: { x: number; y: number; countryIndex: number }[] = [];
+  const rows = 5;
+  const centerX = 250;
+  const centerY = 230;
+
+  let seatIndex = 0;
+  const allSeats = countries.flatMap((c, ci) =>
+    Array.from({ length: c.seats }, () => ci)
+  );
+
+  for (let row = 0; row < rows; row++) {
+    const radius = 90 + row * 35;
+    const seatsInRow = Math.round((allSeats.length / rows) * (0.7 + row * 0.15));
+    const actualSeats = Math.min(seatsInRow, allSeats.length - seatIndex);
+
+    for (let s = 0; s < actualSeats; s++) {
+      if (seatIndex >= allSeats.length) break;
+      const angle = Math.PI * (0.08 + (s / (actualSeats - 1 || 1)) * 0.84);
+      const x = centerX + radius * Math.cos(Math.PI - angle);
+      const y = centerY - radius * Math.sin(angle);
+      seats.push({ x, y, countryIndex: allSeats[seatIndex] });
+      seatIndex++;
+    }
+  }
+
+  return seats;
+};
+
+const seatPositions = generateSeatPositions();
 
 const HemicycleChart = () => {
-  const [hoveredCountry, setHoveredCountry] = useState<string | null>(null);
-  const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
+  const [hoveredCountry, setHoveredCountry] = useState<number | null>(null);
+  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  // Generate seat positions in a hemicycle (semicircle) layout
-  const generateSeats = () => {
-    const seats: { x: number; y: number; country: CountryData; seatIndex: number }[] = [];
-    const rows = 5;
-    const centerX = 400;
-    const centerY = 340;
-    const minRadius = 120;
-    const maxRadius = 300;
-
-    // Flatten all seats with country assignments
-    const allSeats: { country: CountryData; seatIndex: number }[] = [];
-    COUNTRIES.forEach((country) => {
-      for (let i = 0; i < country.seats; i++) {
-        allSeats.push({ country, seatIndex: i });
-      }
-    });
-
-    let seatIdx = 0;
-    for (let row = 0; row < rows; row++) {
-      const radius = minRadius + (maxRadius - minRadius) * (row / (rows - 1));
-      const seatsInRow = row === 0 ? 15 : row === 1 ? 20 : row === 2 ? 25 : row === 3 ? 27 : 28;
-      const actualSeats = Math.min(seatsInRow, allSeats.length - seatIdx);
-
-      for (let i = 0; i < actualSeats && seatIdx < allSeats.length; i++) {
-        const angle = Math.PI - (Math.PI * (i + 0.5)) / actualSeats;
-        const x = centerX + radius * Math.cos(angle);
-        const y = centerY - radius * Math.sin(angle);
-        seats.push({ x, y, ...allSeats[seatIdx] });
-        seatIdx++;
-      }
-    }
-
-    return seats;
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    setTooltipPos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
   };
 
-  const seats = generateSeats();
-  const activeCountry = selectedCountry || hoveredCountry;
-  const activeData = COUNTRIES.find((c) => c.code === activeCountry);
+  const hoveredData = hoveredCountry !== null ? countries[hoveredCountry] : null;
 
   return (
     <AnimatedSection>
-      <div className="relative bg-card rounded-3xl border border-border shadow-lg overflow-hidden">
-        {/* Header */}
-        <div className="text-center pt-8 pb-4 px-6">
-          <h3 className="text-2xl md:text-3xl font-black text-foreground">
-            ECOWAS Youth Parliament Chamber
-          </h3>
-          <p className="text-muted-foreground mt-1">
-            {TOTAL_SEATS} seats across 15 member states
-          </p>
+      <div className="bg-card border border-border rounded-2xl p-6 md:p-8">
+        <div className="text-center mb-6">
+          <h3 className="text-xl font-bold text-foreground">ECOWAS Parliament Hemicycle</h3>
+          <p className="text-sm text-muted-foreground mt-1">{totalSeats} seats across 12 Member States</p>
         </div>
 
-        <div className="flex flex-col lg:flex-row">
-          {/* SVG Chart */}
-          <div className="flex-1 px-4 pb-4">
-            <svg viewBox="0 20 800 360" className="w-full max-w-2xl mx-auto">
-              {/* Speaker podium */}
-              <rect x="350" y="310" width="100" height="40" rx="8" fill="hsl(var(--primary))" opacity="0.15" />
-              <text x="400" y="335" textAnchor="middle" fontSize="11" fontWeight="700" fill="hsl(var(--primary))">
+        <div className="flex flex-col lg:flex-row items-center gap-8">
+          {/* SVG Hemicycle */}
+          <div className="flex-1 w-full max-w-lg mx-auto relative" ref={containerRef} onMouseMove={handleMouseMove}>
+            <svg viewBox="0 0 500 260" className="w-full" aria-label="Hemicycle seating chart">
+              {/* Podium */}
+              <rect x={210} y={210} width={80} height={30} rx={6} fill="hsl(var(--muted))" stroke="hsl(var(--border))" strokeWidth={1} />
+              <text x={250} y={229} textAnchor="middle" fill="hsl(var(--muted-foreground))" fontSize={9} fontWeight={600}>
                 SPEAKER
               </text>
 
-              {/* Seats */}
-              {seats.map((seat, i) => {
-                const isActive = activeCountry === seat.country.code;
-                const isFaded = activeCountry && !isActive;
+              {seatPositions.map((seat, i) => {
+                const country = countries[seat.countryIndex];
+                const isHighlighted = hoveredCountry === null || hoveredCountry === seat.countryIndex;
                 return (
                   <circle
                     key={i}
                     cx={seat.x}
                     cy={seat.y}
-                    r={isActive ? 10 : 8}
-                    fill={seat.country.color}
-                    opacity={isFaded ? 0.2 : 1}
-                    stroke={isActive ? "hsl(var(--foreground))" : "transparent"}
-                    strokeWidth={isActive ? 2 : 0}
-                    className="cursor-pointer transition-all duration-200"
-                    onMouseEnter={() => setHoveredCountry(seat.country.code)}
+                    r={6.5}
+                    fill={country.color}
+                    opacity={isHighlighted ? 0.9 : 0.15}
+                    stroke={hoveredCountry === seat.countryIndex ? "hsl(var(--foreground))" : "none"}
+                    strokeWidth={1.5}
+                    className="transition-all duration-200 cursor-pointer"
+                    onMouseEnter={() => setHoveredCountry(seat.countryIndex)}
                     onMouseLeave={() => setHoveredCountry(null)}
-                    onClick={() =>
-                      setSelectedCountry(
-                        selectedCountry === seat.country.code ? null : seat.country.code
-                      )
-                    }
                   />
                 );
               })}
             </svg>
-          </div>
 
-          {/* Legend / Info Panel */}
-          <div className="lg:w-80 p-6 border-t lg:border-t-0 lg:border-l border-border bg-muted/30">
-            {activeData ? (
-              <div className="text-center lg:text-left space-y-3">
-                <div className="text-4xl">{activeData.flag}</div>
-                <h4 className="text-xl font-bold text-foreground">{activeData.name}</h4>
-                <div className="flex items-center gap-2 justify-center lg:justify-start">
-                  <div
-                    className="w-4 h-4 rounded-full"
-                    style={{ backgroundColor: activeData.color }}
-                  />
-                  <span className="text-lg font-semibold text-foreground">
-                    {activeData.seats} seat{activeData.seats > 1 ? "s" : ""}
-                  </span>
+            {/* Floating tooltip */}
+            {hoveredData && (
+              <div
+                className="absolute pointer-events-none z-50 px-3 py-2 rounded-lg bg-popover border border-border shadow-lg text-sm"
+                style={{
+                  left: tooltipPos.x,
+                  top: tooltipPos.y,
+                  transform: "translate(-50%, -120%)",
+                }}
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-base">{hoveredData.flag}</span>
+                  <span className="font-semibold text-popover-foreground">{hoveredData.name}</span>
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  {((activeData.seats / TOTAL_SEATS) * 100).toFixed(1)}% of total representation
-                </p>
-              </div>
-            ) : (
-              <div>
-                <h4 className="font-bold text-foreground mb-3">Member States</h4>
-                <div className="space-y-1.5 max-h-64 overflow-y-auto">
-                  {COUNTRIES.map((c) => (
-                    <button
-                      key={c.code}
-                      className="flex items-center gap-2 w-full text-left px-2 py-1 rounded-md hover:bg-muted transition-colors text-sm"
-                      onMouseEnter={() => setHoveredCountry(c.code)}
-                      onMouseLeave={() => setHoveredCountry(null)}
-                      onClick={() =>
-                        setSelectedCountry(selectedCountry === c.code ? null : c.code)
-                      }
-                    >
-                      <div
-                        className="w-3 h-3 rounded-full shrink-0"
-                        style={{ backgroundColor: c.color }}
-                      />
-                      <span className="text-foreground">{c.flag} {c.name}</span>
-                      <span className="ml-auto font-semibold text-muted-foreground">{c.seats}</span>
-                    </button>
-                  ))}
-                </div>
+                <p className="text-muted-foreground text-xs mt-0.5">{hoveredData.seats} seats</p>
               </div>
             )}
+          </div>
+
+          {/* Legend */}
+          <div className="flex-shrink-0 w-full lg:w-auto">
+            <h4 className="text-sm font-semibold text-foreground mb-3">Member States</h4>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-1 gap-1.5">
+              {countries.map((country, i) => (
+                <button
+                  key={country.name}
+                  className={`flex items-center gap-2 px-2 py-1.5 rounded-md text-left text-xs transition-colors ${
+                    hoveredCountry === i
+                      ? "bg-muted"
+                      : "hover:bg-muted/50"
+                  }`}
+                  onMouseEnter={() => setHoveredCountry(i)}
+                  onMouseLeave={() => setHoveredCountry(null)}
+                >
+                  <span
+                    className="w-3 h-3 rounded-sm flex-shrink-0"
+                    style={{ backgroundColor: country.color }}
+                  />
+                  <span className="text-foreground">{country.flag} {country.name}</span>
+                  <span className="text-muted-foreground ml-auto">{country.seats}</span>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>
