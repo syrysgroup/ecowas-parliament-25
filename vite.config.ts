@@ -11,6 +11,10 @@ export default defineConfig(({ mode }) => ({
     hmr: {
       overlay: false,
     },
+    // allow Ngrok URL
+    allowedHosts: [
+      'overplentifully-unexacting-rosalyn.ngrok-free.dev'
+    ],
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {
