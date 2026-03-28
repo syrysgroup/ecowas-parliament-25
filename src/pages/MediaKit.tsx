@@ -139,7 +139,7 @@ export default function MediaKit() {
                 <Download className="h-4 w-4" /> Full media pack (ZIP, 145 MB)
               </Button>
               <Button variant="outline" className="gap-2 bg-transparent text-primary-foreground border-primary-foreground/30 hover:bg-primary-foreground/10">
-                <Mail className="h-4 w-4" /> media@ecowasparliament25.org
+                <Mail className="h-4 w-4" /> media@ecowasparliamentinitiatives.org
               </Button>
             </div>
           </AnimatedSection>
