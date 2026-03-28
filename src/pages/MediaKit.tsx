@@ -234,7 +234,7 @@ export default function MediaKit() {
               </table>
             </div>
             <p className="text-xs text-muted-foreground mt-3">
-              Dates and locations subject to confirmation. Subscribe to media updates at media@ecowasparliament25.org
+              Dates and locations subject to confirmation. Subscribe to media updates at media@ecowasparliamentinitiatives.org
             </p>
           </AnimatedSection>
 
