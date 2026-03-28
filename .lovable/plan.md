@@ -1,146 +1,170 @@
 
 
-## Plan: Comprehensive ECOWAS Parliament Platform Upgrade
+# Comprehensive ECOWAS Parliament Initiatives Platform Upgrade
 
-This is a large multi-phase implementation covering authentication/roles, domain/branding, i18n, and new features.
-
----
-
-### Phase 1: Role System & Database Changes
-
-**Current state:** The `app_role` enum only has `admin` and `moderator`. No `super_admin` role exists. The `has_role` function and all RLS policies use this enum.
-
-**Changes needed:**
-
-1. **Add `super_admin` role to `app_role` enum** via migration:
-   ```sql
-   ALTER TYPE public.app_role ADD VALUE 'super_admin';
-   ```
-
-2. **Assign super_admin to user `0b5747ee-cf4a-4c22-8592-a649fca67e45`** via insert tool:
-   ```sql
-   INSERT INTO public.user_roles (user_id, role)
-   VALUES ('0b5747ee-cf4a-4c22-8592-a649fca67e45', 'super_admin')
-   ON CONFLICT (user_id, role) DO NOTHING;
-   ```
-
-3. **Update `has_role` function** — no change needed, it already works generically.
-
-4. **Update RLS policies** to grant `super_admin` full access everywhere (on `user_roles`, `applications`, `nominations`, `representatives`, `profiles`, `admin_activity_logs`). Each policy that checks `has_role(auth.uid(), 'admin')` will also check `has_role(auth.uid(), 'super_admin')`.
-
-5. **Add RLS policy for super_admin to manage user_roles** (insert/update/delete) so they can create admins, moderators, etc.
+This plan covers fixing the build error, expanding to 12 member states, redesigning the Index page, adding social media presence, updating partners/sponsors, and ensuring the platform clearly represents ECOWAS Parliament Initiatives (not the Parliament itself).
 
 ---
 
-### Phase 2: Invitation System (Edge Function)
+## Phase 1: Fix Build Error
 
-Super admins need to invite users by email and pre-assign a role.
+**File:** `supabase/functions/invite-user/index.ts`
 
-1. **Create `invitations` table** via migration:
-   - `id`, `email`, `role` (app_role), `invited_by` (uuid), `accepted_at`, `created_at`, `token` (unique)
-   - RLS: super_admin can insert/read, invited user can read their own
+Replace `anonClient.auth.getClaims()` (which doesn't exist in supabase-js v2) with `anonClient.auth.getUser()` to extract the user ID from the JWT token:
 
-2. **Create `invite-user` edge function:**
-   - Accepts `{ email, role }` from authenticated super_admin
-   - Calls `supabase.auth.admin.inviteUserByEmail(email, { redirectTo })` using service role key
-   - Inserts into `invitations` table with the assigned role
-   - When the invited user accepts and signs up, a trigger assigns the role from the `invitations` table
-
-3. **Create trigger `handle_invitation_role`** — on profile creation (or auth signup), check `invitations` table for matching email, and if found, insert the role into `user_roles` and mark invitation as accepted.
-
-4. **Admin UI:** Add a "User Management" tab to `ProjectDashboard.tsx` or `AdminDashboard.tsx` with:
-   - Invite form (email + role dropdown)
-   - List of current users with roles
-   - Ability to change roles (super_admin only)
+```typescript
+const { data: userData, error: userError } = await anonClient.auth.getUser();
+if (userError || !userData?.user) { return 401; }
+const userId = userData.user.id;
+```
 
 ---
 
-### Phase 3: Update ProtectedRoute & Dashboard Access
+## Phase 2: Extract & Add Flag Assets
 
-1. **Update `ProtectedRoute.tsx`** to accept `super_admin` in `allowedRoles`.
-2. **Update `AdminDashboard.tsx`** and **`ProjectDashboard.tsx`** to show role-specific UI:
-   - Super admin: sees everything + user management + invitation
-   - Admin: sees everything except user management
-   - Moderator: sees review queues only
-3. **Add `/admin/users` route** for user management (super_admin only).
+Extract `flags.zip` to `src/assets/flags/` — one PNG per ECOWAS member state. These will be imported as ES6 modules in components instead of using emoji flags.
 
 ---
 
-### Phase 4: Branding & Content Updates
+## Phase 3: Expand to 12 Member States
 
-**All references across ~10 files:**
+Update `CountriesSection.tsx` from 7 countries to all 12 ECOWAS Parliament member states using the uploaded flag images:
 
-1. **Replace `ecowasparliament25.org`** with `ecowasparliamentinitiatives.org` in all email addresses and URLs.
-2. **Replace `15 member states`** with `12 member states` everywhere (Footer, SponsorPortal, MediaKit, Timeline, ProjectDashboard, Culture page, etc.).
-3. **Replace `15-country`** with `12-country`** in ProjectDashboard task data and chat messages.
-4. **Ensure "ECOWAS Parliament" is used** (not just "ECOWAS") — audit all headings and copy.
-5. **Update email addresses:**
-   - `info@ecowasparliamentinitiatives.org`
-   - `media@ecowasparliamentinitiatives.org`
-   - `sponsors@ecowasparliamentinitiatives.org`
+1. Nigeria, Ghana, Cote d'Ivoire, Senegal, Cabo Verde, Togo, Sierra Leone (existing)
+2. Add: Benin, Burkina Faso, Guinea, Guinea-Bissau, Liberia, Mali, Niger, The Gambia
 
-**Files to update:** Footer.tsx, Contact.tsx, MediaKit.tsx, SponsorPortal.tsx, ProjectDashboard.tsx, Timeline.tsx, Culture.tsx, CountriesSection.tsx
+Each country card will use the real flag image instead of emoji.
+
+Also update the `countries` table seed data if needed.
 
 ---
 
-### Phase 5: French Language Support (i18n)
+## Phase 4: Redesign Index Page
 
-1. **Create `src/lib/i18n.ts`** — lightweight translation system using React Context with `en` and `fr` locale support.
-2. **Create translation files** `src/locales/en.json` and `src/locales/fr.json` with all UI strings.
-3. **Add language toggle** to Navbar (EN | FR button).
-4. **Wrap Layout** with `I18nProvider`.
-5. **Update all pages** to use `useTranslation()` hook for static text.
+Restructure `Index.tsx` with a fresh, modern layout:
 
-This is a significant effort — the initial implementation will cover the Navbar, Footer, Index page, and key programme pages. Remaining pages can be translated incrementally.
+1. **Hero Section** — Rebrand from "@25" celebration to "ECOWAS Parliament Initiatives" as a recurring platform. Update tagline to reflect ongoing initiatives, not just a 25th anniversary. Keep the anniversary logo but position it as the current flagship initiative.
 
----
+2. **Social Media Banner Strip** — New component showing initiative social media (@ecoparl_hub) with follow buttons for X, Instagram, Facebook, LinkedIn, YouTube. Clear label: "Follow ECOWAS Parliament Initiatives".
 
-### Phase 6: Event Registration / RSVP
+3. **"Did You Know?" Section** — New carousel/card component with interesting facts about the ECOWAS Parliament (e.g., founding year, number of seats, role, achievements).
 
-1. **Create `events` table** — `id`, `title`, `description`, `date`, `location`, `country`, `programme`, `capacity`, `created_at`.
-2. **Create `event_registrations` table** — `id`, `event_id`, `user_id`, `name`, `email`, `country`, `status`, `created_at`.
-3. **RLS:** Public can read events. Authenticated users can register. Admins can manage.
-4. **Create `/events` page** listing upcoming events with RSVP buttons.
-5. **Create RSVP modal/form** — collects name, email, country. Stores in `event_registrations`.
+4. **CountdownTimer** — Keep as-is.
 
----
+5. **PillarsGrid** — Keep as-is.
 
-### Phase 7: Sponsor Dashboard Login
+6. **Countries Section** — Expanded to 12 states with flag images.
 
-1. **Add `sponsor` to `app_role` enum**.
-2. **Create `/sponsor-dashboard` route** behind `ProtectedRoute` with `allowedRoles={["sponsor", "admin", "super_admin"]}`.
-3. **Sponsor dashboard page** shows: visibility metrics, logo placements, event schedule, impact reports — data from existing `sponsors` static data initially, later from database.
-4. **Super admins can invite sponsors** via the invitation system with `sponsor` role.
+7. **Partners Strip** — Update to show AWALCO as partner.
+
+8. **Sponsors Section** — Replace current placeholder sponsors with: NASENI, SMEDAN, Providus Bank, Alliance Economic Research and Ethics.
+
+9. **QuoteStrip** — Keep as-is.
+
+10. **LatestNews** — Keep as-is.
+
+11. **Call-to-Action / Sponsor Banner** — Prominent section encouraging sponsorship with link to sponsor portal and social media.
 
 ---
 
-### Phase 8: Domain Configuration
+## Phase 5: Social Media Integration Across Platform
 
-Domains are configured via Lovable's domain settings, not in code. I will:
-1. Add the domain references in the codebase (meta tags, footer links).
-2. Note that domain setup (ecowasparliamentinitiatives.org + redirects for initiativesparlementecedeao.org, parcedeao.org, ecoparl.org) must be configured in **Project Settings → Domains**.
+### New shared component: `SocialMediaBar.tsx`
+
+A reusable component showing social icons for @ecoparl_hub (initiatives) and a subtle link to the official ECOWAS Parliament accounts (@ecowas_parliament / parl.ecowas.int). This ensures visitors understand the distinction.
+
+**Platforms for @ecoparl_hub:**
+- X (Twitter): x.com/ecoparl_hub
+- Instagram: instagram.com/ecoparl_hub
+- Facebook: facebook.com/ecoparl_hub
+- LinkedIn: linkedin.com/company/ecoparl_hub
+- YouTube: youtube.com/@ecoparl_hub
+
+### Placement:
+- **Footer** — Social media icons with @ecoparl_hub links + "Official ECOWAS Parliament: parl.ecowas.int" separate line
+- **Navbar** — Small social icons or a "Follow us" link
+- **Hero Section** — Social links below CTA buttons
+- **Sponsor Portal** — Social links for sponsors to see reach
+- **Contact page** — Social media section
 
 ---
 
-### Implementation Order
+## Phase 6: Update Partners & Sponsors
 
-Due to the size, implementation will be split across multiple steps:
+### Partners:
+- Replace or add **AWALCO** as a partner in `PartnersStrip.tsx` and `SponsorsSection.tsx`
 
-1. Database migrations (role enum, invitations table, events tables, RLS)
-2. Edge function for invitations
-3. ProtectedRoute + Admin UI updates (user management, role-based views)
-4. Branding/content find-and-replace (12 states, email domains, ECOWAS Parliament naming)
-5. French language system
-6. Event registration pages
-7. Sponsor dashboard
-8. Auth page improvements (redirect after login to appropriate dashboard based on role)
+### Sponsors & Supporters:
+- Replace current placeholder sponsors (West African Development Bank, ECOWAS Commission, etc.) with actual sponsors:
+  - NASENI
+  - SMEDAN
+  - Providus Bank
+  - Alliance Economic Research and Ethics
 
-### Technical Details
+Update `SponsorsSection.tsx` with these real sponsors. Remove tiered structure unless the user specifies tiers.
 
-- **New database tables:** `invitations`, `events`, `event_registrations`
-- **Modified enum:** `app_role` adds `super_admin` and `sponsor`
-- **New edge function:** `invite-user`
-- **New pages:** `/admin/users`, `/events`, `/sponsor-dashboard`
-- **Modified files:** ~15-20 existing files for branding, ~10 for i18n wrapper
-- **New files:** ~8-10 new component/page files
+---
+
+## Phase 7: Branding & Identity Clarification
+
+Across all pages, ensure clear distinction:
+- **This website:** ECOWAS Parliament Initiatives (ecowasparliamentinitiatives.org, @ecoparl_hub)
+- **Official Parliament:** ECOWAS Parliament (parl.ecowas.int, @ecowas_parliament)
+
+Update:
+- Footer: Add "This is the official website of ECOWAS Parliament Initiatives" disclaimer
+- Footer: Link to parl.ecowas.int as "ECOWAS Parliament Official Site"
+- `index.html` meta tags: Update domain references to ecowasparliamentinitiatives.org
+- Email addresses: info@ecowasparliamentinitiatives.org (already correct in Footer)
+
+---
+
+## Phase 8: "Did You Know?" Section
+
+New component `DidYouKnow.tsx` with rotating/carousel facts about ECOWAS Parliament:
+- Founded in 2000 in Abuja, Nigeria
+- 115 seats across 12 member states
+- First Speaker: Hon. Ali Nouhoum Diallo (Mali)
+- The Parliament has observer status at the African Union
+- Parliamentary diplomacy across West Africa
+- etc.
+
+Styled as an engaging card carousel or accordion on the Index page.
+
+---
+
+## Files Modified/Created
+
+**Modified (~15 files):**
+- `supabase/functions/invite-user/index.ts` (fix build error)
+- `src/pages/Index.tsx` (redesigned layout)
+- `src/components/home/HeroSection.tsx` (rebrand + social)
+- `src/components/home/CountriesSection.tsx` (12 states + flag images)
+- `src/components/home/SponsorsSection.tsx` (real sponsors)
+- `src/components/home/PartnersStrip.tsx` (AWALCO)
+- `src/components/layout/Footer.tsx` (social media + branding)
+- `src/components/layout/Navbar.tsx` (social icons)
+- `src/pages/Contact.tsx` (social media section)
+- `src/pages/SponsorPortal.tsx` (social media)
+- `index.html` (meta tags)
+- `src/lib/i18n.tsx` (new translation keys)
+
+**Created (~3-4 files):**
+- `src/components/shared/SocialMediaBar.tsx`
+- `src/components/home/DidYouKnow.tsx`
+- `src/assets/flags/*.png` (12 flag images from uploaded zip)
+
+---
+
+## Implementation Order
+
+1. Fix the build error in `invite-user/index.ts`
+2. Extract flags from zip to `src/assets/flags/`
+3. Create `SocialMediaBar.tsx` shared component
+4. Create `DidYouKnow.tsx` component
+5. Update `CountriesSection.tsx` to 12 states with flag images
+6. Update `SponsorsSection.tsx` and `PartnersStrip.tsx` with real partners/sponsors
+7. Redesign `HeroSection.tsx` and `Index.tsx` layout
+8. Update Footer, Navbar, Contact with social media
+9. Update `index.html` meta tags and i18n keys
 
