@@ -41,7 +41,7 @@ const contactCards = [
   {
     icon: Mail,
     label: "Press & media",
-    value: "media@ecowasparliament25.org",
+    value: "media@ecowasparliamentinitiatives.org",
     desc: "Accreditation · Interviews · Statements",
     colour: "bg-blue-50 text-blue-700",
   },
