@@ -1,170 +1,106 @@
 
 
-# Comprehensive ECOWAS Parliament Initiatives Platform Upgrade
+# Index Page Redesign & Fixes
 
-This plan covers fixing the build error, expanding to 12 member states, redesigning the Index page, adding social media presence, updating partners/sponsors, and ensuring the platform clearly represents ECOWAS Parliament Initiatives (not the Parliament itself).
+## Changes Overview
 
----
+### 1. Fix AWALCO Label — Partner, Not Implementing Partner
+- **SponsorsSection.tsx**: Change "Implementing Partners" heading to just "Partners". Update AWALCO description to "strategic partner" instead of "co-organising partner for governance programmes"
+- **PartnersStrip.tsx**: Change "Implementing Partner" to "Partner"
 
-## Phase 1: Fix Build Error
+### 2. Countries Section — Remove Programme Names
+- **CountriesSection.tsx**: Remove the `role` field and the `<p>` element showing programme names under each flag. Keep only the flag image and country name.
 
-**File:** `supabase/functions/invite-user/index.ts`
+### 3. Scroll to Top on Navigation
+- **App.tsx**: Add a `ScrollToTop` component inside `<BrowserRouter>` that calls `window.scrollTo(0, 0)` on every `location.pathname` change using `useLocation` and `useEffect`.
 
-Replace `anonClient.auth.getClaims()` (which doesn't exist in supabase-js v2) with `anonClient.auth.getUser()` to extract the user ID from the JWT token:
+### 4. Footer — Add Sign In Button
+- **Footer.tsx**: Add a "Sign In" link/button (linking to `/auth`) in the footer bottom bar alongside the existing links.
 
-```typescript
-const { data: userData, error: userError } = await anonClient.auth.getUser();
-if (userError || !userData?.user) { return 401; }
-const userId = userData.user.id;
-```
+### 5. Sponsor Logos — Increase Size & Visibility
+- **SponsorsSection.tsx**: Increase `SponsorLogo` size from `40` to `64`. Make the sponsor cards larger with more padding, bigger text, and a more prominent visual treatment (colored left border, larger card layout).
 
----
+### 6. Full Index Page Redesign — Modern, Interactive, Animated
 
-## Phase 2: Extract & Add Flag Assets
+The redesign will make the page feel premium, dynamic, and visually rich:
 
-Extract `flags.zip` to `src/assets/flags/` — one PNG per ECOWAS member state. These will be imported as ES6 modules in components instead of using emoji flags.
+**A. HeroSection.tsx — Cinematic Hero**
+- Full-viewport-height hero with animated gradient background using CSS keyframes
+- Animated floating geometric shapes (circles, hexagons) in the background using CSS animations
+- Large bold typography with staggered slide-up animations
+- Animated stat counters (12 Member States, 7 Programmes, 115 Parliament Seats) with count-up effect
+- Social media bar with glassmorphism styling
 
----
+**B. CountdownTimer.tsx — Glassmorphic Cards**
+- Glassmorphism-styled countdown blocks with backdrop-blur
+- Subtle pulse animation on the seconds counter
+- Gradient background strip
 
-## Phase 3: Expand to 12 Member States
+**C. PillarsGrid.tsx — Interactive Hover Cards**
+- Cards with gradient border on hover (animated border effect)
+- Icon scales up on hover with color transition
+- Staggered entrance animations with increased delays
+- Add a subtle gradient overlay on hover
 
-Update `CountriesSection.tsx` from 7 countries to all 12 ECOWAS Parliament member states using the uploaded flag images:
+**D. CountriesSection.tsx — Flag Grid with Hover Effects**
+- Larger flag images (from w-12 h-8 to w-16 h-12)
+- On hover: flag scales up slightly, card lifts with shadow, country name gets primary color
+- Clean layout: just flag + name, no programme descriptions
 
-1. Nigeria, Ghana, Cote d'Ivoire, Senegal, Cabo Verde, Togo, Sierra Leone (existing)
-2. Add: Benin, Burkina Faso, Guinea, Guinea-Bissau, Liberia, Mali, Niger, The Gambia
+**E. DidYouKnow.tsx — Animated Fact Cards**
+- Add smooth CSS transitions between facts (fade + slide)
+- Gradient accent bar on the left of the card
+- Auto-play with a visible progress bar
 
-Each country card will use the real flag image instead of emoji.
+**F. QuoteStrip.tsx — Keep as-is** (already well-designed)
 
-Also update the `countries` table seed data if needed.
+**G. SponsorsSection.tsx — Prominent Partner & Sponsor Display**
+- AWALCO partner card: larger, with gradient border and badge
+- Sponsor cards: larger logos (size 64), horizontal layout with colored accent stripe
+- Add subtle hover animations
 
----
+**H. LatestNews.tsx — News Cards with Generated Gradient Images**
+- Replace the plain Calendar icon placeholder with unique gradient backgrounds per category (green for Press Release, yellow for Event, blue for Announcement)
+- Add hover lift and shadow transitions
 
-## Phase 4: Redesign Index Page
+**I. SponsorCTA.tsx — Keep existing** (already good)
 
-Restructure `Index.tsx` with a fresh, modern layout:
+**J. New Section: Animated Stats Bar**
+- A new component between Hero and Countdown showing key numbers
+- 12 Member States | 7 Programmes | 115 Parliament Seats | 25 Years
+- Numbers animate (count up) when scrolled into view
 
-1. **Hero Section** — Rebrand from "@25" celebration to "ECOWAS Parliament Initiatives" as a recurring platform. Update tagline to reflect ongoing initiatives, not just a 25th anniversary. Keep the anniversary logo but position it as the current flagship initiative.
+**K. index.css — New Animations**
+- Add `@keyframes gradient-shift` for animated hero background
+- Add `@keyframes shimmer` for sponsor logo hover
+- Add count-up animation utility
 
-2. **Social Media Banner Strip** — New component showing initiative social media (@ecoparl_hub) with follow buttons for X, Instagram, Facebook, LinkedIn, YouTube. Clear label: "Follow ECOWAS Parliament Initiatives".
+### New Index Page Order
+1. HeroSection (with animated background + stats)
+2. CountdownTimer (glassmorphic)
+3. PillarsGrid (interactive cards)
+4. CountriesSection (flags only, no programme text)
+5. DidYouKnow (animated carousel with progress bar)
+6. QuoteStrip
+7. SponsorsSection (partners + larger sponsor logos)
+8. LatestNews (gradient image placeholders)
+9. SponsorCTA
 
-3. **"Did You Know?" Section** — New carousel/card component with interesting facts about the ECOWAS Parliament (e.g., founding year, number of seats, role, achievements).
+### Technical Details
 
-4. **CountdownTimer** — Keep as-is.
+**Files modified:**
+- `src/App.tsx` — add ScrollToTop component
+- `src/pages/Index.tsx` — reorder sections
+- `src/components/home/HeroSection.tsx` — full redesign with animated background, stat counters
+- `src/components/home/CountdownTimer.tsx` — glassmorphism styling
+- `src/components/home/PillarsGrid.tsx` — enhanced hover effects
+- `src/components/home/CountriesSection.tsx` — remove role text, larger flags
+- `src/components/home/DidYouKnow.tsx` — animated transitions, progress bar
+- `src/components/home/SponsorsSection.tsx` — fix AWALCO label, larger logos
+- `src/components/home/PartnersStrip.tsx` — fix label
+- `src/components/home/LatestNews.tsx` — gradient image placeholders
+- `src/components/layout/Footer.tsx` — add Sign In button
+- `src/index.css` — new keyframe animations
 
-5. **PillarsGrid** — Keep as-is.
-
-6. **Countries Section** — Expanded to 12 states with flag images.
-
-7. **Partners Strip** — Update to show AWALCO as partner.
-
-8. **Sponsors Section** — Replace current placeholder sponsors with: NASENI, SMEDAN, Providus Bank, Alliance Economic Research and Ethics.
-
-9. **QuoteStrip** — Keep as-is.
-
-10. **LatestNews** — Keep as-is.
-
-11. **Call-to-Action / Sponsor Banner** — Prominent section encouraging sponsorship with link to sponsor portal and social media.
-
----
-
-## Phase 5: Social Media Integration Across Platform
-
-### New shared component: `SocialMediaBar.tsx`
-
-A reusable component showing social icons for @ecoparl_hub (initiatives) and a subtle link to the official ECOWAS Parliament accounts (@ecowas_parliament / parl.ecowas.int). This ensures visitors understand the distinction.
-
-**Platforms for @ecoparl_hub:**
-- X (Twitter): x.com/ecoparl_hub
-- Instagram: instagram.com/ecoparl_hub
-- Facebook: facebook.com/ecoparl_hub
-- LinkedIn: linkedin.com/company/ecoparl_hub
-- YouTube: youtube.com/@ecoparl_hub
-
-### Placement:
-- **Footer** — Social media icons with @ecoparl_hub links + "Official ECOWAS Parliament: parl.ecowas.int" separate line
-- **Navbar** — Small social icons or a "Follow us" link
-- **Hero Section** — Social links below CTA buttons
-- **Sponsor Portal** — Social links for sponsors to see reach
-- **Contact page** — Social media section
-
----
-
-## Phase 6: Update Partners & Sponsors
-
-### Partners:
-- Replace or add **AWALCO** as a partner in `PartnersStrip.tsx` and `SponsorsSection.tsx`
-
-### Sponsors & Supporters:
-- Replace current placeholder sponsors (West African Development Bank, ECOWAS Commission, etc.) with actual sponsors:
-  - NASENI
-  - SMEDAN
-  - Providus Bank
-  - Alliance Economic Research and Ethics
-
-Update `SponsorsSection.tsx` with these real sponsors. Remove tiered structure unless the user specifies tiers.
-
----
-
-## Phase 7: Branding & Identity Clarification
-
-Across all pages, ensure clear distinction:
-- **This website:** ECOWAS Parliament Initiatives (ecowasparliamentinitiatives.org, @ecoparl_hub)
-- **Official Parliament:** ECOWAS Parliament (parl.ecowas.int, @ecowas_parliament)
-
-Update:
-- Footer: Add "This is the official website of ECOWAS Parliament Initiatives" disclaimer
-- Footer: Link to parl.ecowas.int as "ECOWAS Parliament Official Site"
-- `index.html` meta tags: Update domain references to ecowasparliamentinitiatives.org
-- Email addresses: info@ecowasparliamentinitiatives.org (already correct in Footer)
-
----
-
-## Phase 8: "Did You Know?" Section
-
-New component `DidYouKnow.tsx` with rotating/carousel facts about ECOWAS Parliament:
-- Founded in 2000 in Abuja, Nigeria
-- 115 seats across 12 member states
-- First Speaker: Hon. Ali Nouhoum Diallo (Mali)
-- The Parliament has observer status at the African Union
-- Parliamentary diplomacy across West Africa
-- etc.
-
-Styled as an engaging card carousel or accordion on the Index page.
-
----
-
-## Files Modified/Created
-
-**Modified (~15 files):**
-- `supabase/functions/invite-user/index.ts` (fix build error)
-- `src/pages/Index.tsx` (redesigned layout)
-- `src/components/home/HeroSection.tsx` (rebrand + social)
-- `src/components/home/CountriesSection.tsx` (12 states + flag images)
-- `src/components/home/SponsorsSection.tsx` (real sponsors)
-- `src/components/home/PartnersStrip.tsx` (AWALCO)
-- `src/components/layout/Footer.tsx` (social media + branding)
-- `src/components/layout/Navbar.tsx` (social icons)
-- `src/pages/Contact.tsx` (social media section)
-- `src/pages/SponsorPortal.tsx` (social media)
-- `index.html` (meta tags)
-- `src/lib/i18n.tsx` (new translation keys)
-
-**Created (~3-4 files):**
-- `src/components/shared/SocialMediaBar.tsx`
-- `src/components/home/DidYouKnow.tsx`
-- `src/assets/flags/*.png` (12 flag images from uploaded zip)
-
----
-
-## Implementation Order
-
-1. Fix the build error in `invite-user/index.ts`
-2. Extract flags from zip to `src/assets/flags/`
-3. Create `SocialMediaBar.tsx` shared component
-4. Create `DidYouKnow.tsx` component
-5. Update `CountriesSection.tsx` to 12 states with flag images
-6. Update `SponsorsSection.tsx` and `PartnersStrip.tsx` with real partners/sponsors
-7. Redesign `HeroSection.tsx` and `Index.tsx` layout
-8. Update Footer, Navbar, Contact with social media
-9. Update `index.html` meta tags and i18n keys
+**No new dependencies required** — all animations use CSS keyframes and Tailwind utilities.
 
