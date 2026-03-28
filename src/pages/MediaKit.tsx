@@ -308,7 +308,7 @@ export default function MediaKit() {
                       For urgent enquiries, press accreditation, interview requests, or embargoed briefings, contact our Communications Director directly.
                     </p>
                     <p className="text-primary-foreground font-semibold mt-3">Ibrahim Traore — Communications Director</p>
-                    <p className="text-primary-foreground/75 text-sm">media@ecowasparliament25.org · Response within 24hrs</p>
+                    <p className="text-primary-foreground/75 text-sm">media@ecowasparliamentinitiatives.org · Response within 24hrs</p>
                   </div>
                   <div className="flex flex-col gap-2">
                     <Button variant="secondary" className="gap-2 whitespace-nowrap">

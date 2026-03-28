@@ -321,7 +321,7 @@ export default function Contact() {
                     </p>
                     <Button size="sm" variant="secondary" className="w-full gap-2">
                       <Mail className="h-4 w-4" />
-                      sponsors@ecowasparliament25.org
+                      sponsors@ecowasparliamentinitiatives.org
                     </Button>
                   </CardContent>
                 </Card>
