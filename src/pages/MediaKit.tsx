@@ -59,7 +59,7 @@ const keyFacts = [
   { label: "Anniversary year",    value: "2026" },
   { label: "Programme pillars",   value: "7" },
   { label: "Events across 2026",  value: "40+" },
-  { label: "Countries reached",   value: "All 15 ECOWAS states" },
+  { label: "Countries reached",   value: "All 12 ECOWAS Parliament states" },
   { label: "Programme partners",  value: "3 implementing partners" },
   { label: "Sponsors onboard",    value: "8 (Gold / Silver / Bronze)" },
 ];
