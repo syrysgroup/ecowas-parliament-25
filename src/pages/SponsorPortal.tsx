@@ -11,7 +11,7 @@ import borderlessLogo from "@/assets/borderless-trade-logo.png";
 // ─── Why sponsor? bullets ─────────────────────────────────────────────────────
 const whyPoints = [
   {
-    title: "Reach 15 nations",
+    title: "Reach 12 nations",
     desc: "The programme operates across all ECOWAS member states, giving sponsors unparalleled visibility in a bloc of 400 million people.",
   },
   {
