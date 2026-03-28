@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { LogIn } from "lucide-react";
 import { useTranslation } from "@/lib/i18n";
 import ecowasLogo from "@/assets/ecowas-parliament-logo.png";
 import anniversary25Logo from "@/assets/parliament-25-logo.png";
@@ -104,7 +105,11 @@ const Footer = () => {
               This is the official website of ECOWAS Parliament Initiatives — not the ECOWAS Parliament itself.
             </p>
           </div>
-          <div className="flex gap-4">
+          <div className="flex flex-wrap items-center gap-4">
+            <Link to="/auth" className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:text-primary/80 transition-colors">
+              <LogIn className="h-3.5 w-3.5" />
+              Sign In
+            </Link>
             <Link to="/contact" className="text-xs text-muted-foreground hover:text-primary transition-colors">{t("nav.contact")}</Link>
             <Link to="/media-kit" className="text-xs text-muted-foreground hover:text-primary transition-colors">{t("common.mediaKit")}</Link>
             <Link to="/sponsors" className="text-xs text-muted-foreground hover:text-primary transition-colors">{t("common.sponsor")}</Link>

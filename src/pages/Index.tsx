@@ -5,8 +5,8 @@ import PillarsGrid from "@/components/home/PillarsGrid";
 import CountriesSection from "@/components/home/CountriesSection";
 import DidYouKnow from "@/components/home/DidYouKnow";
 import QuoteStrip from "@/components/home/QuoteStrip";
-import LatestNews from "@/components/home/LatestNews";
 import SponsorsSection from "@/components/home/SponsorsSection";
+import LatestNews from "@/components/home/LatestNews";
 import SponsorCTA from "@/components/home/SponsorCTA";
 
 const Index = () => {

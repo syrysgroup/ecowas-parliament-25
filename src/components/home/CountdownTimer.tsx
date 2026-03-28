@@ -31,8 +31,9 @@ const CountdownTimer = () => {
   ];
 
   return (
-    <section className="py-16 bg-muted">
-      <div className="container text-center">
+    <section className="py-16 bg-gradient-ecowas relative overflow-hidden">
+      <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" />
+      <div className="container relative text-center">
         <p className="text-sm uppercase tracking-wider text-muted-foreground font-semibold mb-2">
           {timeLeft.past ? "Programme Launched" : "Next Major Event — Media Announcement Launch"}
         </p>
@@ -40,10 +41,11 @@ const CountdownTimer = () => {
           5th March 2026 · Abuja, Nigeria
         </p>
         <div className="flex justify-center gap-4 md:gap-6">
-          {blocks.map((block) => (
+          {blocks.map((block, i) => (
             <div key={block.label} className="flex flex-col items-center">
-              <div className="w-20 h-20 md:w-24 md:h-24 rounded-xl bg-card border border-border shadow-lg flex items-center justify-center">
-                <span className="text-3xl md:text-4xl font-black text-primary animate-count-in">
+              <div className="w-20 h-20 md:w-24 md:h-24 rounded-2xl backdrop-blur-md bg-card/80 border border-border/50 shadow-xl flex items-center justify-center">
+                <span className={`text-3xl md:text-4xl font-black text-primary animate-count-in ${block.label === "Seconds" ? "animate-pulse" : ""}`}
+                  style={block.label === "Seconds" ? { animationDuration: "2s" } : undefined}>
                   {String(block.value).padStart(2, "0")}
                 </span>
               </div>

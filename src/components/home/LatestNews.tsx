@@ -1,7 +1,13 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, Calendar } from "lucide-react";
+import { ArrowRight, Newspaper, CalendarDays, Megaphone } from "lucide-react";
 import AnimatedSection from "@/components/shared/AnimatedSection";
 import { Button } from "@/components/ui/button";
+
+const categoryStyles: Record<string, { gradient: string; icon: typeof Newspaper }> = {
+  "Press Release": { gradient: "from-primary/30 to-ecowas-lime/20", icon: Newspaper },
+  "Event": { gradient: "from-ecowas-yellow/30 to-accent/20", icon: CalendarDays },
+  "Announcement": { gradient: "from-ecowas-blue/30 to-primary/20", icon: Megaphone },
+};
 
 const placeholderNews = [
   {
@@ -21,7 +27,7 @@ const placeholderNews = [
   {
     id: "3",
     title: "Strategic Partnerships Announced for @25 Celebrations",
-    excerpt: "Duchess NL, CMD Tourism & Trade, and Borderless Trade & Investment join as implementing partners.",
+    excerpt: "AWALCO and institutional sponsors join as partners to support ECOWAS Parliament Initiatives across West Africa.",
     date: "25 February 2026",
     category: "Announcement",
   },
@@ -46,27 +52,32 @@ const LatestNews = () => {
         </AnimatedSection>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {placeholderNews.map((article, i) => (
-            <AnimatedSection key={article.id} delay={i * 100}>
-              <div className="group rounded-xl border border-border bg-card overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-                <div className="h-40 bg-gradient-to-br from-primary/20 to-ecowas-yellow/10 flex items-center justify-center">
-                  <Calendar className="h-10 w-10 text-primary/40" />
-                </div>
-                <div className="p-5">
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-xs font-semibold uppercase tracking-wider text-primary bg-primary/10 px-2 py-0.5 rounded-full">
-                      {article.category}
-                    </span>
-                    <span className="text-xs text-muted-foreground">{article.date}</span>
+          {placeholderNews.map((article, i) => {
+            const style = categoryStyles[article.category] || categoryStyles["Press Release"];
+            const Icon = style.icon;
+            return (
+              <AnimatedSection key={article.id} delay={i * 100}>
+                <div className="group rounded-2xl border border-border bg-card overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
+                  <div className={`h-44 bg-gradient-to-br ${style.gradient} flex items-center justify-center relative overflow-hidden`}>
+                    <div className="absolute inset-0 bg-gradient-to-t from-card/20 to-transparent" />
+                    <Icon className="h-12 w-12 text-primary/30 group-hover:scale-110 transition-transform duration-500" />
                   </div>
-                  <h3 className="font-bold text-card-foreground group-hover:text-primary transition-colors leading-snug">
-                    {article.title}
-                  </h3>
-                  <p className="mt-2 text-sm text-muted-foreground line-clamp-2">{article.excerpt}</p>
+                  <div className="p-5">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="text-xs font-semibold uppercase tracking-wider text-primary bg-primary/10 px-2.5 py-1 rounded-full">
+                        {article.category}
+                      </span>
+                      <span className="text-xs text-muted-foreground">{article.date}</span>
+                    </div>
+                    <h3 className="font-bold text-card-foreground group-hover:text-primary transition-colors leading-snug">
+                      {article.title}
+                    </h3>
+                    <p className="mt-2 text-sm text-muted-foreground line-clamp-2">{article.excerpt}</p>
+                  </div>
                 </div>
-              </div>
-            </AnimatedSection>
-          ))}
+              </AnimatedSection>
+            );
+          })}
         </div>
       </div>
     </section>
