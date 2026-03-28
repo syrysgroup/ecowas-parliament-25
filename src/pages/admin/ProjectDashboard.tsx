@@ -79,7 +79,7 @@ const tasks: Task[] = [
   { id:"t14", title:"Newsletter subscriber capture",                   status:"backlog",     priority:"high",     programme:"Website",     assignee:"Unassigned",     assigneeInitials:"?"                             },
   { id:"t15", title:"Q2 sponsor impact report template",               status:"backlog",     priority:"high",     programme:"Sponsors",    assignee:"Mariama Camara", assigneeInitials:"MC"                            },
   { id:"t16", title:"Press release — programme launch",                status:"done",        priority:"medium",   programme:"Comms",       assignee:"Ibrahim Traore", assigneeInitials:"IT", due:"5 Mar"               },
-  { id:"t17", title:"15-country invitation letters",                   status:"done",        priority:"high",     programme:"Admin",       assignee:"Awa Sow",        assigneeInitials:"AS", due:"1 Mar"               },
+  { id:"t17", title:"12-country invitation letters",                   status:"done",        priority:"high",     programme:"Admin",       assignee:"Awa Sow",        assigneeInitials:"AS", due:"1 Mar"               },
   { id:"t18", title:"Parliamentary Awards page published",             status:"done",        priority:"medium",   programme:"Website",     assignee:"Seun Adesanya",  assigneeInitials:"SA", due:"15 Mar"              },
   { id:"t19", title:"Supabase RLS policy review",                      status:"done",        priority:"high",     programme:"Tech",        assignee:"Moussa Coulibaly",assigneeInitials:"MO", due:"14 Mar"             },
   { id:"t20", title:"Sponsor logos — asset library",                   status:"done",        priority:"medium",   programme:"Sponsors",    assignee:"Mariama Camara", assigneeInitials:"MC", due:"10 Mar"              },

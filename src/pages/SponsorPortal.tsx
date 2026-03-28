@@ -397,7 +397,7 @@ export default function SponsorPortal() {
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Button size="lg" className="gap-2">
-                <Mail className="h-5 w-5" /> sponsors@ecowasparliament25.org
+                <Mail className="h-5 w-5" /> sponsors@ecowasparliamentinitiatives.org
               </Button>
               <Button size="lg" variant="outline" className="gap-2">
                 <Video className="h-5 w-5" /> Book a 30-min briefing call

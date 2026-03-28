@@ -13,7 +13,7 @@ import {
 const artForms = [
   { title: "Fashion", desc: "West African textile traditions — from Kente and Adire to contemporary haute couture — showcased on the runway.", icon: <Sparkles className="h-5 w-5" /> },
   { title: "Film", desc: "Screenings of Nollywood, Ghallywood, and emerging cinema from across the region, with filmmaker Q&As.", icon: <Film className="h-5 w-5" /> },
-  { title: "Food", desc: "Culinary showcases featuring jollof, thieboudienne, attieke, and fusion cuisines from all 15 Member States.", icon: <UtensilsCrossed className="h-5 w-5" /> },
+  { title: "Food", desc: "Culinary showcases featuring jollof, thieboudienne, attieke, and fusion cuisines from all 12 Member States.", icon: <UtensilsCrossed className="h-5 w-5" /> },
   { title: "Literature", desc: "Readings, panel discussions, and book launches celebrating West African storytelling traditions.", icon: <BookOpen className="h-5 w-5" /> },
   { title: "Music", desc: "Live performances spanning Afrobeats, Mbalax, Highlife, Fuji, Coupé-Décalé, and traditional rhythms.", icon: <Music className="h-5 w-5" /> },
   { title: "Visual Art", desc: "Exhibitions of paintings, sculpture, photography, and mixed media from emerging and established artists.", icon: <Paintbrush className="h-5 w-5" /> },

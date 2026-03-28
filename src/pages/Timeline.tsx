@@ -57,7 +57,7 @@ const events = [
     country: "🇬🇭 Ghana / 🇸🇳 Senegal",
     city: "Accra & Dakar",
     title: "ECOWAS Smart Challenge & Media Training Forum",
-    description: "National youth innovation competitions begin in Ghana and Senegal, with hundreds of young entrepreneurs pitching solutions to regional challenges. In Dakar, a regional media training forum gathers journalists from 15 countries to deepen coverage of parliamentary governance.",
+    description: "National youth innovation competitions begin in Ghana and Senegal, with hundreds of young entrepreneurs pitching solutions to regional challenges. In Dakar, a regional media training forum gathers journalists from 12 countries to deepen coverage of parliamentary governance.",
     programme: "youth",
     deliverables: ["National competitions launched", "Media training for 50+ journalists", "Innovation track registrations"],
     highlight: true,
