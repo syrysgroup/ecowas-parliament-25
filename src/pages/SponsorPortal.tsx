@@ -12,7 +12,7 @@ import borderlessLogo from "@/assets/borderless-trade-logo.png";
 const whyPoints = [
   {
     title: "Reach 12 nations",
-    desc: "The programme operates across all ECOWAS member states, giving sponsors unparalleled visibility in a bloc of 400 million people.",
+    desc: "The programme operates across all ECOWAS Parliament member states, giving sponsors unparalleled visibility in a bloc of 400 million people.",
   },
   {
     title: "Align with democracy & development",
