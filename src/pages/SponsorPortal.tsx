@@ -91,7 +91,7 @@ const tiers = [
 // ─── Stats ─────────────────────────────────────────────────────────────────────
 const stats = [
   { value: "400M+", label: "People in the ECOWAS bloc" },
-  { value: "15",    label: "Member states reached" },
+  { value: "12",    label: "Member states reached" },
   { value: "40+",   label: "Events across 2026" },
   { value: "2.4M",  label: "Combined programme audience (est.)" },
 ];
