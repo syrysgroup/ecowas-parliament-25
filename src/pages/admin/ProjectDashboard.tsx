@@ -79,7 +79,7 @@ const tasks: Task[] = [
   { id:"t14", title:"Newsletter subscriber capture",                   status:"backlog",     priority:"high",     programme:"Website",     assignee:"Unassigned",     assigneeInitials:"?"                             },
   { id:"t15", title:"Q2 sponsor impact report template",               status:"backlog",     priority:"high",     programme:"Sponsors",    assignee:"Mariama Camara", assigneeInitials:"MC"                            },
   { id:"t16", title:"Press release — programme launch",                status:"done",        priority:"medium",   programme:"Comms",       assignee:"Ibrahim Traore", assigneeInitials:"IT", due:"5 Mar"               },
-  { id:"t17", title:"15-country invitation letters",                   status:"done",        priority:"high",     programme:"Admin",       assignee:"Awa Sow",        assigneeInitials:"AS", due:"1 Mar"               },
+  { id:"t17", title:"12-country invitation letters",                   status:"done",        priority:"high",     programme:"Admin",       assignee:"Awa Sow",        assigneeInitials:"AS", due:"1 Mar"               },
   { id:"t18", title:"Parliamentary Awards page published",             status:"done",        priority:"medium",   programme:"Website",     assignee:"Seun Adesanya",  assigneeInitials:"SA", due:"15 Mar"              },
   { id:"t19", title:"Supabase RLS policy review",                      status:"done",        priority:"high",     programme:"Tech",        assignee:"Moussa Coulibaly",assigneeInitials:"MO", due:"14 Mar"             },
   { id:"t20", title:"Sponsor logos — asset library",                   status:"done",        priority:"medium",   programme:"Sponsors",    assignee:"Mariama Camara", assigneeInitials:"MC", due:"10 Mar"              },
@@ -111,7 +111,7 @@ const docs: DocEntry[] = [
     preview:{
       tag:"Press Release · For Immediate Release · 2 March 2026",
       heading:"ECOWAS Parliament Launches Year-Long 25th Anniversary Commemorative Programme",
-      body:`Abuja, 2 March 2026 — The ECOWAS Parliament has officially launched a comprehensive year-long programme marking its 25th anniversary. Spanning all 15 member states and seven programme pillars, the initiative will mobilise youth leaders, trade practitioners, women entrepreneurs, and civic educators across West Africa throughout 2026.\n\nThe programme — titled "25 Years of Parliamentary Democracy in West Africa" — features the Youth Innovation Summit, Trade & SME Forums, Women's Empowerment Platform, Cultural Festivals, Civic Education campaigns, the inaugural Parliamentary Excellence Awards, and the flagship Youth Parliament Simulation. Events will take place across Abuja, Accra, Dakar, Lagos, and 11 additional national capitals.\n\nThe programme is supported by the African Development Bank, the European Union, UNDP, UN Women, and a growing consortium of regional partners.`,
+      body:`Abuja, 2 March 2026 — The ECOWAS Parliament has officially launched a comprehensive year-long programme marking its 25th anniversary. Spanning all 12 member states and seven programme pillars, the initiative will mobilise youth leaders, trade practitioners, women entrepreneurs, and civic educators across West Africa throughout 2026.\n\nThe programme — titled "25 Years of Parliamentary Democracy in West Africa" — features the Youth Innovation Summit, Trade & SME Forums, Women's Empowerment Platform, Cultural Festivals, Civic Education campaigns, the inaugural Parliamentary Excellence Awards, and the flagship Youth Parliament Simulation. Events will take place across Abuja, Accra, Dakar, Lagos, and additional national capitals.\n\nThe programme is supported by the African Development Bank, the European Union, UNDP, UN Women, and a growing consortium of regional partners.`,
     }
   },
   {
@@ -127,7 +127,7 @@ const docs: DocEntry[] = [
     preview:{
       tag:"Programme · 5 March 2026",
       heading:"Programme of Events — 25th Anniversary Media Announcement",
-      body:`This document outlines the full schedule of events for the ECOWAS Parliament 25th Anniversary year. Events span all 15 member states from January through December 2026. Flagship moments include the Opening Ceremony (Abuja, March), Youth Innovation Summit (Accra, May), Trade Forums (Lagos/Dakar, June), Women's Forum (Freetown, July), Cultural Festivals (August–September), and the Anniversary Gala (Abuja, December).\n\nAll events are open to media accreditation. Photography guidelines and interview requests should be directed to the Communications Director. Event registration links will be published on the official website.`,
+      body:`This document outlines the full schedule of events for the ECOWAS Parliament 25th Anniversary year. Events span all 12 member states from January through December 2026. Flagship moments include the Opening Ceremony (Abuja, March), Youth Innovation Summit (Accra, May), Trade Forums (Lagos/Dakar, June), Women's Forum (Freetown, July), Cultural Festivals (August–September), and the Anniversary Gala (Abuja, December).\n\nAll events are open to media accreditation. Photography guidelines and interview requests should be directed to the Communications Director. Event registration links will be published on the official website.`,
     }
   },
   {
@@ -151,7 +151,7 @@ const docs: DocEntry[] = [
     preview:{
       tag:"Youth Parliament · Rules of Procedure · March 2026",
       heading:"Youth Parliament Simulation — Rules of Procedure",
-      body:"The Rules of Procedure govern all aspects of the Youth Parliament Simulation including delegate accreditation, committee formation, debate procedure, resolution drafting, voting rules, and appeals. The simulation is modelled on the actual ECOWAS Parliament rules with modifications appropriate for youth delegates aged 18–30 from all 15 member states.",
+      body:"The Rules of Procedure govern all aspects of the Youth Parliament Simulation including delegate accreditation, committee formation, debate procedure, resolution drafting, voting rules, and appeals. The simulation is modelled on the actual ECOWAS Parliament rules with modifications appropriate for youth delegates aged 18–30 from all 12 member states.",
     }
   },
   {

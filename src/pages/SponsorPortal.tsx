@@ -11,8 +11,8 @@ import borderlessLogo from "@/assets/borderless-trade-logo.png";
 // ─── Why sponsor? bullets ─────────────────────────────────────────────────────
 const whyPoints = [
   {
-    title: "Reach 15 nations",
-    desc: "The programme operates across all ECOWAS member states, giving sponsors unparalleled visibility in a bloc of 400 million people.",
+    title: "Reach 12 nations",
+    desc: "The programme operates across all ECOWAS Parliament member states, giving sponsors unparalleled visibility in a bloc of 400 million people.",
   },
   {
     title: "Align with democracy & development",
@@ -91,7 +91,7 @@ const tiers = [
 // ─── Stats ─────────────────────────────────────────────────────────────────────
 const stats = [
   { value: "400M+", label: "People in the ECOWAS bloc" },
-  { value: "15",    label: "Member states reached" },
+  { value: "12",    label: "Member states reached" },
   { value: "40+",   label: "Events across 2026" },
   { value: "2.4M",  label: "Combined programme audience (est.)" },
 ];
@@ -127,7 +127,7 @@ const implementingPartners = [
     lead: "Dr. Victoria Akai IIPM",
     role: "CEO",
     logo: duchessLogo,
-    description: "Lead implementing partner coordinating the full year-long programme across all 15 ECOWAS member states.",
+    description: "Lead implementing partner coordinating the full year-long programme across all 12 ECOWAS Parliament member states.",
   },
   {
     name: "Borderless Trade & Investment",
@@ -160,7 +160,7 @@ export default function SponsorPortal() {
               Partner with West Africa's Premier Parliamentary Anniversary
             </h1>
             <p className="mt-4 text-lg text-primary-foreground/70 max-w-2xl">
-              The ECOWAS Parliament 25th Anniversary Programme runs across all 15 member states throughout 2026 — 40+ events, 7 programme pillars, and a combined audience reach exceeding 2.4 million. Become part of history.
+              The ECOWAS Parliament 25th Anniversary Programme runs across all 12 member states throughout 2026 — 40+ events, 7 programme pillars, and a combined audience reach exceeding 2.4 million. Become part of history.
             </p>
             <div className="flex flex-wrap gap-3 mt-6">
               <Button variant="secondary" size="lg" className="gap-2">
@@ -397,7 +397,7 @@ export default function SponsorPortal() {
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Button size="lg" className="gap-2">
-                <Mail className="h-5 w-5" /> sponsors@ecowasparliament25.org
+                <Mail className="h-5 w-5" /> sponsors@ecowasparliamentinitiatives.org
               </Button>
               <Button size="lg" variant="outline" className="gap-2">
                 <Video className="h-5 w-5" /> Book a 30-min briefing call

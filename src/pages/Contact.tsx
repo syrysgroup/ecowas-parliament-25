@@ -41,21 +41,21 @@ const contactCards = [
   {
     icon: Mail,
     label: "Press & media",
-    value: "media@ecowasparliament25.org",
+    value: "media@ecowasparliamentinitiatives.org",
     desc: "Accreditation · Interviews · Statements",
     colour: "bg-blue-50 text-blue-700",
   },
   {
     icon: Mail,
     label: "Sponsorship enquiries",
-    value: "sponsors@ecowasparliament25.org",
+    value: "sponsors@ecowasparliamentinitiatives.org",
     desc: "Partnerships · Tier packages · Agreements",
     colour: "bg-amber-50 text-amber-700",
   },
   {
     icon: Mail,
     label: "General programme",
-    value: "info@ecowasparliament25.org",
+    value: "info@ecowasparliamentinitiatives.org",
     desc: "Events · Participation · Delegations",
     colour: "bg-primary/5 text-primary",
   },
@@ -95,7 +95,7 @@ export default function Contact() {
             </Badge>
             <h1 className="text-4xl md:text-5xl font-black">Contact Us</h1>
             <p className="mt-4 text-lg text-primary-foreground/70 max-w-2xl">
-              Reach the ECOWAS Parliament 25th Anniversary team for press accreditation, sponsorship, event enquiries, programme collaboration, or general information.
+              Reach the ECOWAS Parliament 25th Anniversary Initiatives team for press accreditation, sponsorship, event enquiries, programme collaboration, or general information.
             </p>
           </AnimatedSection>
         </div>
@@ -293,7 +293,7 @@ export default function Contact() {
                 <div className="space-y-3">
                   {[
                     { icon: Globe,  label:"Official website",  value:"ecowasparliament.net",       href:"https://www.ecowasparliament.net" },
-                    { icon: Globe,  label:"Programme website", value:"ecowasparliament25.org",      href:"#" },
+                    { icon: Globe,  label:"Programme website", value:"ecowasparliamentinitiatives.org", href:"https://ecowasparliamentinitiatives.org" },
                   ].map(s => {
                     const Icon = s.icon;
                     return (
@@ -321,7 +321,7 @@ export default function Contact() {
                     </p>
                     <Button size="sm" variant="secondary" className="w-full gap-2">
                       <Mail className="h-4 w-4" />
-                      sponsors@ecowasparliament25.org
+                      sponsors@ecowasparliamentinitiatives.org
                     </Button>
                   </CardContent>
                 </Card>

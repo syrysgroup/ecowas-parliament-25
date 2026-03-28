@@ -5,12 +5,14 @@ import Layout from "@/components/layout/Layout";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 
+type AppRole = "super_admin" | "admin" | "moderator" | "sponsor";
+
 interface ProtectedRouteProps {
   children: ReactNode;
-  allowedRoles?: Array<"admin" | "moderator">;
+  allowedRoles?: AppRole[];
 }
 
-const ProtectedRoute = ({ children, allowedRoles = ["admin", "moderator"] }: ProtectedRouteProps) => {
+const ProtectedRoute = ({ children, allowedRoles = ["super_admin", "admin", "moderator"] }: ProtectedRouteProps) => {
   const { user, loading } = useAuth();
   const location = useLocation();
   const [checkingRole, setCheckingRole] = useState(true);
@@ -73,7 +75,7 @@ const ProtectedRoute = ({ children, allowedRoles = ["admin", "moderator"] }: Pro
               </div>
               <h1 className="text-3xl font-black text-card-foreground">Restricted Area</h1>
               <p className="mt-3 text-muted-foreground">
-                This dashboard is only available to authorised admins and moderators.
+                This dashboard is only available to authorised team members.
               </p>
             </div>
           </div>

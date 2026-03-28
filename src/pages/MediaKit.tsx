@@ -33,7 +33,7 @@ const spokespeople = [
   {
     name: "Speaker of the ECOWAS Parliament",
     title: "Right Honourable [Name]",
-    note: "Available for broadcast interviews with advance notice. Interview requests via media@ecowasparliament25.org",
+    note: "Available for broadcast interviews with advance notice. Interview requests via media@ecowasparliamentinitiatives.org",
     initials: "SP",
     colour: "bg-primary/10 text-primary",
   },
@@ -55,11 +55,11 @@ const spokespeople = [
 
 const keyFacts = [
   { label: "Founded",             value: "2001" },
-  { label: "Member states",       value: "15" },
+  { label: "Member states",       value: "12" },
   { label: "Anniversary year",    value: "2026" },
   { label: "Programme pillars",   value: "7" },
   { label: "Events across 2026",  value: "40+" },
-  { label: "Countries reached",   value: "All 15 ECOWAS states" },
+  { label: "Countries reached",   value: "All 12 ECOWAS Parliament states" },
   { label: "Programme partners",  value: "3 implementing partners" },
   { label: "Sponsors onboard",    value: "8 (Gold / Silver / Bronze)" },
 ];
@@ -139,7 +139,7 @@ export default function MediaKit() {
                 <Download className="h-4 w-4" /> Full media pack (ZIP, 145 MB)
               </Button>
               <Button variant="outline" className="gap-2 bg-transparent text-primary-foreground border-primary-foreground/30 hover:bg-primary-foreground/10">
-                <Mail className="h-4 w-4" /> media@ecowasparliament25.org
+                <Mail className="h-4 w-4" /> media@ecowasparliamentinitiatives.org
               </Button>
             </div>
           </AnimatedSection>
@@ -153,7 +153,7 @@ export default function MediaKit() {
             <Clock className="h-5 w-5 text-amber-700 flex-shrink-0 mt-0.5" />
             <p className="text-sm text-amber-800">
               <strong>Media accreditation:</strong> Applications are open for all 2026 events. Email{" "}
-              <a href="mailto:media@ecowasparliament25.org" className="underline">media@ecowasparliament25.org</a>{" "}
+              <a href="mailto:media@ecowasparliamentinitiatives.org" className="underline">media@ecowasparliamentinitiatives.org</a>{" "}
               at least 5 working days before each event. Include your outlet name, assignment, and credential number.
             </p>
           </div>
@@ -234,7 +234,7 @@ export default function MediaKit() {
               </table>
             </div>
             <p className="text-xs text-muted-foreground mt-3">
-              Dates and locations subject to confirmation. Subscribe to media updates at media@ecowasparliament25.org
+              Dates and locations subject to confirmation. Subscribe to media updates at media@ecowasparliamentinitiatives.org
             </p>
           </AnimatedSection>
 
@@ -308,7 +308,7 @@ export default function MediaKit() {
                       For urgent enquiries, press accreditation, interview requests, or embargoed briefings, contact our Communications Director directly.
                     </p>
                     <p className="text-primary-foreground font-semibold mt-3">Ibrahim Traore — Communications Director</p>
-                    <p className="text-primary-foreground/75 text-sm">media@ecowasparliament25.org · Response within 24hrs</p>
+                    <p className="text-primary-foreground/75 text-sm">media@ecowasparliamentinitiatives.org · Response within 24hrs</p>
                   </div>
                   <div className="flex flex-col gap-2">
                     <Button variant="secondary" className="gap-2 whitespace-nowrap">
