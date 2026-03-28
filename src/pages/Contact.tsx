@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Layout from "@/components/layout/Layout";
 import AnimatedSection from "@/components/shared/AnimatedSection";
+import SocialMediaBar from "@/components/shared/SocialMediaBar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -289,11 +290,16 @@ export default function Contact() {
               </AnimatedSection>
 
               <AnimatedSection delay={200}>
-                <h3 className="text-lg font-bold mb-4">Social & web</h3>
+                <h3 className="text-lg font-bold mb-4">Follow @ecoparl_hub</h3>
+                <SocialMediaBar variant="full" showParliamentLink={true} />
+              </AnimatedSection>
+
+              <AnimatedSection delay={240}>
+                <h3 className="text-lg font-bold mb-4">Web</h3>
                 <div className="space-y-3">
                   {[
-                    { icon: Globe,  label:"Official website",  value:"ecowasparliament.net",       href:"https://www.ecowasparliament.net" },
-                    { icon: Globe,  label:"Programme website", value:"ecowasparliamentinitiatives.org", href:"https://ecowasparliamentinitiatives.org" },
+                    { icon: Globe,  label:"ECOWAS Parliament (Official)",  value:"parl.ecowas.int",       href:"https://parl.ecowas.int" },
+                    { icon: Globe,  label:"Initiatives Website", value:"ecowasparliamentinitiatives.org", href:"https://ecowasparliamentinitiatives.org" },
                   ].map(s => {
                     const Icon = s.icon;
                     return (
