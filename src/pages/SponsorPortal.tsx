@@ -127,7 +127,7 @@ const implementingPartners = [
     lead: "Dr. Victoria Akai IIPM",
     role: "CEO",
     logo: duchessLogo,
-    description: "Lead implementing partner coordinating the full year-long programme across all 15 ECOWAS member states.",
+    description: "Lead implementing partner coordinating the full year-long programme across all 12 ECOWAS Parliament member states.",
   },
   {
     name: "Borderless Trade & Investment",
