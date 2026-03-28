@@ -55,7 +55,7 @@ const spokespeople = [
 
 const keyFacts = [
   { label: "Founded",             value: "2001" },
-  { label: "Member states",       value: "15" },
+  { label: "Member states",       value: "12" },
   { label: "Anniversary year",    value: "2026" },
   { label: "Programme pillars",   value: "7" },
   { label: "Events across 2026",  value: "40+" },
