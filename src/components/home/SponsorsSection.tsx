@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 const partners = [
   {
     name: "AWALCO",
-    description: "Association of West African Living Councils — strategic co-organising partner for governance programmes.",
+    description: "Association of West African Living Councils — strategic partner for ECOWAS Parliament Initiatives.",
   },
 ];
 
@@ -27,15 +27,15 @@ const SponsorsSection = () => {
               Programme Partners
             </Badge>
             <h2 className="text-2xl md:text-3xl font-bold text-foreground">
-              Implementing Partners
+              Partners
             </h2>
           </AnimatedSection>
 
           <div className="flex justify-center">
             {partners.map((partner, i) => (
               <AnimatedSection key={partner.name} delay={i * 120}>
-                <div className="p-6 rounded-xl bg-card border-2 border-primary/20 shadow-md max-w-md text-center">
-                  <h3 className="font-bold text-card-foreground text-xl mb-2">{partner.name}</h3>
+                <div className="p-8 rounded-2xl bg-card border-2 border-primary/20 shadow-lg max-w-md text-center hover:shadow-xl hover:border-primary/40 transition-all duration-300">
+                  <h3 className="font-black text-card-foreground text-2xl mb-3">{partner.name}</h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">{partner.description}</p>
                 </div>
               </AnimatedSection>
@@ -54,12 +54,13 @@ const SponsorsSection = () => {
             </p>
           </AnimatedSection>
 
-          <div className="flex flex-wrap justify-center gap-4">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {sponsors.map((sponsor) => (
               <AnimatedSection key={sponsor.name}>
-                <div className="flex items-center gap-3 px-5 py-3 rounded-xl border border-border bg-card hover:shadow-md transition-all">
-                  <SponsorLogo name={sponsor.name} color={sponsor.color} size={40} />
-                  <span className="text-sm font-medium text-card-foreground">{sponsor.name}</span>
+                <div className="group flex flex-col items-center gap-4 p-6 rounded-2xl border border-border bg-card hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+                  style={{ borderLeftWidth: 4, borderLeftColor: sponsor.color }}>
+                  <SponsorLogo name={sponsor.name} color={sponsor.color} size={64} />
+                  <span className="text-base font-bold text-card-foreground text-center">{sponsor.name}</span>
                 </div>
               </AnimatedSection>
             ))}

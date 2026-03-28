@@ -8,56 +8,56 @@ const pillars = [
     description: "National competitions igniting ideas and ambition, converging in Accra for a regional finale.",
     icon: Lightbulb,
     to: "/programmes/youth",
-    color: "bg-ecowas-yellow/10 text-ecowas-yellow",
-    border: "hover:border-ecowas-yellow/40",
+    gradient: "from-[hsl(var(--ecowas-yellow))] to-[hsl(50_87%_55%)]",
+    iconBg: "bg-ecowas-yellow/10 text-ecowas-yellow",
   },
   {
     title: "Trade & SME Forums",
     description: "B2B forums, pilot trade corridors, and dialogue with policymakers across the region.",
     icon: TrendingUp,
     to: "/programmes/trade",
-    color: "bg-primary/10 text-primary",
-    border: "hover:border-primary/40",
+    gradient: "from-[hsl(var(--primary))] to-[hsl(var(--ecowas-lime))]",
+    iconBg: "bg-primary/10 text-primary",
   },
   {
     title: "Women's Economic Empowerment",
     description: "Women-focused trade and entrepreneurship platforms driving inclusive growth.",
     icon: Heart,
     to: "/programmes/women",
-    color: "bg-secondary/10 text-secondary",
-    border: "hover:border-secondary/40",
+    gradient: "from-[hsl(var(--secondary))] to-[hsl(340_66%_50%)]",
+    iconBg: "bg-secondary/10 text-secondary",
   },
   {
     title: "Civic Education & Awareness",
     description: "The ECOWAS Caravan and TV Game Show bringing Parliament closer to citizens.",
     icon: Megaphone,
     to: "/programmes/civic",
-    color: "bg-ecowas-blue/10 text-ecowas-blue",
-    border: "hover:border-ecowas-blue/40",
+    gradient: "from-[hsl(var(--ecowas-blue))] to-[hsl(190_35%_65%)]",
+    iconBg: "bg-ecowas-blue/10 text-ecowas-blue",
   },
   {
     title: "Culture & Creative Celebrations",
     description: "Fashion, film, food, literature, music, art, and sport celebrating West African diversity.",
     icon: Palette,
     to: "/programmes/culture",
-    color: "bg-ecowas-lime/10 text-ecowas-lime",
-    border: "hover:border-ecowas-lime/40",
+    gradient: "from-[hsl(var(--ecowas-lime))] to-[hsl(73_53%_60%)]",
+    iconBg: "bg-ecowas-lime/10 text-ecowas-lime",
   },
   {
     title: "Parliamentary Awards",
     description: "Honouring legislative excellence, leadership, and service across ECOWAS Member States.",
     icon: Award,
     to: "/programmes/awards",
-    color: "bg-accent/10 text-accent",
-    border: "hover:border-accent/40",
+    gradient: "from-[hsl(var(--accent))] to-[hsl(var(--ecowas-yellow))]",
+    iconBg: "bg-accent/10 text-accent",
   },
   {
     title: "Simulated Youth Parliament",
     description: "Giving young people a seat at the table — launching the ECOWAS Youth Parliament vision.",
     icon: Building2,
     to: "/programmes/parliament",
-    color: "bg-ecowas-red/10 text-ecowas-red",
-    border: "hover:border-ecowas-red/40",
+    gradient: "from-[hsl(var(--ecowas-red))] to-[hsl(340_66%_50%)]",
+    iconBg: "bg-ecowas-red/10 text-ecowas-red",
   },
 ];
 
@@ -80,17 +80,24 @@ const PillarsGrid = () => {
             <AnimatedSection key={pillar.to} delay={i * 100}>
               <Link
                 to={pillar.to}
-                className={`group block p-6 rounded-xl border border-border bg-card shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 ${pillar.border}`}
+                className="group relative block p-6 rounded-xl border border-border bg-card shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-2 overflow-hidden"
               >
-                <div className={`inline-flex p-3 rounded-lg ${pillar.color} mb-4`}>
-                  <pillar.icon className="h-6 w-6" />
+                {/* Gradient overlay on hover */}
+                <div className={`absolute inset-0 bg-gradient-to-br ${pillar.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-500`} />
+                {/* Gradient top border on hover */}
+                <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${pillar.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
+
+                <div className="relative">
+                  <div className={`inline-flex p-3 rounded-lg ${pillar.iconBg} mb-4 group-hover:scale-110 transition-transform duration-300`}>
+                    <pillar.icon className="h-6 w-6" />
+                  </div>
+                  <h3 className="text-lg font-bold text-card-foreground group-hover:text-primary transition-colors">
+                    {pillar.title}
+                  </h3>
+                  <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+                    {pillar.description}
+                  </p>
                 </div>
-                <h3 className="text-lg font-bold text-card-foreground group-hover:text-primary transition-colors">
-                  {pillar.title}
-                </h3>
-                <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-                  {pillar.description}
-                </p>
               </Link>
             </AnimatedSection>
           ))}
