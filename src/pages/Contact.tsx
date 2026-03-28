@@ -293,7 +293,7 @@ export default function Contact() {
                 <div className="space-y-3">
                   {[
                     { icon: Globe,  label:"Official website",  value:"ecowasparliament.net",       href:"https://www.ecowasparliament.net" },
-                    { icon: Globe,  label:"Programme website", value:"ecowasparliament25.org",      href:"#" },
+                    { icon: Globe,  label:"Programme website", value:"ecowasparliamentinitiatives.org", href:"https://ecowasparliamentinitiatives.org" },
                   ].map(s => {
                     const Icon = s.icon;
                     return (
