@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { ArrowRight, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import SocialMediaBar from "@/components/shared/SocialMediaBar";
 import anniversary25Logo from "@/assets/parliament-25-logo.png";
 
 const HeroSection = () => {
@@ -15,7 +16,7 @@ const HeroSection = () => {
           <div className="space-y-8">
             <div className="inline-flex items-center gap-2 rounded-full border border-primary-foreground/20 px-4 py-1.5 text-sm">
               <span className="h-2 w-2 rounded-full bg-ecowas-yellow animate-pulse-dot" />
-              January – November 2026
+              ECOWAS Parliament Initiatives
             </div>
 
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-black leading-tight animate-slide-up">
@@ -46,6 +47,14 @@ const HeroSection = () => {
                   View Timeline
                 </Link>
               </Button>
+            </div>
+
+            <div className="animate-slide-up" style={{ animationDelay: "0.4s" }}>
+              <SocialMediaBar
+                variant="icons-only"
+                showParliamentLink={false}
+                className="[&_a]:bg-primary-foreground/10 [&_a]:text-primary-foreground/70 [&_a:hover]:bg-primary-foreground/20 [&_a:hover]:text-primary-foreground"
+              />
             </div>
           </div>
 

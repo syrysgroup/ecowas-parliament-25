@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "@/lib/i18n";
 import ecowasLogo from "@/assets/ecowas-parliament-logo.png";
 import anniversary25Logo from "@/assets/parliament-25-logo.png";
+import SocialMediaBar from "@/components/shared/SocialMediaBar";
 
 const Footer = () => {
   const { t } = useTranslation();
@@ -53,11 +54,12 @@ const Footer = () => {
             <p className="text-sm text-muted-foreground leading-relaxed mb-4">
               {t("footer.tagline")}
             </p>
-            <div className="space-y-1.5 text-xs text-muted-foreground">
+            <div className="space-y-1.5 text-xs text-muted-foreground mb-4">
               <p>📧 info@ecowasparliamentinitiatives.org</p>
               <p>📧 media@ecowasparliamentinitiatives.org</p>
               <p>📧 sponsors@ecowasparliamentinitiatives.org</p>
             </div>
+            <SocialMediaBar variant="full" showParliamentLink={true} />
           </div>
 
           {footerLinks.map(col => (
@@ -96,14 +98,19 @@ const Footer = () => {
         </div>
 
         <div className="mt-6 pt-5 border-t border-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <p className="text-xs text-muted-foreground">{t("footer.copyright")}</p>
+          <div>
+            <p className="text-xs text-muted-foreground">{t("footer.copyright")}</p>
+            <p className="text-[10px] text-muted-foreground/60 mt-1">
+              This is the official website of ECOWAS Parliament Initiatives — not the ECOWAS Parliament itself.
+            </p>
+          </div>
           <div className="flex gap-4">
             <Link to="/contact" className="text-xs text-muted-foreground hover:text-primary transition-colors">{t("nav.contact")}</Link>
             <Link to="/media-kit" className="text-xs text-muted-foreground hover:text-primary transition-colors">{t("common.mediaKit")}</Link>
             <Link to="/sponsors" className="text-xs text-muted-foreground hover:text-primary transition-colors">{t("common.sponsor")}</Link>
-            <a href="https://www.ecowasparliament.net" target="_blank" rel="noreferrer"
+            <a href="https://parl.ecowas.int" target="_blank" rel="noreferrer"
               className="text-xs text-muted-foreground hover:text-primary transition-colors">
-              Official ECOWAS Parliament site ↗
+              ECOWAS Parliament Official Site ↗
             </a>
           </div>
         </div>

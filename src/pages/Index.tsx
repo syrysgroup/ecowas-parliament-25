@@ -3,9 +3,11 @@ import HeroSection from "@/components/home/HeroSection";
 import CountdownTimer from "@/components/home/CountdownTimer";
 import PillarsGrid from "@/components/home/PillarsGrid";
 import CountriesSection from "@/components/home/CountriesSection";
+import DidYouKnow from "@/components/home/DidYouKnow";
 import QuoteStrip from "@/components/home/QuoteStrip";
 import LatestNews from "@/components/home/LatestNews";
 import SponsorsSection from "@/components/home/SponsorsSection";
+import SponsorCTA from "@/components/home/SponsorCTA";
 
 const Index = () => {
   return (
@@ -14,9 +16,11 @@ const Index = () => {
       <CountdownTimer />
       <PillarsGrid />
       <CountriesSection />
+      <DidYouKnow />
       <QuoteStrip />
-      <LatestNews />
       <SponsorsSection />
+      <LatestNews />
+      <SponsorCTA />
     </Layout>
   );
 };
