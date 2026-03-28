@@ -95,7 +95,7 @@ export default function Contact() {
             </Badge>
             <h1 className="text-4xl md:text-5xl font-black">Contact Us</h1>
             <p className="mt-4 text-lg text-primary-foreground/70 max-w-2xl">
-              Reach the ECOWAS Parliament 25th Anniversary team for press accreditation, sponsorship, event enquiries, programme collaboration, or general information.
+              Reach the ECOWAS Parliament 25th Anniversary Initiatives team for press accreditation, sponsorship, event enquiries, programme collaboration, or general information.
             </p>
           </AnimatedSection>
         </div>
