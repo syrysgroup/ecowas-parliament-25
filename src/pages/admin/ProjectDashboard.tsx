@@ -151,7 +151,7 @@ const docs: DocEntry[] = [
     preview:{
       tag:"Youth Parliament · Rules of Procedure · March 2026",
       heading:"Youth Parliament Simulation — Rules of Procedure",
-      body:"The Rules of Procedure govern all aspects of the Youth Parliament Simulation including delegate accreditation, committee formation, debate procedure, resolution drafting, voting rules, and appeals. The simulation is modelled on the actual ECOWAS Parliament rules with modifications appropriate for youth delegates aged 18–30 from all 15 member states.",
+      body:"The Rules of Procedure govern all aspects of the Youth Parliament Simulation including delegate accreditation, committee formation, debate procedure, resolution drafting, voting rules, and appeals. The simulation is modelled on the actual ECOWAS Parliament rules with modifications appropriate for youth delegates aged 18–30 from all 12 member states.",
     }
   },
   {
