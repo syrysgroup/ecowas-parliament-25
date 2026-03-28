@@ -55,7 +55,7 @@ const contactCards = [
   {
     icon: Mail,
     label: "General programme",
-    value: "info@ecowasparliament25.org",
+    value: "info@ecowasparliamentinitiatives.org",
     desc: "Events · Participation · Delegations",
     colour: "bg-primary/5 text-primary",
   },
