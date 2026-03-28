@@ -153,7 +153,7 @@ export default function MediaKit() {
             <Clock className="h-5 w-5 text-amber-700 flex-shrink-0 mt-0.5" />
             <p className="text-sm text-amber-800">
               <strong>Media accreditation:</strong> Applications are open for all 2026 events. Email{" "}
-              <a href="mailto:media@ecowasparliament25.org" className="underline">media@ecowasparliament25.org</a>{" "}
+              <a href="mailto:media@ecowasparliamentinitiatives.org" className="underline">media@ecowasparliamentinitiatives.org</a>{" "}
               at least 5 working days before each event. Include your outlet name, assignment, and credential number.
             </p>
           </div>
