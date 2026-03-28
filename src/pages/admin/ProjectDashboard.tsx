@@ -578,7 +578,7 @@ export default function ProjectDashboard() {
                       <CardContent className="space-y-3">
                         <div className="bg-muted rounded-lg p-3 text-sm">Hi Adaora, the Youth Parliament agenda (42pp) is ready for your review. I've proposed adding a West Africa trade debate session for Day 2 afternoon.</div>
                         <div className="bg-primary/10 rounded-lg p-3 text-sm text-right">Thanks Kwame — I'll review tonight. Trade debate sounds excellent. Let's discuss in tomorrow's call.</div>
-                        <div className="bg-muted rounded-lg p-3 text-sm">Perfect. Should I follow up with Awa to confirm which 15-country delegations are confirmed for logistics?</div>
+                        <div className="bg-muted rounded-lg p-3 text-sm">Perfect. Should I follow up with Awa to confirm which 12-country delegations are confirmed for logistics?</div>
                         <div className="flex gap-2 pt-1">
                           <input className="flex-1 text-sm border border-border rounded-lg px-3 py-1.5 bg-background" placeholder="Type a reply…" />
                           <Button size="sm" className="gap-1"><Send className="h-3.5 w-3.5" /></Button>
@@ -652,7 +652,7 @@ export default function ProjectDashboard() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
               {[
                 { label:"Total sponsors",           value:"8",    sub:"3 Gold · 3 Silver · 2 Bronze" },
-                { label:"Combined audience reach",  value:"2.4M", sub:"Across 15 member states"      },
+                { label:"Combined audience reach",  value:"2.4M", sub:"Across 12 member states"      },
                 { label:"Logo impressions (Q1)",    value:"186K", sub:"+28% vs projection"            },
                 { label:"Pending sign-offs",        value:"2",    sub:"AfDB · Duchess International"  },
               ].map(s => (
