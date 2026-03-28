@@ -160,7 +160,7 @@ export default function SponsorPortal() {
               Partner with West Africa's Premier Parliamentary Anniversary
             </h1>
             <p className="mt-4 text-lg text-primary-foreground/70 max-w-2xl">
-              The ECOWAS Parliament 25th Anniversary Programme runs across all 15 member states throughout 2026 — 40+ events, 7 programme pillars, and a combined audience reach exceeding 2.4 million. Become part of history.
+              The ECOWAS Parliament 25th Anniversary Programme runs across all 12 member states throughout 2026 — 40+ events, 7 programme pillars, and a combined audience reach exceeding 2.4 million. Become part of history.
             </p>
             <div className="flex flex-wrap gap-3 mt-6">
               <Button variant="secondary" size="lg" className="gap-2">
