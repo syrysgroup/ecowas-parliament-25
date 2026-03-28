@@ -3,58 +3,61 @@ import { Link, useLocation } from "react-router-dom";
 import { Menu, X, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { useTranslation, Locale } from "@/lib/i18n";
 import ecowasLogo from "@/assets/ecowas-parliament-logo.png";
 import anniversary25Logo from "@/assets/parliament-25-logo.png";
 
-const navLinks = [
-  { label: "Home",         to: "/"          },
-  { label: "About",        to: "/about"     },
-  {
-    label: "Programmes",
-    to: "/programmes/youth",
-    children: [
-      { label: "Youth Innovation",        to: "/programmes/youth"      },
-      { label: "Trade & SME Forums",      to: "/programmes/trade"      },
-      { label: "Women's Empowerment",     to: "/programmes/women"      },
-      { label: "Civic Education",         to: "/programmes/civic"      },
-      { label: "Culture & Creativity",    to: "/programmes/culture"    },
-      { label: "Parliamentary Awards",    to: "/programmes/awards"     },
-      { label: "Youth Parliament",        to: "/programmes/parliament" },
-    ],
-  },
-  { label: "Timeline",     to: "/timeline"  },
-  { label: "News",         to: "/news"      },
-  { label: "Documents",    to: "/documents" },
-  { label: "Stakeholders", to: "/stakeholders" },
-  { label: "Team",         to: "/team"      },
-  {
-    label: "Get involved",
-    to: "/sponsors",
-    children: [
-      { label: "Sponsor the Programme",   to: "/sponsors"    },
-      { label: "Press & Media Kit",       to: "/media-kit"   },
-      { label: "Contact Us",              to: "/contact"     },
-    ],
-  },
-];
-
 const Navbar = () => {
+  const { t, locale, setLocale } = useTranslation();
   const [programmesOpen, setProgrammesOpen] = useState(false);
   const [involvedOpen, setInvolvedOpen]     = useState(false);
   const [mobileOpen, setMobileOpen]         = useState(false);
   const location = useLocation();
 
+  const navLinks = [
+    { label: t("nav.home"),         to: "/"          },
+    { label: t("nav.about"),        to: "/about"     },
+    {
+      label: t("nav.programmes"),
+      to: "/programmes/youth",
+      children: [
+        { label: t("prog.youth"),      to: "/programmes/youth"      },
+        { label: t("prog.trade"),      to: "/programmes/trade"      },
+        { label: t("prog.women"),      to: "/programmes/women"      },
+        { label: t("prog.civic"),      to: "/programmes/civic"      },
+        { label: t("prog.culture"),    to: "/programmes/culture"    },
+        { label: t("prog.awards"),     to: "/programmes/awards"     },
+        { label: t("prog.parliament"), to: "/programmes/parliament" },
+      ],
+    },
+    { label: t("nav.timeline"),     to: "/timeline"  },
+    { label: t("nav.news"),         to: "/news"      },
+    { label: t("nav.documents"),    to: "/documents" },
+    { label: t("nav.events"),       to: "/events"    },
+    { label: t("nav.stakeholders"), to: "/stakeholders" },
+    { label: t("nav.team"),         to: "/team"      },
+    {
+      label: t("nav.getInvolved"),
+      to: "/sponsors",
+      children: [
+        { label: t("common.sponsor"),   to: "/sponsors"    },
+        { label: t("common.mediaKit"),   to: "/media-kit"   },
+        { label: t("common.contact"),    to: "/contact"     },
+      ],
+    },
+  ];
+
   const isActive = (to: string) =>
     location.pathname === to || (to !== "/" && location.pathname.startsWith(to));
 
+  const toggleLang = () => setLocale(locale === "en" ? "fr" : "en");
+
   return (
     <header className="sticky top-0 z-50 w-full">
-      {/* ECOWAS colour bar */}
       <div className="h-1 bg-gradient-ecowas" />
       <nav className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b border-border">
         <div className="container flex h-16 items-center justify-between">
 
-          {/* Logos */}
           <Link to="/" className="flex items-center gap-3 flex-shrink-0">
             <img src={ecowasLogo}       alt="ECOWAS Parliament"  className="h-10 w-auto" />
             <img src={anniversary25Logo} alt="25th Anniversary" className="h-10 w-auto" />
@@ -79,8 +82,8 @@ const Navbar = () => {
                 );
               }
 
-              const isDropOpen = link.label === "Programmes" ? programmesOpen : involvedOpen;
-              const setOpen    = link.label === "Programmes" ? setProgrammesOpen : setInvolvedOpen;
+              const isDropOpen = link.label === t("nav.programmes") ? programmesOpen : involvedOpen;
+              const setOpen    = link.label === t("nav.programmes") ? setProgrammesOpen : setInvolvedOpen;
 
               return (
                 <div
@@ -118,13 +121,22 @@ const Navbar = () => {
             })}
           </div>
 
-          {/* CTA + mobile */}
+          {/* CTA + language + mobile */}
           <div className="flex items-center gap-2">
+            {/* Language toggle */}
+            <button
+              onClick={toggleLang}
+              className="hidden xl:flex items-center justify-center w-8 h-8 rounded-md border border-border text-xs font-bold text-foreground/70 hover:bg-muted transition-colors"
+              title={locale === "en" ? "Passer en français" : "Switch to English"}
+            >
+              {locale === "en" ? "FR" : "EN"}
+            </button>
+
             <Button asChild size="sm" className="hidden xl:flex">
-              <Link to="/sponsors">Partner with us</Link>
+              <Link to="/sponsors">{t("nav.partnerWithUs")}</Link>
             </Button>
             <Button asChild size="sm" variant="outline" className="hidden xl:flex">
-              <Link to="/contact">Contact</Link>
+              <Link to="/contact">{t("nav.contact")}</Link>
             </Button>
 
             {/* Mobile hamburger */}
@@ -167,11 +179,17 @@ const Navbar = () => {
                     </div>
                   ))}
                   <div className="pt-4 mt-2 border-t border-border space-y-2">
+                    <button
+                      onClick={() => { toggleLang(); setMobileOpen(false); }}
+                      className="w-full px-3 py-2 text-sm font-medium text-left rounded-lg hover:bg-muted transition-colors"
+                    >
+                      {locale === "en" ? "🇫🇷 Passer en français" : "🇬🇧 Switch to English"}
+                    </button>
                     <Button asChild className="w-full" onClick={() => setMobileOpen(false)}>
-                      <Link to="/sponsors">Partner with us</Link>
+                      <Link to="/sponsors">{t("nav.partnerWithUs")}</Link>
                     </Button>
                     <Button asChild variant="outline" className="w-full" onClick={() => setMobileOpen(false)}>
-                      <Link to="/contact">Contact</Link>
+                      <Link to="/contact">{t("nav.contact")}</Link>
                     </Button>
                   </div>
                 </nav>
