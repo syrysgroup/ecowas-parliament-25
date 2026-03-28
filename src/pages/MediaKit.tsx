@@ -33,7 +33,7 @@ const spokespeople = [
   {
     name: "Speaker of the ECOWAS Parliament",
     title: "Right Honourable [Name]",
-    note: "Available for broadcast interviews with advance notice. Interview requests via media@ecowasparliament25.org",
+    note: "Available for broadcast interviews with advance notice. Interview requests via media@ecowasparliamentinitiatives.org",
     initials: "SP",
     colour: "bg-primary/10 text-primary",
   },
