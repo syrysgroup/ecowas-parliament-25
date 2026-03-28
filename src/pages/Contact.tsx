@@ -48,7 +48,7 @@ const contactCards = [
   {
     icon: Mail,
     label: "Sponsorship enquiries",
-    value: "sponsors@ecowasparliament25.org",
+    value: "sponsors@ecowasparliamentinitiatives.org",
     desc: "Partnerships · Tier packages · Agreements",
     colour: "bg-amber-50 text-amber-700",
   },
