@@ -127,7 +127,7 @@ const docs: DocEntry[] = [
     preview:{
       tag:"Programme · 5 March 2026",
       heading:"Programme of Events — 25th Anniversary Media Announcement",
-      body:`This document outlines the full schedule of events for the ECOWAS Parliament 25th Anniversary year. Events span all 15 member states from January through December 2026. Flagship moments include the Opening Ceremony (Abuja, March), Youth Innovation Summit (Accra, May), Trade Forums (Lagos/Dakar, June), Women's Forum (Freetown, July), Cultural Festivals (August–September), and the Anniversary Gala (Abuja, December).\n\nAll events are open to media accreditation. Photography guidelines and interview requests should be directed to the Communications Director. Event registration links will be published on the official website.`,
+      body:`This document outlines the full schedule of events for the ECOWAS Parliament 25th Anniversary year. Events span all 12 member states from January through December 2026. Flagship moments include the Opening Ceremony (Abuja, March), Youth Innovation Summit (Accra, May), Trade Forums (Lagos/Dakar, June), Women's Forum (Freetown, July), Cultural Festivals (August–September), and the Anniversary Gala (Abuja, December).\n\nAll events are open to media accreditation. Photography guidelines and interview requests should be directed to the Communications Director. Event registration links will be published on the official website.`,
     }
   },
   {
