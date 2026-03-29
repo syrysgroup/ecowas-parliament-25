@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import duchessLogo from "@/assets/duchess-logo.png";
 import cmdLogo from "@/assets/cmd-logo.png";
 import borderlessLogo from "@/assets/borderless-trade-logo.png";
-import speakerImage from "@/assets/stakeholder-speaker.jpg";
+import speakerImage from "@/assets/parliament-chamber.png";
 import commsImage from "@/assets/stakeholder-comms.jpg";
 import directorImage from "@/assets/stakeholder-director.jpg";
 import teamPortrait1 from "@/assets/team-portrait-1.jpg";
