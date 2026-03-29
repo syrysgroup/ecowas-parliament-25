@@ -99,21 +99,21 @@ const HeroSection = () => {
         {/* Eyebrow */}
         <div className="inline-flex items-center gap-2 rounded-full border border-primary/50 px-5 py-1.5 text-[11.5px] font-semibold uppercase tracking-widest text-primary bg-primary/10 backdrop-blur-sm mb-6 animate-slide-up" style={{ animationDelay: "0.3s" }}>
           <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse-dot" />
-          Celebrating 25 years of regional democracy
+          Celebrating 25 years of representation
         </div>
 
         {/* Title */}
         <h1 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-black leading-[1.06] text-primary-foreground mb-5 animate-slide-up" style={{ animationDelay: "0.5s" }}>
           Celebrating <span className="text-accent">25 Years</span>
           <span className="block text-lg md:text-2xl lg:text-3xl font-bold text-primary-foreground/70 mt-3">
-            of West African Parliamentary Democracy
+            of West African Parliamentary Representation
           </span>
         </h1>
 
         {/* Description */}
         <p className="text-base text-primary-foreground/60 max-w-xl mx-auto leading-relaxed mb-9 animate-slide-up" style={{ animationDelay: "0.7s" }}>
           The ECOWAS Parliament unites the 12 member states of the Economic Community of West
-          African States — advancing democratic governance, regional integration, and shared
+          African States — advancing regional representation, integration, and shared
           prosperity for all West Africans.
         </p>
 

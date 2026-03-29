@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import ecowasLogo from "@/assets/ecowas-parliament-logo.png";
 
 const stats = [
-  { value: "25", label: "Years of regional parliamentary democracy", color: "text-accent" },
+  { value: "25", label: "Years of regional parliamentary representation", color: "text-accent" },
   { value: "12", label: "Member states united under one parliament", color: "text-primary" },
   { value: "7", label: "Anniversary programme pillars", color: "text-ecowas-blue" },
   { value: "1,200+", label: "Expected delegates & participants", color: "text-ecowas-lime" },
@@ -22,13 +22,13 @@ const AboutSection = () => {
               About the 25th Anniversary
             </Badge>
             <h2 className="text-3xl md:text-4xl font-black text-foreground leading-tight mb-6">
-              A Quarter Century of Democratic Progress
+              A Quarter Century of Representation
             </h2>
             <div className="space-y-4 text-[15px] text-muted-foreground leading-relaxed">
               <p>
                 Established to give voice to the peoples of West Africa through their elected
                 representatives, the ECOWAS Parliament has spent 25 years championing regional
-                integration, democratic governance, and the rule of law across its 12 member states.
+                integration, representation of the people, and the rule of law across its 12 member states.
               </p>
               <p>
                 The 25th Anniversary programme brings together parliamentarians, civil society,
