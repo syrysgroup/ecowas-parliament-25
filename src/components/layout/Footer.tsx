@@ -1,5 +1,4 @@
 import { Link } from "react-router-dom";
-import { LogIn } from "lucide-react";
 import { useTranslation } from "@/lib/i18n";
 import ecowasLogo from "@/assets/ecowas-parliament-logo.png";
 import anniversary25Logo from "@/assets/parliament-25-logo.png";
@@ -49,8 +48,12 @@ const Footer = () => {
         <div className="grid md:grid-cols-4 gap-10">
           <div className="md:col-span-1">
             <div className="flex items-center gap-3 mb-4">
-              <img src={ecowasLogo}       alt="ECOWAS Parliament"  className="h-9 w-auto" />
-              <img src={anniversary25Logo} alt="25th Anniversary" className="h-9 w-auto" />
+              <div className="bg-white rounded-full p-1.5 shadow-sm">
+                <img src={ecowasLogo} alt="ECOWAS Parliament" className="h-8 w-8 object-contain" />
+              </div>
+              <div className="bg-white rounded-full p-1.5 shadow-sm">
+                <img src={anniversary25Logo} alt="25th Anniversary" className="h-8 w-auto object-contain" />
+              </div>
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed mb-4">
               {t("footer.tagline")}
@@ -106,10 +109,6 @@ const Footer = () => {
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-4">
-            <Link to="/auth" className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:text-primary/80 transition-colors">
-              <LogIn className="h-3.5 w-3.5" />
-              Sign In
-            </Link>
             <Link to="/contact" className="text-xs text-muted-foreground hover:text-primary transition-colors">{t("nav.contact")}</Link>
             <Link to="/media-kit" className="text-xs text-muted-foreground hover:text-primary transition-colors">{t("common.mediaKit")}</Link>
             <Link to="/sponsors" className="text-xs text-muted-foreground hover:text-primary transition-colors">{t("common.sponsor")}</Link>
