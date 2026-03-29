@@ -1,63 +1,42 @@
 
 
-## Plan: Content corrections, auth routing, sponsor visuals, and button fixes
+## Plan: Add AuthContext, SuperAdminDashboard, and Bootstrap Super Admin Role
 
-### 1. Fix AWALCO description
-Update all references from "Association of West African Living Councils" to **"Association of West African Legislative Correspondents"** in:
-- `src/components/home/SponsorsSection.tsx`
-- `src/components/home/PartnersStrip.tsx`
+The user uploaded a set of upgraded files that introduce a centralized AuthContext, a redesigned Auth page with forgot-password flow and team-mode, a new SuperAdminDashboard, and an updated ProtectedRoute. They also want the user with UID `0b5747ee-cf4a-4c22-8592-a649fca67e45` assigned as super_admin.
 
-### 2. Structure initiatives hierarchy
-Update the About page and PillarsGrid to clarify that the **25th Anniversary ECOWAS Parliament Programme** is the current initiative, and all 7 programme pillars fall under it. The implementing partners for this programme are **Duchess NL**, **Borderless Trade & Investment**, and **CMD Tourism & Trade Enterprises** (already in SponsorPortal — will add a brief mention on the About page and the homepage SponsorsSection).
+### What will be done
 
-### 3. Role-based auth redirect after sign-in
-Update `src/pages/Auth.tsx` to redirect users to their role-specific dashboard after login instead of `navigate(-1)`:
-- `super_admin` → `/admin`
-- `admin` → `/admin`
-- `moderator` → `/admin`
-- `sponsor` → `/sponsor-dashboard`
-- No role → `/` (homepage)
+1. **Create `src/contexts/AuthContext.tsx`** — new React context providing user, session, roles, convenience booleans (isSuperAdmin, isAdmin, etc.), and signOut/refreshRoles methods. Single source of truth for auth state.
 
-This requires querying `user_roles` after successful sign-in to determine the redirect target.
+2. **Update `src/hooks/useAuth.ts`** — replace the standalone hook with a re-export from AuthContext for backward compatibility.
 
-### 4. Super admin dashboard visibility
-The super admin already has access to `/admin`, `/admin/project`, and `/admin/users`. Will ensure:
-- The AdminDashboard (`/admin`) shows navigation links to Project Dashboard and User Management for super_admin/admin roles
-- Add a quick-access sidebar or nav cards on the AdminDashboard linking to all admin sub-pages
+3. **Update `src/App.tsx`** — wrap the app in `<AuthProvider>`, add the `/admin/super` route pointing to `SuperAdminDashboard` (protected to super_admin only), import the new page.
 
-### 5. Sponsor section visual upgrade
-Replace the SVG-based `SponsorLogo` component with AI-generated placeholder logos for NASENI, SMEDAN, Providus Bank, and Alliance. Use the Nano banana image generation API to create branded placeholder logos, save them to `src/assets/`, and update `SponsorsSection.tsx` to use `<img>` tags instead of the SVG component. Add a gradient background, larger cards, and hover effects to make the section more visually impactful.
+4. **Replace `src/pages/Auth.tsx`** — new Auth page with sign-in, sign-up, forgot password, reset-sent modes, team/staff login toggle, ECOWAS branding header, and role-based redirect.
 
-### 6. Fix transparent/invisible buttons
-The screenshot shows hero buttons are nearly invisible. Fix across multiple files:
-- **HeroSection.tsx**: The "Explore the Programme" button uses `bg-ecowas-yellow text-accent-foreground` — `accent-foreground` is very dark green on dark green background. Change to explicit white or ensure contrast. The "View Timeline" outline button is invisible. Add `bg-primary-foreground/10` as base background.
-- **SponsorCTA.tsx**: Same outline button issue
-- **SponsorPortal.tsx**: `bg-transparent` on the "Book a briefing call" button
-- Global audit: ensure all `variant="outline"` buttons on dark backgrounds have explicit `text-primary-foreground` and visible border/background
+5. **Replace `src/components/admin/ProtectedRoute.tsx`** — uses `useAuthContext()` instead of standalone role-checking logic. Adds `bare` prop for minimal loading shell.
 
-### 7. List roles and dashboards clearly
+6. **Create `src/pages/admin/SuperAdminDashboard.tsx`** — full super admin hub with sidebar navigation, overview stats, user management with role assignment, invitation management, activity log viewer, site routes map, and system settings/info panel.
 
-| Role | Dashboard | Access |
-|------|-----------|--------|
-| `super_admin` | `/admin` + `/admin/project` + `/admin/users` | Everything: user management, invitations, all content |
-| `admin` | `/admin` + `/admin/project` | Content management, applications, nominations, representatives |
-| `moderator` | `/admin` | Review queues: applications, nominations, delegate publishing |
-| `sponsor` | `/sponsor-dashboard` | Visibility metrics, logo placements, event schedule |
+7. **Insert super_admin role for UID `0b5747ee-cf4a-4c22-8592-a649fca67e45`** — SQL insert into `user_roles` table.
 
 ### Technical details
 
-**Files to create:**
-- Generated sponsor logo images (4 files in `src/assets/sponsors/`)
+- **AuthContext** fetches roles from `user_roles` table on auth state change; exposes `hasRole()`, `refreshRoles()`, computed booleans
+- **ProtectedRoute** now reads from context (no separate `useEffect` + state for role checking)
+- **SuperAdminDashboard** queries `profiles`, `user_roles`, `invitations`, `admin_activity_logs`; invokes `invite-user` edge function; manages roles via direct insert/delete on `user_roles`
+- **SQL**: `INSERT INTO public.user_roles (user_id, role) VALUES ('0b5747ee-cf4a-4c22-8592-a649fca67e45', 'super_admin') ON CONFLICT (user_id, role) DO NOTHING;`
+- All existing components using `useAuth` continue working via the re-export shim
 
-**Files to modify:**
-- `src/pages/Auth.tsx` — role-based redirect after login
-- `src/pages/admin/AdminDashboard.tsx` — add nav links to sub-pages for super_admin
-- `src/components/home/SponsorsSection.tsx` — AWALCO fix, implementing partners, visual upgrade
-- `src/components/home/PartnersStrip.tsx` — AWALCO description fix
-- `src/components/home/LatestNews.tsx` — AWALCO description fix
-- `src/components/home/HeroSection.tsx` — fix button visibility
-- `src/components/home/SponsorCTA.tsx` — fix outline button visibility
-- `src/pages/SponsorPortal.tsx` — fix transparent button
-- `src/pages/About.tsx` — add initiative hierarchy context
-- ~6 programme pages — audit outline buttons on hero sections
+### Files changed
+
+| File | Action |
+|------|--------|
+| `src/contexts/AuthContext.tsx` | Create |
+| `src/hooks/useAuth.ts` | Replace |
+| `src/App.tsx` | Update (add AuthProvider wrapper, SuperAdminDashboard route) |
+| `src/pages/Auth.tsx` | Replace |
+| `src/components/admin/ProtectedRoute.tsx` | Replace |
+| `src/pages/admin/SuperAdminDashboard.tsx` | Create |
+| Database: `user_roles` | Insert super_admin role for given UID |
 
