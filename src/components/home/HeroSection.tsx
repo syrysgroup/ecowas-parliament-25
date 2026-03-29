@@ -135,7 +135,7 @@ const HeroSection = () => {
               <p className="text-3xl md:text-4xl font-black text-white leading-none mb-1">
                 <CountUpNumber target={stat.target} suffix={stat.suffix} delay={i * 200} />
               </p>
-              <p className="text-[11px] uppercase tracking-wider font-semibold text-primary-foreground/40">
+              <p className="text-[11px] uppercase tracking-wider font-semibold text-white/70">
                 {stat.label}
               </p>
             </div>
