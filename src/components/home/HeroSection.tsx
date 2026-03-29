@@ -5,6 +5,7 @@ import { useEffect, useState, useRef } from "react";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import ecowasLogo from "@/assets/ecowas-parliament-logo.png";
 import anniversary25Logo from "@/assets/parliament-25-anniversary-logo.png";
+import parliamentBg from "@/assets/parliament-chamber.png";
 
 const stats = [
   { label: "Member States", target: 12 },
@@ -48,6 +49,8 @@ const Particle = ({ size, x, y, delay, color }: { size: number; x: string; y: st
 const HeroSection = () => {
   return (
     <section className="relative min-h-[100vh] flex items-center justify-center overflow-hidden bg-gradient-hero text-primary-foreground">
+      {/* Background image */}
+      <img src={parliamentBg} alt="" className="absolute inset-0 w-full h-full object-cover opacity-25 pointer-events-none" />
       {/* Animated gradient overlay */}
       <div className="absolute inset-0 animate-gradient-shift opacity-30" style={{
         background: "linear-gradient(135deg, hsl(152 100% 26% / 0.4), hsl(50 87% 45% / 0.15), hsl(340 66% 34% / 0.1), hsl(152 100% 20% / 0.3))",
