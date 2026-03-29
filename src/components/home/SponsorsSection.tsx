@@ -1,171 +1,179 @@
+import { useState } from "react";
 import AnimatedSection from "@/components/shared/AnimatedSection";
 import { Badge } from "@/components/ui/badge";
-import naseniLogo from "@/assets/sponsors/naseni-logo.png";
-import smedanLogo from "@/assets/sponsors/smedan-logo.png";
-import providusLogo from "@/assets/sponsors/providus-logo.png";
-import allianceLogo from "@/assets/sponsors/alliance-logo.png";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
+import ecowasLogo from "@/assets/ecowas-parliament-logo.png";
 
-/* ─── Tier sizing ──────────────────────────────────────────────────────────── */
-const TIER_CONFIG = {
-  platinum: { size: 96, label: "Platinum", badge: "bg-amber-100 text-amber-900 border-amber-300", ring: "ring-amber-300/50" },
-  gold:     { size: 80, label: "Gold",     badge: "bg-yellow-100 text-yellow-900 border-yellow-300", ring: "ring-yellow-300/40" },
-  silver:   { size: 64, label: "Silver",   badge: "bg-gray-100 text-gray-700 border-gray-300", ring: "ring-gray-300/30" },
-  supporter:{ size: 48, label: "Supporter",badge: "bg-primary/10 text-primary border-primary/20", ring: "ring-primary/20" },
+/* ── Tier config ── */
+const TIERS = {
+  presenting: { label: "PRESENTING", badge: "border-primary text-primary bg-primary/5" },
+  gold: { label: "GOLD", badge: "border-accent text-accent bg-accent/5" },
+  silver: { label: "SILVER", badge: "border-muted-foreground/40 text-muted-foreground bg-muted/30" },
+  bronze: { label: "BRONZE", badge: "border-[hsl(25_85%_55%)] text-[hsl(25_85%_55%)] bg-[hsl(25_85%_55%/0.06)]" },
+  impl: { label: "IMPL", badge: "border-border text-muted-foreground bg-card" },
 } as const;
 
-type Tier = keyof typeof TIER_CONFIG;
+type Tier = keyof typeof TIERS;
 
-interface Sponsor {
-  name: string;
-  logo: string;
-  tier: Tier;
-}
+interface Sponsor { name: string; subtitle: string }
+interface TierGroup { tier: Tier; sponsors: Sponsor[]; logoSrc?: string }
+interface Programme { id: string; label: string; emoji: string; tiers: TierGroup[]; cta?: { emoji: string; title: string; subtitle: string } }
 
-interface ProgrammeSponsorGroup {
-  programme: string;
-  programmePath: string;
-  color: string;
-  sponsors: Sponsor[];
-}
-
-/* ─── Data ─────────────────────────────────────────────────────────────────── */
-const partners = [
+const programmes: Programme[] = [
   {
-    name: "AWALCO",
-    description: "Association of West African Legislative Correspondents — strategic partner for ECOWAS Parliament Initiatives.",
+    id: "all", label: "Overview", emoji: "",
+    tiers: [
+      { tier: "presenting", sponsors: [{ name: "ECOWAS Commission", subtitle: "All Programmes" }], logoSrc: ecowasLogo },
+      { tier: "gold", sponsors: [{ name: "AfDB", subtitle: "African Development Bank · All Programmes" }] },
+      { tier: "silver", sponsors: [{ name: "UNDP", subtitle: "West Africa · Youth + Women's" }, { name: "EU", subtitle: "Delegation ECOWAS · Civic + Youth Parl" }] },
+      { tier: "bronze", sponsors: [{ name: "DUCHESS", subtitle: "Duchess International · Trade & SME only" }] },
+    ],
   },
-];
-
-const implementingPartners = [
-  { name: "Duchess NL" },
-  { name: "Borderless Trade & Investment" },
-  { name: "CMD Tourism & Trade Enterprises" },
-];
-
-const programmeSponsorGroups: ProgrammeSponsorGroup[] = [
   {
-    programme: "25th Anniversary Programme",
-    programmePath: "/about",
-    color: "border-l-primary",
-    sponsors: [
-      { name: "NASENI", logo: naseniLogo, tier: "gold" },
-      { name: "SMEDAN", logo: smedanLogo, tier: "gold" },
-      { name: "Providus Bank", logo: providusLogo, tier: "silver" },
-      { name: "Alliance Economic Research and Ethics", logo: allianceLogo, tier: "silver" },
+    id: "youth", label: "Youth Innovation", emoji: "🚀",
+    tiers: [
+      { tier: "gold", sponsors: [{ name: "AfDB", subtitle: "African Development Bank" }] },
+      { tier: "silver", sponsors: [{ name: "UNDP", subtitle: "UNDP West Africa" }] },
+    ],
+    cta: { emoji: "🚀", title: "Sponsor Youth Innovation", subtitle: "Gold and Presenting opportunities available." },
+  },
+  {
+    id: "trade", label: "Trade & SME", emoji: "🤝",
+    tiers: [
+      { tier: "gold", sponsors: [{ name: "AfDB", subtitle: "African Development Bank" }] },
+      { tier: "bronze", sponsors: [{ name: "DUCHESS", subtitle: "Duchess International" }] },
+      { tier: "impl", sponsors: [{ name: "WATH", subtitle: "West Africa Trade Hub" }] },
+    ],
+  },
+  {
+    id: "women", label: "Women's Forum", emoji: "⚡",
+    tiers: [
+      { tier: "silver", sponsors: [{ name: "UNDP", subtitle: "UNDP West Africa" }] },
+    ],
+    cta: { emoji: "⚡", title: "Partner with Women's Empowerment", subtitle: "Gold and Presenting tiers open." },
+  },
+  {
+    id: "civic", label: "Civic Education", emoji: "🏛️",
+    tiers: [
+      { tier: "gold", sponsors: [{ name: "EU", subtitle: "EU Delegation ECOWAS" }] },
+    ],
+  },
+  {
+    id: "culture", label: "Culture", emoji: "🎨",
+    tiers: [],
+    cta: { emoji: "🎨", title: "Exclusive Presenting Sponsorship Open", subtitle: "Be the only Presenting Sponsor for Culture & Creativity." },
+  },
+  {
+    id: "awards", label: "Awards", emoji: "🏆",
+    tiers: [
+      { tier: "gold", sponsors: [{ name: "AfDB", subtitle: "African Development Bank" }] },
+    ],
+  },
+  {
+    id: "yparl", label: "Youth Parliament", emoji: "🌍",
+    tiers: [
+      { tier: "gold", sponsors: [{ name: "EU", subtitle: "EU Delegation ECOWAS" }] },
     ],
   },
 ];
 
 const SponsorsSection = () => {
+  const [activeTab, setActiveTab] = useState("all");
+  const active = programmes.find((p) => p.id === activeTab)!;
+
   return (
-    <>
-      {/* ─── Partners & Implementing Partners ─── */}
-      <section className="py-16 bg-gradient-to-b from-muted/30 to-background">
-        <div className="container">
-          <AnimatedSection className="text-center mb-10">
-            <Badge className="bg-primary/10 text-primary border-primary/20 mb-3">Partners & Collaborators</Badge>
-            <h2 className="text-3xl md:text-4xl font-black text-foreground">
-              Our <span className="text-primary">Partners</span>
-            </h2>
-            <p className="mt-3 text-muted-foreground max-w-2xl mx-auto">
-              Strategic partners and implementing organisations powering the ECOWAS Parliament Initiatives.
+    <section className="py-20 bg-gradient-to-b from-background via-muted/20 to-background border-t border-b border-border">
+      <div className="container">
+        <div className="flex items-end justify-between gap-6 mb-10 flex-wrap">
+          <AnimatedSection>
+            <Badge className="bg-primary/10 text-primary border-primary/20 mb-3">Partners & Sponsors</Badge>
+            <h2 className="text-3xl md:text-4xl font-black text-foreground">Our Partner Ecosystem</h2>
+            <p className="mt-3 text-sm text-muted-foreground max-w-xl">
+              Select a programme to view only its sponsors. Partners are scoped exclusively to
+              their designated programme — never cross-attributed.
             </p>
           </AnimatedSection>
+        </div>
 
-          {/* Strategic Partners */}
-          <div className="flex justify-center mb-10">
-            {partners.map((partner, i) => (
-              <AnimatedSection key={partner.name} delay={i * 120}>
-                <div className="p-8 rounded-2xl bg-card border-2 border-primary/20 shadow-lg max-w-md text-center hover:shadow-xl hover:border-primary/40 transition-all duration-300 relative overflow-hidden group">
-                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-ecowas-yellow to-secondary" />
-                  <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 mb-3">Strategic Partner</Badge>
-                  <h3 className="font-black text-card-foreground text-2xl mb-3">{partner.name}</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{partner.description}</p>
-                </div>
-              </AnimatedSection>
-            ))}
-          </div>
-
-          {/* Implementing Partners */}
-          <AnimatedSection className="text-center mb-4">
-            <Badge className="bg-secondary/10 text-secondary border-secondary/20 mb-3">Implementing Partners</Badge>
-          </AnimatedSection>
-          <div className="grid sm:grid-cols-3 gap-4 max-w-2xl mx-auto">
-            {implementingPartners.map((p, i) => (
-              <AnimatedSection key={p.name} delay={i * 100}>
-                <div className="p-5 rounded-xl bg-card border border-border text-center hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-                  <span className="font-bold text-card-foreground text-sm">{p.name}</span>
-                </div>
-              </AnimatedSection>
+        {/* Tabs */}
+        <div className="overflow-x-auto scrollbar-none mb-9">
+          <div className="inline-flex gap-1 p-1.5 bg-card border border-border rounded-xl min-w-fit">
+            {programmes.map((p) => (
+              <button
+                key={p.id}
+                onClick={() => setActiveTab(p.id)}
+                className={`px-4 py-2 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${
+                  activeTab === p.id
+                    ? "bg-primary text-primary-foreground shadow-md"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {p.emoji && <span className="mr-1.5">{p.emoji}</span>}
+                {p.label}
+              </button>
             ))}
           </div>
         </div>
-      </section>
 
-      {/* ─── Programme-Scoped Sponsors ─── */}
-      <section className="py-16 bg-gradient-to-br from-primary/5 via-muted/40 to-secondary/5 border-t border-border">
-        <div className="container">
-          <AnimatedSection className="text-center mb-12">
-            <Badge className="bg-ecowas-yellow/10 text-ecowas-yellow border-ecowas-yellow/20 mb-3">Programme Sponsors</Badge>
-            <h2 className="text-3xl md:text-4xl font-black text-foreground">
-              Sponsors & <span className="text-primary">Supporters</span>
-            </h2>
-            <p className="mt-3 text-muted-foreground max-w-xl mx-auto">
-              Each sponsor is recognised under the specific programme they support.
-            </p>
-          </AnimatedSection>
-
-          {programmeSponsorGroups.map((group) => (
-            <div key={group.programme} className="mb-10 last:mb-0">
-              <AnimatedSection>
-                <div className={`border-l-4 ${group.color} pl-4 mb-6`}>
-                  <h3 className="text-lg font-bold text-foreground">{group.programme}</h3>
-                  <p className="text-sm text-muted-foreground">Sponsors for this initiative</p>
-                </div>
-              </AnimatedSection>
-
-              {/* Tier groups */}
-              {(["platinum", "gold", "silver", "supporter"] as Tier[]).map((tier) => {
-                const tierSponsors = group.sponsors.filter(s => s.tier === tier);
-                if (tierSponsors.length === 0) return null;
-                const config = TIER_CONFIG[tier];
-
-                return (
-                  <div key={tier} className="mb-8">
-                    <div className="flex items-center gap-2 mb-4">
-                      <Badge variant="outline" className={`${config.badge} text-xs`}>{config.label}</Badge>
-                    </div>
-                    <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                      {tierSponsors.map((sponsor) => (
-                        <AnimatedSection key={sponsor.name}>
-                          <div className={`group flex flex-col items-center gap-4 p-8 rounded-2xl border border-border bg-card hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 hover:border-primary/30 ring-1 ${config.ring}`}>
-                            <div
-                              className="rounded-xl bg-background border border-border flex items-center justify-center overflow-hidden group-hover:scale-110 transition-transform duration-300 p-3"
-                              style={{ width: config.size + 24, height: config.size + 24 }}
-                            >
-                              <img
-                                src={sponsor.logo}
-                                alt={sponsor.name}
-                                loading="lazy"
-                                style={{ width: config.size, height: config.size }}
-                                className="object-contain"
-                              />
-                            </div>
-                            <span className="text-base font-bold text-card-foreground text-center leading-tight">
-                              {sponsor.name}
-                            </span>
-                          </div>
-                        </AnimatedSection>
-                      ))}
-                    </div>
+        {/* Tier rows */}
+        {active.tiers.map((tierGroup) => {
+          const cfg = TIERS[tierGroup.tier];
+          return (
+            <div key={tierGroup.tier} className="mb-10">
+              <div className="flex items-center gap-3 mb-5">
+                <span className={`text-[9px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border ${cfg.badge}`}>
+                  {cfg.label}
+                </span>
+                <span className="text-[11px] text-muted-foreground font-bold uppercase tracking-wider">
+                  {cfg.label} Sponsors
+                </span>
+                <div className="flex-1 h-px bg-border" />
+              </div>
+              <div className="flex items-center justify-center flex-wrap gap-4">
+                {tierGroup.sponsors.map((sponsor) => (
+                  <div
+                    key={sponsor.name}
+                    className="flex flex-col items-center justify-center gap-1.5 bg-card/50 border border-border rounded-xl px-5 py-4 hover:border-primary/30 hover:-translate-y-1 transition-all cursor-pointer"
+                    style={{
+                      width: tierGroup.tier === "presenting" ? 320 : tierGroup.tier === "gold" ? 190 : tierGroup.tier === "silver" ? 145 : 108,
+                      minHeight: tierGroup.tier === "presenting" ? 96 : tierGroup.tier === "gold" ? 70 : 52,
+                    }}
+                  >
+                    {tierGroup.logoSrc && (
+                      <img src={tierGroup.logoSrc} alt={sponsor.name} className="h-12 object-contain" />
+                    )}
+                    <span className={`font-bold text-card-foreground text-center leading-tight ${
+                      tierGroup.tier === "presenting" ? "text-lg" : tierGroup.tier === "gold" ? "text-sm" : "text-xs"
+                    }`}>
+                      {sponsor.name}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground text-center">{sponsor.subtitle}</span>
                   </div>
-                );
-              })}
+                ))}
+              </div>
             </div>
-          ))}
-        </div>
-      </section>
-    </>
+          );
+        })}
+
+        {/* Per-programme CTA or info note */}
+        {active.cta ? (
+          <div className="text-center py-10 bg-background/50 border border-dashed border-border rounded-xl mt-6">
+            <span className="text-3xl block mb-3">{active.cta.emoji}</span>
+            <h3 className="text-xl font-black text-foreground mb-2">{active.cta.title}</h3>
+            <p className="text-sm text-muted-foreground mb-5">{active.cta.subtitle}</p>
+            <Button asChild>
+              <Link to="/contact">Enquire →</Link>
+            </Button>
+          </div>
+        ) : activeTab === "all" ? (
+          <div className="text-center p-5 bg-primary/5 border border-primary/15 rounded-lg text-xs text-muted-foreground">
+            Select a programme tab to see that programme's sponsors only. Partners are never shown
+            outside their designated programme(s).
+          </div>
+        ) : null}
+      </div>
+    </section>
   );
 };
 
