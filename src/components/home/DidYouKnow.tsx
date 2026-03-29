@@ -22,7 +22,7 @@ const facts = [
   },
   {
     title: "Parliamentary Diplomacy",
-    text: "The Parliament plays a crucial role in conflict resolution, election observation, and fostering democratic governance across West Africa.",
+    text: "The Parliament plays a crucial role in conflict resolution, election observation, and fostering representation of the peoples of West Africa.",
   },
   {
     title: "Multilingual Institution",

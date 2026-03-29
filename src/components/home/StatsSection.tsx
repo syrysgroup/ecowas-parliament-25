@@ -3,7 +3,7 @@ import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 
 const stats = [
   { target: 12, label: "Member States" },
-  { target: 25, label: "Years of Democracy" },
+  { target: 25, label: "Years of Representation" },
   { target: 7, label: "Programmes" },
   { target: 1200, label: "Expected Delegates", suffix: "+" },
   { target: 3, label: "Award Categories" },
