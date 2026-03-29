@@ -5,6 +5,7 @@ import { useEffect, useState, useRef } from "react";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import ecowasLogo from "@/assets/ecowas-parliament-logo.png";
 import anniversary25Logo from "@/assets/parliament-25-anniversary-logo.png";
+import parliamentBg from "@/assets/parliament-chamber.png";
 
 const stats = [
   { label: "Member States", target: 12 },
