@@ -16,6 +16,7 @@ import {
 import ecowasLogo from "@/assets/ecowas-parliament-logo.png";
 import anniversary25Logo from "@/assets/parliament-25-logo.png";
 
+// ─── Types ────────────────────────────────────────────────────────────────────
 type AuthMode = "signin" | "signup" | "forgot" | "reset_sent";
 
 const ECOWAS_COUNTRIES = [
@@ -24,6 +25,7 @@ const ECOWAS_COUNTRIES = [
   "Nigeria","Senegal","Sierra Leone","Togo",
 ];
 
+// ─── Role-based redirect ──────────────────────────────────────────────────────
 async function getRoleBasedRedirect(
   userId: string,
   from: string | null,
@@ -35,6 +37,7 @@ async function getRoleBasedRedirect(
 
   const roles: string[] = (data ?? []).map((r: any) => r.role);
 
+  // Honour the "from" redirect if the user has enough privilege
   if (from && from !== "/auth") return from;
 
   if (roles.includes("super_admin")) return "/admin/super";
@@ -44,6 +47,7 @@ async function getRoleBasedRedirect(
   return "/";
 }
 
+// ─── Component ────────────────────────────────────────────────────────────────
 export default function Auth() {
   const { user, loading } = useAuthContext();
   const navigate          = useNavigate();
@@ -59,14 +63,16 @@ export default function Auth() {
   const [fullName,    setFullName]    = useState("");
   const [country,     setCountry]     = useState("");
   const [submitting,  setSubmitting]  = useState(false);
-  const [teamMode,    setTeamMode]    = useState(false);
+  const [teamMode,    setTeamMode]    = useState(false);    // switches to staff login styling
 
+  // ── If already signed in, redirect ────────────────────────────────────────
   useEffect(() => {
     if (!loading && user) {
       getRoleBasedRedirect(user.id, from ?? null).then(path => navigate(path, { replace: true }));
     }
   }, [user, loading, from, navigate]);
 
+  // ── Detect team-mode from query param ─────────────────────────────────────
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     if (params.get("team") === "1") setTeamMode(true);
@@ -74,6 +80,7 @@ export default function Auth() {
 
   if (loading) return null;
 
+  // ── Submit handlers ────────────────────────────────────────────────────────
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
@@ -146,6 +153,7 @@ export default function Auth() {
     }
   };
 
+  // ── Shared field ──────────────────────────────────────────────────────────
   const EmailField = (
     <div>
       <Label htmlFor="email" className="text-sm font-semibold mb-1.5 block">Email address</Label>
@@ -186,8 +194,11 @@ export default function Auth() {
     </div>
   );
 
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-gradient-to-b from-muted/30 to-background flex flex-col">
+
+      {/* Top nav */}
       <header className="border-b border-border bg-background/80 backdrop-blur px-6 py-3 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-3">
           <img src={ecowasLogo}        alt="ECOWAS Parliament"  className="h-9 w-auto" />
@@ -201,6 +212,7 @@ export default function Auth() {
       <main className="flex-1 flex items-center justify-center p-4 py-12">
         <div className="w-full max-w-md space-y-4">
 
+          {/* ── Team login toggle ── */}
           {!teamMode ? (
             <div className="flex items-center justify-between">
               <div>
@@ -219,7 +231,9 @@ export default function Auth() {
               </div>
             </div>
           ) : (
-            <div className="rounded-2xl border-2 border-amber-300 bg-amber-50/60 p-4">
+            <div className={`rounded-2xl border-2 p-4 ${
+              teamMode ? "border-amber-300 bg-amber-50/60" : "border-border"
+            }`}>
               <div className="flex items-center gap-2 mb-1">
                 <Crown className="h-5 w-5 text-amber-600" />
                 <h2 className="font-bold text-amber-900">Team / Staff Login</h2>
@@ -231,9 +245,12 @@ export default function Auth() {
             </div>
           )}
 
+          {/* ── Main card ── */}
           <div className={`rounded-2xl border bg-card shadow-sm p-8 ${
             teamMode ? "border-amber-300" : "border-border"
           }`}>
+
+            {/* ── Sign in ── */}
             {mode === "signin" && (
               <form onSubmit={handleSignIn} className="space-y-4">
                 {teamMode && (
@@ -282,6 +299,7 @@ export default function Auth() {
               </form>
             )}
 
+            {/* ── Sign up ── */}
             {mode === "signup" && (
               <form onSubmit={handleSignUp} className="space-y-4">
                 <div>
@@ -325,6 +343,7 @@ export default function Auth() {
               </form>
             )}
 
+            {/* ── Forgot password ── */}
             {mode === "forgot" && (
               <form onSubmit={handleForgot} className="space-y-4">
                 <div className="flex items-center gap-2 p-3 rounded-xl bg-blue-50 border border-blue-200">
@@ -347,6 +366,7 @@ export default function Auth() {
               </form>
             )}
 
+            {/* ── Reset email sent ── */}
             {mode === "reset_sent" && (
               <div className="text-center py-4 space-y-4">
                 <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
@@ -366,6 +386,7 @@ export default function Auth() {
             )}
           </div>
 
+          {/* ── Team / staff switcher ── */}
           <div className="text-center">
             {!teamMode ? (
               <button
@@ -386,6 +407,7 @@ export default function Auth() {
             )}
           </div>
 
+          {/* ── Security note for team mode ── */}
           {teamMode && (
             <div className="flex items-start gap-2 p-3 rounded-xl bg-muted/50 border border-border">
               <AlertCircle className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
