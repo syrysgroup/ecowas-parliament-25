@@ -1,201 +1,405 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import Layout from "@/components/layout/Layout";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthContext } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, Lock, User, ArrowLeft } from "lucide-react";
-import { Link } from "react-router-dom";
+import {
+  Mail, Lock, User, ArrowLeft, Crown, Eye, EyeOff,
+  ShieldCheck, KeyRound, CheckCircle2, AlertCircle,
+} from "lucide-react";
+import ecowasLogo from "@/assets/ecowas-parliament-logo.png";
+import anniversary25Logo from "@/assets/parliament-25-logo.png";
 
-const COUNTRIES = [
-  "Nigeria", "Ghana", "Côte d'Ivoire", "Guinea", "Guinea-Bissau",
-  "Senegal", "Benin", "Cape Verde", "Gambia", "Liberia", "Sierra Leone", "Togo",
+type AuthMode = "signin" | "signup" | "forgot" | "reset_sent";
+
+const ECOWAS_COUNTRIES = [
+  "Benin","Burkina Faso","Cape Verde","Côte d'Ivoire","Gambia",
+  "Ghana","Guinea","Guinea-Bissau","Liberia","Mali","Niger",
+  "Nigeria","Senegal","Sierra Leone","Togo",
 ];
 
-const getRedirectPath = async (userId: string): Promise<string> => {
-  const { data } = await supabase
+async function getRoleBasedRedirect(
+  userId: string,
+  from: string | null,
+): Promise<string> {
+  const { data } = await (supabase as any)
     .from("user_roles")
     .select("role")
     .eq("user_id", userId);
 
-  if (data && data.length > 0) {
-    const roles = data.map((r) => r.role);
-    if (roles.includes("super_admin") || roles.includes("admin") || roles.includes("moderator")) {
-      return "/admin";
-    }
-    if (roles.includes("sponsor")) {
-      return "/sponsor-dashboard";
-    }
-  }
-  return "/";
-};
+  const roles: string[] = (data ?? []).map((r: any) => r.role);
 
-const Auth = () => {
-  const [isSignUp, setIsSignUp] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [fullName, setFullName] = useState("");
-  const [country, setCountry] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const { user, loading } = useAuth();
-  const navigate = useNavigate();
-  const { toast } = useToast();
+  if (from && from !== "/auth") return from;
+
+  if (roles.includes("super_admin")) return "/admin/super";
+  if (roles.includes("admin"))       return "/admin";
+  if (roles.includes("moderator"))   return "/admin";
+  if (roles.includes("sponsor"))     return "/sponsor-dashboard";
+  return "/";
+}
+
+export default function Auth() {
+  const { user, loading } = useAuthContext();
+  const navigate          = useNavigate();
+  const location          = useLocation();
+  const { toast }         = useToast();
+
+  const from = (location.state as any)?.from as string | undefined;
+
+  const [mode,        setMode]        = useState<AuthMode>("signin");
+  const [email,       setEmail]       = useState("");
+  const [password,    setPassword]    = useState("");
+  const [showPwd,     setShowPwd]     = useState(false);
+  const [fullName,    setFullName]    = useState("");
+  const [country,     setCountry]     = useState("");
+  const [submitting,  setSubmitting]  = useState(false);
+  const [teamMode,    setTeamMode]    = useState(false);
 
   useEffect(() => {
     if (!loading && user) {
-      getRedirectPath(user.id).then((path) => navigate(path));
+      getRoleBasedRedirect(user.id, from ?? null).then(path => navigate(path, { replace: true }));
     }
-  }, [user, loading, navigate]);
+  }, [user, loading, from, navigate]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get("team") === "1") setTeamMode(true);
+  }, [location.search]);
+
+  if (loading) return null;
+
+  const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
-
     try {
-      if (isSignUp) {
-        if (!fullName.trim() || !country) {
-          toast({ title: "Please fill all fields", variant: "destructive" });
-          setSubmitting(false);
-          return;
-        }
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: window.location.origin,
-            data: { full_name: fullName.trim(), country },
-          },
-        });
-        if (error) throw error;
-        toast({
-          title: "Check your email",
-          description: "We've sent you a verification link. Please verify your email to continue.",
-        });
-      } else {
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-        if (data.user) {
-          const path = await getRedirectPath(data.user.id);
-          navigate(path);
-        }
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      if (data.user) {
+        const path = await getRoleBasedRedirect(data.user.id, from ?? null);
+        navigate(path, { replace: true });
       }
-    } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } catch (err: any) {
+      toast({
+        title:       "Sign-in failed",
+        description: err.message === "Invalid login credentials"
+          ? "Email or password is incorrect."
+          : err.message,
+        variant: "destructive",
+      });
     } finally {
       setSubmitting(false);
     }
   };
 
-  if (loading) return null;
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!fullName.trim() || !country) {
+      toast({ title: "Please fill all fields", variant: "destructive" });
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth`,
+          data: { full_name: fullName.trim(), country },
+        },
+      });
+      if (error) throw error;
+      toast({
+        title: "Check your email",
+        description: "We've sent a verification link. Click it to activate your account.",
+      });
+      setMode("signin");
+    } catch (err: any) {
+      toast({ title: "Sign-up failed", description: err.message, variant: "destructive" });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleForgot = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) {
+      toast({ title: "Enter your email address first", variant: "destructive" });
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth?mode=reset`,
+      });
+      if (error) throw error;
+      setMode("reset_sent");
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const EmailField = (
+    <div>
+      <Label htmlFor="email" className="text-sm font-semibold mb-1.5 block">Email address</Label>
+      <div className="relative">
+        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          id="email" type="email" required autoComplete="email"
+          placeholder="you@example.com"
+          className="pl-10"
+          value={email} onChange={e => setEmail(e.target.value)}
+          maxLength={255}
+        />
+      </div>
+    </div>
+  );
+
+  const PasswordField = (
+    <div>
+      <Label htmlFor="password" className="text-sm font-semibold mb-1.5 block">Password</Label>
+      <div className="relative">
+        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          id="password" type={showPwd ? "text" : "password"} required autoComplete="current-password"
+          placeholder="••••••••"
+          className="pl-10 pr-10"
+          value={password} onChange={e => setPassword(e.target.value)}
+          minLength={6}
+        />
+        <button
+          type="button"
+          onClick={() => setShowPwd(v => !v)}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+          tabIndex={-1}
+        >
+          {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+        </button>
+      </div>
+    </div>
+  );
 
   return (
-    <Layout>
-      <section className="min-h-[80vh] flex items-center justify-center py-16">
-        <div className="w-full max-w-md px-4">
-          <Button asChild variant="ghost" className="mb-6 -ml-3 text-muted-foreground">
-            <Link to="/"><ArrowLeft className="mr-2 h-4 w-4" />Back to Home</Link>
-          </Button>
+    <div className="min-h-screen bg-gradient-to-b from-muted/30 to-background flex flex-col">
+      <header className="border-b border-border bg-background/80 backdrop-blur px-6 py-3 flex items-center justify-between">
+        <Link to="/" className="flex items-center gap-3">
+          <img src={ecowasLogo}        alt="ECOWAS Parliament"  className="h-9 w-auto" />
+          <img src={anniversary25Logo} alt="25th Anniversary"  className="h-9 w-auto hidden sm:block" />
+        </Link>
+        <Button asChild variant="ghost" size="sm" className="gap-2 text-muted-foreground">
+          <Link to="/"><ArrowLeft className="h-4 w-4" /> Back to site</Link>
+        </Button>
+      </header>
 
-          <div className="bg-card border border-border rounded-2xl p-8 shadow-sm">
-            <h1 className="text-2xl font-bold text-card-foreground mb-1">
-              {isSignUp ? "Create Account" : "Welcome Back"}
-            </h1>
-            <p className="text-sm text-muted-foreground mb-6">
-              {isSignUp ? "Sign up to apply as a Youth Representative" : "Sign in to your account"}
-            </p>
+      <main className="flex-1 flex items-center justify-center p-4 py-12">
+        <div className="w-full max-w-md space-y-4">
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {isSignUp && (
-                <>
-                  <div>
-                    <Label htmlFor="fullName">Full Name</Label>
-                    <div className="relative mt-1">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="fullName"
-                        value={fullName}
-                        onChange={(e) => setFullName(e.target.value)}
-                        placeholder="Your full name"
-                        className="pl-10"
-                        required
-                        maxLength={100}
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <Label htmlFor="country">Country</Label>
-                    <Select value={country} onValueChange={setCountry} required>
-                      <SelectTrigger className="mt-1">
-                        <SelectValue placeholder="Select your country" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {COUNTRIES.map((c) => (
-                          <SelectItem key={c} value={c}>{c}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </>
-              )}
-
+          {!teamMode ? (
+            <div className="flex items-center justify-between">
               <div>
-                <Label htmlFor="email">Email</Label>
-                <div className="relative mt-1">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="you@example.com"
-                    className="pl-10"
-                    required
-                    maxLength={255}
-                  />
-                </div>
+                <h1 className="text-2xl font-black">
+                  {mode === "signin"     ? "Welcome back"
+                  : mode === "signup"    ? "Create account"
+                  : mode === "forgot"    ? "Reset password"
+                  :                        "Check your email"}
+                </h1>
+                <p className="text-sm text-muted-foreground mt-0.5">
+                  {mode === "signin"  ? "Sign in to your account" :
+                   mode === "signup"  ? "Register to apply as a Youth Representative" :
+                   mode === "forgot"  ? "We'll email you a reset link" :
+                                        "Password reset email sent"}
+                </p>
               </div>
-
-              <div>
-                <Label htmlFor="password">Password</Label>
-                <div className="relative mt-1">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="pl-10"
-                    required
-                    minLength={6}
-                  />
-                </div>
+            </div>
+          ) : (
+            <div className="rounded-2xl border-2 border-amber-300 bg-amber-50/60 p-4">
+              <div className="flex items-center gap-2 mb-1">
+                <Crown className="h-5 w-5 text-amber-600" />
+                <h2 className="font-bold text-amber-900">Team / Staff Login</h2>
               </div>
+              <p className="text-xs text-amber-700">
+                This portal is for authorised team members and administrators only.
+                Unauthorised access attempts are logged.
+              </p>
+            </div>
+          )}
 
-              <Button type="submit" className="w-full" disabled={submitting}>
-                {submitting ? "Please wait…" : isSignUp ? "Create Account" : "Sign In"}
-              </Button>
-            </form>
+          <div className={`rounded-2xl border bg-card shadow-sm p-8 ${
+            teamMode ? "border-amber-300" : "border-border"
+          }`}>
+            {mode === "signin" && (
+              <form onSubmit={handleSignIn} className="space-y-4">
+                {teamMode && (
+                  <div className="flex items-center gap-2 p-3 rounded-xl bg-amber-50 border border-amber-200 mb-4">
+                    <ShieldCheck className="h-4 w-4 text-amber-700 flex-shrink-0" />
+                    <p className="text-xs text-amber-800 font-medium">
+                      Staff credential check — all access is recorded.
+                    </p>
+                  </div>
+                )}
+                {EmailField}
+                {PasswordField}
+                <div className="flex items-center justify-between">
+                  <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer">
+                    <input type="checkbox" className="rounded" />
+                    Remember me
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setMode("forgot")}
+                    className="text-sm text-primary hover:underline"
+                  >
+                    Forgot password?
+                  </button>
+                </div>
+                <Button
+                  type="submit"
+                  className={`w-full gap-2 ${teamMode ? "bg-amber-600 hover:bg-amber-700 border-amber-600" : ""}`}
+                  disabled={submitting}
+                >
+                  {submitting ? (
+                    <><span className="animate-spin inline-block">⟳</span> Signing in…</>
+                  ) : (
+                    <>{teamMode ? <Crown className="h-4 w-4" /> : <Lock className="h-4 w-4" />} Sign in</>
+                  )}
+                </Button>
+                {!teamMode && (
+                  <p className="text-sm text-center text-muted-foreground">
+                    Don't have an account?{" "}
+                    <button type="button" onClick={() => setMode("signup")}
+                      className="text-primary font-medium hover:underline">
+                      Sign up
+                    </button>
+                  </p>
+                )}
+              </form>
+            )}
 
-            <p className="text-sm text-center text-muted-foreground mt-6">
-              {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
-              <button
-                type="button"
-                onClick={() => setIsSignUp(!isSignUp)}
-                className="text-primary font-medium hover:underline"
-              >
-                {isSignUp ? "Sign in" : "Sign up"}
-              </button>
-            </p>
+            {mode === "signup" && (
+              <form onSubmit={handleSignUp} className="space-y-4">
+                <div>
+                  <Label htmlFor="fullName" className="text-sm font-semibold mb-1.5 block">Full name</Label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="fullName" required placeholder="Your full name"
+                      className="pl-10"
+                      value={fullName} onChange={e => setFullName(e.target.value)}
+                      maxLength={100}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-sm font-semibold mb-1.5 block">Country</Label>
+                  <Select value={country} onValueChange={setCountry} required>
+                    <SelectTrigger><SelectValue placeholder="Select your country" /></SelectTrigger>
+                    <SelectContent>
+                      {ECOWAS_COUNTRIES.map(c => (
+                        <SelectItem key={c} value={c}>{c}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {EmailField}
+                {PasswordField}
+                <p className="text-xs text-muted-foreground">
+                  Password must be at least 6 characters. By registering you agree to our privacy policy.
+                </p>
+                <Button type="submit" className="w-full gap-2" disabled={submitting}>
+                  {submitting ? "Creating account…" : "Create account"}
+                </Button>
+                <p className="text-sm text-center text-muted-foreground">
+                  Already have an account?{" "}
+                  <button type="button" onClick={() => setMode("signin")}
+                    className="text-primary font-medium hover:underline">
+                    Sign in
+                  </button>
+                </p>
+              </form>
+            )}
+
+            {mode === "forgot" && (
+              <form onSubmit={handleForgot} className="space-y-4">
+                <div className="flex items-center gap-2 p-3 rounded-xl bg-blue-50 border border-blue-200">
+                  <KeyRound className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                  <p className="text-xs text-blue-800">
+                    Enter your email address and we'll send a password reset link.
+                  </p>
+                </div>
+                {EmailField}
+                <Button type="submit" className="w-full" disabled={submitting}>
+                  {submitting ? "Sending…" : "Send reset link"}
+                </Button>
+                <button
+                  type="button"
+                  onClick={() => setMode("signin")}
+                  className="text-sm text-muted-foreground hover:text-foreground w-full text-center"
+                >
+                  ← Back to sign in
+                </button>
+              </form>
+            )}
+
+            {mode === "reset_sent" && (
+              <div className="text-center py-4 space-y-4">
+                <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
+                  <CheckCircle2 className="h-7 w-7 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-lg">Reset link sent</h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Check <strong>{email}</strong> for a password reset link.
+                    The link expires in 1 hour.
+                  </p>
+                </div>
+                <Button variant="outline" onClick={() => setMode("signin")} className="w-full">
+                  Back to sign in
+                </Button>
+              </div>
+            )}
           </div>
-        </div>
-      </section>
-    </Layout>
-  );
-};
 
-export default Auth;
+          <div className="text-center">
+            {!teamMode ? (
+              <button
+                onClick={() => { setTeamMode(true); setMode("signin"); }}
+                className="text-xs text-muted-foreground hover:text-amber-700 flex items-center gap-1.5 mx-auto transition-colors"
+              >
+                <Crown className="h-3.5 w-3.5" />
+                Team / staff portal
+              </button>
+            ) : (
+              <button
+                onClick={() => { setTeamMode(false); setMode("signin"); }}
+                className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1.5 mx-auto"
+              >
+                <User className="h-3.5 w-3.5" />
+                Switch to public sign-in
+              </button>
+            )}
+          </div>
+
+          {teamMode && (
+            <div className="flex items-start gap-2 p-3 rounded-xl bg-muted/50 border border-border">
+              <AlertCircle className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-muted-foreground">
+                Team members are invited by the Super Administrator. If you haven't received
+                an invitation email, contact{" "}
+                <a href="mailto:admin@ecowasparliament25.org" className="text-primary underline">
+                  admin@ecowasparliament25.org
+                </a>.
+              </p>
+            </div>
+          )}
+        </div>
+      </main>
+    </div>
+  );
+}
