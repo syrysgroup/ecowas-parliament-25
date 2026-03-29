@@ -62,6 +62,21 @@ const SpeakerSection = () => {
                 </span>
               ))}
             </div>
+
+            <div className="flex flex-wrap gap-3 mt-6">
+              <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold">
+                <a href="https://www.parl.ecowas.int/the-speaker-6th-legislature/" target="_blank" rel="noopener noreferrer">
+                  <User className="mr-2 h-4 w-4" />
+                  About the Speaker
+                </a>
+              </Button>
+              <Button asChild variant="outline" className="border-primary/30 text-primary hover:bg-primary/5 font-semibold">
+                <a href="https://www.parl.ecowas.int" target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="mr-2 h-4 w-4" />
+                  Official Site
+                </a>
+              </Button>
+            </div>
           </AnimatedSection>
         </div>
       </div>

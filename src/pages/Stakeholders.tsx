@@ -54,8 +54,23 @@ const Stakeholders = () => {
           <AnimatedSection className="mb-8">
             <h2 className="text-2xl font-black text-foreground">ECOWAS Parliament leadership</h2>
           </AnimatedSection>
-          <div className="grid gap-6 md:grid-cols-3">
-            {ecowasStakeholders.map((person, index) => (
+
+          {/* Featured Speaker — full width */}
+          <AnimatedSection className="mb-10">
+            <article className="relative overflow-hidden rounded-3xl border border-primary/20 bg-card shadow-lg">
+              <img src={ecowasStakeholders[0].image} alt={ecowasStakeholders[0].name} className="w-full aspect-[16/7] object-cover object-top" loading="lazy" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+              <div className="absolute bottom-0 left-0 right-0 p-8 md:p-10">
+                <Badge className="mb-3 bg-primary/90 text-primary-foreground border-0">Speaker of the ECOWAS Parliament</Badge>
+                <h3 className="text-3xl md:text-4xl font-black text-white">{ecowasStakeholders[0].name}</h3>
+                <p className="mt-2 text-white/70 text-sm max-w-xl">{ecowasStakeholders[0].title}</p>
+              </div>
+            </article>
+          </AnimatedSection>
+
+          {/* Other leadership */}
+          <div className="grid gap-6 md:grid-cols-2">
+            {ecowasStakeholders.slice(1).map((person, index) => (
               <AnimatedSection key={person.name} delay={index * 60}>
                 <article className="overflow-hidden rounded-3xl border border-border bg-card shadow-sm">
                   <img src={person.image} alt={person.name} className="aspect-[4/4.4] w-full object-cover" loading="lazy" />
