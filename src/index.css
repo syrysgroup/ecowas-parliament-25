@@ -118,6 +118,8 @@
   }
 }
 
+/* ─── Keyframe Animations ─── */
+
 @keyframes float {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-10px); }
@@ -138,7 +140,58 @@
   to { opacity: 1; transform: scale(1); }
 }
 
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+@keyframes particle {
+  0%, 100% {
+    transform: translateY(0) translateX(0) scale(1);
+    opacity: 0.3;
+  }
+  25% {
+    transform: translateY(-20px) translateX(10px) scale(1.2);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translateY(-10px) translateX(-5px) scale(0.9);
+    opacity: 0.4;
+  }
+  75% {
+    transform: translateY(-25px) translateX(15px) scale(1.1);
+    opacity: 0.5;
+  }
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .animate-float { animation: float 3s ease-in-out infinite; }
 .animate-pulse-dot { animation: pulse-dot 2s ease-in-out infinite; }
 .animate-slide-up { animation: slide-up 0.6s ease-out forwards; }
 .animate-count-in { animation: count-in 0.4s ease-out forwards; }
+.animate-gradient-shift { animation: gradient-shift 8s ease infinite; }
+.animate-marquee { animation: marquee 40s linear infinite; }
+.animate-particle { animation: particle 6s ease-in-out infinite; }
+.animate-spin-slow { animation: spin-slow 20s linear infinite; }
+.animate-shimmer { animation: shimmer 2s linear infinite; }
+.animate-fade-in { animation: fade-in 0.2s ease-out; }

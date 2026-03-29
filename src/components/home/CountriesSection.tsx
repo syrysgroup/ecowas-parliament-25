@@ -28,32 +28,45 @@ const countries = [
 ];
 
 const CountriesSection = () => {
+  // Double the list for seamless marquee
+  const doubled = [...countries, ...countries];
+
   return (
-    <section className="py-20 bg-muted/50">
-      <div className="container">
-        <AnimatedSection className="text-center mb-14">
+    <section className="py-16 bg-muted/30 overflow-hidden">
+      <div className="container mb-10">
+        <AnimatedSection className="text-center">
           <h2 className="text-3xl md:text-4xl font-black text-foreground">
             Across <span className="text-primary">12 Member States</span>
           </h2>
           <p className="mt-4 text-muted-foreground max-w-2xl mx-auto">
-            From capitals to communities, the programme unfolds across all ECOWAS Parliament member states in West Africa.
+            From capitals to communities, the programme unfolds across all ECOWAS Parliament member states.
           </p>
         </AnimatedSection>
+      </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {countries.map((country, i) => (
-            <AnimatedSection key={country.name} delay={i * 60}>
-              <div className="group flex flex-col items-center p-5 bg-card rounded-xl border border-border shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
+      {/* Marquee ticker */}
+      <div className="relative group">
+        {/* Fade edges */}
+        <div className="absolute left-0 top-0 bottom-0 w-20 z-10 bg-gradient-to-r from-muted/30 to-transparent pointer-events-none" />
+        <div className="absolute right-0 top-0 bottom-0 w-20 z-10 bg-gradient-to-l from-muted/30 to-transparent pointer-events-none" />
+
+        <div className="flex animate-marquee group-hover:[animation-play-state:paused]">
+          {doubled.map((country, i) => (
+            <div
+              key={`${country.name}-${i}`}
+              className="flex-shrink-0 flex flex-col items-center mx-6 group/flag cursor-default"
+            >
+              <div className="w-20 h-14 rounded-lg overflow-hidden shadow-md border border-border bg-card group-hover/flag:scale-110 group-hover/flag:shadow-xl transition-all duration-300">
                 <img
                   src={country.flag}
                   alt={`Flag of ${country.name}`}
-                  className="w-16 h-12 object-cover rounded-sm mb-3 shadow-sm group-hover:scale-110 transition-transform duration-300"
+                  className="w-full h-full object-cover"
                 />
-                <h3 className="font-bold text-card-foreground text-sm text-center group-hover:text-primary transition-colors">
-                  {country.name}
-                </h3>
               </div>
-            </AnimatedSection>
+              <p className="mt-2 text-xs font-bold text-card-foreground group-hover/flag:text-primary transition-colors text-center whitespace-nowrap">
+                {country.name}
+              </p>
+            </div>
           ))}
         </div>
       </div>
