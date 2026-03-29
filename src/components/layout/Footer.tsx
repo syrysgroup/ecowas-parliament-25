@@ -55,7 +55,6 @@ const Footer = () => {
                 <img src={anniversary25Logo} alt="25th Anniversary" className="h-8 w-auto object-contain" />
               </div>
             </div>
-            </div>
             <p className="text-sm text-muted-foreground leading-relaxed mb-4">
               {t("footer.tagline")}
             </p>
