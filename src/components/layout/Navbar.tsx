@@ -3,46 +3,51 @@ import { Link, useLocation } from "react-router-dom";
 import { Menu, X, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { useTranslation, Locale } from "@/lib/i18n";
+import { useTranslation } from "@/lib/i18n";
 import ecowasLogo from "@/assets/ecowas-parliament-logo.png";
 import anniversary25Logo from "@/assets/parliament-25-logo.png";
 
 const Navbar = () => {
   const { t, locale, setLocale } = useTranslation();
-  const [programmesOpen, setProgrammesOpen] = useState(false);
-  const [involvedOpen, setInvolvedOpen]     = useState(false);
-  const [mobileOpen, setMobileOpen]         = useState(false);
   const location = useLocation();
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [openDrop, setOpenDrop] = useState<string | null>(null);
 
   const navLinks = [
-    { label: t("nav.home"),         to: "/"          },
-    { label: t("nav.about"),        to: "/about"     },
+    { label: "Home", to: "/" },
+    { label: "About", to: "/about" },
     {
-      label: t("nav.programmes"),
+      label: "Initiatives",
       to: "/programmes/youth",
       children: [
-        { label: t("prog.youth"),      to: "/programmes/youth"      },
-        { label: t("prog.trade"),      to: "/programmes/trade"      },
-        { label: t("prog.women"),      to: "/programmes/women"      },
-        { label: t("prog.civic"),      to: "/programmes/civic"      },
-        { label: t("prog.culture"),    to: "/programmes/culture"    },
-        { label: t("prog.awards"),     to: "/programmes/awards"     },
+        { label: t("prog.youth"), to: "/programmes/youth" },
+        { label: t("prog.trade"), to: "/programmes/trade" },
+        { label: t("prog.women"), to: "/programmes/women" },
+        { label: t("prog.civic"), to: "/programmes/civic" },
+        { label: t("prog.culture"), to: "/programmes/culture" },
+        { label: t("prog.awards"), to: "/programmes/awards" },
         { label: t("prog.parliament"), to: "/programmes/parliament" },
       ],
     },
-    { label: t("nav.timeline"),     to: "/timeline"  },
-    { label: t("nav.news"),         to: "/news"      },
-    { label: t("nav.documents"),    to: "/documents" },
-    { label: t("nav.events"),       to: "/events"    },
-    { label: t("nav.stakeholders"), to: "/stakeholders" },
-    { label: t("nav.team"),         to: "/team"      },
     {
-      label: t("nav.getInvolved"),
+      label: "Resources",
+      to: "/timeline",
+      children: [
+        { label: t("nav.timeline"), to: "/timeline" },
+        { label: t("nav.news"), to: "/news" },
+        { label: t("nav.documents"), to: "/documents" },
+        { label: t("nav.events"), to: "/events" },
+        { label: "Media Kit", to: "/media-kit" },
+      ],
+    },
+    {
+      label: "Get Involved",
       to: "/sponsors",
       children: [
-        { label: t("common.sponsor"),   to: "/sponsors"    },
-        { label: t("common.mediaKit"),   to: "/media-kit"   },
-        { label: t("common.contact"),    to: "/contact"     },
+        { label: "Sponsor Portal", to: "/sponsors" },
+        { label: t("nav.stakeholders"), to: "/stakeholders" },
+        { label: t("nav.team"), to: "/team" },
+        { label: t("nav.contact"), to: "/contact" },
       ],
     },
   ];
@@ -57,9 +62,8 @@ const Navbar = () => {
       <div className="h-1 bg-gradient-ecowas" />
       <nav className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b border-border">
         <div className="container flex h-16 items-center justify-between">
-
           <Link to="/" className="flex items-center gap-3 flex-shrink-0">
-            <img src={ecowasLogo}       alt="ECOWAS Parliament"  className="h-10 w-auto" />
+            <img src={ecowasLogo} alt="ECOWAS Parliament" className="h-10 w-auto" />
             <img src={anniversary25Logo} alt="25th Anniversary" className="h-10 w-auto" />
           </Link>
 
@@ -82,34 +86,36 @@ const Navbar = () => {
                 );
               }
 
-              const isDropOpen = link.label === t("nav.programmes") ? programmesOpen : involvedOpen;
-              const setOpen    = link.label === t("nav.programmes") ? setProgrammesOpen : setInvolvedOpen;
+              const isDropOpen = openDrop === link.label;
 
               return (
                 <div
                   key={link.label}
                   className="relative"
-                  onMouseEnter={() => setOpen(true)}
-                  onMouseLeave={() => setOpen(false)}
+                  onMouseEnter={() => setOpenDrop(link.label)}
+                  onMouseLeave={() => setOpenDrop(null)}
                 >
-                  <Link
-                    to={link.to}
+                  <button
                     className={`flex items-center gap-1 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-                      isActive(link.to)
+                      link.children.some(c => isActive(c.to))
                         ? "text-primary bg-primary/8"
                         : "text-foreground/80 hover:text-primary hover:bg-muted"
                     }`}
                   >
                     {link.label}
                     <ChevronDown className={`h-3.5 w-3.5 transition-transform ${isDropOpen ? "rotate-180" : ""}`} />
-                  </Link>
+                  </button>
                   {isDropOpen && (
-                    <div className="absolute top-full left-0 mt-1 w-56 bg-card border border-border rounded-xl shadow-lg p-2 animate-fade-in">
+                    <div className="absolute top-full left-0 mt-1 w-60 bg-card border border-border rounded-xl shadow-lg p-2 animate-fade-in z-50">
                       {link.children.map((child) => (
                         <Link
                           key={child.to}
                           to={child.to}
-                          className="block px-3 py-2 text-sm rounded-lg hover:bg-muted text-foreground/80 hover:text-primary transition-colors"
+                          className={`block px-3 py-2 text-sm rounded-lg transition-colors ${
+                            isActive(child.to)
+                              ? "text-primary bg-primary/5"
+                              : "text-foreground/80 hover:bg-muted hover:text-primary"
+                          }`}
                         >
                           {child.label}
                         </Link>
@@ -133,7 +139,6 @@ const Navbar = () => {
               </a>
             </div>
 
-            {/* Language toggle */}
             <button
               onClick={toggleLang}
               className="hidden xl:flex items-center justify-center w-8 h-8 rounded-md border border-border text-xs font-bold text-foreground/70 hover:bg-muted transition-colors"
@@ -144,9 +149,6 @@ const Navbar = () => {
 
             <Button asChild size="sm" className="hidden xl:flex">
               <Link to="/sponsors">{t("nav.partnerWithUs")}</Link>
-            </Button>
-            <Button asChild size="sm" variant="outline" className="hidden xl:flex">
-              <Link to="/contact">{t("nav.contact")}</Link>
             </Button>
 
             {/* Mobile hamburger */}
@@ -206,7 +208,6 @@ const Navbar = () => {
               </SheetContent>
             </Sheet>
           </div>
-
         </div>
       </nav>
     </header>

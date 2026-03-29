@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import ecowasLogo from "@/assets/ecowas-parliament-logo.png";
 
+// ─── Types ────────────────────────────────────────────────────────────────────
 interface UserWithRoles {
   id:        string;
   email:     string;
@@ -50,6 +51,7 @@ interface ActivityLog {
   actor?: { full_name: string; email: string };
 }
 
+// ─── Role config ──────────────────────────────────────────────────────────────
 const ROLE_CONFIG: Record<AppRole, {
   label: string; icon: React.ElementType;
   badge: string; border: string; desc: string;
@@ -80,7 +82,9 @@ const ROLE_CONFIG: Record<AppRole, {
   },
 };
 
+// ─── Site route map ───────────────────────────────────────────────────────────
 const ROUTES = [
+  // Public
   { path:"/",                    label:"Home",                       access:"public",      icon:Globe          },
   { path:"/about",               label:"About the Programme",        access:"public",      icon:FileText       },
   { path:"/timeline",            label:"Timeline",                   access:"public",      icon:Clock          },
@@ -92,6 +96,7 @@ const ROUTES = [
   { path:"/contact",             label:"Contact",                    access:"public",      icon:Mail           },
   { path:"/media-kit",           label:"Media Kit",                  access:"public",      icon:FileText       },
   { path:"/sponsors",            label:"Sponsor Portal (public)",    access:"public",      icon:Star           },
+  // Programmes
   { path:"/programmes/youth",    label:"Youth Innovation",           access:"public",      icon:Globe          },
   { path:"/programmes/trade",    label:"Trade & SME",                access:"public",      icon:Globe          },
   { path:"/programmes/women",    label:"Women's Empowerment",        access:"public",      icon:Globe          },
@@ -99,7 +104,9 @@ const ROUTES = [
   { path:"/programmes/culture",  label:"Culture & Creativity",       access:"public",      icon:Globe          },
   { path:"/programmes/awards",   label:"Parliamentary Awards",       access:"public",      icon:Globe          },
   { path:"/programmes/parliament",label:"Youth Parliament",          access:"public",      icon:Globe          },
+  // Auth
   { path:"/auth",                label:"Authentication",             access:"public",      icon:Lock           },
+  // Protected
   { path:"/admin",               label:"Parliament Operations",      access:"admin+",      icon:LayoutDashboard},
   { path:"/admin/project",       label:"Project Command Centre",     access:"admin+",      icon:LayoutDashboard},
   { path:"/admin/users",         label:"User Management",            access:"admin+",      icon:Users          },
@@ -107,10 +114,12 @@ const ROUTES = [
   { path:"/sponsor-dashboard",   label:"Sponsor Dashboard",          access:"sponsor",     icon:Star           },
 ];
 
+// ─── Tab type ─────────────────────────────────────────────────────────────────
 type Tab = "overview" | "users" | "invitations" | "activity" | "routes" | "settings";
 
+// ─── Component ────────────────────────────────────────────────────────────────
 export default function SuperAdminDashboard() {
-  const { user, signOut, refreshRoles } = useAuthContext();
+  const { user, isSuperAdmin, signOut, refreshRoles } = useAuthContext();
   const { toast }  = useToast();
   const navigate   = useNavigate();
 
@@ -124,6 +133,7 @@ export default function SuperAdminDashboard() {
   const [sending,     setSending]     = useState(false);
   const [searchQ,     setSearchQ]     = useState("");
 
+  // ── Load all data ───────────────────────────────────────────────────────
   const loadData = useCallback(async () => {
     if (!user) return;
     setLoading(true);
@@ -142,6 +152,7 @@ export default function SuperAdminDashboard() {
           .limit(50),
       ]);
 
+      // Build roles map
       const rolesMap = new Map<string, AppRole[]>();
       (rolesRes.data ?? []).forEach((r: any) => {
         const arr = rolesMap.get(r.user_id) || [];
@@ -177,6 +188,7 @@ export default function SuperAdminDashboard() {
 
   useEffect(() => { loadData(); }, [loadData]);
 
+  // ── Invite user ────────────────────────────────────────────────────────
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inviteEmail.trim()) return;
@@ -202,6 +214,7 @@ export default function SuperAdminDashboard() {
     }
   };
 
+  // ── Change role ────────────────────────────────────────────────────────
   const handleRoleChange = async (
     targetUserId: string,
     role: AppRole,
@@ -228,6 +241,7 @@ export default function SuperAdminDashboard() {
     }
   };
 
+  // ── Revoke invitation ──────────────────────────────────────────────────
   const revokeInvitation = async (invId: string) => {
     try {
       await (supabase as any).from("invitations").delete().eq("id", invId);
@@ -238,6 +252,7 @@ export default function SuperAdminDashboard() {
     }
   };
 
+  // ── Stats ──────────────────────────────────────────────────────────────
   const stats = {
     total:      users.length,
     superAdmins:users.filter(u => u.roles.includes("super_admin")).length,
@@ -255,6 +270,7 @@ export default function SuperAdminDashboard() {
     u.country.toLowerCase().includes(searchQ.toLowerCase())
   );
 
+  // ── Sidebar nav ─────────────────────────────────────────────────────────
   const NAV: { id: Tab; label: string; icon: React.ElementType; badge?: number }[] = [
     { id:"overview",    label:"Overview",     icon:LayoutDashboard              },
     { id:"users",       label:"Users",        icon:Users,   badge:stats.total   },
@@ -266,8 +282,10 @@ export default function SuperAdminDashboard() {
 
   return (
     <div className="min-h-screen bg-background flex">
-      {/* Sidebar */}
-      <aside className="w-60 flex-shrink-0 bg-[hsl(var(--sidebar-background,222_47%_11%))] flex flex-col sticky top-0 h-screen overflow-y-auto">
+
+      {/* ── Sidebar ── */}
+      <aside className="w-60 flex-shrink-0 bg-[#0a1628] flex flex-col sticky top-0 h-screen overflow-y-auto">
+        {/* Logo */}
         <div className="p-5 border-b border-white/10">
           <img src={ecowasLogo} alt="ECOWAS" className="h-9 w-auto mb-3 brightness-0 invert opacity-90" />
           <div className="flex items-center gap-2">
@@ -281,6 +299,7 @@ export default function SuperAdminDashboard() {
           </div>
         </div>
 
+        {/* User info */}
         <div className="px-4 py-3 border-b border-white/10">
           <p className="text-xs font-semibold text-white/80 truncate">{user?.email}</p>
           <div className="flex items-center gap-1 mt-1">
@@ -289,6 +308,7 @@ export default function SuperAdminDashboard() {
           </div>
         </div>
 
+        {/* Nav links */}
         <nav className="flex-1 p-3 space-y-0.5">
           {NAV.map(n => {
             const Icon = n.icon;
@@ -315,6 +335,7 @@ export default function SuperAdminDashboard() {
           })}
         </nav>
 
+        {/* Quick links */}
         <div className="p-3 border-t border-white/10 space-y-0.5">
           {[
             { to:"/admin",         label:"Parliament Ops",  icon:LayoutDashboard },
@@ -337,8 +358,9 @@ export default function SuperAdminDashboard() {
         </div>
       </aside>
 
-      {/* Main content */}
+      {/* ── Main content ── */}
       <main className="flex-1 min-w-0 overflow-y-auto">
+        {/* Topbar */}
         <div className="sticky top-0 z-10 bg-background/90 backdrop-blur border-b border-border px-6 py-3 flex items-center justify-between">
           <div>
             <h1 className="font-bold text-base capitalize">{tab.replace("_"," ")}</h1>
@@ -353,9 +375,10 @@ export default function SuperAdminDashboard() {
 
         <div className="p-6 space-y-6">
 
-          {/* OVERVIEW */}
+          {/* ═══ OVERVIEW ═══ */}
           {tab === "overview" && (
             <>
+              {/* Stat cards */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 {[
                   { label:"Total users",       value:stats.total,      colour:"text-foreground",    icon:Users      },
@@ -376,6 +399,7 @@ export default function SuperAdminDashboard() {
                 })}
               </div>
 
+              {/* Role breakdown */}
               <div className="rounded-2xl border border-border bg-card p-5">
                 <h2 className="text-sm font-bold mb-4">Role definitions & current distribution</h2>
                 <div className="grid sm:grid-cols-2 gap-3">
@@ -400,6 +424,7 @@ export default function SuperAdminDashboard() {
                 </div>
               </div>
 
+              {/* Recent activity */}
               <div className="rounded-2xl border border-border bg-card p-5">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-sm font-bold">Recent activity</h2>
@@ -434,9 +459,10 @@ export default function SuperAdminDashboard() {
             </>
           )}
 
-          {/* USERS */}
+          {/* ═══ USERS ═══ */}
           {tab === "users" && (
             <>
+              {/* Invite form */}
               <div className="rounded-2xl border border-amber-200 bg-amber-50/50 p-5">
                 <h2 className="text-sm font-bold flex items-center gap-2 mb-4">
                   <UserPlus className="h-4 w-4 text-amber-700" />
@@ -472,6 +498,7 @@ export default function SuperAdminDashboard() {
                 </p>
               </div>
 
+              {/* Search + table */}
               <div className="rounded-2xl border border-border bg-card">
                 <div className="p-4 border-b border-border flex items-center justify-between gap-3 flex-wrap">
                   <h2 className="text-sm font-bold flex items-center gap-2">
@@ -509,7 +536,7 @@ export default function SuperAdminDashboard() {
                             <TableCell>
                               <div className="flex items-center gap-2">
                                 <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary flex-shrink-0">
-                                  {(u.full_name || u.email)[0]?.toUpperCase() ?? "?"}
+                                  {(u.full_name || u.email)[0].toUpperCase()}
                                 </div>
                                 <span className="text-sm font-medium">{u.full_name || "—"}</span>
                                 {u.id === user?.id && (
@@ -588,7 +615,7 @@ export default function SuperAdminDashboard() {
             </>
           )}
 
-          {/* INVITATIONS */}
+          {/* ═══ INVITATIONS ═══ */}
           {tab === "invitations" && (
             <div className="rounded-2xl border border-border bg-card">
               <div className="p-4 border-b border-border flex items-center justify-between">
@@ -653,7 +680,7 @@ export default function SuperAdminDashboard() {
             </div>
           )}
 
-          {/* ACTIVITY LOG */}
+          {/* ═══ ACTIVITY LOG ═══ */}
           {tab === "activity" && (
             <div className="rounded-2xl border border-border bg-card">
               <div className="p-4 border-b border-border">
@@ -696,7 +723,7 @@ export default function SuperAdminDashboard() {
             </div>
           )}
 
-          {/* ROUTES */}
+          {/* ═══ ROUTES ═══ */}
           {tab === "routes" && (
             <div className="space-y-4">
               <div className="flex items-center gap-3 p-4 rounded-xl bg-blue-50 border border-blue-200">
@@ -706,6 +733,7 @@ export default function SuperAdminDashboard() {
                 </p>
               </div>
 
+              {/* Group by access type */}
               {(["public","admin+","sponsor","super_admin"] as const).map(access => {
                 const group = ROUTES.filter(r => r.access === access);
                 if (!group.length) return null;
@@ -742,7 +770,7 @@ export default function SuperAdminDashboard() {
             </div>
           )}
 
-          {/* SETTINGS */}
+          {/* ═══ SETTINGS ═══ */}
           {tab === "settings" && (
             <div className="space-y-5">
               <div className="rounded-2xl border border-border bg-card p-5">

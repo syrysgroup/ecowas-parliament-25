@@ -42,19 +42,50 @@ const CountUpNumber = ({ target, delay = 0 }: { target: number; delay?: number }
   return <span ref={ref as React.RefObject<HTMLSpanElement>}>{count}</span>;
 };
 
+/* Floating particle */
+const Particle = ({ size, x, y, delay, color }: { size: number; x: string; y: string; delay: string; color: string }) => (
+  <div
+    className="absolute rounded-full animate-particle pointer-events-none"
+    style={{
+      width: size,
+      height: size,
+      left: x,
+      top: y,
+      animationDelay: delay,
+      background: color,
+      opacity: 0.35,
+    }}
+  />
+);
+
 const HeroSection = () => {
   return (
     <section className="relative min-h-[100vh] flex items-center overflow-hidden bg-gradient-hero text-primary-foreground">
-      {/* Animated floating shapes */}
+      {/* Animated gradient overlay */}
+      <div className="absolute inset-0 animate-gradient-shift opacity-30" style={{
+        background: "linear-gradient(135deg, hsl(152 100% 26% / 0.4), hsl(50 87% 45% / 0.15), hsl(340 66% 34% / 0.1), hsl(152 100% 20% / 0.3))",
+        backgroundSize: "400% 400%",
+      }} />
+
+      {/* Floating particles */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[10%] left-[5%] w-64 h-64 rounded-full bg-primary/8 blur-3xl animate-float" />
-        <div className="absolute top-[60%] right-[8%] w-48 h-48 rounded-full bg-ecowas-yellow/6 blur-3xl animate-float" style={{ animationDelay: "1s" }} />
-        <div className="absolute top-[30%] right-[20%] w-32 h-32 rounded-full bg-ecowas-lime/5 blur-2xl animate-float" style={{ animationDelay: "2s" }} />
-        <div className="absolute bottom-[15%] left-[15%] w-40 h-40 rounded-full bg-secondary/5 blur-3xl animate-float" style={{ animationDelay: "0.5s" }} />
-        {/* Geometric accents */}
-        <div className="absolute top-20 right-[10%] w-2 h-2 rounded-full bg-ecowas-yellow/40 animate-pulse-dot" />
-        <div className="absolute top-[40%] left-[12%] w-1.5 h-1.5 rounded-full bg-primary/30 animate-pulse-dot" style={{ animationDelay: "0.7s" }} />
-        <div className="absolute bottom-[30%] right-[25%] w-2.5 h-2.5 rounded-full bg-ecowas-lime/30 animate-pulse-dot" style={{ animationDelay: "1.4s" }} />
+        <Particle size={6} x="8%" y="15%" delay="0s" color="hsl(50 87% 45%)" />
+        <Particle size={4} x="25%" y="70%" delay="1.2s" color="hsl(152 100% 40%)" />
+        <Particle size={8} x="75%" y="20%" delay="0.5s" color="hsl(50 87% 45%)" />
+        <Particle size={5} x="90%" y="60%" delay="2s" color="hsl(73 53% 49%)" />
+        <Particle size={3} x="60%" y="80%" delay="0.8s" color="hsl(152 100% 30%)" />
+        <Particle size={7} x="40%" y="10%" delay="1.5s" color="hsl(340 66% 50%)" />
+        <Particle size={4} x="15%" y="50%" delay="2.5s" color="hsl(190 35% 53%)" />
+        <Particle size={6} x="85%" y="40%" delay="3s" color="hsl(50 87% 45%)" />
+        <Particle size={5} x="50%" y="90%" delay="1s" color="hsl(73 53% 49%)" />
+        <Particle size={3} x="35%" y="35%" delay="3.5s" color="hsl(152 100% 40%)" />
+      </div>
+
+      {/* Geometric blur shapes */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-[10%] left-[5%] w-72 h-72 rounded-full bg-primary/8 blur-3xl animate-float" />
+        <div className="absolute top-[55%] right-[5%] w-56 h-56 rounded-full bg-ecowas-yellow/6 blur-3xl animate-float" style={{ animationDelay: "1.2s" }} />
+        <div className="absolute bottom-[10%] left-[20%] w-44 h-44 rounded-full bg-secondary/5 blur-3xl animate-float" style={{ animationDelay: "0.6s" }} />
       </div>
 
       <div className="container relative py-20 md:py-28">
@@ -65,12 +96,15 @@ const HeroSection = () => {
               ECOWAS Parliament Initiatives
             </div>
 
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-black leading-tight animate-slide-up" style={{ animationDelay: "0.1s" }}>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-black leading-[1.05] animate-slide-up" style={{ animationDelay: "0.1s" }}>
               ECOWAS Parliament{" "}
-              <span className="text-ecowas-yellow">@25</span>
+              <span className="text-ecowas-yellow relative">
+                @25
+                <span className="absolute -bottom-1 left-0 right-0 h-1.5 bg-ecowas-yellow/30 rounded-full" />
+              </span>
               <br />
-              <span className="text-2xl md:text-3xl lg:text-4xl font-semibold text-primary-foreground/80">
-                A Year-Long Movement
+              <span className="text-2xl md:text-3xl lg:text-4xl font-semibold text-primary-foreground/80 block mt-3">
+                A Year-Long Movement Across Borders
               </span>
             </h1>
 
@@ -81,10 +115,10 @@ const HeroSection = () => {
             </p>
 
             <div className="flex flex-wrap gap-4 animate-slide-up" style={{ animationDelay: "0.3s" }}>
-              <Button asChild size="lg" className="bg-ecowas-yellow text-background hover:bg-ecowas-yellow/90 font-bold shadow-lg hover:shadow-xl transition-all">
+              <Button asChild size="lg" className="bg-ecowas-yellow text-background hover:bg-ecowas-yellow/90 font-bold shadow-lg hover:shadow-xl transition-all group">
                 <Link to="/about">
                   Explore the Programme
-                  <ArrowRight className="ml-2 h-4 w-4" />
+                  <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
                 </Link>
               </Button>
               <Button asChild variant="outline" size="lg" className="border-primary-foreground/30 text-primary-foreground bg-primary-foreground/10 hover:bg-primary-foreground/20 backdrop-blur-sm">
@@ -106,7 +140,9 @@ const HeroSection = () => {
 
           <div className="flex justify-center lg:justify-end animate-slide-up" style={{ animationDelay: "0.2s" }}>
             <div className="relative">
-              <div className="absolute inset-0 bg-ecowas-yellow/20 rounded-full blur-3xl scale-110 animate-pulse" style={{ animationDuration: "4s" }} />
+              <div className="absolute inset-0 bg-ecowas-yellow/20 rounded-full blur-3xl scale-125 animate-pulse" style={{ animationDuration: "4s" }} />
+              <div className="absolute -inset-8 rounded-full border border-primary-foreground/5 animate-spin-slow" />
+              <div className="absolute -inset-16 rounded-full border border-dashed border-primary-foreground/5 animate-spin-slow" style={{ animationDirection: "reverse", animationDuration: "25s" }} />
               <img
                 src={anniversary25Logo}
                 alt="ECOWAS Parliament 25th Anniversary"
@@ -119,8 +155,8 @@ const HeroSection = () => {
         {/* Stats Bar */}
         <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-4 animate-slide-up" style={{ animationDelay: "0.5s" }}>
           {stats.map((stat, i) => (
-            <div key={stat.label} className="text-center p-5 rounded-2xl backdrop-blur-md bg-primary-foreground/5 border border-primary-foreground/10">
-              <p className="text-3xl md:text-4xl font-black text-ecowas-yellow">
+            <div key={stat.label} className="group text-center p-6 rounded-2xl backdrop-blur-md bg-primary-foreground/5 border border-primary-foreground/10 hover:bg-primary-foreground/10 transition-all duration-300">
+              <p className="text-3xl md:text-4xl font-black text-ecowas-yellow group-hover:scale-110 transition-transform duration-300 inline-block">
                 <CountUpNumber target={stat.target} delay={i * 200} />
               </p>
               <p className="text-sm text-primary-foreground/60 mt-1 font-medium">{stat.label}</p>
