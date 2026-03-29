@@ -81,13 +81,13 @@ const HeroSection = () => {
             </p>
 
             <div className="flex flex-wrap gap-4 animate-slide-up" style={{ animationDelay: "0.3s" }}>
-              <Button asChild size="lg" className="bg-ecowas-yellow text-accent-foreground hover:bg-ecowas-yellow/90 font-bold shadow-lg hover:shadow-xl transition-all">
+              <Button asChild size="lg" className="bg-ecowas-yellow text-background hover:bg-ecowas-yellow/90 font-bold shadow-lg hover:shadow-xl transition-all">
                 <Link to="/about">
                   Explore the Programme
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
-              <Button asChild variant="outline" size="lg" className="border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10 backdrop-blur-sm">
+              <Button asChild variant="outline" size="lg" className="border-primary-foreground/30 text-primary-foreground bg-primary-foreground/10 hover:bg-primary-foreground/20 backdrop-blur-sm">
                 <Link to="/timeline">
                   <Calendar className="mr-2 h-4 w-4" />
                   View Timeline

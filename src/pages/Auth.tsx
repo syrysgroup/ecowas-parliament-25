@@ -16,6 +16,24 @@ const COUNTRIES = [
   "Senegal", "Benin", "Cape Verde", "Gambia", "Liberia", "Sierra Leone", "Togo",
 ];
 
+const getRedirectPath = async (userId: string): Promise<string> => {
+  const { data } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId);
+
+  if (data && data.length > 0) {
+    const roles = data.map((r) => r.role);
+    if (roles.includes("super_admin") || roles.includes("admin") || roles.includes("moderator")) {
+      return "/admin";
+    }
+    if (roles.includes("sponsor")) {
+      return "/sponsor-dashboard";
+    }
+  }
+  return "/";
+};
+
 const Auth = () => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
@@ -29,7 +47,7 @@ const Auth = () => {
 
   useEffect(() => {
     if (!loading && user) {
-      navigate(-1);
+      getRedirectPath(user.id).then((path) => navigate(path));
     }
   }, [user, loading, navigate]);
 
@@ -58,9 +76,12 @@ const Auth = () => {
           description: "We've sent you a verification link. Please verify your email to continue.",
         });
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        navigate(-1);
+        if (data.user) {
+          const path = await getRedirectPath(data.user.id);
+          navigate(path);
+        }
       }
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
