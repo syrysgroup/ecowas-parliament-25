@@ -169,7 +169,7 @@ export default function SponsorPortal() {
               <Button
                 variant="outline"
                 size="lg"
-                className="gap-2 bg-transparent text-primary-foreground border-primary-foreground/30 hover:bg-primary-foreground/10"
+                className="gap-2 bg-primary-foreground/10 text-primary-foreground border-primary-foreground/30 hover:bg-primary-foreground/20"
               >
                 <Video className="h-4 w-4" /> Book a briefing call
               </Button>
