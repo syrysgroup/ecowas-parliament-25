@@ -52,10 +52,10 @@ interface ActivityLog {
 }
 
 // ─── Role config ──────────────────────────────────────────────────────────────
-const ROLE_CONFIG: Record<AppRole, {
+const ROLE_CONFIG: Partial<Record<AppRole, {
   label: string; icon: React.ElementType;
   badge: string; border: string; desc: string;
-}> = {
+}>> = {
   super_admin: {
     label:"Super Admin", icon:Crown,
     badge:"bg-amber-100 text-amber-900 border-amber-300",
@@ -79,6 +79,60 @@ const ROLE_CONFIG: Record<AppRole, {
     badge:"bg-violet-100 text-violet-800 border-violet-200",
     border:"border-l-violet-400",
     desc:"Access to Sponsor Dashboard — visibility metrics, event placements, impact reports.",
+  },
+  project_director: {
+    label:"Project Director", icon:ShieldCheck,
+    badge:"bg-blue-100 text-blue-800 border-blue-200",
+    border:"border-l-blue-400",
+    desc:"Full programme oversight — all tasks, calendar, sponsor data, and financials (view).",
+  },
+  programme_lead: {
+    label:"Programme Lead", icon:Users,
+    badge:"bg-teal-100 text-teal-800 border-teal-200",
+    border:"border-l-teal-400",
+    desc:"Manages tasks and calendar for their assigned programme pillar.",
+  },
+  website_editor: {
+    label:"Website Editor", icon:Globe,
+    badge:"bg-orange-100 text-orange-800 border-orange-200",
+    border:"border-l-orange-400",
+    desc:"Edits website pages via CMS Editor; content goes through review workflow.",
+  },
+  marketing_manager: {
+    label:"Marketing Manager", icon:Send,
+    badge:"bg-rose-100 text-rose-800 border-rose-200",
+    border:"border-l-rose-400",
+    desc:"Manages campaigns, email broadcasts, newsletter, and marketing analytics.",
+  },
+  communications_officer: {
+    label:"Communications Officer", icon:Mail,
+    badge:"bg-purple-100 text-purple-800 border-purple-200",
+    border:"border-l-purple-400",
+    desc:"Handles press releases, translations, and external communications.",
+  },
+  finance_coordinator: {
+    label:"Finance Coordinator", icon:Activity,
+    badge:"bg-yellow-100 text-yellow-800 border-yellow-200",
+    border:"border-l-yellow-400",
+    desc:"Manages budget, invoices, reconciliation reports, and document signing.",
+  },
+  logistics_coordinator: {
+    label:"Logistics Coordinator", icon:Settings,
+    badge:"bg-cyan-100 text-cyan-800 border-cyan-200",
+    border:"border-l-cyan-400",
+    desc:"Coordinates 15-country delegation logistics, events, and task assignments.",
+  },
+  sponsor_manager: {
+    label:"Sponsor Manager", icon:Handshake,
+    badge:"bg-amber-100 text-amber-800 border-amber-200",
+    border:"border-l-amber-400",
+    desc:"Manages all sponsor and partner relationships, metrics, and documents.",
+  },
+  consultant: {
+    label:"Consultant", icon:Clock,
+    badge:"bg-gray-100 text-gray-800 border-gray-200",
+    border:"border-l-gray-400",
+    desc:"Time-limited access to assigned tasks and linked documents only. Auto-expires.",
   },
 };
 
@@ -553,6 +607,7 @@ export default function SuperAdminDashboard() {
                                 )}
                                 {u.roles.map(role => {
                                   const cfg = ROLE_CONFIG[role];
+                                  if (!cfg) return null;
                                   const Icon = cfg.icon;
                                   return (
                                     <Badge
@@ -586,11 +641,11 @@ export default function SuperAdminDashboard() {
                                     <SelectValue placeholder="+ Role" />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    {(["super_admin","admin","moderator","sponsor"] as AppRole[])
+                                    {(Object.keys(ROLE_CONFIG) as AppRole[])
                                       .filter(r => !u.roles.includes(r))
                                       .map(r => (
                                         <SelectItem key={r} value={r} className="text-xs">
-                                          {ROLE_CONFIG[r].label}
+                                          {ROLE_CONFIG[r]?.label ?? r}
                                         </SelectItem>
                                       ))
                                     }
@@ -636,7 +691,7 @@ export default function SuperAdminDashboard() {
               ) : (
                 <div className="divide-y divide-border">
                   {invitations.map(inv => {
-                    const cfg = ROLE_CONFIG[inv.role];
+                    const cfg = ROLE_CONFIG[inv.role] ?? ROLE_CONFIG["admin"]!;
                     const Icon = cfg.icon;
                     return (
                       <div key={inv.id} className="flex items-center gap-4 px-5 py-3 hover:bg-muted/30 transition-colors">

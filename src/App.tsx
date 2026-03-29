@@ -43,6 +43,9 @@ import SuperAdminDashboard from "./pages/admin/SuperAdminDashboard";
 // Sponsor dashboard
 import SponsorDashboard from "./pages/SponsorDashboard";
 
+// CRM
+import CRMDashboard from "./pages/CRMDashboard";
+
 const queryClient = new QueryClient();
 
 function ScrollToTop() {
@@ -114,6 +117,19 @@ const App = () => (
               <Route path="/sponsor-dashboard" element={
                 <ProtectedRoute allowedRoles={["super_admin", "admin", "sponsor"]}>
                   <SponsorDashboard />
+                </ProtectedRoute>
+              }/>
+
+              {/* CRM — all staff + sponsor roles */}
+              <Route path="/crm" element={
+                <ProtectedRoute allowedRoles={[
+                  "super_admin", "admin", "moderator", "sponsor",
+                  "project_director", "programme_lead", "website_editor",
+                  "marketing_manager", "communications_officer",
+                  "finance_coordinator", "logistics_coordinator",
+                  "sponsor_manager", "consultant",
+                ]} bare>
+                  <CRMDashboard />
                 </ProtectedRoute>
               }/>
 
