@@ -1,5 +1,7 @@
 import AnimatedSection from "@/components/shared/AnimatedSection";
 import { useTranslation } from "@/lib/i18n";
+import { Button } from "@/components/ui/button";
+import { ExternalLink, User } from "lucide-react";
 import speakerImg from "@/assets/speaker-memounatou.jpeg";
 
 const SpeakerSection = () => {
