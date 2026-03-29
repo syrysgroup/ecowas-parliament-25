@@ -1,7 +1,10 @@
 import AnimatedSection from "@/components/shared/AnimatedSection";
+import { useTranslation } from "@/lib/i18n";
 import speakerImg from "@/assets/speaker-memounatou.jpeg";
 
 const SpeakerSection = () => {
+  const { t } = useTranslation();
+
   return (
     <section className="py-16 bg-muted/30 border-b border-border">
       <div className="container">
@@ -12,11 +15,10 @@ const SpeakerSection = () => {
               <div className="w-64 h-80 md:w-72 md:h-[22rem] rounded-2xl overflow-hidden border-4 border-primary/20 shadow-xl">
                 <img
                   src={speakerImg}
-                  alt="Rt. Hon. Hadja Mémounatou Ibrahima"
+                  alt={t("speaker.name")}
                   className="w-full h-full object-cover object-top"
                 />
               </div>
-              {/* Accent corner */}
               <div className="absolute -bottom-3 -right-3 w-20 h-20 rounded-xl bg-gradient-to-br from-primary to-accent opacity-20 -z-10" />
               <div className="absolute -top-3 -left-3 w-16 h-16 rounded-xl bg-gradient-to-br from-accent to-primary opacity-15 -z-10" />
             </div>
@@ -26,34 +28,25 @@ const SpeakerSection = () => {
           <AnimatedSection delay={200} className="lg:col-span-3">
             <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 border border-primary/20 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-primary mb-5">
               <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-              Speaker of ECOWAS Parliament
+              {t("speaker.badge")}
             </div>
 
-            {/* Trilingual titles */}
             <div className="space-y-3 mb-6">
               <div>
                 <p className="text-2xl md:text-3xl font-black text-foreground leading-tight">
-                  Rt. Hon. Hadja Mémounatou Ibrahima
+                  {t("speaker.name")}
                 </p>
-                <p className="text-sm font-semibold text-primary mt-1">Speaker, ECOWAS Parliament</p>
-              </div>
-              <div className="flex flex-wrap gap-x-6 gap-y-1 text-xs text-muted-foreground">
-                <span>
-                  <span className="font-semibold text-foreground/60">FR:</span> Hon. Hadja Mémounatou Ibrahima — Présidente du Parlement de la CEDEAO
-                </span>
-                <span>
-                  <span className="font-semibold text-foreground/60">PT:</span> Excelentíssima Hadja Mémounatou Ibrahima — Presidente do Parlamento da CEDEAO
-                </span>
+                <p className="text-sm font-semibold text-primary mt-1">{t("speaker.title")}</p>
               </div>
             </div>
 
             {/* Quote / description */}
             <div className="relative pl-5 border-l-[3px] border-accent">
               <p className="text-[15px] text-muted-foreground leading-relaxed italic">
-                "The Speaker launched these initiatives to foster Parliament's mandate of
-                representation of the people, in line with the ECOWAS 2050 Vision — the
-                historic shift from an <strong className="text-foreground not-italic">ECOWAS of States</strong> to
-                an <strong className="text-foreground not-italic">ECOWAS of the People</strong>."
+                "{t("speaker.quote")}{" "}
+                <strong className="text-foreground not-italic">{t("speaker.ecowasStates")}</strong>{" "}
+                {t("speaker.ecowasTo")}{" "}
+                <strong className="text-foreground not-italic">{t("speaker.ecowasPeople")}</strong>."
               </p>
             </div>
 

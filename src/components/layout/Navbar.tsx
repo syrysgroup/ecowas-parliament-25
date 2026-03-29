@@ -3,20 +3,24 @@ import { Link, useLocation } from "react-router-dom";
 import { Menu, X, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { useTranslation } from "@/lib/i18n";
+import { useTranslation, Locale } from "@/lib/i18n";
 import ecowasLogo from "@/assets/ecowas-parliament-logo.png";
+
+const localeLabels: Record<Locale, string> = { en: "EN", fr: "FR", pt: "PT" };
+const localeOrder: Locale[] = ["en", "fr", "pt"];
 
 const Navbar = () => {
   const { t, locale, setLocale } = useTranslation();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openDrop, setOpenDrop] = useState<string | null>(null);
+  const [langOpen, setLangOpen] = useState(false);
 
   const navLinks = [
-    { label: "Home", to: "/" },
-    { label: "About", to: "/about" },
+    { label: t("nav.home"), to: "/" },
+    { label: t("nav.about"), to: "/about" },
     {
-      label: "Initiatives",
+      label: t("nav.programmes"),
       to: "/programmes/youth",
       children: [
         { label: t("prog.youth"), to: "/programmes/youth" },
@@ -29,21 +33,20 @@ const Navbar = () => {
       ],
     },
     {
-      label: "Resources",
-      to: "/timeline",
+      label: t("nav.events"),
+      to: "/events",
       children: [
         { label: t("nav.timeline"), to: "/timeline" },
         { label: t("nav.news"), to: "/news" },
         { label: t("nav.documents"), to: "/documents" },
         { label: t("nav.events"), to: "/events" },
-        { label: "Media Kit", to: "/media-kit" },
+        { label: t("common.mediaKit"), to: "/media-kit" },
       ],
     },
     {
-      label: "Get Involved",
-      to: "/sponsors",
+      label: t("nav.stakeholders"),
+      to: "/stakeholders",
       children: [
-        { label: "Sponsor Portal", to: "/sponsors" },
         { label: t("nav.stakeholders"), to: "/stakeholders" },
         { label: t("nav.team"), to: "/team" },
         { label: t("nav.contact"), to: "/contact" },
@@ -54,14 +57,12 @@ const Navbar = () => {
   const isActive = (to: string) =>
     location.pathname === to || (to !== "/" && location.pathname.startsWith(to));
 
-  const toggleLang = () => setLocale(locale === "en" ? "fr" : "en");
-
   return (
     <header className="sticky top-0 z-50 w-full">
       <div className="h-1 bg-gradient-ecowas" />
       <nav className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b border-border">
         <div className="container flex h-16 items-center justify-between">
-          {/* Logo — only ECOWAS Parliament, in white circle */}
+          {/* Logo */}
           <Link to="/" className="flex items-center gap-3 flex-shrink-0">
             <div className="bg-white rounded-full p-1.5 shadow-sm">
               <img src={ecowasLogo} alt="ECOWAS Parliament" className="h-9 w-9 object-contain" />
@@ -132,15 +133,35 @@ const Navbar = () => {
             })}
           </div>
 
-          {/* CTA + language + mobile */}
+          {/* CTA + language switcher + mobile */}
           <div className="flex items-center gap-2">
-            <button
-              onClick={toggleLang}
-              className="hidden xl:flex items-center justify-center w-8 h-8 rounded-md border border-border text-xs font-bold text-foreground/70 hover:bg-muted transition-colors"
-              title={locale === "en" ? "Passer en français" : "Switch to English"}
+            {/* Language dropdown */}
+            <div
+              className="relative hidden xl:block"
+              onMouseEnter={() => setLangOpen(true)}
+              onMouseLeave={() => setLangOpen(false)}
             >
-              {locale === "en" ? "FR" : "EN"}
-            </button>
+              <button
+                className="flex items-center justify-center w-9 h-9 rounded-md border border-border text-xs font-bold text-foreground/70 hover:bg-muted transition-colors"
+              >
+                {localeLabels[locale]}
+              </button>
+              {langOpen && (
+                <div className="absolute top-full right-0 mt-1 bg-card border border-border rounded-lg shadow-lg p-1 animate-fade-in z-50 min-w-[80px]">
+                  {localeOrder.map((l) => (
+                    <button
+                      key={l}
+                      onClick={() => { setLocale(l); setLangOpen(false); }}
+                      className={`block w-full px-3 py-1.5 text-sm rounded-md text-left transition-colors ${
+                        l === locale ? "text-primary bg-primary/5 font-bold" : "text-foreground/70 hover:bg-muted"
+                      }`}
+                    >
+                      {localeLabels[l]}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
 
             <Button asChild size="sm" className="hidden xl:flex">
               <Link to="/sponsors">{t("nav.partnerWithUs")}</Link>
@@ -186,12 +207,20 @@ const Navbar = () => {
                     </div>
                   ))}
                   <div className="pt-4 mt-2 border-t border-border space-y-2">
-                    <button
-                      onClick={() => { toggleLang(); setMobileOpen(false); }}
-                      className="w-full px-3 py-2 text-sm font-medium text-left rounded-lg hover:bg-muted transition-colors"
-                    >
-                      {locale === "en" ? "🇫🇷 Passer en français" : "🇬🇧 Switch to English"}
-                    </button>
+                    {/* Language selector for mobile */}
+                    <div className="flex gap-1 px-3">
+                      {localeOrder.map((l) => (
+                        <button
+                          key={l}
+                          onClick={() => { setLocale(l); }}
+                          className={`flex-1 px-2 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                            l === locale ? "bg-primary text-primary-foreground" : "bg-muted text-foreground/70 hover:bg-muted/80"
+                          }`}
+                        >
+                          {localeLabels[l]}
+                        </button>
+                      ))}
+                    </div>
                     <Button asChild className="w-full" onClick={() => setMobileOpen(false)}>
                       <Link to="/sponsors">{t("nav.partnerWithUs")}</Link>
                     </Button>
