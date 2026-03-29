@@ -132,7 +132,7 @@ const HeroSection = () => {
               {i < stats.length - 1 && (
                 <div className="absolute right-0 top-[15%] h-[70%] w-px bg-primary-foreground/10 hidden sm:block" />
               )}
-              <p className="text-3xl md:text-4xl font-black text-primary leading-none mb-1">
+              <p className="text-3xl md:text-4xl font-black text-white leading-none mb-1">
                 <CountUpNumber target={stat.target} suffix={stat.suffix} delay={i * 200} />
               </p>
               <p className="text-[11px] uppercase tracking-wider font-semibold text-primary-foreground/40">
