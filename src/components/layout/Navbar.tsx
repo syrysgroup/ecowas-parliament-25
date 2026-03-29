@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useTranslation } from "@/lib/i18n";
 import ecowasLogo from "@/assets/ecowas-parliament-logo.png";
-import anniversary25Logo from "@/assets/parliament-25-logo.png";
 
 const Navbar = () => {
   const { t, locale, setLocale } = useTranslation();
@@ -62,13 +61,19 @@ const Navbar = () => {
       <div className="h-1 bg-gradient-ecowas" />
       <nav className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b border-border">
         <div className="container flex h-16 items-center justify-between">
+          {/* Logo — only ECOWAS Parliament, in white circle */}
           <Link to="/" className="flex items-center gap-3 flex-shrink-0">
-            <img src={ecowasLogo} alt="ECOWAS Parliament" className="h-10 w-auto" />
-            <img src={anniversary25Logo} alt="25th Anniversary" className="h-10 w-auto" />
+            <div className="bg-white rounded-full p-1.5 shadow-sm">
+              <img src={ecowasLogo} alt="ECOWAS Parliament" className="h-9 w-9 object-contain" />
+            </div>
+            <div className="hidden sm:block">
+              <p className="text-sm font-bold text-foreground leading-tight">ECOWAS Parliament</p>
+              <p className="text-[10px] text-muted-foreground leading-tight">Parlement de la CEDEAO</p>
+            </div>
           </Link>
 
           {/* Desktop nav */}
-          <div className="hidden xl:flex items-center gap-0.5">
+          <div className="hidden xl:flex items-center gap-1">
             {navLinks.map((link) => {
               if (!link.children) {
                 return (
@@ -127,18 +132,8 @@ const Navbar = () => {
             })}
           </div>
 
-          {/* CTA + social + language + mobile */}
+          {/* CTA + language + mobile */}
           <div className="flex items-center gap-2">
-            {/* Social icons - desktop */}
-            <div className="hidden xl:flex items-center gap-1 mr-1">
-              <a href="https://x.com/ecoparl_hub" target="_blank" rel="noreferrer" title="@ecoparl_hub on X" className="w-7 h-7 rounded-md flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-muted transition-colors">
-                <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>
-              </a>
-              <a href="https://instagram.com/ecoparl_hub" target="_blank" rel="noreferrer" title="@ecoparl_hub on Instagram" className="w-7 h-7 rounded-md flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-muted transition-colors">
-                <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
-              </a>
-            </div>
-
             <button
               onClick={toggleLang}
               className="hidden xl:flex items-center justify-center w-8 h-8 rounded-md border border-border text-xs font-bold text-foreground/70 hover:bg-muted transition-colors"

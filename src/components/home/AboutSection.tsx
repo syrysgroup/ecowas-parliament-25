@@ -64,12 +64,13 @@ const AboutSection = () => {
               ))}
               {/* Logo row spanning 2 cols */}
               <div className="col-span-2 flex items-center gap-3.5 bg-card border border-border rounded-2xl p-4">
-                <img
-                  src={ecowasLogo}
-                  alt="ECOWAS Parliament"
-                  className="h-10 w-10 object-contain shrink-0"
-                  style={{ filter: "drop-shadow(0 2px 6px hsl(152 100% 26% / 0.3))" }}
-                />
+                <div className="bg-white rounded-full p-1.5 shadow-sm shrink-0">
+                  <img
+                    src={ecowasLogo}
+                    alt="ECOWAS Parliament"
+                    className="h-9 w-9 object-contain"
+                  />
+                </div>
                 <div>
                   <p className="text-sm font-bold text-card-foreground">ECOWAS Parliament</p>
                   <p className="text-[11px] text-muted-foreground">

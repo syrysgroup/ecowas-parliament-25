@@ -80,7 +80,7 @@ const HeroSection = () => {
         {/* Dual logo row */}
         <div className="flex items-center justify-center gap-7 mb-11 animate-slide-up" style={{ animationDelay: "0.1s" }}>
           <div className="flex flex-col items-center gap-2.5">
-            <img src={ecowasLogo} alt="ECOWAS Parliament" className="h-20 w-20 md:h-24 md:w-24 object-contain animate-float" style={{ filter: "drop-shadow(0 12px 40px hsl(152 100% 26% / 0.5))" }} />
+            <div className="bg-white rounded-full p-2 shadow-lg"><img src={ecowasLogo} alt="ECOWAS Parliament" className="h-16 w-16 md:h-20 md:w-20 object-contain animate-float" /></div>
             <div className="text-center">
               <p className="text-sm font-bold text-primary-foreground">ECOWAS Parliament</p>
               <p className="text-[10px] uppercase tracking-widest text-primary-foreground/40">Parlement de la CEDEAO</p>
@@ -88,7 +88,7 @@ const HeroSection = () => {
           </div>
           <div className="w-px h-20 bg-gradient-to-b from-transparent via-primary-foreground/20 to-transparent shrink-0" />
           <div className="flex flex-col items-center gap-2.5">
-            <img src={anniversary25Logo} alt="25th Anniversary" className="h-16 md:h-20 w-auto object-contain animate-float" style={{ animationDelay: "1.2s", filter: "drop-shadow(0 8px 24px hsl(50 87% 45% / 0.25))" }} />
+            <div className="bg-white rounded-full p-2 shadow-lg"><img src={anniversary25Logo} alt="25th Anniversary" className="h-14 md:h-16 w-auto object-contain animate-float" style={{ animationDelay: "1.2s" }} /></div>
             <div className="text-center">
               <p className="text-xs font-semibold text-accent">25th Anniversary</p>
               <p className="text-[10px] uppercase tracking-wider text-primary-foreground/40">EP25 · 2025</p>
