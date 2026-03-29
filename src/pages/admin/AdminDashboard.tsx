@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import AnimatedSection from "@/components/shared/AnimatedSection";
 import { Badge } from "@/components/ui/badge";
@@ -5,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useMemo, useState } from "react";
-import { CheckCircle2, FileClock, ShieldCheck, Trophy, Users, Vote } from "lucide-react";
+import { CheckCircle2, FileClock, FolderKanban, ShieldCheck, Trophy, UserPlus, Users, Vote } from "lucide-react";
 
 type QueueItem = {
   id: string;
@@ -21,9 +22,12 @@ const AdminDashboard = () => {
   const [nominations, setNominations] = useState<QueueItem[]>([]);
   const [representatives, setRepresentatives] = useState<QueueItem[]>([]);
   const [roleLabel, setRoleLabel] = useState("Moderator");
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
   useEffect(() => {
     const loadDashboard = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+
       const [applicationsRes, nominationsRes, representativesRes, rolesRes] = await Promise.all([
         (supabase as any)
           .from("applications")
@@ -40,7 +44,9 @@ const AdminDashboard = () => {
           .select("id, full_name, country, verified_at")
           .order("verified_at", { ascending: false })
           .limit(8),
-        (supabase as any).from("user_roles").select("role"),
+        user
+          ? supabase.from("user_roles").select("role").eq("user_id", user.id)
+          : Promise.resolve({ data: [] }),
       ]);
 
       setApplications(
@@ -73,7 +79,15 @@ const AdminDashboard = () => {
       );
 
       const roles = (rolesRes.data ?? []).map((item: any) => item.role);
-      setRoleLabel(roles.includes("admin") ? "Admin" : "Moderator");
+      if (roles.includes("super_admin")) {
+        setRoleLabel("Super Admin");
+        setIsSuperAdmin(true);
+      } else if (roles.includes("admin")) {
+        setRoleLabel("Admin");
+        setIsSuperAdmin(true);
+      } else {
+        setRoleLabel("Moderator");
+      }
     };
 
     void loadDashboard();
@@ -105,6 +119,53 @@ const AdminDashboard = () => {
 
       <section className="py-16">
         <div className="container space-y-10">
+          {/* Quick Navigation for Admin/Super Admin */}
+          {isSuperAdmin && (
+            <AnimatedSection>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <Link to="/admin/users" className="group">
+                  <Card className="border-border bg-card shadow-sm hover:shadow-lg hover:border-primary/30 transition-all duration-300">
+                    <CardContent className="flex items-center gap-4 p-5">
+                      <div className="rounded-xl bg-primary/10 p-3 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                        <UserPlus className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <p className="font-bold text-card-foreground">User Management</p>
+                        <p className="text-sm text-muted-foreground">Invite users, assign roles</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+                <Link to="/admin/project" className="group">
+                  <Card className="border-border bg-card shadow-sm hover:shadow-lg hover:border-primary/30 transition-all duration-300">
+                    <CardContent className="flex items-center gap-4 p-5">
+                      <div className="rounded-xl bg-primary/10 p-3 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                        <FolderKanban className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <p className="font-bold text-card-foreground">Project Dashboard</p>
+                        <p className="text-sm text-muted-foreground">Programme tracking, milestones</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+                <Link to="/events" className="group">
+                  <Card className="border-border bg-card shadow-sm hover:shadow-lg hover:border-primary/30 transition-all duration-300">
+                    <CardContent className="flex items-center gap-4 p-5">
+                      <div className="rounded-xl bg-primary/10 p-3 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                        <Users className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <p className="font-bold text-card-foreground">Events</p>
+                        <p className="text-sm text-muted-foreground">Manage events, registrations</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              </div>
+            </AnimatedSection>
+          )}
+
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             {stats.map((stat, index) => {
               const Icon = stat.icon;

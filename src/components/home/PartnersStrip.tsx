@@ -10,7 +10,7 @@ const PartnersStrip = () => {
           </p>
           <p className="text-lg font-bold text-foreground">AWALCO</p>
           <p className="text-sm text-muted-foreground mt-1">
-            Association of West African Living Councils
+            Association of West African Legislative Correspondents
           </p>
         </AnimatedSection>
       </div>

@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Lightbulb, TrendingUp, Heart, Megaphone, Palette, Building2, Award } from "lucide-react";
 import AnimatedSection from "@/components/shared/AnimatedSection";
+import { Badge } from "@/components/ui/badge";
 
 const pillars = [
   {
@@ -66,12 +67,15 @@ const PillarsGrid = () => {
     <section className="py-20 bg-background">
       <div className="container">
         <AnimatedSection className="text-center mb-14">
+          <Badge className="bg-primary/10 text-primary border-primary/20 mb-3">
+            25th Anniversary ECOWAS Parliament Programme
+          </Badge>
           <h2 className="text-3xl md:text-4xl font-black text-foreground">
             Programme <span className="text-primary">Pillars</span>
           </h2>
           <p className="mt-4 text-muted-foreground max-w-2xl mx-auto">
-            Seven strategic pillars spanning youth innovation, trade, women's empowerment,
-            civic engagement, culture, parliamentary awards, and parliamentary simulation.
+            Seven strategic pillars under the 25th Anniversary initiative — spanning youth innovation, trade,
+            women's empowerment, civic engagement, culture, parliamentary awards, and parliamentary simulation.
           </p>
         </AnimatedSection>
 
