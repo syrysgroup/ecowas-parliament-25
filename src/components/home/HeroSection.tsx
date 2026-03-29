@@ -92,8 +92,8 @@ const HeroSection = () => {
         </div>
 
         {/* Eyebrow */}
-        <div className="inline-flex items-center gap-2 rounded-full border border-primary/50 px-5 py-1.5 text-[11.5px] font-semibold uppercase tracking-widest text-primary bg-primary/10 backdrop-blur-sm mb-6 animate-slide-up" style={{ animationDelay: "0.3s" }}>
-          <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse-dot" />
+        <div className="inline-flex items-center gap-2 rounded-full border border-white/50 px-5 py-1.5 text-[11.5px] font-semibold uppercase tracking-widest text-white bg-white/10 backdrop-blur-sm mb-6 animate-slide-up" style={{ animationDelay: "0.3s" }}>
+          <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse-dot" />
           Celebrating 25 years of representation
         </div>
 
