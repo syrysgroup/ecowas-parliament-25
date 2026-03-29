@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useEffect, useState, useRef } from "react";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import ecowasLogo from "@/assets/ecowas-parliament-logo.png";
-import anniversary25Logo from "@/assets/parliament-25-anniversary-logo.png";
+
 import parliamentBg from "@/assets/parliament-chamber.png";
 
 const stats = [
@@ -81,27 +81,19 @@ const HeroSection = () => {
       {/* Content — centered */}
       <div className="relative z-10 text-center max-w-4xl px-6 md:px-10 py-20 md:py-28">
         {/* Dual logo row */}
-        <div className="flex items-center justify-center gap-7 mb-11 animate-slide-up" style={{ animationDelay: "0.1s" }}>
+        <div className="flex items-center justify-center mb-11 animate-slide-up" style={{ animationDelay: "0.1s" }}>
           <div className="flex flex-col items-center gap-2.5">
             <div className="bg-white rounded-full p-2 shadow-lg"><img src={ecowasLogo} alt="ECOWAS Parliament" className="h-16 w-16 md:h-20 md:w-20 object-contain animate-float" /></div>
             <div className="text-center">
-              <p className="text-sm font-bold text-primary-foreground">ECOWAS Parliament</p>
-              <p className="text-[10px] uppercase tracking-widest text-primary-foreground/40">Parlement de la CEDEAO</p>
-            </div>
-          </div>
-          <div className="w-px h-20 bg-gradient-to-b from-transparent via-primary-foreground/20 to-transparent shrink-0" />
-          <div className="flex flex-col items-center gap-2.5">
-            <div className="bg-white rounded-full p-2 shadow-lg"><img src={anniversary25Logo} alt="25th Anniversary" className="h-14 md:h-16 w-auto object-contain animate-float" style={{ animationDelay: "1.2s" }} /></div>
-            <div className="text-center">
-              <p className="text-xs font-semibold text-accent">25th Anniversary</p>
-              <p className="text-[10px] uppercase tracking-wider text-primary-foreground/40">EP25 · 2025</p>
+              <p className="text-sm font-bold text-white">ECOWAS Parliament</p>
+              <p className="text-[10px] uppercase tracking-widest text-white/50">Parlement de la CEDEAO</p>
             </div>
           </div>
         </div>
 
         {/* Eyebrow */}
-        <div className="inline-flex items-center gap-2 rounded-full border border-primary/50 px-5 py-1.5 text-[11.5px] font-semibold uppercase tracking-widest text-primary bg-primary/10 backdrop-blur-sm mb-6 animate-slide-up" style={{ animationDelay: "0.3s" }}>
-          <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse-dot" />
+        <div className="inline-flex items-center gap-2 rounded-full border border-white/50 px-5 py-1.5 text-[11.5px] font-semibold uppercase tracking-widest text-white bg-white/10 backdrop-blur-sm mb-6 animate-slide-up" style={{ animationDelay: "0.3s" }}>
+          <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse-dot" />
           Celebrating 25 years of representation
         </div>
 
@@ -140,10 +132,10 @@ const HeroSection = () => {
               {i < stats.length - 1 && (
                 <div className="absolute right-0 top-[15%] h-[70%] w-px bg-primary-foreground/10 hidden sm:block" />
               )}
-              <p className="text-3xl md:text-4xl font-black text-primary leading-none mb-1">
+              <p className="text-3xl md:text-4xl font-black text-white leading-none mb-1">
                 <CountUpNumber target={stat.target} suffix={stat.suffix} delay={i * 200} />
               </p>
-              <p className="text-[11px] uppercase tracking-wider font-semibold text-primary-foreground/40">
+              <p className="text-[11px] uppercase tracking-wider font-semibold text-white/70">
                 {stat.label}
               </p>
             </div>
