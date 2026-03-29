@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import duchessLogo from "@/assets/duchess-logo.png";
 import cmdLogo from "@/assets/cmd-logo.png";
 import borderlessLogo from "@/assets/borderless-trade-logo.png";
-import speakerImage from "@/assets/parliament-chamber.png";
+import speakerImg from "@/assets/speaker-memounatou.jpeg";
 import commsImage from "@/assets/stakeholder-comms.jpg";
 import directorImage from "@/assets/stakeholder-director.jpg";
 import teamPortrait1 from "@/assets/team-portrait-1.jpg";
@@ -13,7 +13,7 @@ import teamPortrait2 from "@/assets/team-portrait-2.jpg";
 import teamPortrait3 from "@/assets/team-portrait-3.jpg";
 
 const ecowasStakeholders = [
-  { name: "Rt. Hon. Hadja Mémounatou Ibrahima", title: "Speaker of the ECOWAS Parliament", image: speakerImage },
+  { name: "Rt. Hon. Hadja Mémounatou Ibrahima", title: "Speaker of the ECOWAS Parliament", image: speakerImg },
   { name: "Mrs. Uche Duru", title: "Chief Communication Officer", image: commsImage },
   { name: "Dr. Kabeer Garba", title: "Ag. Director, Parliamentary Affairs", image: directorImage },
 ];
@@ -31,17 +31,22 @@ const sponsors = [
   { name: "United Nations Development Programme", color: "hsl(var(--primary))" },
   { name: "GIZ West Africa", color: "hsl(var(--secondary))" },
   { name: "Access Bank Group", color: "hsl(var(--ecowas-yellow))" },
-    { name: "Dangote Foundation", color: "hsl(var(--ecowas-lime))" },
+  { name: "Dangote Foundation", color: "hsl(var(--ecowas-lime))" },
 ];
 
 const Stakeholders = () => {
   return (
     <Layout>
+      {/* Hero */}
       <section className="bg-gradient-hero py-20 text-primary-foreground">
         <div className="container">
           <AnimatedSection>
-            <Badge className="border-primary-foreground/20 bg-primary-foreground/10 text-primary-foreground">People and Institutions</Badge>
-            <h1 className="mt-4 text-4xl font-black md:text-5xl">Stakeholders & Partners</h1>
+            <Badge className="border-primary-foreground/20 bg-primary-foreground/10 text-primary-foreground">
+              People and Institutions
+            </Badge>
+            <h1 className="mt-4 text-4xl font-black md:text-5xl">
+              Stakeholders & Partners
+            </h1>
             <p className="mt-4 max-w-3xl text-lg text-primary-foreground/75">
               The programme now shows the faces behind implementation and ECOWAS leadership, alongside the co-organisers and supporting institutions shaping the 25th anniversary platform.
             </p>
@@ -49,34 +54,56 @@ const Stakeholders = () => {
         </div>
       </section>
 
+      {/* ECOWAS Leadership */}
       <section className="py-16">
         <div className="container">
           <AnimatedSection className="mb-8">
-            <h2 className="text-2xl font-black text-foreground">ECOWAS Parliament leadership</h2>
+            <h2 className="text-2xl font-black text-foreground">
+              ECOWAS Parliament leadership
+            </h2>
           </AnimatedSection>
 
-          {/* Featured Speaker — full width */}
-          <AnimatedSection className="mb-10">
-            <article className="relative overflow-hidden rounded-3xl border border-primary/20 bg-card shadow-lg">
-              <img src={ecowasStakeholders[0].image} alt={ecowasStakeholders[0].name} className="w-full aspect-[16/7] object-cover object-top" loading="lazy" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-              <div className="absolute bottom-0 left-0 right-0 p-8 md:p-10">
-                <Badge className="mb-3 bg-primary/90 text-primary-foreground border-0">Speaker of the ECOWAS Parliament</Badge>
-                <h3 className="text-3xl md:text-4xl font-black text-white">{ecowasStakeholders[0].name}</h3>
-                <p className="mt-2 text-white/70 text-sm max-w-xl">{ecowasStakeholders[0].title}</p>
+          {/* Featured Speaker */}
+          <AnimatedSection className="mb-10 flex justify-center">
+            <article className="overflow-hidden rounded-3xl border border-primary/20 bg-card shadow-sm w-1/2">
+              <img
+                src={ecowasStakeholders[0].image}
+                alt={ecowasStakeholders[0].name}
+                className="w-full aspect-[14/16] object-cover object-top"
+                loading="lazy"
+              />
+              <div className="p-4">
+                <Badge className="mb-3 bg-primary/90 text-primary-foreground border-0">
+                  Speaker of the ECOWAS Parliament
+                </Badge>
+                <h3 className="text-2xl font-black text-card-foreground">
+                  {ecowasStakeholders[0].name}
+                </h3>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {ecowasStakeholders[0].title}
+                </p>
               </div>
             </article>
           </AnimatedSection>
 
           {/* Other leadership */}
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {ecowasStakeholders.slice(1).map((person, index) => (
               <AnimatedSection key={person.name} delay={index * 60}>
-                <article className="overflow-hidden rounded-3xl border border-border bg-card shadow-sm">
-                  <img src={person.image} alt={person.name} className="aspect-[4/4.4] w-full object-cover" loading="lazy" />
+                <article className="overflow-hidden rounded-3xl border border-primary/20 bg-card shadow-sm w-full">
+                  <img
+                    src={person.image}
+                    alt={person.name}
+                    className="w-full aspect-[4/3] object-cover object-top"
+                    loading="lazy"
+                  />
                   <div className="p-5">
-                    <h3 className="text-xl font-black text-card-foreground">{person.name}</h3>
-                    <p className="mt-1 text-sm text-muted-foreground">{person.title}</p>
+                    <h3 className="text-xl font-black text-card-foreground">
+                      {person.name}
+                    </h3>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {person.title}
+                    </p>
                   </div>
                 </article>
               </AnimatedSection>
@@ -85,24 +112,46 @@ const Stakeholders = () => {
         </div>
       </section>
 
+      {/* Implementation Partners */}
       <section className="bg-muted/30 py-16">
         <div className="container">
           <AnimatedSection>
-            <Badge className="mb-3 bg-primary/10 text-primary">Programme Co-Organisers</Badge>
-            <h2 className="text-2xl font-black text-foreground">Implementation partners</h2>
+            <Badge className="mb-3 bg-primary/10 text-primary">
+              Programme Co-Organisers
+            </Badge>
+            <h2 className="text-2xl font-black text-foreground">
+              Implementation partners
+            </h2>
           </AnimatedSection>
+
           <div className="mt-8 grid gap-6 lg:grid-cols-3">
             {implementingPartners.map((partner, index) => (
               <AnimatedSection key={partner.name} delay={index * 70}>
-                <article className="overflow-hidden rounded-3xl border border-primary/20 bg-card shadow-sm">
-                  <img src={partner.image} alt={partner.lead} className="aspect-[4/3] w-full object-cover" loading="lazy" />
+                <article className="overflow-hidden rounded-3xl border border-primary/20 bg-card shadow-sm w-full">
+                  <img
+                    src={partner.image}
+                    alt={partner.lead}
+                    className="w-full aspect-[4/3] object-cover object-top"
+                    loading="lazy"
+                  />
                   <div className="space-y-4 p-6">
-                    <img src={partner.logo} alt={partner.name} className="h-12 w-auto" loading="lazy" />
+                    <img
+                      src={partner.logo}
+                      alt={partner.name}
+                      className="h-12 w-auto"
+                      loading="lazy"
+                    />
                     <div>
-                      <h3 className="text-xl font-black text-card-foreground">{partner.name}</h3>
-                      <p className="text-sm text-primary">{partner.lead} — {partner.role}</p>
+                      <h3 className="text-xl font-black text-card-foreground">
+                        {partner.name}
+                      </h3>
+                      <p className="text-sm text-primary">
+                        {partner.lead} — {partner.role}
+                      </p>
                     </div>
-                    <p className="text-sm text-muted-foreground">{partner.description}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {partner.description}
+                    </p>
                   </div>
                 </article>
               </AnimatedSection>
@@ -111,17 +160,27 @@ const Stakeholders = () => {
         </div>
       </section>
 
+      {/* Sponsors */}
       <section className="py-16">
         <div className="container">
           <AnimatedSection className="mb-8">
-            <h2 className="text-2xl font-black text-foreground">Sponsors & supporters</h2>
+            <h2 className="text-2xl font-black text-foreground">
+              Sponsors & supporters
+            </h2>
           </AnimatedSection>
+
           <div className="flex flex-wrap gap-4">
             {sponsors.map((sponsor, index) => (
               <AnimatedSection key={sponsor.name} delay={index * 40}>
                 <div className="flex items-center gap-3 rounded-2xl border border-border bg-card px-5 py-4 shadow-sm">
-                  <SponsorLogo name={sponsor.name} color={sponsor.color} size={42} />
-                  <span className="text-sm font-semibold text-card-foreground">{sponsor.name}</span>
+                  <SponsorLogo
+                    name={sponsor.name}
+                    color={sponsor.color}
+                    size={42}
+                  />
+                  <span className="text-sm font-semibold text-card-foreground">
+                    {sponsor.name}
+                  </span>
                 </div>
               </AnimatedSection>
             ))}
