@@ -1,4 +1,3 @@
-import AnimatedSection from "@/components/shared/AnimatedSection";
 import flagBenin from "@/assets/flags/benin.png";
 import flagCaboVerde from "@/assets/flags/cabo-verde.png";
 import flagCoteDivoire from "@/assets/flags/cote-divoire.png";
@@ -28,42 +27,30 @@ const countries = [
 ];
 
 const CountriesSection = () => {
-  // Double the list for seamless marquee
   const doubled = [...countries, ...countries];
 
   return (
-    <section className="py-16 bg-muted/30 overflow-hidden">
-      <div className="container mb-10">
-        <AnimatedSection className="text-center">
-          <h2 className="text-3xl md:text-4xl font-black text-foreground">
-            Across <span className="text-primary">12 Member States</span>
-          </h2>
-          <p className="mt-4 text-muted-foreground max-w-2xl mx-auto">
-            From capitals to communities, the programme unfolds across all ECOWAS Parliament member states.
-          </p>
-        </AnimatedSection>
-      </div>
+    <section className="py-8 bg-card border-t border-b border-border overflow-hidden">
+      <p className="text-center text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground mb-5">
+        12 ECOWAS Member States
+      </p>
 
-      {/* Marquee ticker */}
       <div className="relative group">
-        {/* Fade edges */}
-        <div className="absolute left-0 top-0 bottom-0 w-20 z-10 bg-gradient-to-r from-muted/30 to-transparent pointer-events-none" />
-        <div className="absolute right-0 top-0 bottom-0 w-20 z-10 bg-gradient-to-l from-muted/30 to-transparent pointer-events-none" />
+        <div className="absolute left-0 top-0 bottom-0 w-16 z-10 bg-gradient-to-r from-card to-transparent pointer-events-none" />
+        <div className="absolute right-0 top-0 bottom-0 w-16 z-10 bg-gradient-to-l from-card to-transparent pointer-events-none" />
 
-        <div className="flex animate-marquee group-hover:[animation-play-state:paused]">
+        <div className="flex animate-marquee group-hover:[animation-play-state:paused]" style={{ animationDuration: "24s" }}>
           {doubled.map((country, i) => (
             <div
               key={`${country.name}-${i}`}
-              className="flex-shrink-0 flex flex-col items-center mx-6 group/flag cursor-default"
+              className="flex-shrink-0 flex flex-col items-center gap-2 mx-2.5 px-4 py-3 bg-muted/30 border border-border rounded-xl min-w-[106px] hover:border-primary/30 hover:-translate-y-1 transition-all cursor-default"
             >
-              <div className="w-20 h-14 rounded-lg overflow-hidden shadow-md border border-border bg-card group-hover/flag:scale-110 group-hover/flag:shadow-xl transition-all duration-300">
-                <img
-                  src={country.flag}
-                  alt={`Flag of ${country.name}`}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <p className="mt-2 text-xs font-bold text-card-foreground group-hover/flag:text-primary transition-colors text-center whitespace-nowrap">
+              <img
+                src={country.flag}
+                alt={`Flag of ${country.name}`}
+                className="w-[62px] h-10 object-cover rounded shadow-md"
+              />
+              <p className="text-[10px] font-bold text-muted-foreground text-center whitespace-nowrap leading-tight">
                 {country.name}
               </p>
             </div>

@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 
 const TARGET_DATE = new Date("2026-03-05T12:00:00+01:00");
 
@@ -26,46 +28,40 @@ const CountdownTimer = () => {
   const blocks = [
     { label: "Days", value: timeLeft.days },
     { label: "Hours", value: timeLeft.hours },
-    { label: "Minutes", value: timeLeft.minutes },
-    { label: "Seconds", value: timeLeft.seconds },
+    { label: "Mins", value: timeLeft.minutes },
+    { label: "Secs", value: timeLeft.seconds },
   ];
 
   return (
-    <section className="py-16 bg-gradient-ecowas relative overflow-hidden">
-      <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" />
-      <div className="container relative text-center">
-        <p className="text-sm uppercase tracking-wider text-muted-foreground font-semibold mb-2">
-          {timeLeft.past ? "Programme Launched" : "Next Major Event — Media Announcement Launch"}
-        </p>
-        <p className="text-lg font-bold text-foreground mb-8">
-          5th March 2026 · Abuja, Nigeria
-        </p>
-        <div className="flex justify-center gap-4 md:gap-6">
-          {blocks.map((block, i) => (
-            <div key={block.label} className="flex flex-col items-center">
-              <div className="w-20 h-20 md:w-24 md:h-24 rounded-2xl backdrop-blur-md bg-card/80 border border-border/50 shadow-xl flex items-center justify-center">
-                <span className={`text-3xl md:text-4xl font-black text-primary animate-count-in ${block.label === "Seconds" ? "animate-pulse" : ""}`}
-                  style={block.label === "Seconds" ? { animationDuration: "2s" } : undefined}>
-                  {String(block.value).padStart(2, "0")}
-                </span>
-              </div>
-              <span className="mt-2 text-xs uppercase tracking-wider text-muted-foreground font-medium">
+    <div className="bg-gradient-to-r from-[hsl(20_60%_6%)] to-card border-t border-secondary/25 border-b border-b-border py-5 px-6 md:px-11">
+      <div className="max-w-screen-xl mx-auto flex items-center justify-between gap-5 flex-wrap">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-secondary mb-1">
+            {timeLeft.past ? "Programme Launched" : "Next Major Event"}
+          </p>
+          <p className="text-base md:text-lg font-black text-foreground">
+            ECOWAS Parliament 25th Anniversary Ceremony — Abuja, Nigeria
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2.5">
+          {blocks.map((block) => (
+            <div key={block.label} className="text-center bg-background/30 border border-border rounded-lg px-3 py-2 min-w-[60px] md:min-w-[66px]">
+              <span className="text-2xl md:text-3xl font-black text-accent leading-none block">
+                {String(block.value).padStart(2, "0")}
+              </span>
+              <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-semibold">
                 {block.label}
               </span>
             </div>
           ))}
         </div>
-        <div className="flex justify-center gap-1.5 mt-6">
-          {[0, 1, 2].map((i) => (
-            <span
-              key={i}
-              className="h-2 w-2 rounded-full bg-primary animate-pulse-dot"
-              style={{ animationDelay: `${i * 0.3}s` }}
-            />
-          ))}
-        </div>
+
+        <Button asChild size="sm" className="font-bold text-xs">
+          <Link to="/events">View Details →</Link>
+        </Button>
       </div>
-    </section>
+    </div>
   );
 };
 
