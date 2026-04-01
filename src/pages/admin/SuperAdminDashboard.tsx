@@ -392,8 +392,8 @@ export default function SuperAdminDashboard() {
         {/* Quick links */}
         <div className="p-3 border-t border-white/10 space-y-0.5">
           {[
-            { to:"/admin",         label:"Parliament Ops",  icon:LayoutDashboard },
-            { to:"/admin/project", label:"Project Board",   icon:Settings        },
+            { to:"/crm",                          label:"CRM Dashboard",    icon:LayoutDashboard },
+            { to:"/crm?section=parliament-ops",   label:"Parliament Ops",   icon:Settings        },
           ].map(l => {
             const Icon = l.icon;
             return (

@@ -37,12 +37,21 @@ async function getRoleBasedRedirect(
 
   const roles: string[] = (data ?? []).map((r: any) => r.role);
 
-  // Honour the "from" redirect if the user has enough privilege
-  if (from && from !== "/auth") return from;
+  // Honour the "from" redirect only if it's a non-privileged path,
+  // or the user actually has a role that grants access to privileged paths.
+  const isPrivilegedPath =
+    from?.startsWith("/admin/super") ||
+    from?.startsWith("/admin/users") ||
+    from?.startsWith("/crm") ||
+    from?.startsWith("/sponsor-dashboard");
+  const hasPrivilegedRole = roles.some(r =>
+    ["super_admin", "admin", "moderator", "sponsor"].includes(r)
+  );
+  if (from && from !== "/auth" && (!isPrivilegedPath || hasPrivilegedRole)) return from;
 
   if (roles.includes("super_admin")) return "/admin/super";
-  if (roles.includes("admin"))       return "/admin";
-  if (roles.includes("moderator"))   return "/admin";
+  if (roles.includes("admin"))       return "/crm";
+  if (roles.includes("moderator"))   return "/crm";
   if (roles.includes("sponsor"))     return "/sponsor-dashboard";
   return "/";
 }

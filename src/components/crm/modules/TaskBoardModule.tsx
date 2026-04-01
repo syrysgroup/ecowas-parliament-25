@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Clock, ChevronDown } from "lucide-react";
+import { Plus, Clock, Pencil, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { TASK_CREATE_ROLES } from "../crmRoles";
@@ -31,21 +31,29 @@ const PRIORITY_COLOURS: Record<string, string> = {
 };
 
 // ─── Task Card ─────────────────────────────────────────────────────────────────
-function TaskCard({ task, onStatusChange, canUpdateStatus }: {
+function TaskCard({ task, onStatusChange, canUpdateStatus, isAdmin, onEdit, onDelete }: {
   task: any;
   onStatusChange: (id: string, status: string) => void;
   canUpdateStatus: boolean;
+  isAdmin: boolean;
+  onEdit: (task: any) => void;
+  onDelete: (id: string) => void;
 }) {
   const [open, setOpen] = useState(false);
   const [newStatus, setNewStatus] = useState(task.status);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   return (
     <>
       <div
-        className="bg-[#0d1610] border border-[#1e2d22] rounded-lg p-3 space-y-2 cursor-pointer hover:border-[#2a3d2d] transition-colors"
-        onClick={() => canUpdateStatus && setOpen(true)}
+        className="bg-[#0d1610] border border-[#1e2d22] rounded-lg p-3 space-y-2 hover:border-[#2a3d2d] transition-colors"
       >
-        <p className="text-[12.5px] font-medium text-[#c8e0cc] leading-snug">{task.title}</p>
+        <p
+          className="text-[12.5px] font-medium text-[#c8e0cc] leading-snug cursor-pointer"
+          onClick={() => canUpdateStatus && setOpen(true)}
+        >
+          {task.title}
+        </p>
         <div className="flex items-center gap-2 flex-wrap">
           {task.pillar && (
             <span className="text-[9px] font-mono text-[#4a6650] uppercase bg-[#111a14] border border-[#1e2d22] rounded px-1.5 py-0.5">
@@ -74,6 +82,44 @@ function TaskCard({ task, onStatusChange, canUpdateStatus }: {
             </span>
           )}
         </div>
+
+        {/* Admin actions */}
+        {isAdmin && (
+          <div className="pt-1 border-t border-[#1e2d22] flex items-center gap-1.5">
+            {!confirmDelete ? (
+              <>
+                <button
+                  onClick={() => onEdit(task)}
+                  className="flex items-center gap-1 text-[10px] text-[#4a6650] hover:text-[#a0c4a8] transition-colors px-1.5 py-0.5 rounded hover:bg-[#111a14]"
+                >
+                  <Pencil size={10} /> Edit
+                </button>
+                <button
+                  onClick={() => setConfirmDelete(true)}
+                  className="flex items-center gap-1 text-[10px] text-[#4a6650] hover:text-red-400 transition-colors px-1.5 py-0.5 rounded hover:bg-red-950"
+                >
+                  <Trash2 size={10} /> Delete
+                </button>
+              </>
+            ) : (
+              <div className="flex items-center gap-1.5 w-full">
+                <span className="text-[10px] text-red-400 flex-1">Delete task?</span>
+                <button
+                  onClick={() => { onDelete(task.id); setConfirmDelete(false); }}
+                  className="text-[10px] font-semibold text-red-400 hover:text-red-300 px-1.5 py-0.5 rounded hover:bg-red-950 transition-colors"
+                >
+                  Yes
+                </button>
+                <button
+                  onClick={() => setConfirmDelete(false)}
+                  className="text-[10px] text-[#4a6650] hover:text-[#a0c4a8] px-1.5 py-0.5 rounded hover:bg-[#111a14] transition-colors"
+                >
+                  No
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {canUpdateStatus && (
@@ -113,6 +159,90 @@ function TaskCard({ task, onStatusChange, canUpdateStatus }: {
         </Dialog>
       )}
     </>
+  );
+}
+
+// ─── Shared task form fields ───────────────────────────────────────────────────
+function TaskFormFields({
+  title, setTitle,
+  description, setDescription,
+  pillar, setPillar,
+  priority, setPriority,
+  assigneeId, setAssigneeId,
+  dueDate, setDueDate,
+  profiles,
+}: {
+  title: string; setTitle: (v: string) => void;
+  description: string; setDescription: (v: string) => void;
+  pillar: string; setPillar: (v: string) => void;
+  priority: string; setPriority: (v: string) => void;
+  assigneeId: string; setAssigneeId: (v: string) => void;
+  dueDate: string; setDueDate: (v: string) => void;
+  profiles: any[];
+}) {
+  return (
+    <div className="space-y-3 py-1">
+      <div className="space-y-1">
+        <Label className="text-[11px] text-[#4a6650]">Title *</Label>
+        <Input value={title} onChange={e => setTitle(e.target.value)}
+          className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8"
+          placeholder="Task title" />
+      </div>
+      <div className="space-y-1">
+        <Label className="text-[11px] text-[#4a6650]">Description</Label>
+        <Textarea value={description} onChange={e => setDescription(e.target.value)}
+          className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs resize-none"
+          rows={2} placeholder="Optional description" />
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1">
+          <Label className="text-[11px] text-[#4a6650]">Pillar</Label>
+          <Select value={pillar} onValueChange={setPillar}>
+            <SelectTrigger className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="bg-[#0d1610] border-[#1e2d22]">
+              {PILLARS.map(p => (
+                <SelectItem key={p} value={p} className="text-[#c8e0cc] text-xs capitalize">{p}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1">
+          <Label className="text-[11px] text-[#4a6650]">Priority</Label>
+          <Select value={priority} onValueChange={setPriority}>
+            <SelectTrigger className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="bg-[#0d1610] border-[#1e2d22]">
+              {PRIORITIES.map(p => (
+                <SelectItem key={p} value={p} className="text-[#c8e0cc] text-xs capitalize">{p}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1">
+          <Label className="text-[11px] text-[#4a6650]">Assign to</Label>
+          <Select value={assigneeId} onValueChange={setAssigneeId}>
+            <SelectTrigger className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8">
+              <SelectValue placeholder="Unassigned" />
+            </SelectTrigger>
+            <SelectContent className="bg-[#0d1610] border-[#1e2d22]">
+              {profiles.map((p: any) => (
+                <SelectItem key={p.id} value={p.id} className="text-[#c8e0cc] text-xs">{p.full_name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1">
+          <Label className="text-[11px] text-[#4a6650]">Due date</Label>
+          <Input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)}
+            className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8" />
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -160,68 +290,15 @@ function CreateTaskDialog({ open, onClose, profiles }: {
         <DialogHeader>
           <DialogTitle className="text-sm font-semibold text-[#c8e0cc]">New Task</DialogTitle>
         </DialogHeader>
-        <div className="space-y-3 py-1">
-          <div className="space-y-1">
-            <Label className="text-[11px] text-[#4a6650]">Title *</Label>
-            <Input value={title} onChange={e => setTitle(e.target.value)}
-              className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8"
-              placeholder="Task title" />
-          </div>
-          <div className="space-y-1">
-            <Label className="text-[11px] text-[#4a6650]">Description</Label>
-            <Textarea value={description} onChange={e => setDescription(e.target.value)}
-              className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs resize-none"
-              rows={2} placeholder="Optional description" />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <Label className="text-[11px] text-[#4a6650]">Pillar</Label>
-              <Select value={pillar} onValueChange={setPillar}>
-                <SelectTrigger className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-[#0d1610] border-[#1e2d22]">
-                  {PILLARS.map(p => (
-                    <SelectItem key={p} value={p} className="text-[#c8e0cc] text-xs capitalize">{p}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1">
-              <Label className="text-[11px] text-[#4a6650]">Priority</Label>
-              <Select value={priority} onValueChange={setPriority}>
-                <SelectTrigger className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-[#0d1610] border-[#1e2d22]">
-                  {PRIORITIES.map(p => (
-                    <SelectItem key={p} value={p} className="text-[#c8e0cc] text-xs capitalize">{p}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <Label className="text-[11px] text-[#4a6650]">Assign to</Label>
-              <Select value={assigneeId} onValueChange={setAssigneeId}>
-                <SelectTrigger className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8">
-                  <SelectValue placeholder="Unassigned" />
-                </SelectTrigger>
-                <SelectContent className="bg-[#0d1610] border-[#1e2d22]">
-                  {profiles.map((p: any) => (
-                    <SelectItem key={p.id} value={p.id} className="text-[#c8e0cc] text-xs">{p.full_name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1">
-              <Label className="text-[11px] text-[#4a6650]">Due date</Label>
-              <Input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)}
-                className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8" />
-            </div>
-          </div>
-        </div>
+        <TaskFormFields
+          title={title} setTitle={setTitle}
+          description={description} setDescription={setDescription}
+          pillar={pillar} setPillar={setPillar}
+          priority={priority} setPriority={setPriority}
+          assigneeId={assigneeId} setAssigneeId={setAssigneeId}
+          dueDate={dueDate} setDueDate={setDueDate}
+          profiles={profiles}
+        />
         <DialogFooter>
           <Button variant="outline" size="sm" onClick={onClose} className="border-[#1e2d22] text-[#6b8f72] text-xs">
             Cancel
@@ -237,15 +314,94 @@ function CreateTaskDialog({ open, onClose, profiles }: {
   );
 }
 
+// ─── Edit Task Dialog ──────────────────────────────────────────────────────────
+function EditTaskDialog({ task, open, onClose, profiles }: {
+  task: any;
+  open: boolean;
+  onClose: () => void;
+  profiles: any[];
+}) {
+  const qc = useQueryClient();
+  const [title, setTitle] = useState(task?.title ?? "");
+  const [description, setDescription] = useState(task?.description ?? "");
+  const [pillar, setPillar] = useState(task?.pillar ?? "general");
+  const [assigneeId, setAssigneeId] = useState(task?.assignee_id ?? "");
+  const [priority, setPriority] = useState(task?.priority ?? "medium");
+  const [dueDate, setDueDate] = useState(task?.due_date?.slice(0, 10) ?? "");
+
+  // Sync state when task changes
+  const syncedTask = task?.id;
+  useState(() => {
+    if (!task) return;
+    setTitle(task.title ?? "");
+    setDescription(task.description ?? "");
+    setPillar(task.pillar ?? "general");
+    setAssigneeId(task.assignee_id ?? "");
+    setPriority(task.priority ?? "medium");
+    setDueDate(task.due_date?.slice(0, 10) ?? "");
+  });
+
+  const update = useMutation({
+    mutationFn: async () => {
+      await (supabase as any).from("tasks").update({
+        title,
+        description: description || null,
+        pillar,
+        priority,
+        assignee_id: assigneeId || null,
+        due_date: dueDate || null,
+      }).eq("id", task.id);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["crm-tasks"] });
+      qc.invalidateQueries({ queryKey: ["crm-task-counts"] });
+      qc.invalidateQueries({ queryKey: ["crm-my-tasks"] });
+      onClose();
+    },
+  });
+
+  if (!task) return null;
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="bg-[#0d1610] border-[#1e2d22] text-[#c8e0cc] max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-sm font-semibold text-[#c8e0cc]">Edit Task</DialogTitle>
+        </DialogHeader>
+        <TaskFormFields
+          title={title} setTitle={setTitle}
+          description={description} setDescription={setDescription}
+          pillar={pillar} setPillar={setPillar}
+          priority={priority} setPriority={setPriority}
+          assigneeId={assigneeId} setAssigneeId={setAssigneeId}
+          dueDate={dueDate} setDueDate={setDueDate}
+          profiles={profiles}
+        />
+        <DialogFooter>
+          <Button variant="outline" size="sm" onClick={onClose} className="border-[#1e2d22] text-[#6b8f72] text-xs">
+            Cancel
+          </Button>
+          <Button size="sm" disabled={!title.trim() || update.isPending}
+            onClick={() => update.mutate()}
+            className="bg-emerald-700 hover:bg-emerald-600 text-white text-xs">
+            {update.isPending ? "Saving…" : "Save Changes"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 export default function TaskBoardModule() {
-  const { user, roles, isSuperAdmin, isProjectDirector } = useAuthContext();
+  const { user, roles, isSuperAdmin, isProjectDirector, isAdmin } = useAuthContext();
   const qc = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState<any>(null);
+  const [editOpen, setEditOpen] = useState(false);
 
   const canCreate = roles.some(r => TASK_CREATE_ROLES.includes(r));
 
-  // Build query based on role
   const { data: tasks, isLoading } = useQuery({
     queryKey: ["crm-tasks", user?.id, roles],
     queryFn: async () => {
@@ -254,7 +410,6 @@ export default function TaskBoardModule() {
         .select("*, assignee:profiles!assignee_id(id, full_name, avatar_url)")
         .order("created_at", { ascending: false });
 
-      // programme_lead, website_editor etc. see only their assigned tasks
       if (!isSuperAdmin && !isProjectDirector) {
         q = q.eq("assignee_id", user?.id);
       }
@@ -264,7 +419,6 @@ export default function TaskBoardModule() {
     enabled: !!user?.id,
   });
 
-  // Profiles for assignee select
   const { data: profiles = [] } = useQuery({
     queryKey: ["crm-profiles"],
     queryFn: async () => {
@@ -274,12 +428,23 @@ export default function TaskBoardModule() {
         .order("full_name");
       return data ?? [];
     },
-    enabled: canCreate,
+    enabled: canCreate || isAdmin,
   });
 
   const updateStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
       await (supabase as any).from("tasks").update({ status }).eq("id", id);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["crm-tasks"] });
+      qc.invalidateQueries({ queryKey: ["crm-task-counts"] });
+      qc.invalidateQueries({ queryKey: ["crm-my-tasks"] });
+    },
+  });
+
+  const deleteTask = useMutation({
+    mutationFn: async (id: string) => {
+      await (supabase as any).from("tasks").delete().eq("id", id);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["crm-tasks"] });
@@ -336,6 +501,9 @@ export default function TaskBoardModule() {
                     task={task}
                     canUpdateStatus={task.assignee_id === user?.id || isSuperAdmin || isProjectDirector}
                     onStatusChange={(id, status) => updateStatus.mutate({ id, status })}
+                    isAdmin={isAdmin}
+                    onEdit={(t) => { setEditTarget(t); setEditOpen(true); }}
+                    onDelete={(id) => deleteTask.mutate(id)}
                   />
                 ))
               )}
@@ -345,6 +513,12 @@ export default function TaskBoardModule() {
       </div>
 
       <CreateTaskDialog open={createOpen} onClose={() => setCreateOpen(false)} profiles={profiles} />
+      <EditTaskDialog
+        task={editTarget}
+        open={editOpen}
+        onClose={() => { setEditOpen(false); setEditTarget(null); }}
+        profiles={profiles}
+      />
     </div>
   );
 }

@@ -13,6 +13,8 @@ import {
   DollarSign,
   Megaphone,
   Layout,
+  ShieldCheck,
+  UserPlus,
 } from "lucide-react";
 
 export type ModuleId =
@@ -23,6 +25,8 @@ export type ModuleId =
   | "comms"
   | "documents"
   | "team"
+  | "people"
+  | "parliament-ops"
   | "sponsor-metrics"
   | "analytics"
   | "finance"
@@ -101,7 +105,7 @@ export const CRM_MODULES: CRMModule[] = [
       "website_editor", "communications_officer", "finance_coordinator",
       "logistics_coordinator", "sponsor_manager", "moderator", "consultant",
     ],
-    isStub: true,
+    isStub: false,
   },
   {
     id: "team",
@@ -113,7 +117,23 @@ export const CRM_MODULES: CRMModule[] = [
       "website_editor", "marketing_manager", "communications_officer",
       "finance_coordinator", "logistics_coordinator", "sponsor_manager", "moderator",
     ],
-    isStub: true,
+    isStub: false,
+  },
+  {
+    id: "people",
+    label: "People & Access",
+    icon: UserPlus,
+    section: "people",
+    allowedRoles: ["super_admin", "admin"],
+    isStub: false,
+  },
+  {
+    id: "parliament-ops",
+    label: "Parliament Ops",
+    icon: ShieldCheck,
+    section: "parliament-ops",
+    allowedRoles: ["super_admin", "admin", "moderator"],
+    isStub: false,
   },
   {
     id: "sponsor-metrics",
@@ -121,7 +141,7 @@ export const CRM_MODULES: CRMModule[] = [
     icon: TrendingUp,
     section: "sponsor-metrics",
     allowedRoles: ["super_admin", "admin", "sponsor_manager", "sponsor"],
-    isStub: true,
+    isStub: false,
   },
   {
     id: "analytics",

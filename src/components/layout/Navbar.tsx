@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Menu, X, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,8 @@ const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openDrop, setOpenDrop] = useState<string | null>(null);
   const [langOpen, setLangOpen] = useState(false);
+  const dropTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const langTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const navLinks = [
     { label: t("nav.home"), to: "/" },
@@ -98,8 +100,13 @@ const Navbar = () => {
                 <div
                   key={link.label}
                   className="relative"
-                  onMouseEnter={() => setOpenDrop(link.label)}
-                  onMouseLeave={() => setOpenDrop(null)}
+                  onMouseEnter={() => {
+                    if (dropTimer.current) clearTimeout(dropTimer.current);
+                    setOpenDrop(link.label);
+                  }}
+                  onMouseLeave={() => {
+                    dropTimer.current = setTimeout(() => setOpenDrop(null), 150);
+                  }}
                 >
                   <button
                     className={`flex items-center gap-1 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
@@ -138,8 +145,13 @@ const Navbar = () => {
             {/* Language dropdown */}
             <div
               className="relative hidden xl:block"
-              onMouseEnter={() => setLangOpen(true)}
-              onMouseLeave={() => setLangOpen(false)}
+              onMouseEnter={() => {
+                if (langTimer.current) clearTimeout(langTimer.current);
+                setLangOpen(true);
+              }}
+              onMouseLeave={() => {
+                langTimer.current = setTimeout(() => setLangOpen(false), 150);
+              }}
             >
               <button
                 className="flex items-center justify-center w-9 h-9 rounded-md border border-border text-xs font-bold text-foreground/70 hover:bg-muted transition-colors"

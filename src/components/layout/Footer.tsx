@@ -82,25 +82,6 @@ const Footer = () => {
           ))}
         </div>
 
-        <div className="mt-10 pt-8 border-t border-border">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
-            <div>
-              <p className="font-bold text-sm">{t("footer.subscribe")}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">{t("footer.subscribeDesc")}</p>
-            </div>
-            <div className="flex gap-2 w-full md:w-auto">
-              <input
-                type="email"
-                placeholder={t("footer.email")}
-                className="flex-1 md:w-56 text-sm border border-border rounded-lg px-3 py-2 bg-background focus:outline-none focus:ring-1 focus:ring-primary"
-              />
-              <button className="px-4 py-2 bg-primary text-primary-foreground text-sm font-medium rounded-lg hover:opacity-90 transition-opacity whitespace-nowrap">
-                {t("footer.subscribeBtn")}
-              </button>
-            </div>
-          </div>
-        </div>
-
         <div className="mt-6 pt-5 border-t border-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div>
             <p className="text-xs text-muted-foreground">{t("footer.copyright")}</p>
@@ -116,6 +97,12 @@ const Footer = () => {
               className="text-xs text-muted-foreground hover:text-primary transition-colors">
               ECOWAS Parliament Official Site ↗
             </a>
+            <Link
+              to="/auth"
+              className="text-xs font-medium px-3 py-1.5 rounded-md border border-border text-foreground/70 hover:text-primary hover:border-primary transition-colors"
+            >
+              Sign In
+            </Link>
           </div>
         </div>
       </div>

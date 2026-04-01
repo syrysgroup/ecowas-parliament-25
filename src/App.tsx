@@ -35,8 +35,6 @@ import Parliament from "./pages/programmes/Parliament";
 import Auth from "./pages/Auth";
 
 // Admin pages
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import ProjectDashboard from "./pages/admin/ProjectDashboard";
 import UserManagement from "./pages/admin/UserManagement";
 import SuperAdminDashboard from "./pages/admin/SuperAdminDashboard";
 
@@ -97,16 +95,6 @@ const App = () => (
               }/>
 
               {/* Protected admin area */}
-              <Route path="/admin" element={
-                <ProtectedRoute allowedRoles={["super_admin", "admin", "moderator"]}>
-                  <AdminDashboard />
-                </ProtectedRoute>
-              }/>
-              <Route path="/admin/project" element={
-                <ProtectedRoute allowedRoles={["super_admin", "admin", "moderator"]}>
-                  <ProjectDashboard />
-                </ProtectedRoute>
-              }/>
               <Route path="/admin/users" element={
                 <ProtectedRoute allowedRoles={["super_admin"]}>
                   <UserManagement />
