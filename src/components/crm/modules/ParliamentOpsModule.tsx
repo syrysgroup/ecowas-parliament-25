@@ -1,8 +1,7 @@
-import { useEffect, useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, FileClock, Trophy, Vote } from "lucide-react";
-import { format, parseISO } from "date-fns";
+import { useAuthContext } from "@/contexts/AuthContext";
+import { CheckCircle2, FileClock, Trophy, Vote, Check, X, UserMinus } from "lucide-react";
 
 interface QueueItem {
   id: string;
@@ -20,63 +19,71 @@ const STATUS_STYLE: Record<string, string> = {
 };
 
 export default function ParliamentOpsModule() {
-  const [applications,    setApplications]    = useState<QueueItem[]>([]);
-  const [nominations,     setNominations]     = useState<QueueItem[]>([]);
-  const [representatives, setRepresentatives] = useState<QueueItem[]>([]);
-  const [loading,         setLoading]         = useState(true);
+  const { isAdmin, isSuperAdmin } = useAuthContext();
+  const qc = useQueryClient();
 
-  useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      const [appRes, nomRes, repRes] = await Promise.all([
-        (supabase as any)
-          .from("applications")
-          .select("id, country, created_at, status, profiles!inner(full_name)")
-          .order("created_at", { ascending: false })
-          .limit(20),
-        (supabase as any)
-          .from("public_nominee_leaderboard")
-          .select("id, full_name, country, created_at, vote_count")
-          .order("vote_count", { ascending: false })
-          .limit(20),
-        (supabase as any)
-          .from("public_representatives")
-          .select("id, full_name, country, verified_at")
-          .order("verified_at", { ascending: false })
-          .limit(20),
-      ]);
+  const { data: applications = [], isLoading: loadingApps } = useQuery<QueueItem[]>({
+    queryKey: ["parliament-applications"],
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("applications")
+        .select("id, country, created_at, status, profiles!inner(full_name)")
+        .order("created_at", { ascending: false })
+        .limit(20);
+      return (data ?? []).map((a: any) => ({
+        id: a.id,
+        full_name: a.profiles?.full_name ?? "Applicant",
+        country: a.country,
+        created_at: a.created_at,
+        status: a.status,
+      }));
+    },
+  });
 
-      setApplications(
-        (appRes.data ?? []).map((a: any) => ({
-          id: a.id,
-          full_name: a.profiles?.full_name ?? "Applicant",
-          country: a.country,
-          created_at: a.created_at,
-          status: a.status,
-        }))
-      );
-      setNominations(
-        (nomRes.data ?? []).map((n: any) => ({
-          id: n.id,
-          full_name: n.full_name,
-          country: n.country,
-          created_at: n.created_at,
-          vote_count: n.vote_count,
-        }))
-      );
-      setRepresentatives(
-        (repRes.data ?? []).map((r: any) => ({
-          id: r.id,
-          full_name: r.full_name,
-          country: r.country,
-          created_at: r.verified_at,
-        }))
-      );
-      setLoading(false);
-    };
-    void load();
-  }, []);
+  const { data: nominations = [], isLoading: loadingNoms } = useQuery<QueueItem[]>({
+    queryKey: ["parliament-nominations"],
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("public_nominee_leaderboard")
+        .select("id, full_name, country, created_at, vote_count")
+        .order("vote_count", { ascending: false })
+        .limit(20);
+      return data ?? [];
+    },
+  });
 
+  const { data: representatives = [], isLoading: loadingReps } = useQuery<QueueItem[]>({
+    queryKey: ["parliament-representatives"],
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("public_representatives")
+        .select("id, full_name, country, verified_at")
+        .order("verified_at", { ascending: false })
+        .limit(20);
+      return (data ?? []).map((r: any) => ({
+        id: r.id,
+        full_name: r.full_name,
+        country: r.country,
+        created_at: r.verified_at,
+      }));
+    },
+  });
+
+  const updateApplicationStatus = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      await (supabase as any).from("applications").update({ status }).eq("id", id);
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["parliament-applications"] }),
+  });
+
+  const removeDelegate = useMutation({
+    mutationFn: async (id: string) => {
+      await (supabase as any).from("public_representatives").delete().eq("id", id);
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["parliament-representatives"] }),
+  });
+
+  const loading = loadingApps || loadingNoms || loadingReps;
   const pending = applications.filter(a => a.status === "pending").length;
 
   return (
@@ -92,9 +99,9 @@ export default function ParliamentOpsModule() {
       {/* Stat chips */}
       <div className="grid grid-cols-3 gap-3">
         {[
-          { label: "Pending applications", value: loading ? "…" : String(pending),             icon: FileClock, accent: "border-amber-800 text-amber-400 bg-amber-950"    },
-          { label: "Qualified nominees",   value: loading ? "…" : String(nominations.length),  icon: Vote,      accent: "border-blue-800 text-blue-400 bg-blue-950"        },
-          { label: "Verified delegates",   value: loading ? "…" : String(representatives.length), icon: Trophy, accent: "border-emerald-800 text-emerald-400 bg-emerald-950" },
+          { label: "Pending applications", value: loading ? "…" : String(pending),                icon: FileClock, accent: "border-amber-800 text-amber-400 bg-amber-950"    },
+          { label: "Qualified nominees",   value: loading ? "…" : String(nominations.length),     icon: Vote,      accent: "border-blue-800 text-blue-400 bg-blue-950"        },
+          { label: "Verified delegates",   value: loading ? "…" : String(representatives.length), icon: Trophy,    accent: "border-emerald-800 text-emerald-400 bg-emerald-950" },
         ].map(s => {
           const Icon = s.icon;
           return (
@@ -124,11 +131,30 @@ export default function ParliamentOpsModule() {
             {applications.length === 0 ? (
               <Empty text="No applications yet." />
             ) : applications.map(a => (
-              <ItemRow key={a.id} item={a}>
-                <span className={`text-[9px] font-mono border rounded px-1.5 py-0.5 ${STATUS_STYLE[a.status ?? "pending"] ?? STATUS_STYLE.pending}`}>
-                  {a.status ?? "pending"}
-                </span>
-              </ItemRow>
+              <ItemRow key={a.id} item={a} actions={
+                isAdmin && a.status === "pending" ? (
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => updateApplicationStatus.mutate({ id: a.id, status: "approved" })}
+                      title="Approve"
+                      className="w-6 h-6 rounded flex items-center justify-center bg-emerald-950 border border-emerald-800 text-emerald-400 hover:bg-emerald-900 transition-colors"
+                    >
+                      <Check size={11} />
+                    </button>
+                    <button
+                      onClick={() => updateApplicationStatus.mutate({ id: a.id, status: "rejected" })}
+                      title="Reject"
+                      className="w-6 h-6 rounded flex items-center justify-center bg-red-950 border border-red-800 text-red-400 hover:bg-red-900 transition-colors"
+                    >
+                      <X size={11} />
+                    </button>
+                  </div>
+                ) : (
+                  <span className={`text-[9px] font-mono border rounded px-1.5 py-0.5 ${STATUS_STYLE[a.status ?? "pending"] ?? STATUS_STYLE.pending}`}>
+                    {a.status ?? "pending"}
+                  </span>
+                )
+              } />
             ))}
           </Section>
 
@@ -137,11 +163,11 @@ export default function ParliamentOpsModule() {
             {nominations.length === 0 ? (
               <Empty text="No nominees yet." />
             ) : nominations.map(n => (
-              <ItemRow key={n.id} item={n}>
+              <ItemRow key={n.id} item={n} actions={
                 <span className="text-[9px] font-mono border border-blue-800 rounded px-1.5 py-0.5 bg-blue-950 text-blue-400">
                   {n.vote_count ?? 0} votes
                 </span>
-              </ItemRow>
+              } />
             ))}
           </Section>
 
@@ -150,9 +176,19 @@ export default function ParliamentOpsModule() {
             {representatives.length === 0 ? (
               <Empty text="No verified delegates yet." />
             ) : representatives.map(r => (
-              <ItemRow key={r.id} item={r}>
-                <CheckCircle2 size={13} className="text-emerald-500" />
-              </ItemRow>
+              <ItemRow key={r.id} item={r} actions={
+                isSuperAdmin ? (
+                  <button
+                    onClick={() => removeDelegate.mutate(r.id)}
+                    title="Remove delegate"
+                    className="w-6 h-6 rounded flex items-center justify-center bg-red-950 border border-red-800 text-red-400 hover:bg-red-900 transition-colors"
+                  >
+                    <UserMinus size={11} />
+                  </button>
+                ) : (
+                  <CheckCircle2 size={13} className="text-emerald-500" />
+                )
+              } />
             ))}
           </Section>
         </div>
@@ -173,14 +209,14 @@ function Section({ title, icon: Icon, children }: { title: string; icon: React.E
   );
 }
 
-function ItemRow({ item, children }: { item: QueueItem; children: React.ReactNode }) {
+function ItemRow({ item, actions }: { item: QueueItem; actions: React.ReactNode }) {
   return (
     <div className="flex items-center justify-between gap-2 px-4 py-3 hover:bg-[#111a14] transition-colors">
       <div className="min-w-0">
         <p className="text-[12.5px] font-medium text-[#c8e0cc] truncate">{item.full_name}</p>
         <p className="text-[10px] text-[#4a6650]">{item.country}</p>
       </div>
-      <div className="flex-shrink-0">{children}</div>
+      <div className="flex-shrink-0">{actions}</div>
     </div>
   );
 }

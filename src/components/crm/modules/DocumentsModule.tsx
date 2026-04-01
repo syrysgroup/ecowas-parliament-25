@@ -1,7 +1,15 @@
-import { useQuery } from "@tanstack/react-query";
-import { FolderOpen, FileText, Lock, Download, AlertCircle } from "lucide-react";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { FolderOpen, Lock, Download, AlertCircle, Plus, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuthContext } from "@/contexts/AuthContext";
 import { format, parseISO } from "date-fns";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 
 interface Doc {
   id: string;
@@ -18,10 +26,115 @@ const TYPE_STYLE: Record<string, string> = {
   PDF: "bg-red-950 text-red-400 border-red-800",
   DOC: "bg-blue-950 text-blue-400 border-blue-800",
   XLS: "bg-emerald-950 text-emerald-400 border-emerald-800",
+  PPT: "bg-orange-950 text-orange-400 border-orange-800",
+  ZIP: "bg-violet-950 text-violet-400 border-violet-800",
 };
 
+const FILE_TYPES = ["PDF", "DOC", "XLS", "PPT", "ZIP"];
+
+// ─── Add Document Dialog ───────────────────────────────────────────────────────
+function AddDocumentDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { user } = useAuthContext();
+  const qc = useQueryClient();
+  const [title, setTitle] = useState("");
+  const [category, setCategory] = useState("General");
+  const [fileType, setFileType] = useState("PDF");
+  const [fileSizeKb, setFileSizeKb] = useState("");
+  const [restricted, setRestricted] = useState(false);
+
+  const create = useMutation({
+    mutationFn: async () => {
+      await (supabase as any).from("documents").insert({
+        title,
+        category: category || "General",
+        file_type: fileType,
+        file_size_kb: fileSizeKb ? Number(fileSizeKb) : null,
+        restricted,
+        uploaded_by: user!.id,
+      });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["crm-documents"] });
+      setTitle(""); setCategory("General"); setFileType("PDF");
+      setFileSizeKb(""); setRestricted(false);
+      onClose();
+    },
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="bg-[#0d1610] border-[#1e2d22] text-[#c8e0cc] max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-sm font-semibold text-[#c8e0cc]">Add Document</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3 py-1">
+          <div className="space-y-1">
+            <Label className="text-[11px] text-[#4a6650]">Title *</Label>
+            <Input value={title} onChange={e => setTitle(e.target.value)}
+              className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8"
+              placeholder="Document title" />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label className="text-[11px] text-[#4a6650]">Category</Label>
+              <Input value={category} onChange={e => setCategory(e.target.value)}
+                className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8"
+                placeholder="General" />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-[11px] text-[#4a6650]">File type</Label>
+              <Select value={fileType} onValueChange={setFileType}>
+                <SelectTrigger className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-[#0d1610] border-[#1e2d22]">
+                  {FILE_TYPES.map(t => (
+                    <SelectItem key={t} value={t} className="text-[#c8e0cc] text-xs">{t}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3 items-end">
+            <div className="space-y-1">
+              <Label className="text-[11px] text-[#4a6650]">Size (KB)</Label>
+              <Input
+                type="number"
+                value={fileSizeKb}
+                onChange={e => setFileSizeKb(e.target.value)}
+                className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8"
+                placeholder="Optional"
+              />
+            </div>
+            <div className="flex items-center gap-2 pb-1">
+              <Switch checked={restricted} onCheckedChange={setRestricted} />
+              <Label className="text-[11px] text-[#4a6650]">Restricted</Label>
+            </div>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" size="sm" onClick={onClose} className="border-[#1e2d22] text-[#6b8f72] text-xs">
+            Cancel
+          </Button>
+          <Button size="sm" disabled={!title.trim() || create.isPending}
+            onClick={() => create.mutate()}
+            className="bg-emerald-700 hover:bg-emerald-600 text-white text-xs">
+            {create.isPending ? "Adding…" : "Add Document"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── Main ──────────────────────────────────────────────────────────────────────
 export default function DocumentsModule() {
-  const { data, isLoading, error } = useQuery<Doc[] | null>({
+  const { isAdmin } = useAuthContext();
+  const qc = useQueryClient();
+  const [addOpen, setAddOpen] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+
+  const { data, isLoading } = useQuery<Doc[] | null>({
     queryKey: ["crm-documents"],
     queryFn: async () => {
       const res = await (supabase as any)
@@ -30,8 +143,7 @@ export default function DocumentsModule() {
         .order("created_at", { ascending: false })
         .limit(50);
 
-      // If table doesn't exist, Supabase returns a specific error code
-      if (res.error?.code === "42P01") return null; // table does not exist
+      if (res.error?.code === "42P01") return null;
 
       return (res.data ?? []).map((d: any) => ({
         id: d.id,
@@ -46,7 +158,16 @@ export default function DocumentsModule() {
     },
   });
 
-  // Table not set up yet
+  const deleteDocument = useMutation({
+    mutationFn: async (id: string) => {
+      await (supabase as any).from("documents").delete().eq("id", id);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["crm-documents"] });
+      setConfirmDeleteId(null);
+    },
+  });
+
   if (!isLoading && data === null) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4 text-center">
@@ -70,21 +191,27 @@ export default function DocumentsModule() {
   return (
     <div className="space-y-5">
       {/* Header */}
-      <div>
-        <h2 className="text-lg font-bold text-[#c8e0cc]">Documents</h2>
-        <p className="text-[12px] text-[#6b8f72] mt-0.5">
-          Shared files, MoU templates, budget documents, and reports
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-bold text-[#c8e0cc]">Documents</h2>
+          <p className="text-[12px] text-[#6b8f72] mt-0.5">
+            Shared files, MoU templates, budget documents, and reports
+          </p>
+        </div>
+        {isAdmin && (
+          <Button size="sm" onClick={() => setAddOpen(true)}
+            className="bg-emerald-700 hover:bg-emerald-600 text-white text-xs gap-1.5">
+            <Plus size={13} /> Add Document
+          </Button>
+        )}
       </div>
 
-      {/* Loading */}
       {isLoading && (
         <div className="flex items-center justify-center h-40">
           <div className="w-6 h-6 border-2 border-emerald-700 border-t-emerald-400 rounded-full animate-spin" />
         </div>
       )}
 
-      {/* Empty */}
       {!isLoading && Array.isArray(data) && data.length === 0 && (
         <div className="flex flex-col items-center justify-center min-h-[40vh] gap-3 text-center">
           <div className="h-14 w-14 rounded-2xl bg-[#111a14] border border-[#1e2d22] flex items-center justify-center">
@@ -94,7 +221,6 @@ export default function DocumentsModule() {
         </div>
       )}
 
-      {/* Document list */}
       {!isLoading && Array.isArray(data) && data.length > 0 && (
         <div className="space-y-2">
           {data.map(doc => {
@@ -104,18 +230,17 @@ export default function DocumentsModule() {
                 ? `${(doc.file_size_kb / 1024).toFixed(1)} MB`
                 : `${doc.file_size_kb} KB`
               : null;
+            const isConfirming = confirmDeleteId === doc.id;
 
             return (
               <div
                 key={doc.id}
                 className="bg-[#0d1610] border border-[#1e2d22] rounded-xl p-4 flex items-center gap-3 hover:border-[#2a3d2d] transition-colors"
               >
-                {/* File type badge */}
                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-[10px] font-bold flex-shrink-0 border ${typeStyle}`}>
                   {doc.file_type}
                 </div>
 
-                {/* Info */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className="text-[13px] font-semibold text-[#c8e0cc] truncate">{doc.title}</p>
@@ -139,18 +264,49 @@ export default function DocumentsModule() {
                   </div>
                 </div>
 
-                {/* Download button */}
-                <button
-                  className="flex items-center gap-1.5 text-[11px] text-[#4a6650] hover:text-[#a0c4a8] bg-[#111a14] border border-[#1e2d22] rounded-lg px-2.5 py-1.5 transition-colors flex-shrink-0"
-                  title="Download"
-                >
-                  <Download size={12} />
-                </button>
+                <div className="flex items-center gap-1.5 flex-shrink-0">
+                  <button
+                    className="flex items-center gap-1.5 text-[11px] text-[#4a6650] hover:text-[#a0c4a8] bg-[#111a14] border border-[#1e2d22] rounded-lg px-2.5 py-1.5 transition-colors"
+                    title="Download"
+                  >
+                    <Download size={12} />
+                  </button>
+
+                  {isAdmin && !isConfirming && (
+                    <button
+                      onClick={() => setConfirmDeleteId(doc.id)}
+                      className="flex items-center gap-1 text-[11px] text-[#4a6650] hover:text-red-400 bg-[#111a14] border border-[#1e2d22] hover:border-red-900 rounded-lg px-2.5 py-1.5 transition-colors"
+                      title="Delete"
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  )}
+
+                  {isAdmin && isConfirming && (
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => deleteDocument.mutate(doc.id)}
+                        disabled={deleteDocument.isPending}
+                        className="text-[10px] font-semibold text-red-400 hover:text-red-300 bg-red-950 border border-red-800 rounded px-2 py-1 transition-colors"
+                      >
+                        {deleteDocument.isPending ? "…" : "Delete"}
+                      </button>
+                      <button
+                        onClick={() => setConfirmDeleteId(null)}
+                        className="text-[10px] text-[#4a6650] hover:text-[#a0c4a8] bg-[#111a14] border border-[#1e2d22] rounded px-2 py-1 transition-colors"
+                      >
+                        No
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             );
           })}
         </div>
       )}
+
+      <AddDocumentDialog open={addOpen} onClose={() => setAddOpen(false)} />
     </div>
   );
 }

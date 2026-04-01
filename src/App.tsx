@@ -36,7 +36,6 @@ import Auth from "./pages/Auth";
 
 // Admin pages
 import UserManagement from "./pages/admin/UserManagement";
-import SuperAdminDashboard from "./pages/admin/SuperAdminDashboard";
 
 // Sponsor dashboard
 import SponsorDashboard from "./pages/SponsorDashboard";
@@ -86,13 +85,6 @@ const App = () => (
 
               {/* Auth */}
               <Route path="/auth" element={<Auth />} />
-
-              {/* Protected: Super Admin */}
-              <Route path="/admin/super" element={
-                <ProtectedRoute allowedRoles={["super_admin"]} bare>
-                  <SuperAdminDashboard />
-                </ProtectedRoute>
-              }/>
 
               {/* Protected admin area */}
               <Route path="/admin/users" element={

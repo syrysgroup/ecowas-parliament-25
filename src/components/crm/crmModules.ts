@@ -15,6 +15,8 @@ import {
   Layout,
   ShieldCheck,
   UserPlus,
+  Crown,
+  Settings,
 } from "lucide-react";
 
 export type ModuleId =
@@ -31,7 +33,9 @@ export type ModuleId =
   | "analytics"
   | "finance"
   | "marketing"
-  | "cms";
+  | "cms"
+  | "super-admin"
+  | "settings";
 
 export interface CRMModule {
   id:           ModuleId;
@@ -177,6 +181,26 @@ export const CRM_MODULES: CRMModule[] = [
       "website_editor", "marketing_manager", "communications_officer",
     ],
     isStub: true,
+  },
+  {
+    id: "super-admin",
+    label: "Super Admin Hub",
+    icon: Crown,
+    section: "super-admin",
+    allowedRoles: ["super_admin"],
+    isStub: false,
+  },
+  {
+    id: "settings",
+    label: "Settings",
+    icon: Settings,
+    section: "settings",
+    allowedRoles: [
+      "super_admin", "admin", "moderator", "project_director", "programme_lead",
+      "website_editor", "marketing_manager", "communications_officer",
+      "finance_coordinator", "logistics_coordinator", "sponsor_manager", "consultant", "sponsor",
+    ],
+    isStub: false,
   },
 ];
 

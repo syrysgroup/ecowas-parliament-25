@@ -40,7 +40,6 @@ async function getRoleBasedRedirect(
   // Honour the "from" redirect only if it's a non-privileged path,
   // or the user actually has a role that grants access to privileged paths.
   const isPrivilegedPath =
-    from?.startsWith("/admin/super") ||
     from?.startsWith("/admin/users") ||
     from?.startsWith("/crm") ||
     from?.startsWith("/sponsor-dashboard");
@@ -49,7 +48,7 @@ async function getRoleBasedRedirect(
   );
   if (from && from !== "/auth" && (!isPrivilegedPath || hasPrivilegedRole)) return from;
 
-  if (roles.includes("super_admin")) return "/admin/super";
+  if (roles.includes("super_admin")) return "/crm?section=super-admin";
   if (roles.includes("admin"))       return "/crm";
   if (roles.includes("moderator"))   return "/crm";
   if (roles.includes("sponsor"))     return "/sponsor-dashboard";

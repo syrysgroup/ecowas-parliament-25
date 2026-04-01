@@ -5,7 +5,7 @@ import {
   format, isSameMonth, isToday, parseISO, isSameDay,
   addMonths, subMonths,
 } from "date-fns";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Pencil, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { CALENDAR_CREATE_ROLES } from "../crmRoles";
@@ -41,6 +41,78 @@ const EVENT_PILL: Record<string, string> = {
 };
 
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+// ─── Shared event form fields ─────────────────────────────────────────────────
+function EventFormFields({
+  title, setTitle,
+  description, setDescription,
+  startTime, setStartTime,
+  endTime, setEndTime,
+  allDay, setAllDay,
+  colour, setColour,
+}: {
+  title: string; setTitle: (v: string) => void;
+  description: string; setDescription: (v: string) => void;
+  startTime: string; setStartTime: (v: string) => void;
+  endTime: string; setEndTime: (v: string) => void;
+  allDay: boolean; setAllDay: (v: boolean) => void;
+  colour: string; setColour: (v: string) => void;
+}) {
+  return (
+    <div className="space-y-3 py-1">
+      <div className="space-y-1">
+        <Label className="text-[11px] text-[#4a6650]">Title *</Label>
+        <Input value={title} onChange={e => setTitle(e.target.value)}
+          className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8"
+          placeholder="Event title" />
+      </div>
+      <div className="flex items-center gap-3">
+        <Label className="text-[11px] text-[#4a6650]">All day</Label>
+        <Switch checked={allDay} onCheckedChange={setAllDay} />
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1">
+          <Label className="text-[11px] text-[#4a6650]">Start *</Label>
+          <Input
+            type={allDay ? "date" : "datetime-local"}
+            value={startTime}
+            onChange={e => setStartTime(e.target.value)}
+            className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8"
+          />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-[11px] text-[#4a6650]">End</Label>
+          <Input
+            type={allDay ? "date" : "datetime-local"}
+            value={endTime}
+            onChange={e => setEndTime(e.target.value)}
+            className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8"
+          />
+        </div>
+      </div>
+      <div className="space-y-1">
+        <Label className="text-[11px] text-[#4a6650]">Description</Label>
+        <Textarea value={description} onChange={e => setDescription(e.target.value)}
+          className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs resize-none"
+          rows={2} placeholder="Optional description" />
+      </div>
+      <div className="space-y-2">
+        <Label className="text-[11px] text-[#4a6650]">Colour</Label>
+        <div className="flex gap-2">
+          {COLOUR_OPTIONS.map(c => (
+            <button
+              key={c.id}
+              onClick={() => setColour(c.id)}
+              title={c.label}
+              className={`w-6 h-6 rounded-full ${c.cls} transition-all
+                ${colour === c.id ? "ring-2 ring-white ring-offset-1 ring-offset-[#0d1610]" : "opacity-60 hover:opacity-100"}`}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // ─── Add Event Dialog ──────────────────────────────────────────────────────────
 function AddEventDialog({ open, onClose, defaultDate }: {
@@ -86,58 +158,14 @@ function AddEventDialog({ open, onClose, defaultDate }: {
         <DialogHeader>
           <DialogTitle className="text-sm font-semibold text-[#c8e0cc]">Add Event</DialogTitle>
         </DialogHeader>
-        <div className="space-y-3 py-1">
-          <div className="space-y-1">
-            <Label className="text-[11px] text-[#4a6650]">Title *</Label>
-            <Input value={title} onChange={e => setTitle(e.target.value)}
-              className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8"
-              placeholder="Event title" />
-          </div>
-          <div className="flex items-center gap-3">
-            <Label className="text-[11px] text-[#4a6650]">All day</Label>
-            <Switch checked={allDay} onCheckedChange={setAllDay} />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <Label className="text-[11px] text-[#4a6650]">Start *</Label>
-              <Input
-                type={allDay ? "date" : "datetime-local"}
-                value={startTime}
-                onChange={e => setStartTime(e.target.value)}
-                className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8"
-              />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-[11px] text-[#4a6650]">End</Label>
-              <Input
-                type={allDay ? "date" : "datetime-local"}
-                value={endTime}
-                onChange={e => setEndTime(e.target.value)}
-                className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8"
-              />
-            </div>
-          </div>
-          <div className="space-y-1">
-            <Label className="text-[11px] text-[#4a6650]">Description</Label>
-            <Textarea value={description} onChange={e => setDescription(e.target.value)}
-              className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs resize-none"
-              rows={2} placeholder="Optional description" />
-          </div>
-          <div className="space-y-2">
-            <Label className="text-[11px] text-[#4a6650]">Colour</Label>
-            <div className="flex gap-2">
-              {COLOUR_OPTIONS.map(c => (
-                <button
-                  key={c.id}
-                  onClick={() => setColour(c.id)}
-                  title={c.label}
-                  className={`w-6 h-6 rounded-full ${c.cls} transition-all
-                    ${colour === c.id ? "ring-2 ring-white ring-offset-1 ring-offset-[#0d1610]" : "opacity-60 hover:opacity-100"}`}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
+        <EventFormFields
+          title={title} setTitle={setTitle}
+          description={description} setDescription={setDescription}
+          startTime={startTime} setStartTime={setStartTime}
+          endTime={endTime} setEndTime={setEndTime}
+          allDay={allDay} setAllDay={setAllDay}
+          colour={colour} setColour={setColour}
+        />
         <DialogFooter>
           <Button variant="outline" size="sm" onClick={onClose} className="border-[#1e2d22] text-[#6b8f72] text-xs">
             Cancel
@@ -153,20 +181,87 @@ function AddEventDialog({ open, onClose, defaultDate }: {
   );
 }
 
+// ─── Edit Event Dialog ─────────────────────────────────────────────────────────
+function EditEventDialog({ event, open, onClose }: {
+  event: any;
+  open: boolean;
+  onClose: () => void;
+}) {
+  const qc = useQueryClient();
+  const [title, setTitle] = useState(event?.title ?? "");
+  const [description, setDescription] = useState(event?.description ?? "");
+  const [startTime, setStartTime] = useState(event?.start_time?.slice(0, 16) ?? "");
+  const [endTime, setEndTime] = useState(event?.end_time?.slice(0, 16) ?? "");
+  const [allDay, setAllDay] = useState(event?.all_day ?? false);
+  const [colour, setColour] = useState(event?.colour ?? "green");
+
+  const update = useMutation({
+    mutationFn: async () => {
+      await (supabase as any).from("crm_calendar_events").update({
+        title,
+        description: description || null,
+        start_time: startTime,
+        end_time: endTime || null,
+        all_day: allDay,
+        colour,
+      }).eq("id", event.id);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["crm-calendar"] });
+      qc.invalidateQueries({ queryKey: ["crm-upcoming-events"] });
+      onClose();
+    },
+  });
+
+  if (!event) return null;
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="bg-[#0d1610] border-[#1e2d22] text-[#c8e0cc] max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-sm font-semibold text-[#c8e0cc]">Edit Event</DialogTitle>
+        </DialogHeader>
+        <EventFormFields
+          title={title} setTitle={setTitle}
+          description={description} setDescription={setDescription}
+          startTime={startTime} setStartTime={setStartTime}
+          endTime={endTime} setEndTime={setEndTime}
+          allDay={allDay} setAllDay={setAllDay}
+          colour={colour} setColour={setColour}
+        />
+        <DialogFooter>
+          <Button variant="outline" size="sm" onClick={onClose} className="border-[#1e2d22] text-[#6b8f72] text-xs">
+            Cancel
+          </Button>
+          <Button size="sm" disabled={!title.trim() || !startTime || update.isPending}
+            onClick={() => update.mutate()}
+            className="bg-emerald-700 hover:bg-emerald-600 text-white text-xs">
+            {update.isPending ? "Saving…" : "Save Changes"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 export default function CalendarModule() {
-  const { roles } = useAuthContext();
+  const { roles, isAdmin } = useAuthContext();
+  const qc = useQueryClient();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [addOpen, setAddOpen] = useState(false);
   const [clickedDate, setClickedDate] = useState<Date | undefined>();
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
+  const [editTarget, setEditTarget] = useState<any>(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const [confirmDeleteEvent, setConfirmDeleteEvent] = useState(false);
 
   const canCreate = roles.some(r => CALENDAR_CREATE_ROLES.includes(r));
 
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
   const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
-  const startPadding = getDay(monthStart); // 0=Sun
+  const startPadding = getDay(monthStart);
 
   const { data: events = [], isLoading } = useQuery({
     queryKey: ["crm-calendar", format(currentDate, "yyyy-MM")],
@@ -178,6 +273,18 @@ export default function CalendarModule() {
         .lte("start_time", monthEnd.toISOString())
         .order("start_time", { ascending: true });
       return data ?? [];
+    },
+  });
+
+  const deleteEvent = useMutation({
+    mutationFn: async (id: string) => {
+      await (supabase as any).from("crm_calendar_events").delete().eq("id", id);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["crm-calendar"] });
+      qc.invalidateQueries({ queryKey: ["crm-upcoming-events"] });
+      setSelectedEvent(null);
+      setConfirmDeleteEvent(false);
     },
   });
 
@@ -215,7 +322,6 @@ export default function CalendarModule() {
 
       {/* Calendar grid */}
       <div className="bg-[#0d1610] border border-[#1e2d22] rounded-xl overflow-hidden">
-        {/* Day name headers */}
         <div className="grid grid-cols-7 border-b border-[#1e2d22]">
           {DAY_NAMES.map(d => (
             <div key={d} className="px-2 py-2 text-[10px] font-mono uppercase text-[#4a6650] text-center">
@@ -224,9 +330,7 @@ export default function CalendarModule() {
           ))}
         </div>
 
-        {/* Day cells */}
         <div className="grid grid-cols-7">
-          {/* Leading empty cells */}
           {Array.from({ length: startPadding }).map((_, i) => (
             <div key={`pad-${i}`} className="border-r border-b border-[#1e2d22] min-h-[80px] bg-[#080d0a]" />
           ))}
@@ -264,7 +368,7 @@ export default function CalendarModule() {
                 {isLoading ? null : dayEvents.slice(0, 2).map((ev: any) => (
                   <button
                     key={ev.id}
-                    onClick={e => { e.stopPropagation(); setSelectedEvent(ev); }}
+                    onClick={e => { e.stopPropagation(); setSelectedEvent(ev); setConfirmDeleteEvent(false); }}
                     className={`text-[9px] font-medium px-1.5 py-0.5 rounded border truncate text-left w-full
                       ${EVENT_PILL[ev.colour] ?? EVENT_PILL.green}`}
                   >
@@ -282,7 +386,7 @@ export default function CalendarModule() {
 
       {/* Event detail dialog */}
       {selectedEvent && (
-        <Dialog open={!!selectedEvent} onOpenChange={() => setSelectedEvent(null)}>
+        <Dialog open={!!selectedEvent} onOpenChange={() => { setSelectedEvent(null); setConfirmDeleteEvent(false); }}>
           <DialogContent className="bg-[#0d1610] border-[#1e2d22] text-[#c8e0cc] max-w-sm">
             <DialogHeader>
               <div className="flex items-center gap-2">
@@ -299,16 +403,52 @@ export default function CalendarModule() {
               {selectedEvent.description && (
                 <p className="text-[12px] text-[#a0c4a8] leading-relaxed">{selectedEvent.description}</p>
               )}
+              {/* Inline delete confirm */}
+              {confirmDeleteEvent && (
+                <div className="flex items-center gap-2 pt-1 border-t border-[#1e2d22]">
+                  <span className="text-[11px] text-red-400 flex-1">Delete this event?</span>
+                  <Button size="sm" onClick={() => deleteEvent.mutate(selectedEvent.id)}
+                    disabled={deleteEvent.isPending}
+                    className="bg-red-700 hover:bg-red-600 text-white text-xs h-7 px-2">
+                    {deleteEvent.isPending ? "…" : "Yes, delete"}
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => setConfirmDeleteEvent(false)}
+                    className="border-[#1e2d22] text-[#6b8f72] text-xs h-7 px-2">
+                    Cancel
+                  </Button>
+                </div>
+              )}
             </div>
-            <DialogFooter>
-              <Button variant="outline" size="sm" onClick={() => setSelectedEvent(null)}
-                className="border-[#1e2d22] text-[#6b8f72] text-xs">Close</Button>
+            <DialogFooter className="gap-1.5">
+              {isAdmin && !confirmDeleteEvent && (
+                <>
+                  <Button variant="outline" size="sm"
+                    onClick={() => { setEditTarget(selectedEvent); setSelectedEvent(null); setEditOpen(true); }}
+                    className="border-[#1e2d22] text-[#6b8f72] hover:text-[#a0c4a8] text-xs gap-1">
+                    <Pencil size={11} /> Edit
+                  </Button>
+                  <Button variant="outline" size="sm"
+                    onClick={() => setConfirmDeleteEvent(true)}
+                    className="border-red-900 text-red-500 hover:text-red-400 hover:bg-red-950 text-xs gap-1">
+                    <Trash2 size={11} /> Delete
+                  </Button>
+                </>
+              )}
+              {!confirmDeleteEvent && (
+                <Button variant="outline" size="sm" onClick={() => setSelectedEvent(null)}
+                  className="border-[#1e2d22] text-[#6b8f72] text-xs">Close</Button>
+              )}
             </DialogFooter>
           </DialogContent>
         </Dialog>
       )}
 
       <AddEventDialog open={addOpen} onClose={() => setAddOpen(false)} defaultDate={clickedDate} />
+      <EditEventDialog
+        event={editTarget}
+        open={editOpen}
+        onClose={() => { setEditOpen(false); setEditTarget(null); }}
+      />
     </div>
   );
 }

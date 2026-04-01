@@ -14,6 +14,8 @@ import PeopleModule       from "@/components/crm/modules/PeopleModule";
 import ParliamentOpsModule from "@/components/crm/modules/ParliamentOpsModule";
 import SponsorMetricsModule from "@/components/crm/modules/SponsorMetricsModule";
 import DocumentsModule    from "@/components/crm/modules/DocumentsModule";
+import SuperAdminModule   from "@/components/crm/modules/SuperAdminModule";
+import SettingsModule     from "@/components/crm/modules/SettingsModule";
 
 // Lazy — stub modules
 const MessagingModule = lazy(() => import("@/components/crm/modules/MessagingModule"));
@@ -73,6 +75,8 @@ export default function CRMDashboard() {
       case "finance":         return <Suspense fallback={<ModuleLoader />}><FinanceModule /></Suspense>;
       case "marketing":       return <Suspense fallback={<ModuleLoader />}><MarketingModule /></Suspense>;
       case "cms":             return <Suspense fallback={<ModuleLoader />}><CMSModule /></Suspense>;
+      case "super-admin":     return <SuperAdminModule />;
+      case "settings":        return <SettingsModule />;
       default:                return <DashboardModule onNavigate={navigateSection} />;
     }
   };

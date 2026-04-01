@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight, LogOut } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { getModulesForRoles, CRM_MODULES } from "./crmModules";
 import { CRM_ROLE_META } from "./crmRoles";
+import { supabase } from "@/integrations/supabase/client";
 import type { ModuleId } from "./crmModules";
 
 const STORAGE_KEY = "crm_sidebar_collapsed";
@@ -17,6 +19,22 @@ export default function CRMSidebar({ activeSection, onNavigate }: CRMSidebarProp
   const [collapsed, setCollapsed] = useState(() => {
     try { return localStorage.getItem(STORAGE_KEY) === "true"; }
     catch { return false; }
+  });
+
+  // Unread inbox count for badge
+  const { data: unreadCount = 0 } = useQuery<number>({
+    queryKey: ["crm-inbox-unread", user?.id],
+    queryFn: async () => {
+      const { count } = await (supabase as any)
+        .from("crm_messages")
+        .select("id", { count: "exact", head: true })
+        .eq("to_user_id", user!.id)
+        .eq("is_read", false)
+        .eq("is_archived", false);
+      return count ?? 0;
+    },
+    enabled: !!user?.id,
+    refetchInterval: 60_000,
   });
 
   useEffect(() => {
@@ -92,7 +110,7 @@ export default function CRMSidebar({ activeSection, onNavigate }: CRMSidebarProp
                   onClick={() => onNavigate(mod.section)}
                   title={collapsed ? mod.label : undefined}
                   className={`
-                    w-full flex items-center gap-3 px-2.5 py-2 rounded-lg text-left transition-all duration-100
+                    relative w-full flex items-center gap-3 px-2.5 py-2 rounded-lg text-left transition-all duration-100
                     ${isActive
                       ? "bg-emerald-950 text-emerald-400 border border-emerald-800"
                       : "text-[#6b8f72] hover:text-[#a0c4a8] hover:bg-[#111a14] border border-transparent"
@@ -102,12 +120,20 @@ export default function CRMSidebar({ activeSection, onNavigate }: CRMSidebarProp
                 >
                   <Icon size={15} className="flex-shrink-0" />
                   {!collapsed && (
-                    <span className="text-[12.5px] font-medium truncate">{mod.label}</span>
+                    <span className="text-[12.5px] font-medium truncate flex-1">{mod.label}</span>
                   )}
                   {!collapsed && mod.isStub && (
                     <span className="ml-auto text-[9px] font-mono text-[#3a5040] bg-[#111a14] border border-[#1e2d22] rounded px-1 flex-shrink-0">
                       soon
                     </span>
+                  )}
+                  {!collapsed && mod.section === "inbox" && unreadCount > 0 && (
+                    <span className="ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-red-950 border border-red-800 text-red-400 flex-shrink-0">
+                      {unreadCount > 99 ? "99+" : unreadCount}
+                    </span>
+                  )}
+                  {collapsed && mod.section === "inbox" && unreadCount > 0 && (
+                    <span className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-red-500 flex-shrink-0" />
                   )}
                 </button>
               </li>
