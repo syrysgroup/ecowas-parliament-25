@@ -4,8 +4,15 @@ import { useAuthContext } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import type { AppRole } from "@/contexts/AuthContext";
 import { CRM_ROLE_META } from "../crmRoles";
-import { Send, Trash2, CheckCircle2, Clock, UserPlus, RefreshCw, X } from "lucide-react";
+import {
+  Send, Trash2, CheckCircle2, Clock, UserPlus, RefreshCw, X,
+  Eye, Pencil, UserMinus, EyeOff, AlertTriangle,
+} from "lucide-react";
 import { format, parseISO } from "date-fns";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface UserWithRoles {
   id: string;
@@ -24,6 +31,21 @@ interface Invitation {
   accepted_at: string | null;
 }
 
+interface UserEmailSettings {
+  smtp_host: string;
+  smtp_port: number;
+  smtp_user: string;
+  smtp_password: string;
+  imap_host: string;
+  imap_port: number;
+  auto_connect: boolean;
+}
+
+const EMPTY_EMAIL_SETTINGS: UserEmailSettings = {
+  smtp_host: "", smtp_port: 587, smtp_user: "", smtp_password: "",
+  imap_host: "", imap_port: 993, auto_connect: true,
+};
+
 // Roles an admin can assign (not super_admin — only super_admin can grant that)
 const ADMIN_ASSIGNABLE_ROLES: AppRole[] = [
   "admin", "moderator", "project_director", "programme_lead",
@@ -34,8 +56,387 @@ const ADMIN_ASSIGNABLE_ROLES: AppRole[] = [
 
 const SUPER_ADMIN_ASSIGNABLE_ROLES: AppRole[] = ["super_admin", ...ADMIN_ASSIGNABLE_ROLES];
 
+// ─── View User Dialog ────────────────────────────────────────────────────────
+function ViewUserDialog({ target, onClose }: { target: UserWithRoles; onClose: () => void }) {
+  const [emailCfg, setEmailCfg] = useState<UserEmailSettings | null>(null);
+  const [loadingCfg, setLoadingCfg] = useState(true);
+
+  useEffect(() => {
+    setLoadingCfg(true);
+    (supabase as any)
+      .from("user_email_settings")
+      .select("*")
+      .eq("user_id", target.id)
+      .maybeSingle()
+      .then(({ data }: any) => {
+        setEmailCfg(data ?? null);
+        setLoadingCfg(false);
+      });
+  }, [target.id]);
+
+  const initials = target.full_name.split(" ").map((n: string) => n[0]).slice(0, 2).join("").toUpperCase() || "?";
+
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent className="bg-[#0d1610] border-[#1e2d22] text-[#c8e0cc] max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-sm font-semibold text-[#c8e0cc]">User Details</DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-5 py-1">
+          {/* Avatar + name */}
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-full bg-[#1e2d22] flex items-center justify-center text-lg font-bold text-emerald-400 uppercase flex-shrink-0">
+              {initials}
+            </div>
+            <div>
+              <p className="text-[15px] font-bold text-[#c8e0cc]">{target.full_name || "—"}</p>
+              <p className="text-xs text-[#6b8f72] mt-0.5">{target.email}</p>
+              <p className="text-[11px] text-[#4a6650] mt-0.5">{target.country || "No country set"}</p>
+            </div>
+          </div>
+
+          {/* Meta */}
+          <div className="grid grid-cols-2 gap-3 text-[11px]">
+            <div className="bg-[#111a14] border border-[#1e2d22] rounded-lg px-3 py-2">
+              <p className="text-[#4a6650] mb-0.5">Joined</p>
+              <p className="text-[#a0c4a8] font-medium">{format(parseISO(target.created_at), "d MMM yyyy")}</p>
+            </div>
+            <div className="bg-[#111a14] border border-[#1e2d22] rounded-lg px-3 py-2">
+              <p className="text-[#4a6650] mb-0.5">Roles</p>
+              <p className="text-[#a0c4a8] font-medium">{target.roles.length} assigned</p>
+            </div>
+          </div>
+
+          {/* Role chips */}
+          {target.roles.length > 0 && (
+            <div>
+              <p className="text-[11px] text-[#4a6650] mb-2">Assigned Roles</p>
+              <div className="flex flex-wrap gap-1.5">
+                {target.roles.map(role => {
+                  const m = CRM_ROLE_META[role];
+                  if (!m) return null;
+                  return (
+                    <span key={role}
+                      className={`text-[10px] font-mono border rounded px-2 py-0.5 ${m.bgColour} ${m.colour} ${m.borderColour}`}>
+                      {m.label}
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Email config */}
+          <div>
+            <p className="text-[11px] text-[#4a6650] mb-2">Email Configuration</p>
+            {loadingCfg ? (
+              <div className="h-8 bg-[#111a14] rounded-lg animate-pulse" />
+            ) : emailCfg ? (
+              <div className="bg-[#111a14] border border-[#1e2d22] rounded-lg px-3 py-3 space-y-1.5 text-[11px]">
+                <div className="flex items-center justify-between">
+                  <span className="text-[#4a6650]">Status</span>
+                  <span className={`font-mono rounded px-1.5 py-0.5 text-[9px] border ${
+                    emailCfg.auto_connect
+                      ? "bg-emerald-950 text-emerald-400 border-emerald-800"
+                      : "bg-[#1e2d22] text-[#4a6650] border-[#2a3d2d]"
+                  }`}>
+                    {emailCfg.auto_connect ? "● Auto-connect ON" : "● Manual"}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[#4a6650]">SMTP</span>
+                  <span className="text-[#a0c4a8]">{emailCfg.smtp_host}:{emailCfg.smtp_port}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[#4a6650]">IMAP</span>
+                  <span className="text-[#a0c4a8]">{emailCfg.imap_host}:{emailCfg.imap_port}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[#4a6650]">Login</span>
+                  <span className="text-[#a0c4a8]">{emailCfg.smtp_user}</span>
+                </div>
+              </div>
+            ) : (
+              <p className="text-[11px] text-[#3a5040] italic">No email credentials configured.</p>
+            )}
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" size="sm" onClick={onClose}
+            className="border-[#1e2d22] text-[#6b8f72] hover:text-[#a0c4a8] text-xs">
+            Close
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── Edit User Dialog ────────────────────────────────────────────────────────
+function EditUserDialog({
+  target, isSuperAdmin, onClose, onSaved,
+}: {
+  target: UserWithRoles;
+  isSuperAdmin: boolean;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const { toast } = useToast();
+  const [fullName,   setFullName]   = useState(target.full_name);
+  const [country,    setCountry]    = useState(target.country);
+  const [saving,     setSaving]     = useState(false);
+  const [showPass,   setShowPass]   = useState(false);
+
+  // Email settings state
+  const [emailCfg,     setEmailCfg]     = useState<UserEmailSettings>(EMPTY_EMAIL_SETTINGS);
+  const [loadingEmail, setLoadingEmail] = useState(isSuperAdmin);
+
+  useEffect(() => {
+    if (!isSuperAdmin) return;
+    setLoadingEmail(true);
+    (supabase as any)
+      .from("user_email_settings")
+      .select("*")
+      .eq("user_id", target.id)
+      .maybeSingle()
+      .then(({ data }: any) => {
+        if (data) setEmailCfg({
+          smtp_host:     data.smtp_host     ?? "",
+          smtp_port:     data.smtp_port     ?? 587,
+          smtp_user:     data.smtp_user     ?? "",
+          smtp_password: data.smtp_password ?? "",
+          imap_host:     data.imap_host     ?? "",
+          imap_port:     data.imap_port     ?? 993,
+          auto_connect:  data.auto_connect  ?? true,
+        });
+        setLoadingEmail(false);
+      });
+  }, [target.id, isSuperAdmin]);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      // 1. Update profile
+      const { error: profileErr } = await (supabase as any)
+        .from("profiles")
+        .update({ full_name: fullName.trim(), country: country.trim() })
+        .eq("id", target.id);
+      if (profileErr) throw profileErr;
+
+      // 2. Upsert email settings (super_admin only)
+      if (isSuperAdmin) {
+        const { error: emailErr } = await (supabase as any)
+          .from("user_email_settings")
+          .upsert({
+            user_id:       target.id,
+            smtp_host:     emailCfg.smtp_host.trim(),
+            smtp_port:     Number(emailCfg.smtp_port) || 587,
+            smtp_user:     emailCfg.smtp_user.trim(),
+            smtp_password: emailCfg.smtp_password,
+            imap_host:     emailCfg.imap_host.trim(),
+            imap_port:     Number(emailCfg.imap_port) || 993,
+            auto_connect:  emailCfg.auto_connect,
+            updated_at:    new Date().toISOString(),
+          }, { onConflict: "user_id" });
+        if (emailErr) throw emailErr;
+      }
+
+      toast({ title: "User updated" });
+      onSaved();
+    } catch (err: any) {
+      toast({ title: "Save failed", description: err.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent className="bg-[#0d1610] border-[#1e2d22] text-[#c8e0cc] max-w-lg max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-sm font-semibold text-[#c8e0cc]">
+            Edit User — {target.full_name || target.email}
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-5 py-1">
+          {/* Profile section */}
+          <div>
+            <p className="text-[11px] font-semibold text-emerald-500 uppercase tracking-wider mb-3">Profile</p>
+            <div className="space-y-3">
+              <div className="space-y-1">
+                <Label className="text-[11px] text-[#4a6650]">Full Name</Label>
+                <Input
+                  value={fullName}
+                  onChange={e => setFullName(e.target.value)}
+                  placeholder="Full name"
+                  className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-[11px] text-[#4a6650]">Country</Label>
+                <Input
+                  value={country}
+                  onChange={e => setCountry(e.target.value)}
+                  placeholder="Country"
+                  className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Email credentials — super_admin only */}
+          {isSuperAdmin && (
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <p className="text-[11px] font-semibold text-amber-400 uppercase tracking-wider">Email Credentials</p>
+                <span className="text-[9px] font-mono text-amber-600 bg-amber-950 border border-amber-800 rounded px-1.5 py-0.5">
+                  SUPER ADMIN
+                </span>
+              </div>
+
+              {/* Migration warning */}
+              <div className="flex items-start gap-2 bg-amber-950/40 border border-amber-800/60 rounded-lg px-3 py-2.5 mb-3">
+                <AlertTriangle size={12} className="text-amber-400 mt-0.5 flex-shrink-0" />
+                <p className="text-[10px] text-amber-400 leading-relaxed">
+                  Requires a <code className="font-mono">user_email_settings</code> table. Run in Supabase SQL editor:
+                  <br />
+                  <code className="font-mono text-[9px] text-amber-300 break-all">
+                    CREATE TABLE user_email_settings (user_id UUID PRIMARY KEY REFERENCES profiles(id) ON DELETE CASCADE, smtp_host TEXT, smtp_port INT DEFAULT 587, smtp_user TEXT, smtp_password TEXT, imap_host TEXT, imap_port INT DEFAULT 993, auto_connect BOOLEAN DEFAULT true, updated_at TIMESTAMPTZ DEFAULT now());
+                  </code>
+                </p>
+              </div>
+
+              {loadingEmail ? (
+                <div className="space-y-2">
+                  {[1, 2, 3].map(i => <div key={i} className="h-8 bg-[#111a14] rounded-lg animate-pulse" />)}
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {/* SMTP host + port */}
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="col-span-2 space-y-1">
+                      <Label className="text-[11px] text-[#4a6650]">SMTP Host</Label>
+                      <Input
+                        value={emailCfg.smtp_host}
+                        onChange={e => setEmailCfg(c => ({ ...c, smtp_host: e.target.value }))}
+                        placeholder="smtp.gmail.com"
+                        className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-[11px] text-[#4a6650]">Port</Label>
+                      <Input
+                        type="number"
+                        min={1}
+                        value={emailCfg.smtp_port}
+                        onChange={e => setEmailCfg(c => ({ ...c, smtp_port: Number(e.target.value) }))}
+                        className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8"
+                      />
+                    </div>
+                  </div>
+
+                  {/* SMTP username */}
+                  <div className="space-y-1">
+                    <Label className="text-[11px] text-[#4a6650]">SMTP Username / Email</Label>
+                    <Input
+                      value={emailCfg.smtp_user}
+                      onChange={e => setEmailCfg(c => ({ ...c, smtp_user: e.target.value }))}
+                      placeholder="user@example.com"
+                      className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8"
+                    />
+                  </div>
+
+                  {/* Password with show/hide */}
+                  <div className="space-y-1">
+                    <Label className="text-[11px] text-[#4a6650]">SMTP Password</Label>
+                    <div className="relative">
+                      <Input
+                        type={showPass ? "text" : "password"}
+                        value={emailCfg.smtp_password}
+                        onChange={e => setEmailCfg(c => ({ ...c, smtp_password: e.target.value }))}
+                        placeholder="••••••••"
+                        className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8 pr-8"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPass(v => !v)}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#4a6650] hover:text-[#a0c4a8] transition-colors"
+                      >
+                        {showPass ? <EyeOff size={12} /> : <Eye size={12} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* IMAP host + port */}
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="col-span-2 space-y-1">
+                      <Label className="text-[11px] text-[#4a6650]">IMAP Host</Label>
+                      <Input
+                        value={emailCfg.imap_host}
+                        onChange={e => setEmailCfg(c => ({ ...c, imap_host: e.target.value }))}
+                        placeholder="imap.gmail.com"
+                        className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-[11px] text-[#4a6650]">Port</Label>
+                      <Input
+                        type="number"
+                        min={1}
+                        value={emailCfg.imap_port}
+                        onChange={e => setEmailCfg(c => ({ ...c, imap_port: Number(e.target.value) }))}
+                        className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Auto-connect toggle */}
+                  <div className="flex items-center justify-between bg-[#111a14] border border-[#1e2d22] rounded-lg px-3 py-2.5">
+                    <div>
+                      <p className="text-[12px] text-[#c8e0cc]">Auto-connect on login</p>
+                      <p className="text-[10px] text-[#4a6650] mt-0.5">
+                        User is automatically connected to their email when they log into the CRM.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setEmailCfg(c => ({ ...c, auto_connect: !c.auto_connect }))}
+                      className={`relative w-9 h-5 rounded-full transition-colors flex-shrink-0 ml-3 ${
+                        emailCfg.auto_connect ? "bg-emerald-600" : "bg-[#2a3d2d]"
+                      }`}
+                    >
+                      <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all ${
+                        emailCfg.auto_connect ? "left-[18px]" : "left-0.5"
+                      }`} />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        <DialogFooter className="gap-2">
+          <Button variant="outline" size="sm" onClick={onClose}
+            className="border-[#1e2d22] text-[#6b8f72] hover:text-[#a0c4a8] text-xs">
+            Cancel
+          </Button>
+          <Button size="sm" onClick={handleSave} disabled={saving}
+            className="bg-emerald-700 hover:bg-emerald-600 text-white text-xs">
+            {saving ? "Saving…" : "Save changes"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── Main Component ──────────────────────────────────────────────────────────
 export default function PeopleModule() {
-  const { user, isSuperAdmin, refreshRoles } = useAuthContext();
+  const { user, isAdmin, isSuperAdmin, refreshRoles } = useAuthContext();
   const { toast } = useToast();
 
   const [users,       setUsers]       = useState<UserWithRoles[]>([]);
@@ -46,6 +447,13 @@ export default function PeopleModule() {
   const [inviteRole,  setInviteRole]  = useState<AppRole>("admin");
   const [search,      setSearch]      = useState("");
   const [tab,         setTab]         = useState<"users" | "invitations">("users");
+
+  // CRUD state
+  const [viewTarget,      setViewTarget]      = useState<UserWithRoles | null>(null);
+  const [editTarget,      setEditTarget]      = useState<UserWithRoles | null>(null);
+  const [editOpen,        setEditOpen]        = useState(false);
+  const [viewOpen,        setViewOpen]        = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const assignableRoles = isSuperAdmin ? SUPER_ADMIN_ASSIGNABLE_ROLES : ADMIN_ASSIGNABLE_ROLES;
 
@@ -98,7 +506,6 @@ export default function PeopleModule() {
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inviteEmail.trim()) return;
-    // Admin cannot invite super_admin
     if (!isSuperAdmin && inviteRole === "super_admin") {
       toast({ title: "Insufficient permissions", description: "Only a Super Admin can grant the super_admin role.", variant: "destructive" });
       return;
@@ -153,6 +560,18 @@ export default function PeopleModule() {
       loadData();
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  };
+
+  const deleteUser = async (userId: string) => {
+    try {
+      await (supabase as any).from("user_roles").delete().eq("user_id", userId);
+      await (supabase as any).from("profiles").delete().eq("id", userId);
+      toast({ title: "User removed" });
+      setConfirmDeleteId(null);
+      loadData();
+    } catch (err: any) {
+      toast({ title: "Error removing user", description: err.message, variant: "destructive" });
     }
   };
 
@@ -301,9 +720,63 @@ export default function PeopleModule() {
                           )}
                         </div>
                       </div>
-                      <p className="text-[10px] text-[#3a5040] flex-shrink-0 hidden sm:block">
+
+                      {/* Joined date */}
+                      <p className="text-[10px] text-[#3a5040] flex-shrink-0 hidden sm:block pt-0.5">
                         {format(parseISO(u.created_at), "d MMM yyyy")}
                       </p>
+
+                      {/* Action buttons — isAdmin only */}
+                      {isAdmin && (
+                        <div className="flex items-center gap-0.5 flex-shrink-0">
+                          {/* View */}
+                          <button
+                            onClick={() => { setViewTarget(u); setViewOpen(true); }}
+                            title="View details"
+                            className="p-1.5 text-[#4a6650] hover:text-[#a0c4a8] transition-colors rounded"
+                          >
+                            <Eye size={13} />
+                          </button>
+
+                          {/* Edit */}
+                          <button
+                            onClick={() => { setEditTarget(u); setEditOpen(true); }}
+                            title="Edit user"
+                            className="p-1.5 text-[#4a6650] hover:text-[#a0c4a8] transition-colors rounded"
+                          >
+                            <Pencil size={13} />
+                          </button>
+
+                          {/* Delete — super_admin only, cannot delete yourself */}
+                          {isSuperAdmin && u.id !== user?.id && (
+                            confirmDeleteId === u.id ? (
+                              <span className="flex items-center gap-1 text-[9px] ml-1">
+                                <button
+                                  onClick={() => deleteUser(u.id)}
+                                  className="text-red-400 hover:text-red-300 font-semibold transition-colors"
+                                >
+                                  Yes
+                                </button>
+                                <span className="text-[#3a5040]">/</span>
+                                <button
+                                  onClick={() => setConfirmDeleteId(null)}
+                                  className="text-[#4a6650] hover:text-[#a0c4a8] transition-colors"
+                                >
+                                  No
+                                </button>
+                              </span>
+                            ) : (
+                              <button
+                                onClick={() => setConfirmDeleteId(u.id)}
+                                title="Delete user"
+                                className="p-1.5 text-[#4a6650] hover:text-red-400 transition-colors rounded"
+                              >
+                                <UserMinus size={13} />
+                              </button>
+                            )
+                          )}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -359,6 +832,22 @@ export default function PeopleModule() {
             </div>
           )}
         </div>
+      )}
+
+      {/* Dialogs */}
+      {viewOpen && viewTarget && (
+        <ViewUserDialog
+          target={viewTarget}
+          onClose={() => { setViewOpen(false); setViewTarget(null); }}
+        />
+      )}
+      {editOpen && editTarget && (
+        <EditUserDialog
+          target={editTarget}
+          isSuperAdmin={isSuperAdmin}
+          onClose={() => { setEditOpen(false); setEditTarget(null); }}
+          onSaved={() => { setEditOpen(false); setEditTarget(null); loadData(); }}
+        />
       )}
     </div>
   );

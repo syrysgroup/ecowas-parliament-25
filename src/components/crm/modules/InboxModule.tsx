@@ -195,6 +195,21 @@ export default function InboxModule() {
   const [composeOpen, setComposeOpen] = useState(false);
   const [replyMsg, setReplyMsg] = useState<any>(null);
 
+  // Per-user email settings (set by super_admin in PeopleModule)
+  const { data: emailSettings } = useQuery({
+    queryKey: ["user-email-settings", user?.id],
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("user_email_settings")
+        .select("smtp_user, auto_connect")
+        .eq("user_id", user!.id)
+        .maybeSingle();
+      return data ?? null;
+    },
+    enabled: !!user?.id,
+    staleTime: 5 * 60_000,
+  });
+
   // Profiles for compose
   const { data: profiles = [] } = useQuery({
     queryKey: ["crm-profiles-inbox"],
@@ -280,11 +295,21 @@ export default function InboxModule() {
     <div className="flex h-[calc(100vh-120px)] bg-[#0a0f0d] border border-[#1e2d22] rounded-xl overflow-hidden">
       {/* Folder pane */}
       <div className="w-[140px] border-r border-[#1e2d22] flex flex-col flex-shrink-0">
-        <div className="p-3 border-b border-[#1e2d22]">
+        <div className="p-3 border-b border-[#1e2d22] space-y-2">
           <Button size="sm" onClick={() => { setComposeOpen(true); setReplyMsg(null); }}
             className="w-full bg-emerald-700 hover:bg-emerald-600 text-white text-xs gap-1.5">
             <Plus size={12} /> Compose
           </Button>
+          {emailSettings?.auto_connect ? (
+            <div className="flex items-center gap-1.5 px-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0" />
+              <span className="text-[9px] text-emerald-500 truncate" title={emailSettings.smtp_user}>
+                {emailSettings.smtp_user}
+              </span>
+            </div>
+          ) : (
+            <p className="text-[9px] text-[#3a5040] px-1 text-center">No email configured</p>
+          )}
         </div>
         <nav className="flex-1 p-2 space-y-0.5">
           {FOLDERS.map(f => (
