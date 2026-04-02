@@ -21,6 +21,7 @@ import Contact from "./pages/Contact";
 import MediaKit from "./pages/MediaKit";
 import SponsorPortal from "./pages/SponsorPortal";
 import Events from "./pages/Events";
+import Volunteer from "./pages/Volunteer";
 
 // Programme pages
 import Youth from "./pages/programmes/Youth";
@@ -73,6 +74,7 @@ const App = () => (
               <Route path="/media-kit"          element={<MediaKit />}       />
               <Route path="/sponsors"           element={<SponsorPortal />}  />
               <Route path="/events"             element={<Events />}         />
+              <Route path="/volunteer"          element={<Volunteer />}      />
 
               {/* Programme pillars */}
               <Route path="/programmes/youth"      element={<Youth />}      />

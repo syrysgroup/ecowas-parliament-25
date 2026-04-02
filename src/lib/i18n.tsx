@@ -46,6 +46,27 @@ const translations: Record<Locale, Record<string, string>> = {
     "common.contact": "Contact Us",
     "common.sponsor": "Sponsor the Programme",
     "common.mediaKit": "Press & Media Kit",
+    "common.volunteer": "Volunteer",
+    // Footer extra
+    "footer.builtBy": "Built by Resident Technology Ltd",
+    "footer.signIn": "Sign In",
+    "footer.dashboard": "Dashboard",
+    // Volunteer page
+    "volunteer.badge": "Get Involved",
+    "volunteer.title": "Volunteer with Us",
+    "volunteer.subtitle": "Join the team behind the ECOWAS Parliament 25th Anniversary Programme. Volunteers play a vital role across events, communications, translation, community outreach, and more.",
+    "volunteer.formTitle": "Volunteer Application",
+    "volunteer.formDesc": "Tell us about yourself and how you'd like to contribute. We'll be in touch within 5 working days.",
+    "volunteer.name": "Full name",
+    "volunteer.email": "Email address",
+    "volunteer.country": "Country",
+    "volunteer.area": "Area of interest",
+    "volunteer.skills": "Skills & experience",
+    "volunteer.message": "Why do you want to volunteer?",
+    "volunteer.submit": "Submit application",
+    "volunteer.successTitle": "Application received",
+    "volunteer.successDesc": "Thank you for your interest in volunteering. A member of the team will be in touch within 5 working days.",
+    "volunteer.another": "Submit another application",
     // Events
     "events.title": "Events & Registration",
     "events.subtitle": "Register for upcoming ECOWAS Parliament 25th Anniversary events across West Africa.",
@@ -105,6 +126,27 @@ const translations: Record<Locale, Record<string, string>> = {
     "common.contact": "Contactez-nous",
     "common.sponsor": "Parrainer le Programme",
     "common.mediaKit": "Kit Presse & Médias",
+    "common.volunteer": "Bénévolat",
+    // Footer extra
+    "footer.builtBy": "Créé par Resident Technology Ltd",
+    "footer.signIn": "Connexion",
+    "footer.dashboard": "Tableau de bord",
+    // Volunteer page
+    "volunteer.badge": "Participer",
+    "volunteer.title": "Devenez bénévole",
+    "volunteer.subtitle": "Rejoignez l'équipe du Programme du 25e anniversaire du Parlement de la CEDEAO. Les bénévoles jouent un rôle essentiel lors des événements, dans les communications, la traduction, la sensibilisation communautaire et bien plus encore.",
+    "volunteer.formTitle": "Candidature bénévole",
+    "volunteer.formDesc": "Parlez-nous de vous et de la manière dont vous souhaitez contribuer. Nous vous contacterons dans les 5 jours ouvrables.",
+    "volunteer.name": "Nom complet",
+    "volunteer.email": "Adresse e-mail",
+    "volunteer.country": "Pays",
+    "volunteer.area": "Domaine d'intérêt",
+    "volunteer.skills": "Compétences et expérience",
+    "volunteer.message": "Pourquoi souhaitez-vous faire du bénévolat ?",
+    "volunteer.submit": "Soumettre la candidature",
+    "volunteer.successTitle": "Candidature reçue",
+    "volunteer.successDesc": "Merci de l'intérêt que vous portez au bénévolat. Un membre de l'équipe vous contactera dans les 5 jours ouvrables.",
+    "volunteer.another": "Soumettre une autre candidature",
     // Events
     "events.title": "Événements & Inscription",
     "events.subtitle": "Inscrivez-vous aux événements du 25e anniversaire du Parlement de la CEDEAO à travers l'Afrique de l'Ouest.",
@@ -164,6 +206,27 @@ const translations: Record<Locale, Record<string, string>> = {
     "common.contact": "Contacte-nos",
     "common.sponsor": "Patrocinar o Programa",
     "common.mediaKit": "Kit de Imprensa & Media",
+    "common.volunteer": "Voluntariado",
+    // Footer extra
+    "footer.builtBy": "Desenvolvido por Resident Technology Ltd",
+    "footer.signIn": "Entrar",
+    "footer.dashboard": "Painel",
+    // Volunteer page
+    "volunteer.badge": "Participar",
+    "volunteer.title": "Voluntarie-se connosco",
+    "volunteer.subtitle": "Junte-se à equipa do Programa do 25.º Aniversário do Parlamento da CEDEAO. Os voluntários desempenham um papel vital em eventos, comunicações, tradução, sensibilização comunitária e muito mais.",
+    "volunteer.formTitle": "Candidatura a voluntário",
+    "volunteer.formDesc": "Fale-nos sobre si e como gostaria de contribuir. Entraremos em contacto nos próximos 5 dias úteis.",
+    "volunteer.name": "Nome completo",
+    "volunteer.email": "Endereço de e-mail",
+    "volunteer.country": "País",
+    "volunteer.area": "Área de interesse",
+    "volunteer.skills": "Competências e experiência",
+    "volunteer.message": "Por que razão deseja ser voluntário?",
+    "volunteer.submit": "Enviar candidatura",
+    "volunteer.successTitle": "Candidatura recebida",
+    "volunteer.successDesc": "Obrigado pelo interesse em ser voluntário. Um membro da equipa entrará em contacto nos próximos 5 dias úteis.",
+    "volunteer.another": "Enviar outra candidatura",
     // Events
     "events.title": "Eventos & Inscrição",
     "events.subtitle": "Inscreva-se nos eventos do 25.º aniversário do Parlamento da CEDEAO na África Ocidental.",
@@ -194,11 +257,18 @@ const I18nContext = createContext<I18nContextType>({
   t: (key) => key,
 });
 
+function detectBrowserLocale(): Locale {
+  const lang = (navigator.language || "").toLowerCase();
+  if (lang.startsWith("fr")) return "fr";
+  if (lang.startsWith("pt")) return "pt";
+  return "en";
+}
+
 export function I18nProvider({ children }: { children: ReactNode }) {
   const [locale, setLocale] = useState<Locale>(() => {
     const stored = localStorage.getItem("locale");
-    if (stored === "fr" || stored === "pt") return stored;
-    return "en";
+    if (stored === "en" || stored === "fr" || stored === "pt") return stored;
+    return detectBrowserLocale();
   });
 
   const changeLocale = useCallback((l: Locale) => {

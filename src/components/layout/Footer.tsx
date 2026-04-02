@@ -1,11 +1,13 @@
 import { Link } from "react-router-dom";
 import { useTranslation } from "@/lib/i18n";
+import { useAuthContext } from "@/contexts/AuthContext";
 import ecowasLogo from "@/assets/ecowas-parliament-logo.png";
 import anniversary25Logo from "@/assets/parliament-25-logo.png";
 import SocialMediaBar from "@/components/shared/SocialMediaBar";
 
 const Footer = () => {
   const { t } = useTranslation();
+  const { user } = useAuthContext();
 
   const footerLinks = [
     {
@@ -35,9 +37,10 @@ const Footer = () => {
     {
       heading: t("footer.getInvolved"),
       links: [
-        { label: t("common.sponsor"),   to: "/sponsors"  },
-        { label: t("common.mediaKit"),   to: "/media-kit" },
-        { label: t("common.contact"),    to: "/contact"   },
+        { label: t("common.sponsor"),    to: "/sponsors"   },
+        { label: t("common.mediaKit"),   to: "/media-kit"  },
+        { label: t("common.contact"),    to: "/contact"    },
+        { label: t("common.volunteer"),  to: "/volunteer"  },
       ],
     },
   ];
@@ -88,6 +91,7 @@ const Footer = () => {
             <p className="text-[10px] text-muted-foreground/60 mt-1">
               This is the official website of ECOWAS Parliament Initiatives — not the ECOWAS Parliament itself.
             </p>
+            <p className="text-[10px] text-muted-foreground/40 mt-0.5">{t("footer.builtBy")}</p>
           </div>
           <div className="flex flex-wrap items-center gap-4">
             <Link to="/contact" className="text-xs text-muted-foreground hover:text-primary transition-colors">{t("nav.contact")}</Link>
@@ -97,12 +101,21 @@ const Footer = () => {
               className="text-xs text-muted-foreground hover:text-primary transition-colors">
               ECOWAS Parliament Official Site ↗
             </a>
-            <Link
-              to="/auth"
-              className="text-xs font-medium px-3 py-1.5 rounded-md border border-border text-foreground/70 hover:text-primary hover:border-primary transition-colors"
-            >
-              Sign In
-            </Link>
+            {user ? (
+              <Link
+                to="/crm"
+                className="text-xs font-medium px-3 py-1.5 rounded-md border border-border text-foreground/70 hover:text-primary hover:border-primary transition-colors"
+              >
+                {t("footer.dashboard")}
+              </Link>
+            ) : (
+              <Link
+                to="/auth"
+                className="text-xs font-medium px-3 py-1.5 rounded-md border border-border text-foreground/70 hover:text-primary hover:border-primary transition-colors"
+              >
+                {t("footer.signIn")}
+              </Link>
+            )}
           </div>
         </div>
       </div>
