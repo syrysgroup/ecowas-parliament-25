@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { FolderOpen, Lock, Download, AlertCircle, Plus, Trash2 } from "lucide-react";
+import { FolderOpen, Lock, Download, AlertCircle, Plus, Trash2, Pencil } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { format, parseISO } from "date-fns";
@@ -127,12 +127,104 @@ function AddDocumentDialog({ open, onClose }: { open: boolean; onClose: () => vo
   );
 }
 
+// ─── Edit Document Dialog ──────────────────────────────────────────────────────
+function EditDocumentDialog({ doc, open, onClose }: { doc: Doc; open: boolean; onClose: () => void }) {
+  const qc = useQueryClient();
+  const [title, setTitle] = useState(doc.title);
+  const [category, setCategory] = useState(doc.category);
+  const [fileType, setFileType] = useState(doc.file_type);
+  const [fileSizeKb, setFileSizeKb] = useState(doc.file_size_kb != null ? String(doc.file_size_kb) : "");
+  const [restricted, setRestricted] = useState(doc.restricted);
+
+  const update = useMutation({
+    mutationFn: async () => {
+      await (supabase as any).from("documents").update({
+        title,
+        category: category || "General",
+        file_type: fileType,
+        file_size_kb: fileSizeKb ? Number(fileSizeKb) : null,
+        restricted,
+      }).eq("id", doc.id);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["crm-documents"] });
+      onClose();
+    },
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="bg-[#0d1610] border-[#1e2d22] text-[#c8e0cc] max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-sm font-semibold text-[#c8e0cc]">Edit Document</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3 py-1">
+          <div className="space-y-1">
+            <Label className="text-[11px] text-[#4a6650]">Title *</Label>
+            <Input value={title} onChange={e => setTitle(e.target.value)}
+              className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8"
+              placeholder="Document title" />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label className="text-[11px] text-[#4a6650]">Category</Label>
+              <Input value={category} onChange={e => setCategory(e.target.value)}
+                className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8"
+                placeholder="General" />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-[11px] text-[#4a6650]">File type</Label>
+              <Select value={fileType} onValueChange={setFileType}>
+                <SelectTrigger className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-[#0d1610] border-[#1e2d22]">
+                  {FILE_TYPES.map(t => (
+                    <SelectItem key={t} value={t} className="text-[#c8e0cc] text-xs">{t}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3 items-end">
+            <div className="space-y-1">
+              <Label className="text-[11px] text-[#4a6650]">Size (KB)</Label>
+              <Input
+                type="number"
+                value={fileSizeKb}
+                onChange={e => setFileSizeKb(e.target.value)}
+                className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8"
+                placeholder="Optional"
+              />
+            </div>
+            <div className="flex items-center gap-2 pb-1">
+              <Switch checked={restricted} onCheckedChange={setRestricted} />
+              <Label className="text-[11px] text-[#4a6650]">Restricted</Label>
+            </div>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" size="sm" onClick={onClose} className="border-[#1e2d22] text-[#6b8f72] text-xs">
+            Cancel
+          </Button>
+          <Button size="sm" disabled={!title.trim() || update.isPending}
+            onClick={() => update.mutate()}
+            className="bg-emerald-700 hover:bg-emerald-600 text-white text-xs">
+            {update.isPending ? "Saving…" : "Save Changes"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 // ─── Main ──────────────────────────────────────────────────────────────────────
 export default function DocumentsModule() {
   const { isAdmin } = useAuthContext();
   const qc = useQueryClient();
   const [addOpen, setAddOpen] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [editTarget, setEditTarget] = useState<Doc | null>(null);
 
   const { data, isLoading } = useQuery<Doc[] | null>({
     queryKey: ["crm-documents"],
@@ -274,6 +366,16 @@ export default function DocumentsModule() {
 
                   {isAdmin && !isConfirming && (
                     <button
+                      onClick={() => setEditTarget(doc)}
+                      className="flex items-center gap-1 text-[11px] text-[#4a6650] hover:text-[#a0c4a8] bg-[#111a14] border border-[#1e2d22] rounded-lg px-2.5 py-1.5 transition-colors"
+                      title="Edit"
+                    >
+                      <Pencil size={12} />
+                    </button>
+                  )}
+
+                  {isAdmin && !isConfirming && (
+                    <button
                       onClick={() => setConfirmDeleteId(doc.id)}
                       className="flex items-center gap-1 text-[11px] text-[#4a6650] hover:text-red-400 bg-[#111a14] border border-[#1e2d22] hover:border-red-900 rounded-lg px-2.5 py-1.5 transition-colors"
                       title="Delete"
@@ -307,6 +409,13 @@ export default function DocumentsModule() {
       )}
 
       <AddDocumentDialog open={addOpen} onClose={() => setAddOpen(false)} />
+      {editTarget && (
+        <EditDocumentDialog
+          doc={editTarget}
+          open={!!editTarget}
+          onClose={() => setEditTarget(null)}
+        />
+      )}
     </div>
   );
 }

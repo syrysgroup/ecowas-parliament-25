@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { TrendingUp, Eye, Handshake, Clock, Pencil, UserMinus } from "lucide-react";
+import { TrendingUp, Eye, Handshake, Clock, Pencil, UserMinus, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,64 @@ function deriveTier(index: number): Tier {
   if (index < 2) return "gold";
   if (index < 5) return "silver";
   return "bronze";
+}
+
+// ─── Invite Sponsor Dialog ─────────────────────────────────────────────────────
+function InviteSponsorDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
+  const [isPending, setIsPending] = useState(false);
+
+  const handleInvite = async () => {
+    if (!email.trim()) return;
+    setIsPending(true);
+    try {
+      await (supabase as any).functions.invoke("invite-user", {
+        body: { email: email.trim(), role: "sponsor", full_name: name.trim() || undefined },
+      });
+      setEmail(""); setName("");
+      onClose();
+    } finally {
+      setIsPending(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="bg-[#0d1610] border-[#1e2d22] text-[#c8e0cc] max-w-sm">
+        <DialogHeader>
+          <DialogTitle className="text-sm font-semibold text-[#c8e0cc]">Invite Sponsor</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3 py-1">
+          <div className="space-y-1">
+            <Label className="text-[11px] text-[#4a6650]">Email *</Label>
+            <Input value={email} onChange={e => setEmail(e.target.value)}
+              className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8"
+              placeholder="sponsor@organisation.com" />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-[11px] text-[#4a6650]">Name (optional)</Label>
+            <Input value={name} onChange={e => setName(e.target.value)}
+              className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8"
+              placeholder="Organisation name" />
+          </div>
+          <p className="text-[10px] text-[#4a6650]">
+            An invitation email will be sent. The sponsor can set their tier after onboarding.
+          </p>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" size="sm" onClick={onClose} className="border-[#1e2d22] text-[#6b8f72] text-xs">
+            Cancel
+          </Button>
+          <Button size="sm" disabled={!email.trim() || isPending}
+            onClick={handleInvite}
+            className="bg-emerald-700 hover:bg-emerald-600 text-white text-xs">
+            {isPending ? "Sending…" : "Send Invite"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
 }
 
 // ─── Edit Sponsor Dialog ───────────────────────────────────────────────────────
@@ -110,6 +168,7 @@ export default function SponsorMetricsModule() {
   const [editTarget, setEditTarget] = useState<SponsorUser | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [confirmRemoveId, setConfirmRemoveId] = useState<string | null>(null);
+  const [inviteOpen, setInviteOpen] = useState(false);
 
   const { data: sponsors = [], isLoading } = useQuery<SponsorUser[]>({
     queryKey: ["crm-sponsors"],
@@ -160,11 +219,19 @@ export default function SponsorMetricsModule() {
   return (
     <div className="space-y-5">
       {/* Header */}
-      <div>
-        <h2 className="text-lg font-bold text-[#c8e0cc]">Sponsor Metrics</h2>
-        <p className="text-[12px] text-[#6b8f72] mt-0.5">
-          Visibility reports and engagement tracking for each sponsor partner
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-bold text-[#c8e0cc]">Sponsor Metrics</h2>
+          <p className="text-[12px] text-[#6b8f72] mt-0.5">
+            Visibility reports and engagement tracking for each sponsor partner
+          </p>
+        </div>
+        {isAdmin && (
+          <Button size="sm" onClick={() => setInviteOpen(true)}
+            className="bg-emerald-700 hover:bg-emerald-600 text-white text-xs gap-1.5">
+            <Plus size={13} /> Add Sponsor
+          </Button>
+        )}
       </div>
 
       {/* Summary stat cards */}
@@ -311,6 +378,7 @@ export default function SponsorMetricsModule() {
           onTierChange={(id, t) => setTierOverrides(prev => ({ ...prev, [id]: t }))}
         />
       )}
+      <InviteSponsorDialog open={inviteOpen} onClose={() => setInviteOpen(false)} />
     </div>
   );
 }
