@@ -17,7 +17,7 @@ const programmeMap: Record<string, { label: string; to: string; color: string; b
   civic: { label: "Civic Education", to: "/programmes/civic", color: "bg-ecowas-blue/10 text-ecowas-blue", borderColor: "border-l-ecowas-blue", icon: <Megaphone className="h-3.5 w-3.5" /> },
   culture: { label: "Culture & Creativity", to: "/programmes/culture", color: "bg-ecowas-lime/10 text-ecowas-lime", borderColor: "border-l-ecowas-lime", icon: <Palette className="h-3.5 w-3.5" /> },
   parliament: { label: "Youth Parliament", to: "/programmes/parliament", color: "bg-ecowas-red/10 text-ecowas-red", borderColor: "border-l-ecowas-red", icon: <Building2 className="h-3.5 w-3.5" /> },
-  awards: { label: "Parliamentary Awards", to: "/programmes/awards", color: "bg-accent/10 text-accent", borderColor: "border-l-accent", icon: <Award className="h-3.5 w-3.5" /> },
+  awards: { label: "AWALCO Parliamentary Awards", to: "/programmes/awards", color: "bg-accent/10 text-accent", borderColor: "border-l-accent", icon: <Award className="h-3.5 w-3.5" /> },
   general: { label: "General", to: "/about", color: "bg-muted text-muted-foreground", borderColor: "border-l-muted-foreground", icon: <Star className="h-3.5 w-3.5" /> },
 };
 
