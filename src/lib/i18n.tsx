@@ -12,6 +12,7 @@ const translations: Record<Locale, Record<string, string>> = {
     "nav.news": "News",
     "nav.documents": "Documents",
     "nav.stakeholders": "Stakeholders",
+    "nav.stakeholdersPartners": "Stakeholders & Partners",
     "nav.team": "Team",
     "nav.getInvolved": "Get involved",
     "nav.partnerWithUs": "Partner with us",
