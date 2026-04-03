@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useEffect, useState, useRef } from "react";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import ecowasLogo from "@/assets/ecowas-parliament-logo.png";
+import parliament25Logo from "@/assets/parliament-25-logo.png";
 
 import parliamentBg from "@/assets/parliament-chamber.png";
 
