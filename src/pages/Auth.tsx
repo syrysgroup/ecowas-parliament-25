@@ -236,16 +236,61 @@ export default function Auth() {
     </div>
   );
 
+  const isButtonDisabled = submitting || !captchaToken;
+  const disabledClasses = isButtonDisabled ? "opacity-50 cursor-not-allowed" : "";
+
+  const handleCaptchaSuccess = (token: string) => {
+    setCaptchaToken(token);
+    setCaptchaLoading(false);
+    setCaptchaError(false);
+    if (captchaTimeoutRef.current) clearTimeout(captchaTimeoutRef.current);
+  };
+
+  const handleCaptchaError = () => {
+    setCaptchaToken(null);
+    setCaptchaLoading(false);
+    setCaptchaError(true);
+    toast({ title: "CAPTCHA failed to load", description: "Please click 'Retry' or refresh the page.", variant: "destructive" });
+  };
+
+  const handleCaptchaWidgetLoad = () => {
+    // Start a 10-second timeout — if token isn't received, show retry
+    captchaTimeoutRef.current = setTimeout(() => {
+      if (!captchaToken) {
+        setCaptchaLoading(false);
+        setCaptchaError(true);
+      }
+    }, 10000);
+  };
+
   const TurnstileWidget = (
-    <div className="flex justify-center">
+    <div className="flex flex-col items-center gap-2">
       <Turnstile
         ref={turnstileRef}
+        key={mode}
         siteKey={TURNSTILE_SITE_KEY}
-        onSuccess={(token) => setCaptchaToken(token)}
-        onError={() => setCaptchaToken(null)}
-        onExpire={() => setCaptchaToken(null)}
+        onSuccess={handleCaptchaSuccess}
+        onError={handleCaptchaError}
+        onExpire={() => { setCaptchaToken(null); setCaptchaLoading(true); }}
+        onWidgetLoad={handleCaptchaWidgetLoad}
+        scriptOptions={{ appendTo: "body" }}
         options={{ size: "normal", theme: "auto" }}
       />
+      {captchaLoading && !captchaToken && !captchaError && (
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Loader2 className="h-3 w-3 animate-spin" />
+          <span>Loading security check…</span>
+        </div>
+      )}
+      {captchaError && !captchaToken && (
+        <button
+          type="button"
+          onClick={resetTurnstile}
+          className="flex items-center gap-1.5 text-xs text-primary hover:underline font-medium"
+        >
+          <RefreshCw className="h-3 w-3" /> Retry CAPTCHA
+        </button>
+      )}
     </div>
   );
 
