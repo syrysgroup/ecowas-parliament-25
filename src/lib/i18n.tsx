@@ -27,7 +27,7 @@ const translations: Record<Locale, Record<string, string>> = {
     "prog.women": "Women's Empowerment",
     "prog.civic": "Civic Education",
     "prog.culture": "Culture & Creativity",
-    "prog.awards": "Parliamentary Awards",
+    "prog.awards": "AWALCO Parliamentary Awards",
     "prog.parliament": "Youth Parliament",
     // Footer
     "footer.programme": "Programme",
