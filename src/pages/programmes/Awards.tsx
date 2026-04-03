@@ -71,7 +71,7 @@ const Awards = () => (
             </div>
             <Badge variant="outline" className="border-primary-foreground/20 text-primary-foreground/70">Programme Pillar</Badge>
           </div>
-          <h1 className="text-4xl md:text-6xl font-black leading-tight">ECOWAS Parliamentary<br />Awards</h1>
+          <h1 className="text-4xl md:text-6xl font-black leading-tight">AWALCO Parliamentary<br />Awards</h1>
           <p className="mt-4 text-lg text-primary-foreground/70 max-w-2xl">
             Honouring excellence, leadership, and service — celebrating the legislators who have shaped West Africa's democratic journey.
           </p>
