@@ -11,7 +11,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import {
   Mail, Lock, User, ArrowLeft, Crown, Eye, EyeOff,
-  ShieldCheck, KeyRound, CheckCircle2, AlertCircle,
+  ShieldCheck, KeyRound, CheckCircle2, AlertCircle, RefreshCw, Loader2,
 } from "lucide-react";
 import { Turnstile } from "@marsidev/react-turnstile";
 import ecowasLogo from "@/assets/ecowas-parliament-logo.png";
