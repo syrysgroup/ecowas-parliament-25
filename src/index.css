@@ -50,6 +50,18 @@
     --sidebar-accent-foreground: 150 10% 20%;
     --sidebar-border: 150 10% 88%;
     --sidebar-ring: 152 100% 26%;
+
+    /* CRM-specific tokens (light mode) */
+    --crm-bg: 150 15% 97%;
+    --crm-card: 150 10% 99%;
+    --crm-surface: 150 12% 94%;
+    --crm-border: 150 10% 85%;
+    --crm-border-hover: 150 10% 75%;
+    --crm-text: 150 20% 15%;
+    --crm-text-secondary: 150 15% 30%;
+    --crm-text-muted: 150 10% 40%;
+    --crm-text-dim: 150 8% 50%;
+    --crm-text-faint: 150 6% 62%;
   }
 
   .dark {
