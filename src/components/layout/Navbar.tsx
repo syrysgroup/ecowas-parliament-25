@@ -4,6 +4,7 @@ import { Menu, X, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useTranslation, Locale } from "@/lib/i18n";
+import ThemeToggle from "@/components/shared/ThemeToggle";
 import ecowasLogo from "@/assets/ecowas-parliament-logo.png";
 
 const localeLabels: Record<Locale, string> = { en: "EN", fr: "FR", pt: "PT" };
@@ -175,6 +176,8 @@ const Navbar = () => {
               )}
             </div>
 
+            <ThemeToggle className="hidden xl:flex" />
+
             <Button asChild size="sm" className="hidden xl:flex">
               <Link to="/sponsors">{t("nav.partnerWithUs")}</Link>
             </Button>
@@ -232,6 +235,10 @@ const Navbar = () => {
                           {localeLabels[l]}
                         </button>
                       ))}
+                    </div>
+                    {/* Theme toggle for mobile */}
+                    <div className="px-3">
+                      <ThemeToggle variant="full" className="w-full" />
                     </div>
                     <Button asChild className="w-full" onClick={() => setMobileOpen(false)}>
                       <Link to="/sponsors">{t("nav.partnerWithUs")}</Link>

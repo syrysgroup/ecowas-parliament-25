@@ -1,5 +1,6 @@
 import { ReactNode, useState, useRef, useEffect } from "react";
-import { Bell, Settings, X } from "lucide-react";
+import { Bell, Settings, X, Sun, Moon } from "lucide-react";
+import { useTheme } from "next-themes";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, parseISO, isToday, addHours } from "date-fns";
 import CRMSidebar from "./CRMSidebar";
@@ -247,6 +248,25 @@ function NotificationBell({ onNavigate }: { onNavigate: (s: string) => void }) {
   );
 }
 
+// ─── CRM Theme Toggle ─────────────────────────────────────────────────────────
+function CRMThemeToggle() {
+  const { resolvedTheme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  if (!mounted) return null;
+  const isDark = resolvedTheme === "dark";
+  return (
+    <button
+      title={isDark ? "Switch to light mode" : "Switch to dark mode"}
+      onClick={() => setTheme(isDark ? "light" : "dark")}
+      className="p-1.5 rounded-lg transition-colors text-[#4a6650] hover:text-[#a0c4a8] hover:bg-[#111a14]"
+      aria-label="Toggle theme"
+    >
+      {isDark ? <Sun size={15} /> : <Moon size={15} />}
+    </button>
+  );
+}
+
 // ─── Main layout ──────────────────────────────────────────────────────────────
 export default function CRMLayout({ activeSection, onNavigate, children }: CRMLayoutProps) {
   const { user, roles } = useAuthContext();
@@ -272,9 +292,11 @@ export default function CRMLayout({ activeSection, onNavigate, children }: CRMLa
             <span className="text-[13px] font-semibold text-[#c8e0cc] truncate">{moduleLabel}</span>
           </div>
 
-          {/* Right: notification bell + settings + user avatar */}
+          {/* Right: notification bell + theme toggle + settings + user avatar */}
           <div className="flex items-center gap-2 flex-shrink-0">
             <NotificationBell onNavigate={onNavigate} />
+
+            <CRMThemeToggle />
 
             <button
               onClick={() => onNavigate("settings")}
