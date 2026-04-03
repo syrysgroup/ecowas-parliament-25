@@ -128,18 +128,18 @@ export default function MessagingModule() {
   );
 
   return (
-    <div className="flex h-[calc(100vh-12rem)] gap-0 border border-[#1e2d22] rounded-xl overflow-hidden">
+    <div className="flex h-[calc(100vh-12rem)] gap-0 border border-crm-border rounded-xl overflow-hidden">
       {/* Contact list */}
-      <div className="w-64 flex-shrink-0 bg-[#0a120c] border-r border-[#1e2d22] flex flex-col">
-        <div className="p-3 border-b border-[#1e2d22]">
-          <h2 className="text-[11px] font-semibold text-[#c8e0cc] mb-2">Messages</h2>
+      <div className="w-64 flex-shrink-0 bg-crm border-r border-crm-border flex flex-col">
+        <div className="p-3 border-b border-crm-border">
+          <h2 className="text-[11px] font-semibold text-crm-text mb-2">Messages</h2>
           <div className="relative">
-            <Search size={11} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#4a6650]" />
+            <Search size={11} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-crm-text-dim" />
             <Input
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Search contacts…"
-              className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-7 pl-7"
+              className="bg-crm-surface border-crm-border text-crm-text text-xs h-7 pl-7"
             />
           </div>
         </div>
@@ -148,40 +148,40 @@ export default function MessagingModule() {
             <button
               key={c.id}
               onClick={() => setSelectedContact(c)}
-              className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-left hover:bg-[#111a14] transition-colors ${selectedContact?.id === c.id ? "bg-[#111a14] border-r-2 border-emerald-600" : ""}`}
+              className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-left hover:bg-crm-surface transition-colors ${selectedContact?.id === c.id ? "bg-crm-surface border-r-2 border-emerald-600" : ""}`}
             >
               <div className="w-7 h-7 rounded-full bg-[#1e2d22] flex items-center justify-center text-[10px] font-bold text-emerald-400 flex-shrink-0 uppercase">
                 {initials(c.full_name)}
               </div>
               <div className="min-w-0">
-                <p className="text-[11px] font-medium text-[#c8e0cc] truncate">{c.full_name}</p>
-                <p className="text-[9px] text-[#4a6650] truncate">{c.email}</p>
+                <p className="text-[11px] font-medium text-crm-text truncate">{c.full_name}</p>
+                <p className="text-[9px] text-crm-text-dim truncate">{c.email}</p>
               </div>
             </button>
           ))}
           {filteredContacts.length === 0 && (
-            <p className="text-[10px] text-[#4a6650] text-center py-6">No contacts found</p>
+            <p className="text-[10px] text-crm-text-dim text-center py-6">No contacts found</p>
           )}
         </div>
       </div>
 
       {/* Chat pane */}
-      <div className="flex-1 flex flex-col bg-[#0d1610] min-w-0">
+      <div className="flex-1 flex flex-col bg-crm-card min-w-0">
         {!selectedContact ? (
           <div className="flex-1 flex flex-col items-center justify-center gap-3 text-center">
-            <MessageSquare className="h-8 w-8 text-[#4a6650]" />
-            <p className="text-sm text-[#6b8f72]">Select a contact to start messaging</p>
+            <MessageSquare className="h-8 w-8 text-crm-text-dim" />
+            <p className="text-sm text-crm-text-muted">Select a contact to start messaging</p>
           </div>
         ) : (
           <>
             {/* Chat header */}
-            <div className="px-4 py-3 border-b border-[#1e2d22] flex items-center gap-2.5">
+            <div className="px-4 py-3 border-b border-crm-border flex items-center gap-2.5">
               <div className="w-7 h-7 rounded-full bg-[#1e2d22] flex items-center justify-center text-[10px] font-bold text-emerald-400 uppercase">
                 {initials(selectedContact.full_name)}
               </div>
               <div>
-                <p className="text-[12px] font-semibold text-[#c8e0cc]">{selectedContact.full_name}</p>
-                <p className="text-[9px] text-[#4a6650]">{selectedContact.email}</p>
+                <p className="text-[12px] font-semibold text-crm-text">{selectedContact.full_name}</p>
+                <p className="text-[9px] text-crm-text-dim">{selectedContact.email}</p>
               </div>
             </div>
 
@@ -197,19 +197,19 @@ export default function MessagingModule() {
                     <div className={`max-w-[70%] ${isMine ? "items-end" : "items-start"} flex flex-col gap-1`}>
                       <div className={`px-3 py-2 rounded-2xl text-[12px] relative ${
                         isDeleted
-                          ? "bg-[#111a14] border border-[#1e2d22] text-[#4a6650] italic"
+                          ? "bg-crm-surface border border-crm-border text-crm-text-dim italic"
                           : isMine
                             ? "bg-emerald-800 text-white"
-                            : "bg-[#111a14] border border-[#1e2d22] text-[#c8e0cc]"
+                            : "bg-crm-surface border border-crm-border text-crm-text"
                       }`}>
                         {isDeleted ? "Message deleted" : msg.body}
                       </div>
                       <div className={`flex items-center gap-2 ${isMine ? "flex-row-reverse" : ""}`}>
-                        <span className="text-[9px] text-[#4a6650]">{formatMsgTime(msg.sent_at)}</span>
+                        <span className="text-[9px] text-crm-text-dim">{formatMsgTime(msg.sent_at)}</span>
                         {isMine && !isDeleted && !isConfirming && (
                           <button
                             onClick={() => setConfirmDeleteId(msg.id)}
-                            className="opacity-0 group-hover:opacity-100 transition-opacity text-[#4a6650] hover:text-red-400"
+                            className="opacity-0 group-hover:opacity-100 transition-opacity text-crm-text-dim hover:text-red-400"
                           >
                             <Trash2 size={10} />
                           </button>
@@ -221,7 +221,7 @@ export default function MessagingModule() {
                               Delete
                             </button>
                             <button onClick={() => setConfirmDeleteId(null)}
-                              className="text-[9px] text-[#4a6650] bg-[#111a14] border border-[#1e2d22] rounded px-1.5 py-0.5">
+                              className="text-[9px] text-crm-text-dim bg-crm-surface border border-crm-border rounded px-1.5 py-0.5">
                               No
                             </button>
                           </div>
@@ -233,20 +233,20 @@ export default function MessagingModule() {
               })}
               {messages.length === 0 && (
                 <div className="flex items-center justify-center h-full">
-                  <p className="text-sm text-[#4a6650]">No messages yet. Say hello!</p>
+                  <p className="text-sm text-crm-text-dim">No messages yet. Say hello!</p>
                 </div>
               )}
               <div ref={bottomRef} />
             </div>
 
             {/* Input */}
-            <div className="p-3 border-t border-[#1e2d22] flex items-center gap-2">
+            <div className="p-3 border-t border-crm-border flex items-center gap-2">
               <Input
                 value={draft}
                 onChange={e => setDraft(e.target.value)}
                 onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); if (draft.trim()) sendMessage.mutate(); } }}
                 placeholder={`Message ${selectedContact.full_name}…`}
-                className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-9 flex-1"
+                className="bg-crm-surface border-crm-border text-crm-text text-xs h-9 flex-1"
               />
               <button
                 onClick={() => { if (draft.trim()) sendMessage.mutate(); }}

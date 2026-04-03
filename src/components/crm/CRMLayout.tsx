@@ -172,7 +172,7 @@ function NotificationBell({ onNavigate }: { onNavigate: (s: string) => void }) {
       <button
         onClick={() => setOpen(v => !v)}
         className={`relative p-1.5 rounded-lg transition-colors ${
-          open ? "bg-[#1e2d22] text-[#a0c4a8]" : "text-[#4a6650] hover:text-[#a0c4a8] hover:bg-[#111a14]"
+          open ? "bg-[#1e2d22] text-crm-text-secondary" : "text-crm-text-dim hover:text-crm-text-secondary hover:bg-crm-surface"
         }`}
         title="Notifications"
       >
@@ -185,9 +185,9 @@ function NotificationBell({ onNavigate }: { onNavigate: (s: string) => void }) {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-80 bg-[#0d1610] border border-[#1e2d22] rounded-xl shadow-2xl shadow-black/60 z-50 overflow-hidden">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-[#1e2d22]">
-            <span className="text-[12px] font-semibold text-[#a0c4a8]">Notifications</span>
+        <div className="absolute right-0 top-full mt-2 w-80 bg-crm-card border border-crm-border rounded-xl shadow-2xl shadow-black/60 z-50 overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-crm-border">
+            <span className="text-[12px] font-semibold text-crm-text-secondary">Notifications</span>
             {unread > 0 && (
               <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-red-950 border border-red-800 text-red-400">
                 {unread} new
@@ -202,24 +202,24 @@ function NotificationBell({ onNavigate }: { onNavigate: (s: string) => void }) {
               </div>
             ) : notifs.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-8 gap-2">
-                <Bell size={20} className="text-[#2a3d2d]" />
-                <p className="text-[11px] text-[#3a5040]">All caught up</p>
+                <Bell size={20} className="text-crm-text-faint" />
+                <p className="text-[11px] text-crm-text-faint">All caught up</p>
               </div>
             ) : (
-              <div className="divide-y divide-[#1e2d22]">
+              <div className="divide-y divide-crm-border">
                 {notifs.map(n => (
                   <button
                     key={n.id}
                     onClick={() => handleNotifClick(n)}
-                    className="w-full flex items-start gap-3 px-4 py-3 hover:bg-[#111a14] transition-colors text-left"
+                    className="w-full flex items-start gap-3 px-4 py-3 hover:bg-crm-surface transition-colors text-left"
                   >
                     <div className={`w-6 h-6 rounded-full border flex items-center justify-center flex-shrink-0 mt-0.5 ${NOTIF_ICON[n.type]}`}>
                       <Bell size={10} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[11px] font-semibold text-[#c8e0cc]">{n.title}</p>
-                      <p className="text-[10px] text-[#6b8f72] truncate">{n.body}</p>
-                      <p className="text-[9px] text-[#3a5040] mt-0.5">
+                      <p className="text-[11px] font-semibold text-crm-text">{n.title}</p>
+                      <p className="text-[10px] text-crm-text-muted truncate">{n.body}</p>
+                      <p className="text-[9px] text-crm-text-faint mt-0.5">
                         {format(parseISO(n.time), "d MMM · h:mm a")}
                       </p>
                     </div>
@@ -233,7 +233,7 @@ function NotificationBell({ onNavigate }: { onNavigate: (s: string) => void }) {
           </div>
 
           {notifs.length > 0 && (
-            <div className="px-4 py-2 border-t border-[#1e2d22]">
+            <div className="px-4 py-2 border-t border-crm-border">
               <button
                 onClick={() => { onNavigate("inbox"); setOpen(false); }}
                 className="text-[10px] text-emerald-500 hover:text-emerald-400 transition-colors"
@@ -259,7 +259,7 @@ function CRMThemeToggle() {
     <button
       title={isDark ? "Switch to light mode" : "Switch to dark mode"}
       onClick={() => setTheme(isDark ? "light" : "dark")}
-      className="p-1.5 rounded-lg transition-colors text-[#4a6650] hover:text-[#a0c4a8] hover:bg-[#111a14]"
+      className="p-1.5 rounded-lg transition-colors text-crm-text-dim hover:text-crm-text-secondary hover:bg-crm-surface"
       aria-label="Toggle theme"
     >
       {isDark ? <Sun size={15} /> : <Moon size={15} />}
@@ -277,19 +277,19 @@ export default function CRMLayout({ activeSection, onNavigate, children }: CRMLa
   const initial = displayName.charAt(0).toUpperCase();
 
   return (
-    <div className="flex h-screen bg-[#0a0f0d] text-[#e8f5e9] overflow-hidden">
+    <div className="flex h-screen bg-crm text-crm-text overflow-hidden">
       <CRMSidebar activeSection={activeSection} onNavigate={onNavigate} />
 
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         {/* Top bar */}
-        <header className="h-14 border-b border-[#1e2d22] flex items-center px-6 flex-shrink-0 bg-[#080d0a]">
+        <header className="h-14 border-b border-crm-border flex items-center px-6 flex-shrink-0 bg-crm-card">
           {/* Left: breadcrumb */}
           <div className="flex items-center gap-2 flex-1 min-w-0">
-            <span className="text-[10px] font-mono text-[#4a6650] tracking-widest uppercase hidden sm:block">
+            <span className="text-[10px] font-mono text-crm-text-dim tracking-widest uppercase hidden sm:block">
               ECOWAS Parliament 25
             </span>
             <span className="text-[#1e2d22] hidden sm:block">/</span>
-            <span className="text-[13px] font-semibold text-[#c8e0cc] truncate">{moduleLabel}</span>
+            <span className="text-[13px] font-semibold text-crm-text truncate">{moduleLabel}</span>
           </div>
 
           {/* Right: notification bell + theme toggle + settings + user avatar */}
@@ -302,8 +302,8 @@ export default function CRMLayout({ activeSection, onNavigate, children }: CRMLa
               onClick={() => onNavigate("settings")}
               className={`p-1.5 rounded-lg transition-colors ${
                 activeSection === "settings"
-                  ? "bg-[#1e2d22] text-[#a0c4a8]"
-                  : "text-[#4a6650] hover:text-[#a0c4a8] hover:bg-[#111a14]"
+                  ? "bg-[#1e2d22] text-crm-text-secondary"
+                  : "text-crm-text-dim hover:text-crm-text-secondary hover:bg-crm-surface"
               }`}
               title="Settings"
             >
@@ -313,13 +313,13 @@ export default function CRMLayout({ activeSection, onNavigate, children }: CRMLa
             {/* User avatar chip */}
             <button
               onClick={() => onNavigate("settings")}
-              className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-[#111a14] transition-colors"
+              className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-crm-surface transition-colors"
               title="Go to settings"
             >
               <div className="w-6 h-6 rounded-full bg-[#1e2d22] flex items-center justify-center text-[10px] font-bold text-emerald-400 uppercase flex-shrink-0">
                 {initial}
               </div>
-              <span className="text-[11px] text-[#6b8f72] hidden md:block truncate max-w-[100px]">
+              <span className="text-[11px] text-crm-text-muted hidden md:block truncate max-w-[100px]">
                 {displayName}
               </span>
             </button>

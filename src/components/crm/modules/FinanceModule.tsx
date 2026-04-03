@@ -80,76 +80,76 @@ function BudgetItemDialog({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="bg-[#0d1610] border-[#1e2d22] text-[#c8e0cc] max-w-md">
+      <DialogContent className="bg-crm-card border-crm-border text-crm-text max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-sm font-semibold text-[#c8e0cc]">
+          <DialogTitle className="text-sm font-semibold text-crm-text">
             {isEdit ? "Edit Budget Item" : "Add Budget Item"}
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-3 py-1">
           <div className="space-y-1">
-            <Label className="text-[11px] text-[#4a6650]">Title *</Label>
+            <Label className="text-[11px] text-crm-text-dim">Title *</Label>
             <Input value={title} onChange={e => setTitle(e.target.value)}
-              className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8"
+              className="bg-crm-surface border-crm-border text-crm-text text-xs h-8"
               placeholder="e.g. Venue deposit" />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <Label className="text-[11px] text-[#4a6650]">Category</Label>
+              <Label className="text-[11px] text-crm-text-dim">Category</Label>
               <Select value={category} onValueChange={setCategory}>
-                <SelectTrigger className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8">
+                <SelectTrigger className="bg-crm-surface border-crm-border text-crm-text text-xs h-8">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-[#0d1610] border-[#1e2d22]">
+                <SelectContent className="bg-crm-card border-crm-border">
                   {CATEGORIES.map(c => (
-                    <SelectItem key={c} value={c} className="text-[#c8e0cc] text-xs">{c}</SelectItem>
+                    <SelectItem key={c} value={c} className="text-crm-text text-xs">{c}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1">
-              <Label className="text-[11px] text-[#4a6650]">Amount (USD)</Label>
+              <Label className="text-[11px] text-crm-text-dim">Amount (USD)</Label>
               <Input type="number" value={amount} onChange={e => setAmount(e.target.value)}
-                className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8"
+                className="bg-crm-surface border-crm-border text-crm-text text-xs h-8"
                 placeholder="0.00" />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <Label className="text-[11px] text-[#4a6650]">Type</Label>
+              <Label className="text-[11px] text-crm-text-dim">Type</Label>
               <Select value={type} onValueChange={v => setType(v as "income" | "expense")}>
-                <SelectTrigger className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8">
+                <SelectTrigger className="bg-crm-surface border-crm-border text-crm-text text-xs h-8">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-[#0d1610] border-[#1e2d22]">
-                  <SelectItem value="income"  className="text-[#c8e0cc] text-xs">Income</SelectItem>
-                  <SelectItem value="expense" className="text-[#c8e0cc] text-xs">Expense</SelectItem>
+                <SelectContent className="bg-crm-card border-crm-border">
+                  <SelectItem value="income"  className="text-crm-text text-xs">Income</SelectItem>
+                  <SelectItem value="expense" className="text-crm-text text-xs">Expense</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1">
-              <Label className="text-[11px] text-[#4a6650]">Status</Label>
+              <Label className="text-[11px] text-crm-text-dim">Status</Label>
               <Select value={status} onValueChange={v => setStatus(v as "pending" | "approved" | "paid")}>
-                <SelectTrigger className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8">
+                <SelectTrigger className="bg-crm-surface border-crm-border text-crm-text text-xs h-8">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-[#0d1610] border-[#1e2d22]">
-                  <SelectItem value="pending"  className="text-[#c8e0cc] text-xs">Pending</SelectItem>
-                  <SelectItem value="approved" className="text-[#c8e0cc] text-xs">Approved</SelectItem>
-                  <SelectItem value="paid"     className="text-[#c8e0cc] text-xs">Paid</SelectItem>
+                <SelectContent className="bg-crm-card border-crm-border">
+                  <SelectItem value="pending"  className="text-crm-text text-xs">Pending</SelectItem>
+                  <SelectItem value="approved" className="text-crm-text text-xs">Approved</SelectItem>
+                  <SelectItem value="paid"     className="text-crm-text text-xs">Paid</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
           <div className="space-y-1">
-            <Label className="text-[11px] text-[#4a6650]">Notes</Label>
+            <Label className="text-[11px] text-crm-text-dim">Notes</Label>
             <Textarea value={notes} onChange={e => setNotes(e.target.value)}
-              className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs min-h-[60px] resize-none"
+              className="bg-crm-surface border-crm-border text-crm-text text-xs min-h-[60px] resize-none"
               placeholder="Optional notes or reference" />
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" size="sm" onClick={onClose} className="border-[#1e2d22] text-[#6b8f72] text-xs">
+          <Button variant="outline" size="sm" onClick={onClose} className="border-crm-border text-crm-text-muted text-xs">
             Cancel
           </Button>
           <Button size="sm" disabled={!title.trim() || !amount || save.isPending}
@@ -218,7 +218,7 @@ function BudgetList() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4 text-center">
         <AlertCircle className="h-7 w-7 text-amber-500" />
-        <p className="text-sm text-[#6b8f72]">
+        <p className="text-sm text-crm-text-muted">
           Create a <span className="font-mono text-emerald-500">budget_items</span> table in Supabase to get started.
         </p>
       </div>
@@ -234,8 +234,8 @@ function BudgetList() {
           { label: "Total Expenses", value: `$${totalExpense.toLocaleString()}`, classes: "text-red-400" },
           { label: "Balance",        value: `$${Math.abs(balance).toLocaleString()}`, classes: balance >= 0 ? "text-emerald-400" : "text-red-400" },
         ].map(s => (
-          <div key={s.label} className="bg-[#0d1610] border border-[#1e2d22] rounded-xl p-3">
-            <p className="text-[10px] font-mono uppercase tracking-widest text-[#4a6650]">{s.label}</p>
+          <div key={s.label} className="bg-crm-card border border-crm-border rounded-xl p-3">
+            <p className="text-[10px] font-mono uppercase tracking-widest text-crm-text-dim">{s.label}</p>
             <p className={`text-xl font-bold mt-0.5 ${s.classes}`}>{s.value}</p>
           </div>
         ))}
@@ -245,24 +245,24 @@ function BudgetList() {
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-2">
           <Select value={filterType} onValueChange={setFilterType}>
-            <SelectTrigger className="bg-[#0d1610] border-[#1e2d22] text-[#c8e0cc] text-xs h-8 w-32">
+            <SelectTrigger className="bg-crm-card border-crm-border text-crm-text text-xs h-8 w-32">
               <SelectValue placeholder="All types" />
             </SelectTrigger>
-            <SelectContent className="bg-[#0d1610] border-[#1e2d22]">
-              <SelectItem value="all"     className="text-[#c8e0cc] text-xs">All types</SelectItem>
-              <SelectItem value="income"  className="text-[#c8e0cc] text-xs">Income</SelectItem>
-              <SelectItem value="expense" className="text-[#c8e0cc] text-xs">Expense</SelectItem>
+            <SelectContent className="bg-crm-card border-crm-border">
+              <SelectItem value="all"     className="text-crm-text text-xs">All types</SelectItem>
+              <SelectItem value="income"  className="text-crm-text text-xs">Income</SelectItem>
+              <SelectItem value="expense" className="text-crm-text text-xs">Expense</SelectItem>
             </SelectContent>
           </Select>
           <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger className="bg-[#0d1610] border-[#1e2d22] text-[#c8e0cc] text-xs h-8 w-32">
+            <SelectTrigger className="bg-crm-card border-crm-border text-crm-text text-xs h-8 w-32">
               <SelectValue placeholder="All statuses" />
             </SelectTrigger>
-            <SelectContent className="bg-[#0d1610] border-[#1e2d22]">
-              <SelectItem value="all"      className="text-[#c8e0cc] text-xs">All statuses</SelectItem>
-              <SelectItem value="pending"  className="text-[#c8e0cc] text-xs">Pending</SelectItem>
-              <SelectItem value="approved" className="text-[#c8e0cc] text-xs">Approved</SelectItem>
-              <SelectItem value="paid"     className="text-[#c8e0cc] text-xs">Paid</SelectItem>
+            <SelectContent className="bg-crm-card border-crm-border">
+              <SelectItem value="all"      className="text-crm-text text-xs">All statuses</SelectItem>
+              <SelectItem value="pending"  className="text-crm-text text-xs">Pending</SelectItem>
+              <SelectItem value="approved" className="text-crm-text text-xs">Approved</SelectItem>
+              <SelectItem value="paid"     className="text-crm-text text-xs">Paid</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -282,8 +282,8 @@ function BudgetList() {
 
       {!isLoading && filtered.length === 0 && (
         <div className="flex flex-col items-center justify-center min-h-[30vh] gap-3 text-center">
-          <DollarSign className="h-6 w-6 text-[#4a6650]" />
-          <p className="text-sm text-[#6b8f72]">No budget items found.</p>
+          <DollarSign className="h-6 w-6 text-crm-text-dim" />
+          <p className="text-sm text-crm-text-muted">No budget items found.</p>
         </div>
       )}
 
@@ -294,19 +294,19 @@ function BudgetList() {
           const isConfirming = confirmDeleteId === item.id;
 
           return (
-            <div key={item.id} className="bg-[#0d1610] border border-[#1e2d22] rounded-xl p-4 flex items-center gap-3 hover:border-[#2a3d2d] transition-colors">
+            <div key={item.id} className="bg-crm-card border border-crm-border rounded-xl p-4 flex items-center gap-3 hover:border-crm-border-hover transition-colors">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap mb-1">
-                  <p className="text-[13px] font-semibold text-[#c8e0cc] truncate">{item.title}</p>
+                  <p className="text-[13px] font-semibold text-crm-text truncate">{item.title}</p>
                   <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded border ${typeCfg.classes}`}>{typeCfg.label}</span>
                   <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded border ${statusCfg.classes}`}>{statusCfg.label}</span>
                 </div>
                 <div className="flex items-center gap-3 flex-wrap">
-                  <span className="text-[10px] font-mono text-[#4a6650] bg-[#111a14] border border-[#1e2d22] rounded px-1.5 py-0.5">{item.category}</span>
-                  <span className="text-[10px] text-[#6b8f72]">{format(parseISO(item.created_at), "d MMM yyyy")}</span>
-                  {item.created_by_name && <span className="text-[10px] text-[#4a6650]">by {item.created_by_name}</span>}
+                  <span className="text-[10px] font-mono text-crm-text-dim bg-crm-surface border border-crm-border rounded px-1.5 py-0.5">{item.category}</span>
+                  <span className="text-[10px] text-crm-text-muted">{format(parseISO(item.created_at), "d MMM yyyy")}</span>
+                  {item.created_by_name && <span className="text-[10px] text-crm-text-dim">by {item.created_by_name}</span>}
                 </div>
-                {item.notes && <p className="text-[10px] text-[#4a6650] mt-1 truncate">{item.notes}</p>}
+                {item.notes && <p className="text-[10px] text-crm-text-dim mt-1 truncate">{item.notes}</p>}
               </div>
 
               <div className="flex items-center gap-3 flex-shrink-0">
@@ -317,11 +317,11 @@ function BudgetList() {
                 {isAdmin && !isConfirming && (
                   <div className="flex items-center gap-1">
                     <button onClick={() => setEditTarget(item)}
-                      className="w-7 h-7 rounded flex items-center justify-center bg-[#111a14] border border-[#1e2d22] text-[#4a6650] hover:text-[#a0c4a8] transition-colors">
+                      className="w-7 h-7 rounded flex items-center justify-center bg-crm-surface border border-crm-border text-crm-text-dim hover:text-crm-text-secondary transition-colors">
                       <Pencil size={12} />
                     </button>
                     <button onClick={() => setConfirmDeleteId(item.id)}
-                      className="w-7 h-7 rounded flex items-center justify-center bg-[#111a14] border border-[#1e2d22] text-[#4a6650] hover:text-red-400 hover:border-red-900 transition-colors">
+                      className="w-7 h-7 rounded flex items-center justify-center bg-crm-surface border border-crm-border text-crm-text-dim hover:text-red-400 hover:border-red-900 transition-colors">
                       <Trash2 size={12} />
                     </button>
                   </div>
@@ -334,7 +334,7 @@ function BudgetList() {
                       {deleteItem.isPending ? "…" : "Delete"}
                     </button>
                     <button onClick={() => setConfirmDeleteId(null)}
-                      className="text-[10px] text-[#4a6650] bg-[#111a14] border border-[#1e2d22] rounded px-2 py-1">
+                      className="text-[10px] text-crm-text-dim bg-crm-surface border border-crm-border rounded px-2 py-1">
                       No
                     </button>
                   </div>
@@ -391,22 +391,22 @@ function SignOffsTab() {
   if (data.length === 0) return (
     <div className="flex flex-col items-center justify-center min-h-[30vh] gap-3 text-center">
       <CheckCircle2 className="h-6 w-6 text-emerald-500" />
-      <p className="text-sm text-[#6b8f72]">No items pending sign-off.</p>
+      <p className="text-sm text-crm-text-muted">No items pending sign-off.</p>
     </div>
   );
 
   return (
     <div className="space-y-2">
       {data.map(item => (
-        <div key={item.id} className="bg-[#0d1610] border border-amber-800/40 rounded-xl p-4 flex items-center gap-3">
+        <div key={item.id} className="bg-crm-card border border-amber-800/40 rounded-xl p-4 flex items-center gap-3">
           <div className="flex-1 min-w-0">
-            <p className="text-[13px] font-semibold text-[#c8e0cc] truncate">{item.title}</p>
+            <p className="text-[13px] font-semibold text-crm-text truncate">{item.title}</p>
             <div className="flex items-center gap-3 mt-0.5 flex-wrap">
-              <span className="text-[10px] font-mono text-[#4a6650] bg-[#111a14] border border-[#1e2d22] rounded px-1.5 py-0.5">{item.category}</span>
+              <span className="text-[10px] font-mono text-crm-text-dim bg-crm-surface border border-crm-border rounded px-1.5 py-0.5">{item.category}</span>
               <span className={`text-[10px] ${item.type === "income" ? "text-emerald-400" : "text-red-400"}`}>
                 {item.type === "income" ? "+" : "-"}${item.amount.toLocaleString()}
               </span>
-              {item.created_by_name && <span className="text-[10px] text-[#4a6650]">by {item.created_by_name}</span>}
+              {item.created_by_name && <span className="text-[10px] text-crm-text-dim">by {item.created_by_name}</span>}
             </div>
           </div>
           {isAdmin && (
@@ -426,16 +426,16 @@ export default function FinanceModule() {
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="text-lg font-bold text-[#c8e0cc]">Finance</h2>
-        <p className="text-[12px] text-[#6b8f72] mt-0.5">
+        <h2 className="text-lg font-bold text-crm-text">Finance</h2>
+        <p className="text-[12px] text-crm-text-muted mt-0.5">
           Budget management, invoice tracking, and financial sign-off workflows
         </p>
       </div>
 
       <Tabs defaultValue="budget">
-        <TabsList className="bg-[#111a14] border border-[#1e2d22] h-8">
-          <TabsTrigger value="budget"   className="text-xs data-[state=active]:bg-[#1e2d22] data-[state=active]:text-[#c8e0cc] text-[#4a6650]">Budget</TabsTrigger>
-          <TabsTrigger value="signoffs" className="text-xs data-[state=active]:bg-[#1e2d22] data-[state=active]:text-[#c8e0cc] text-[#4a6650]">Sign-offs</TabsTrigger>
+        <TabsList className="bg-crm-surface border border-crm-border h-8">
+          <TabsTrigger value="budget"   className="text-xs data-[state=active]:bg-[#1e2d22] data-[state=active]:text-crm-text text-crm-text-dim">Budget</TabsTrigger>
+          <TabsTrigger value="signoffs" className="text-xs data-[state=active]:bg-[#1e2d22] data-[state=active]:text-crm-text text-crm-text-dim">Sign-offs</TabsTrigger>
         </TabsList>
         <TabsContent value="budget"   className="mt-4"><BudgetList /></TabsContent>
         <TabsContent value="signoffs" className="mt-4"><SignOffsTab /></TabsContent>

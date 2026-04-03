@@ -19,10 +19,10 @@ function Section({ title, icon: Icon, children }: {
   title: string; icon: React.ElementType; children: React.ReactNode;
 }) {
   return (
-    <div className="bg-[#0d1610] border border-[#1e2d22] rounded-xl overflow-hidden">
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-[#1e2d22]">
-        <Icon size={13} className="text-[#4a6650]" />
-        <h3 className="text-[12px] font-semibold text-[#a0c4a8]">{title}</h3>
+    <div className="bg-crm-card border border-crm-border rounded-xl overflow-hidden">
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-crm-border">
+        <Icon size={13} className="text-crm-text-dim" />
+        <h3 className="text-[12px] font-semibold text-crm-text-secondary">{title}</h3>
       </div>
       <div className="p-4 space-y-4">{children}</div>
     </div>
@@ -33,14 +33,14 @@ function Section({ title, icon: Icon, children }: {
 function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1">
-      <Label className="text-[11px] text-[#4a6650]">{label}</Label>
+      <Label className="text-[11px] text-crm-text-dim">{label}</Label>
       {children}
-      {hint && <p className="text-[10px] text-[#3a5040]">{hint}</p>}
+      {hint && <p className="text-[10px] text-crm-text-faint">{hint}</p>}
     </div>
   );
 }
 
-const inputCls = "bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8 placeholder:text-[#3a5040]";
+const inputCls = "bg-crm-surface border-crm-border text-crm-text text-xs h-8 placeholder:text-crm-text-faint";
 
 // ─── Email settings ───────────────────────────────────────────────────────────
 function EmailSettings() {
@@ -159,7 +159,7 @@ function EmailSettings() {
               <button
                 type="button"
                 onClick={() => setShowPass(v => !v)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-[#4a6650] hover:text-[#a0c4a8]"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-crm-text-dim hover:text-crm-text-secondary"
               >
                 {showPass ? <EyeOff size={12} /> : <Eye size={12} />}
               </button>
@@ -188,14 +188,14 @@ function EmailSettings() {
                 onCheckedChange={v => setForm(prev => ({ ...prev, auto_connect: v }))}
               />
               <div>
-                <Label className="text-[11px] text-[#c8e0cc]">Auto-connect on login</Label>
-                <p className="text-[10px] text-[#4a6650]">Super admin is automatically connected to the inbox when they log in</p>
+                <Label className="text-[11px] text-crm-text">Auto-connect on login</Label>
+                <p className="text-[10px] text-crm-text-dim">Super admin is automatically connected to the inbox when they log in</p>
               </div>
             </div>
           </div>
 
           {/* Save button */}
-          <div className="pt-2 border-t border-[#1e2d22]">
+          <div className="pt-2 border-t border-crm-border">
             <Button
               size="sm"
               onClick={() => save.mutate()}
@@ -290,12 +290,12 @@ function NotificationSettings() {
             <div key={item.key} className="flex items-start gap-3">
               <Switch checked={prefs[item.key]} onCheckedChange={() => toggle(item.key)} />
               <div>
-                <p className="text-[12px] font-medium text-[#c8e0cc]">{item.label}</p>
-                <p className="text-[10px] text-[#4a6650]">{item.desc}</p>
+                <p className="text-[12px] font-medium text-crm-text">{item.label}</p>
+                <p className="text-[10px] text-crm-text-dim">{item.desc}</p>
               </div>
             </div>
           ))}
-          <div className="pt-2 border-t border-[#1e2d22]">
+          <div className="pt-2 border-t border-crm-border">
             <Button size="sm" onClick={() => save.mutate()} disabled={save.isPending}
               className="bg-emerald-700 hover:bg-emerald-600 text-white text-xs gap-1.5">
               {save.isPending ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
@@ -374,19 +374,19 @@ function SecuritySettings() {
   return (
     <Section title="Security" icon={Shield}>
       <div className="space-y-3">
-        <div className="flex items-center justify-between py-2 border-b border-[#1e2d22]">
+        <div className="flex items-center justify-between py-2 border-b border-crm-border">
           <div>
-            <p className="text-[12px] font-medium text-[#c8e0cc]">Email address</p>
-            <p className="text-[11px] text-[#6b8f72] font-mono">{user?.email}</p>
+            <p className="text-[12px] font-medium text-crm-text">Email address</p>
+            <p className="text-[11px] text-crm-text-muted font-mono">{user?.email}</p>
           </div>
         </div>
 
         <div className="py-2">
-          <p className="text-[12px] font-medium text-[#c8e0cc] mb-1">Change password</p>
+          <p className="text-[12px] font-medium text-crm-text mb-1">Change password</p>
           {hasEmailAcct ? (
             // Inline form — syncs to Zoho
             <form onSubmit={handleChangePassword} className="space-y-2 mt-2">
-              <p className="text-[10px] text-[#4a6650]">
+              <p className="text-[10px] text-crm-text-dim">
                 Password change will sync automatically to your <span className="font-mono text-emerald-500">@ecowasparliamentinitiatives.org</span> email account.
               </p>
               <Input
@@ -395,14 +395,14 @@ function SecuritySettings() {
                 onChange={e => setNewPw(e.target.value)}
                 placeholder="New password (min 8 chars)"
                 minLength={8}
-                className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8"
+                className="bg-crm-surface border-crm-border text-crm-text text-xs h-8"
               />
               <Input
                 type="password"
                 value={confirmPw}
                 onChange={e => setConfirmPw(e.target.value)}
                 placeholder="Confirm new password"
-                className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8"
+                className="bg-crm-surface border-crm-border text-crm-text text-xs h-8"
               />
               <Button
                 type="submit"
@@ -417,10 +417,10 @@ function SecuritySettings() {
           ) : (
             // No Zoho account — send reset link
             <div className="flex items-center justify-between mt-1">
-              <p className="text-[10px] text-[#4a6650]">Send a password reset link to your email</p>
+              <p className="text-[10px] text-crm-text-dim">Send a password reset link to your email</p>
               <Button
                 size="sm" variant="outline" onClick={sendPasswordReset} disabled={sending}
-                className="border-[#1e2d22] text-[#6b8f72] hover:text-[#a0c4a8] text-xs gap-1.5 h-7"
+                className="border-crm-border text-crm-text-muted hover:text-crm-text-secondary text-xs gap-1.5 h-7"
               >
                 {sending ? <Loader2 size={11} className="animate-spin" /> : <Mail size={11} />}
                 Send reset link
@@ -450,8 +450,8 @@ export default function SettingsModule() {
     <div className="space-y-5 max-w-3xl">
       {/* Header */}
       <div>
-        <h2 className="text-lg font-bold text-[#c8e0cc]">Settings</h2>
-        <p className="text-[12px] text-[#6b8f72] mt-0.5">
+        <h2 className="text-lg font-bold text-crm-text">Settings</h2>
+        <p className="text-[12px] text-crm-text-muted mt-0.5">
           Manage your notification preferences, security, and system configuration
         </p>
       </div>
@@ -465,7 +465,7 @@ export default function SettingsModule() {
             className={`flex items-center gap-2 px-3 py-2 rounded-lg text-[12px] font-medium transition-all ${
               tab === t.id
                 ? "bg-emerald-950 text-emerald-400 border border-emerald-800"
-                : "text-[#6b8f72] hover:text-[#a0c4a8] hover:bg-[#111a14] border border-transparent"
+                : "text-crm-text-muted hover:text-crm-text-secondary hover:bg-crm-surface border border-transparent"
             }`}
           >
             <t.icon size={13} />

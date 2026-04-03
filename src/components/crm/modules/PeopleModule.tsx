@@ -78,9 +78,9 @@ function ViewUserDialog({ target, onClose }: { target: UserWithRoles; onClose: (
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="bg-[#0d1610] border-[#1e2d22] text-[#c8e0cc] max-w-md">
+      <DialogContent className="bg-crm-card border-crm-border text-crm-text max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-sm font-semibold text-[#c8e0cc]">User Details</DialogTitle>
+          <DialogTitle className="text-sm font-semibold text-crm-text">User Details</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-5 py-1">
@@ -90,28 +90,28 @@ function ViewUserDialog({ target, onClose }: { target: UserWithRoles; onClose: (
               {initials}
             </div>
             <div>
-              <p className="text-[15px] font-bold text-[#c8e0cc]">{target.full_name || "—"}</p>
-              <p className="text-xs text-[#6b8f72] mt-0.5">{target.email}</p>
-              <p className="text-[11px] text-[#4a6650] mt-0.5">{target.country || "No country set"}</p>
+              <p className="text-[15px] font-bold text-crm-text">{target.full_name || "—"}</p>
+              <p className="text-xs text-crm-text-muted mt-0.5">{target.email}</p>
+              <p className="text-[11px] text-crm-text-dim mt-0.5">{target.country || "No country set"}</p>
             </div>
           </div>
 
           {/* Meta */}
           <div className="grid grid-cols-2 gap-3 text-[11px]">
-            <div className="bg-[#111a14] border border-[#1e2d22] rounded-lg px-3 py-2">
-              <p className="text-[#4a6650] mb-0.5">Joined</p>
-              <p className="text-[#a0c4a8] font-medium">{format(parseISO(target.created_at), "d MMM yyyy")}</p>
+            <div className="bg-crm-surface border border-crm-border rounded-lg px-3 py-2">
+              <p className="text-crm-text-dim mb-0.5">Joined</p>
+              <p className="text-crm-text-secondary font-medium">{format(parseISO(target.created_at), "d MMM yyyy")}</p>
             </div>
-            <div className="bg-[#111a14] border border-[#1e2d22] rounded-lg px-3 py-2">
-              <p className="text-[#4a6650] mb-0.5">Roles</p>
-              <p className="text-[#a0c4a8] font-medium">{target.roles.length} assigned</p>
+            <div className="bg-crm-surface border border-crm-border rounded-lg px-3 py-2">
+              <p className="text-crm-text-dim mb-0.5">Roles</p>
+              <p className="text-crm-text-secondary font-medium">{target.roles.length} assigned</p>
             </div>
           </div>
 
           {/* Role chips */}
           {target.roles.length > 0 && (
             <div>
-              <p className="text-[11px] text-[#4a6650] mb-2">Assigned Roles</p>
+              <p className="text-[11px] text-crm-text-dim mb-2">Assigned Roles</p>
               <div className="flex flex-wrap gap-1.5">
                 {target.roles.map(role => {
                   const m = CRM_ROLE_META[role];
@@ -129,43 +129,43 @@ function ViewUserDialog({ target, onClose }: { target: UserWithRoles; onClose: (
 
           {/* Email config */}
           <div>
-            <p className="text-[11px] text-[#4a6650] mb-2">Email Configuration</p>
+            <p className="text-[11px] text-crm-text-dim mb-2">Email Configuration</p>
             {loadingCfg ? (
-              <div className="h-8 bg-[#111a14] rounded-lg animate-pulse" />
+              <div className="h-8 bg-crm-surface rounded-lg animate-pulse" />
             ) : emailCfg ? (
-              <div className="bg-[#111a14] border border-[#1e2d22] rounded-lg px-3 py-3 space-y-1.5 text-[11px]">
+              <div className="bg-crm-surface border border-crm-border rounded-lg px-3 py-3 space-y-1.5 text-[11px]">
                 <div className="flex items-center justify-between">
-                  <span className="text-[#4a6650]">Status</span>
+                  <span className="text-crm-text-dim">Status</span>
                   <span className={`font-mono rounded px-1.5 py-0.5 text-[9px] border ${
                     emailCfg.auto_connect
                       ? "bg-emerald-950 text-emerald-400 border-emerald-800"
-                      : "bg-[#1e2d22] text-[#4a6650] border-[#2a3d2d]"
+                      : "bg-[#1e2d22] text-crm-text-dim border-crm-border-hover"
                   }`}>
                     {emailCfg.auto_connect ? "● Auto-connect ON" : "● Manual"}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-[#4a6650]">SMTP</span>
-                  <span className="text-[#a0c4a8]">{emailCfg.smtp_host}:{emailCfg.smtp_port}</span>
+                  <span className="text-crm-text-dim">SMTP</span>
+                  <span className="text-crm-text-secondary">{emailCfg.smtp_host}:{emailCfg.smtp_port}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-[#4a6650]">IMAP</span>
-                  <span className="text-[#a0c4a8]">{emailCfg.imap_host}:{emailCfg.imap_port}</span>
+                  <span className="text-crm-text-dim">IMAP</span>
+                  <span className="text-crm-text-secondary">{emailCfg.imap_host}:{emailCfg.imap_port}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-[#4a6650]">Login</span>
-                  <span className="text-[#a0c4a8]">{emailCfg.smtp_user}</span>
+                  <span className="text-crm-text-dim">Login</span>
+                  <span className="text-crm-text-secondary">{emailCfg.smtp_user}</span>
                 </div>
               </div>
             ) : (
-              <p className="text-[11px] text-[#3a5040] italic">No email credentials configured.</p>
+              <p className="text-[11px] text-crm-text-faint italic">No email credentials configured.</p>
             )}
           </div>
         </div>
 
         <DialogFooter>
           <Button variant="outline" size="sm" onClick={onClose}
-            className="border-[#1e2d22] text-[#6b8f72] hover:text-[#a0c4a8] text-xs">
+            className="border-crm-border text-crm-text-muted hover:text-crm-text-secondary text-xs">
             Close
           </Button>
         </DialogFooter>
@@ -254,9 +254,9 @@ function EditUserDialog({
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="bg-[#0d1610] border-[#1e2d22] text-[#c8e0cc] max-w-lg max-h-[85vh] overflow-y-auto">
+      <DialogContent className="bg-crm-card border-crm-border text-crm-text max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-sm font-semibold text-[#c8e0cc]">
+          <DialogTitle className="text-sm font-semibold text-crm-text">
             Edit User — {target.full_name || target.email}
           </DialogTitle>
         </DialogHeader>
@@ -267,21 +267,21 @@ function EditUserDialog({
             <p className="text-[11px] font-semibold text-emerald-500 uppercase tracking-wider mb-3">Profile</p>
             <div className="space-y-3">
               <div className="space-y-1">
-                <Label className="text-[11px] text-[#4a6650]">Full Name</Label>
+                <Label className="text-[11px] text-crm-text-dim">Full Name</Label>
                 <Input
                   value={fullName}
                   onChange={e => setFullName(e.target.value)}
                   placeholder="Full name"
-                  className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8"
+                  className="bg-crm-surface border-crm-border text-crm-text text-xs h-8"
                 />
               </div>
               <div className="space-y-1">
-                <Label className="text-[11px] text-[#4a6650]">Country</Label>
+                <Label className="text-[11px] text-crm-text-dim">Country</Label>
                 <Input
                   value={country}
                   onChange={e => setCountry(e.target.value)}
                   placeholder="Country"
-                  className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8"
+                  className="bg-crm-surface border-crm-border text-crm-text text-xs h-8"
                 />
               </div>
             </div>
@@ -311,59 +311,59 @@ function EditUserDialog({
 
               {loadingEmail ? (
                 <div className="space-y-2">
-                  {[1, 2, 3].map(i => <div key={i} className="h-8 bg-[#111a14] rounded-lg animate-pulse" />)}
+                  {[1, 2, 3].map(i => <div key={i} className="h-8 bg-crm-surface rounded-lg animate-pulse" />)}
                 </div>
               ) : (
                 <div className="space-y-3">
                   {/* SMTP host + port */}
                   <div className="grid grid-cols-3 gap-2">
                     <div className="col-span-2 space-y-1">
-                      <Label className="text-[11px] text-[#4a6650]">SMTP Host</Label>
+                      <Label className="text-[11px] text-crm-text-dim">SMTP Host</Label>
                       <Input
                         value={emailCfg.smtp_host}
                         onChange={e => setEmailCfg(c => ({ ...c, smtp_host: e.target.value }))}
                         placeholder="smtp.gmail.com"
-                        className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8"
+                        className="bg-crm-surface border-crm-border text-crm-text text-xs h-8"
                       />
                     </div>
                     <div className="space-y-1">
-                      <Label className="text-[11px] text-[#4a6650]">Port</Label>
+                      <Label className="text-[11px] text-crm-text-dim">Port</Label>
                       <Input
                         type="number"
                         min={1}
                         value={emailCfg.smtp_port}
                         onChange={e => setEmailCfg(c => ({ ...c, smtp_port: Number(e.target.value) }))}
-                        className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8"
+                        className="bg-crm-surface border-crm-border text-crm-text text-xs h-8"
                       />
                     </div>
                   </div>
 
                   {/* SMTP username */}
                   <div className="space-y-1">
-                    <Label className="text-[11px] text-[#4a6650]">SMTP Username / Email</Label>
+                    <Label className="text-[11px] text-crm-text-dim">SMTP Username / Email</Label>
                     <Input
                       value={emailCfg.smtp_user}
                       onChange={e => setEmailCfg(c => ({ ...c, smtp_user: e.target.value }))}
                       placeholder="user@example.com"
-                      className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8"
+                      className="bg-crm-surface border-crm-border text-crm-text text-xs h-8"
                     />
                   </div>
 
                   {/* Password with show/hide */}
                   <div className="space-y-1">
-                    <Label className="text-[11px] text-[#4a6650]">SMTP Password</Label>
+                    <Label className="text-[11px] text-crm-text-dim">SMTP Password</Label>
                     <div className="relative">
                       <Input
                         type={showPass ? "text" : "password"}
                         value={emailCfg.smtp_password}
                         onChange={e => setEmailCfg(c => ({ ...c, smtp_password: e.target.value }))}
                         placeholder="••••••••"
-                        className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8 pr-8"
+                        className="bg-crm-surface border-crm-border text-crm-text text-xs h-8 pr-8"
                       />
                       <button
                         type="button"
                         onClick={() => setShowPass(v => !v)}
-                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#4a6650] hover:text-[#a0c4a8] transition-colors"
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-crm-text-dim hover:text-crm-text-secondary transition-colors"
                       >
                         {showPass ? <EyeOff size={12} /> : <Eye size={12} />}
                       </button>
@@ -373,31 +373,31 @@ function EditUserDialog({
                   {/* IMAP host + port */}
                   <div className="grid grid-cols-3 gap-2">
                     <div className="col-span-2 space-y-1">
-                      <Label className="text-[11px] text-[#4a6650]">IMAP Host</Label>
+                      <Label className="text-[11px] text-crm-text-dim">IMAP Host</Label>
                       <Input
                         value={emailCfg.imap_host}
                         onChange={e => setEmailCfg(c => ({ ...c, imap_host: e.target.value }))}
                         placeholder="imap.gmail.com"
-                        className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8"
+                        className="bg-crm-surface border-crm-border text-crm-text text-xs h-8"
                       />
                     </div>
                     <div className="space-y-1">
-                      <Label className="text-[11px] text-[#4a6650]">Port</Label>
+                      <Label className="text-[11px] text-crm-text-dim">Port</Label>
                       <Input
                         type="number"
                         min={1}
                         value={emailCfg.imap_port}
                         onChange={e => setEmailCfg(c => ({ ...c, imap_port: Number(e.target.value) }))}
-                        className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8"
+                        className="bg-crm-surface border-crm-border text-crm-text text-xs h-8"
                       />
                     </div>
                   </div>
 
                   {/* Auto-connect toggle */}
-                  <div className="flex items-center justify-between bg-[#111a14] border border-[#1e2d22] rounded-lg px-3 py-2.5">
+                  <div className="flex items-center justify-between bg-crm-surface border border-crm-border rounded-lg px-3 py-2.5">
                     <div>
-                      <p className="text-[12px] text-[#c8e0cc]">Auto-connect on login</p>
-                      <p className="text-[10px] text-[#4a6650] mt-0.5">
+                      <p className="text-[12px] text-crm-text">Auto-connect on login</p>
+                      <p className="text-[10px] text-crm-text-dim mt-0.5">
                         User is automatically connected to their email when they log into the CRM.
                       </p>
                     </div>
@@ -421,7 +421,7 @@ function EditUserDialog({
 
         <DialogFooter className="gap-2">
           <Button variant="outline" size="sm" onClick={onClose}
-            className="border-[#1e2d22] text-[#6b8f72] hover:text-[#a0c4a8] text-xs">
+            className="border-crm-border text-crm-text-muted hover:text-crm-text-secondary text-xs">
             Cancel
           </Button>
           <Button size="sm" onClick={handleSave} disabled={saving}
@@ -588,22 +588,22 @@ export default function PeopleModule() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h2 className="text-lg font-bold text-[#c8e0cc]">People & Access</h2>
-          <p className="text-[12px] text-[#6b8f72] mt-0.5">
+          <h2 className="text-lg font-bold text-crm-text">People & Access</h2>
+          <p className="text-[12px] text-crm-text-muted mt-0.5">
             Invite team members, assign roles, manage access
           </p>
         </div>
         <button onClick={loadData} disabled={loading}
-          className="flex items-center gap-1.5 text-xs text-[#4a6650] hover:text-[#a0c4a8] transition-colors">
+          className="flex items-center gap-1.5 text-xs text-crm-text-dim hover:text-crm-text-secondary transition-colors">
           <RefreshCw size={12} className={loading ? "animate-spin" : ""} /> Refresh
         </button>
       </div>
 
       {/* Invite form */}
-      <div className="bg-[#0d1610] border border-[#1e2d22] rounded-xl p-5">
+      <div className="bg-crm-card border border-crm-border rounded-xl p-5">
         <div className="flex items-center gap-2 mb-4">
           <UserPlus size={14} className="text-emerald-500" />
-          <h3 className="text-[13px] font-semibold text-[#c8e0cc]">Invite team member</h3>
+          <h3 className="text-[13px] font-semibold text-crm-text">Invite team member</h3>
         </div>
         <form onSubmit={handleInvite} className="flex flex-col sm:flex-row gap-3">
           <input
@@ -612,12 +612,12 @@ export default function PeopleModule() {
             placeholder="colleague@example.com"
             value={inviteEmail}
             onChange={e => setInviteEmail(e.target.value)}
-            className="flex-1 bg-[#111a14] border border-[#1e2d22] text-[#a0c4a8] text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-emerald-700 placeholder:text-[#3a5040]"
+            className="flex-1 bg-crm-surface border border-crm-border text-crm-text-secondary text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-emerald-700 placeholder:text-crm-text-faint"
           />
           <select
             value={inviteRole}
             onChange={e => setInviteRole(e.target.value as AppRole)}
-            className="bg-[#111a14] border border-[#1e2d22] text-[#a0c4a8] text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-emerald-700"
+            className="bg-crm-surface border border-crm-border text-crm-text-secondary text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-emerald-700"
           >
             {assignableRoles.map(r => (
               <option key={r} value={r}>{CRM_ROLE_META[r]?.label ?? r}</option>
@@ -635,7 +635,7 @@ export default function PeopleModule() {
       </div>
 
       {/* Tab switcher */}
-      <div className="flex gap-1 border-b border-[#1e2d22]">
+      <div className="flex gap-1 border-b border-crm-border">
         {[
           { id: "users" as const,       label: `Users (${filteredUsers.length})` },
           { id: "invitations" as const, label: `Invitations${pending > 0 ? ` · ${pending} pending` : ""}` },
@@ -644,7 +644,7 @@ export default function PeopleModule() {
             className={`px-4 py-2 text-xs font-medium border-b-2 transition-colors ${
               tab === t.id
                 ? "border-emerald-500 text-emerald-400"
-                : "border-transparent text-[#6b8f72] hover:text-[#a0c4a8]"
+                : "border-transparent text-crm-text-muted hover:text-crm-text-secondary"
             }`}>
             {t.label}
           </button>
@@ -665,27 +665,27 @@ export default function PeopleModule() {
             placeholder="Search by name, email or country…"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full bg-[#0d1610] border border-[#1e2d22] text-[#a0c4a8] text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-emerald-700 placeholder:text-[#3a5040]"
+            className="w-full bg-crm-card border border-crm-border text-crm-text-secondary text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-emerald-700 placeholder:text-crm-text-faint"
           />
-          <div className="bg-[#0d1610] border border-[#1e2d22] rounded-xl overflow-hidden">
+          <div className="bg-crm-card border border-crm-border rounded-xl overflow-hidden">
             {filteredUsers.length === 0 ? (
-              <p className="text-center text-xs text-[#3a5040] py-8">No users found.</p>
+              <p className="text-center text-xs text-crm-text-faint py-8">No users found.</p>
             ) : (
-              <div className="divide-y divide-[#1e2d22]">
+              <div className="divide-y divide-crm-border">
                 {filteredUsers.map(u => {
                   const initials = u.full_name.split(" ").map((n: string) => n[0]).slice(0, 2).join("").toUpperCase() || "?";
                   const addableRoles = assignableRoles.filter(r => !u.roles.includes(r));
                   return (
-                    <div key={u.id} className="flex items-start gap-3 px-4 py-3 hover:bg-[#111a14] transition-colors">
+                    <div key={u.id} className="flex items-start gap-3 px-4 py-3 hover:bg-crm-surface transition-colors">
                       <div className="w-9 h-9 rounded-full bg-[#1e2d22] flex items-center justify-center text-xs font-bold text-emerald-400 flex-shrink-0 uppercase">
                         {initials}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <p className="text-[12.5px] font-semibold text-[#c8e0cc]">{u.full_name || "—"}</p>
-                          <p className="text-[11px] text-[#6b8f72]">{u.email}</p>
+                          <p className="text-[12.5px] font-semibold text-crm-text">{u.full_name || "—"}</p>
+                          <p className="text-[11px] text-crm-text-muted">{u.email}</p>
                         </div>
-                        <p className="text-[10px] text-[#4a6650] mt-0.5">{u.country}</p>
+                        <p className="text-[10px] text-crm-text-dim mt-0.5">{u.country}</p>
                         {/* Role chips */}
                         <div className="flex flex-wrap gap-1 mt-2">
                           {u.roles.map(role => {
@@ -710,7 +710,7 @@ export default function PeopleModule() {
                             <select
                               defaultValue=""
                               onChange={e => { if (e.target.value) { handleRoleChange(u.id, e.target.value as AppRole, "add"); e.target.value = ""; }}}
-                              className="text-[9px] font-mono bg-[#111a14] border border-[#1e2d22] text-[#4a6650] rounded px-1 py-0.5 focus:outline-none cursor-pointer"
+                              className="text-[9px] font-mono bg-crm-surface border border-crm-border text-crm-text-dim rounded px-1 py-0.5 focus:outline-none cursor-pointer"
                             >
                               <option value="">+ role</option>
                               {addableRoles.map(r => (
@@ -722,7 +722,7 @@ export default function PeopleModule() {
                       </div>
 
                       {/* Joined date */}
-                      <p className="text-[10px] text-[#3a5040] flex-shrink-0 hidden sm:block pt-0.5">
+                      <p className="text-[10px] text-crm-text-faint flex-shrink-0 hidden sm:block pt-0.5">
                         {format(parseISO(u.created_at), "d MMM yyyy")}
                       </p>
 
@@ -733,7 +733,7 @@ export default function PeopleModule() {
                           <button
                             onClick={() => { setViewTarget(u); setViewOpen(true); }}
                             title="View details"
-                            className="p-1.5 text-[#4a6650] hover:text-[#a0c4a8] transition-colors rounded"
+                            className="p-1.5 text-crm-text-dim hover:text-crm-text-secondary transition-colors rounded"
                           >
                             <Eye size={13} />
                           </button>
@@ -742,7 +742,7 @@ export default function PeopleModule() {
                           <button
                             onClick={() => { setEditTarget(u); setEditOpen(true); }}
                             title="Edit user"
-                            className="p-1.5 text-[#4a6650] hover:text-[#a0c4a8] transition-colors rounded"
+                            className="p-1.5 text-crm-text-dim hover:text-crm-text-secondary transition-colors rounded"
                           >
                             <Pencil size={13} />
                           </button>
@@ -757,10 +757,10 @@ export default function PeopleModule() {
                                 >
                                   Yes
                                 </button>
-                                <span className="text-[#3a5040]">/</span>
+                                <span className="text-crm-text-faint">/</span>
                                 <button
                                   onClick={() => setConfirmDeleteId(null)}
-                                  className="text-[#4a6650] hover:text-[#a0c4a8] transition-colors"
+                                  className="text-crm-text-dim hover:text-crm-text-secondary transition-colors"
                                 >
                                   No
                                 </button>
@@ -769,7 +769,7 @@ export default function PeopleModule() {
                               <button
                                 onClick={() => setConfirmDeleteId(u.id)}
                                 title="Delete user"
-                                className="p-1.5 text-[#4a6650] hover:text-red-400 transition-colors rounded"
+                                className="p-1.5 text-crm-text-dim hover:text-red-400 transition-colors rounded"
                               >
                                 <UserMinus size={13} />
                               </button>
@@ -788,24 +788,24 @@ export default function PeopleModule() {
 
       {/* Invitations tab */}
       {!loading && tab === "invitations" && (
-        <div className="bg-[#0d1610] border border-[#1e2d22] rounded-xl overflow-hidden">
+        <div className="bg-crm-card border border-crm-border rounded-xl overflow-hidden">
           {invitations.length === 0 ? (
-            <p className="text-center text-xs text-[#3a5040] py-8">No invitations sent yet.</p>
+            <p className="text-center text-xs text-crm-text-faint py-8">No invitations sent yet.</p>
           ) : (
-            <div className="divide-y divide-[#1e2d22]">
+            <div className="divide-y divide-crm-border">
               {invitations.map(inv => {
                 const m = CRM_ROLE_META[inv.role];
                 const accepted = !!inv.accepted_at;
                 return (
-                  <div key={inv.id} className="flex items-center gap-3 px-4 py-3 hover:bg-[#111a14] transition-colors">
+                  <div key={inv.id} className="flex items-center gap-3 px-4 py-3 hover:bg-crm-surface transition-colors">
                     <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${accepted ? "bg-emerald-950" : "bg-[#1e2d22]"}`}>
                       {accepted
                         ? <CheckCircle2 size={13} className="text-emerald-400" />
-                        : <Clock size={13} className="text-[#4a6650]" />
+                        : <Clock size={13} className="text-crm-text-dim" />
                       }
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[12.5px] font-medium text-[#c8e0cc] truncate">{inv.email}</p>
+                      <p className="text-[12.5px] font-medium text-crm-text truncate">{inv.email}</p>
                       <div className="flex items-center gap-2 mt-0.5">
                         {m && (
                           <span className={`text-[9px] font-mono border rounded px-1.5 py-0.5 ${m.bgColour} ${m.colour} ${m.borderColour}`}>
@@ -815,14 +815,14 @@ export default function PeopleModule() {
                         <span className={`text-[10px] font-mono ${accepted ? "text-emerald-500" : "text-amber-500"}`}>
                           {accepted ? `Accepted ${format(parseISO(inv.accepted_at!), "d MMM")}` : "Pending"}
                         </span>
-                        <span className="text-[10px] text-[#3a5040]">
+                        <span className="text-[10px] text-crm-text-faint">
                           Sent {format(parseISO(inv.created_at), "d MMM yyyy")}
                         </span>
                       </div>
                     </div>
                     {!accepted && (
                       <button onClick={() => revokeInvitation(inv.id)}
-                        className="text-[#3a5040] hover:text-red-400 transition-colors p-1" title="Revoke">
+                        className="text-crm-text-faint hover:text-red-400 transition-colors p-1" title="Revoke">
                         <Trash2 size={13} />
                       </button>
                     )}

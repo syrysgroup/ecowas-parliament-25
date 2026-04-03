@@ -69,8 +69,8 @@ export default function TeamModule() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h2 className="text-lg font-bold text-[#c8e0cc]">Team Directory</h2>
-          <p className="text-[12px] text-[#6b8f72] mt-0.5">
+          <h2 className="text-lg font-bold text-crm-text">Team Directory</h2>
+          <p className="text-[12px] text-crm-text-muted mt-0.5">
             {members.length} team member{members.length !== 1 ? "s" : ""} with system roles
           </p>
         </div>
@@ -78,7 +78,7 @@ export default function TeamModule() {
           <select
             value={filterRole}
             onChange={e => setFilterRole(e.target.value as AppRole | "")}
-            className="bg-[#0d1610] border border-[#1e2d22] text-[#a0c4a8] text-xs rounded-lg px-3 py-1.5 focus:outline-none focus:border-emerald-700"
+            className="bg-crm-card border border-crm-border text-crm-text-secondary text-xs rounded-lg px-3 py-1.5 focus:outline-none focus:border-emerald-700"
           >
             <option value="">All roles</option>
             {allRoles.map(r => (
@@ -86,13 +86,13 @@ export default function TeamModule() {
             ))}
           </select>
           <div className="relative">
-            <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#4a6650]" />
+            <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-crm-text-dim" />
             <input
               type="text"
               placeholder="Search…"
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="bg-[#0d1610] border border-[#1e2d22] text-[#a0c4a8] text-xs rounded-lg pl-7 pr-3 py-1.5 w-40 focus:outline-none focus:border-emerald-700 placeholder:text-[#3a5040]"
+              className="bg-crm-card border border-crm-border text-crm-text-secondary text-xs rounded-lg pl-7 pr-3 py-1.5 w-40 focus:outline-none focus:border-emerald-700 placeholder:text-crm-text-faint"
             />
           </div>
         </div>
@@ -106,10 +106,10 @@ export default function TeamModule() {
 
       {!isLoading && filtered.length === 0 && (
         <div className="flex flex-col items-center justify-center min-h-[40vh] gap-3 text-center">
-          <div className="h-14 w-14 rounded-2xl bg-[#111a14] border border-[#1e2d22] flex items-center justify-center">
-            <Users className="h-6 w-6 text-[#4a6650]" />
+          <div className="h-14 w-14 rounded-2xl bg-crm-surface border border-crm-border flex items-center justify-center">
+            <Users className="h-6 w-6 text-crm-text-dim" />
           </div>
-          <p className="text-sm text-[#6b8f72]">
+          <p className="text-sm text-crm-text-muted">
             {search || filterRole ? "No members match your filter." : "No team members found."}
           </p>
         </div>
@@ -124,15 +124,15 @@ export default function TeamModule() {
             return (
               <div
                 key={member.id}
-                className="bg-[#0d1610] border border-[#1e2d22] rounded-xl p-4 flex items-start gap-3 hover:border-[#2a3d2d] transition-colors"
+                className="bg-crm-card border border-crm-border rounded-xl p-4 flex items-start gap-3 hover:border-crm-border-hover transition-colors"
               >
                 <div className="w-10 h-10 rounded-full bg-[#1e2d22] flex items-center justify-center text-sm font-bold text-emerald-400 flex-shrink-0 uppercase">
                   {initials}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-[13px] font-semibold text-[#c8e0cc] truncate">{member.full_name}</p>
-                  <p className="text-[11px] text-[#6b8f72] truncate">{member.email}</p>
-                  <p className="text-[10px] text-[#4a6650] mt-0.5">{member.country}</p>
+                  <p className="text-[13px] font-semibold text-crm-text truncate">{member.full_name}</p>
+                  <p className="text-[11px] text-crm-text-muted truncate">{member.email}</p>
+                  <p className="text-[10px] text-crm-text-dim mt-0.5">{member.country}</p>
                   <div className="flex flex-wrap gap-1 mt-2">
                     {member.roles.map(role => {
                       const m = CRM_ROLE_META[role];

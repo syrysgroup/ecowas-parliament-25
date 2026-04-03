@@ -82,13 +82,13 @@ function StatCard({ label, value, icon: Icon, accent }: {
   label: string; value: string | number; icon: React.ElementType; accent: string;
 }) {
   return (
-    <div className="bg-[#0d1610] border border-[#1e2d22] rounded-xl p-4 flex items-start gap-3">
+    <div className="bg-crm-card border border-crm-border rounded-xl p-4 flex items-start gap-3">
       <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 border ${accent}`}>
         <Icon size={15} />
       </div>
       <div>
-        <p className="text-[10px] font-mono uppercase tracking-widest text-[#4a6650]">{label}</p>
-        <p className="text-2xl font-bold text-[#c8e0cc]">{value}</p>
+        <p className="text-[10px] font-mono uppercase tracking-widest text-crm-text-dim">{label}</p>
+        <p className="text-2xl font-bold text-crm-text">{value}</p>
       </div>
     </div>
   );
@@ -105,7 +105,7 @@ function TabBtn({ id, label, icon: Icon, badge, active, onClick }: {
       className={`flex items-center gap-2 px-3 py-2 rounded-lg text-[12px] font-medium transition-all ${
         active
           ? "bg-amber-950 text-amber-400 border border-amber-800"
-          : "text-[#6b8f72] hover:text-[#a0c4a8] hover:bg-[#111a14] border border-transparent"
+          : "text-crm-text-muted hover:text-crm-text-secondary hover:bg-crm-surface border border-transparent"
       }`}
     >
       <Icon size={13} />
@@ -257,14 +257,14 @@ export default function SuperAdminModule() {
             <div className="w-6 h-6 rounded bg-amber-950 border border-amber-800 flex items-center justify-center">
               <Crown size={12} className="text-amber-400" />
             </div>
-            <h2 className="text-lg font-bold text-[#c8e0cc]">Super Admin Hub</h2>
+            <h2 className="text-lg font-bold text-crm-text">Super Admin Hub</h2>
           </div>
-          <p className="text-[12px] text-[#6b8f72] mt-0.5">
+          <p className="text-[12px] text-crm-text-muted mt-0.5">
             Full system oversight — users, roles, activity, and configuration
           </p>
         </div>
         <Button size="sm" variant="outline" onClick={loadData} disabled={loading}
-          className="border-[#1e2d22] text-[#6b8f72] hover:text-[#a0c4a8] text-xs gap-1.5 h-8">
+          className="border-crm-border text-crm-text-muted hover:text-crm-text-secondary text-xs gap-1.5 h-8">
           <RefreshCw size={12} className={loading ? "animate-spin" : ""} />
           Refresh
         </Button>
@@ -288,9 +288,9 @@ export default function SuperAdminModule() {
           </div>
 
           {/* Role breakdown */}
-          <div className="bg-[#0d1610] border border-[#1e2d22] rounded-xl overflow-hidden">
-            <div className="px-4 py-3 border-b border-[#1e2d22]">
-              <h3 className="text-[12px] font-semibold text-[#a0c4a8]">Role definitions & distribution</h3>
+          <div className="bg-crm-card border border-crm-border rounded-xl overflow-hidden">
+            <div className="px-4 py-3 border-b border-crm-border">
+              <h3 className="text-[12px] font-semibold text-crm-text-secondary">Role definitions & distribution</h3>
             </div>
             <div className="p-4 grid sm:grid-cols-2 gap-2">
               {(Object.entries(ROLE_CONFIG) as [AppRole, typeof ROLE_CONFIG[AppRole]][]).map(([key, cfg]) => {
@@ -298,16 +298,16 @@ export default function SuperAdminModule() {
                 const Icon = cfg.icon;
                 const count = users.filter(u => u.roles.includes(key)).length;
                 return (
-                  <div key={key} className="flex items-start gap-3 p-3 rounded-lg border border-[#1e2d22] hover:border-[#2a3d2d] transition-colors">
+                  <div key={key} className="flex items-start gap-3 p-3 rounded-lg border border-crm-border hover:border-crm-border-hover transition-colors">
                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 border text-[11px] font-bold ${cfg.badge}`}>
                       <Icon size={14} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
-                        <span className="text-[12px] font-semibold text-[#c8e0cc]">{cfg.label}</span>
-                        <span className="text-lg font-black text-[#4a6650]">{count}</span>
+                        <span className="text-[12px] font-semibold text-crm-text">{cfg.label}</span>
+                        <span className="text-lg font-black text-crm-text-dim">{count}</span>
                       </div>
-                      <p className="text-[10px] text-[#4a6650] mt-0.5 leading-relaxed">{cfg.desc}</p>
+                      <p className="text-[10px] text-crm-text-dim mt-0.5 leading-relaxed">{cfg.desc}</p>
                     </div>
                   </div>
                 );
@@ -316,9 +316,9 @@ export default function SuperAdminModule() {
           </div>
 
           {/* Recent activity */}
-          <div className="bg-[#0d1610] border border-[#1e2d22] rounded-xl overflow-hidden">
-            <div className="px-4 py-3 border-b border-[#1e2d22] flex items-center justify-between">
-              <h3 className="text-[12px] font-semibold text-[#a0c4a8]">Recent activity</h3>
+          <div className="bg-crm-card border border-crm-border rounded-xl overflow-hidden">
+            <div className="px-4 py-3 border-b border-crm-border flex items-center justify-between">
+              <h3 className="text-[12px] font-semibold text-crm-text-secondary">Recent activity</h3>
               <button onClick={() => setTab("activity")} className="text-[11px] text-emerald-500 hover:text-emerald-400">View all →</button>
             </div>
             {loading ? (
@@ -326,21 +326,21 @@ export default function SuperAdminModule() {
                 <div className="w-5 h-5 border-2 border-emerald-700 border-t-emerald-400 rounded-full animate-spin" />
               </div>
             ) : activityLog.length === 0 ? (
-              <p className="text-[12px] text-[#3a5040] text-center py-8">No activity logged yet.</p>
+              <p className="text-[12px] text-crm-text-faint text-center py-8">No activity logged yet.</p>
             ) : (
-              <div className="divide-y divide-[#1e2d22]">
+              <div className="divide-y divide-crm-border">
                 {activityLog.slice(0, 6).map(log => (
                   <div key={log.id} className="flex items-start gap-3 px-4 py-3">
                     <div className="w-6 h-6 rounded-full bg-emerald-950 border border-emerald-800 flex items-center justify-center flex-shrink-0 mt-0.5">
                       <Activity size={10} className="text-emerald-400" />
                     </div>
                     <div>
-                      <p className="text-[12px] text-[#c8e0cc]">
+                      <p className="text-[12px] text-crm-text">
                         <span className="font-semibold">{log.actor?.full_name || "System"}</span>
                         {" "}<span className="text-emerald-400">{log.action}</span>
                         {" "}on <span className="font-medium">{log.entity_type}</span>
                       </p>
-                      <p className="text-[10px] text-[#4a6650] mt-0.5">{new Date(log.created_at).toLocaleString()}</p>
+                      <p className="text-[10px] text-crm-text-dim mt-0.5">{new Date(log.created_at).toLocaleString()}</p>
                     </div>
                   </div>
                 ))}
@@ -354,7 +354,7 @@ export default function SuperAdminModule() {
       {tab === "users" && (
         <div className="space-y-4">
           {/* Invite form */}
-          <div className="bg-[#0d1610] border border-amber-800 rounded-xl p-4">
+          <div className="bg-crm-card border border-amber-800 rounded-xl p-4">
             <h3 className="text-[12px] font-semibold text-amber-400 flex items-center gap-2 mb-3">
               <UserPlus size={13} /> Invite a new team member
             </h3>
@@ -362,15 +362,15 @@ export default function SuperAdminModule() {
               <Input
                 type="email" required placeholder="colleague@example.com"
                 value={inviteEmail} onChange={e => setInviteEmail(e.target.value)}
-                className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8 flex-1"
+                className="bg-crm-surface border-crm-border text-crm-text text-xs h-8 flex-1"
               />
               <Select value={inviteRole} onValueChange={v => setInviteRole(v as AppRole)}>
-                <SelectTrigger className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8 sm:w-44">
+                <SelectTrigger className="bg-crm-surface border-crm-border text-crm-text text-xs h-8 sm:w-44">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-[#0d1610] border-[#1e2d22]">
+                <SelectContent className="bg-crm-card border-crm-border">
                   {(Object.keys(ROLE_CONFIG) as AppRole[]).map(r => (
-                    <SelectItem key={r} value={r} className="text-[#c8e0cc] text-xs">{ROLE_CONFIG[r]?.label ?? r}</SelectItem>
+                    <SelectItem key={r} value={r} className="text-crm-text text-xs">{ROLE_CONFIG[r]?.label ?? r}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -383,13 +383,13 @@ export default function SuperAdminModule() {
           </div>
 
           {/* Users table */}
-          <div className="bg-[#0d1610] border border-[#1e2d22] rounded-xl overflow-hidden">
-            <div className="px-4 py-3 border-b border-[#1e2d22] flex items-center justify-between gap-3 flex-wrap">
-              <h3 className="text-[12px] font-semibold text-[#a0c4a8]">All users ({filteredUsers.length})</h3>
+          <div className="bg-crm-card border border-crm-border rounded-xl overflow-hidden">
+            <div className="px-4 py-3 border-b border-crm-border flex items-center justify-between gap-3 flex-wrap">
+              <h3 className="text-[12px] font-semibold text-crm-text-secondary">All users ({filteredUsers.length})</h3>
               <Input
                 placeholder="Search name, email, country…"
                 value={searchQ} onChange={e => setSearchQ(e.target.value)}
-                className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-7 w-56"
+                className="bg-crm-surface border-crm-border text-crm-text text-xs h-7 w-56"
               />
             </div>
             {loading ? (
@@ -397,27 +397,27 @@ export default function SuperAdminModule() {
                 <div className="w-5 h-5 border-2 border-emerald-700 border-t-emerald-400 rounded-full animate-spin" />
               </div>
             ) : (
-              <div className="divide-y divide-[#1e2d22]">
+              <div className="divide-y divide-crm-border">
                 {filteredUsers.map(u => (
-                  <div key={u.id} className="flex items-start gap-3 px-4 py-3 hover:bg-[#111a14] transition-colors">
+                  <div key={u.id} className="flex items-start gap-3 px-4 py-3 hover:bg-crm-surface transition-colors">
                     <div className="w-8 h-8 rounded-full bg-[#1e2d22] flex items-center justify-center text-xs font-bold text-emerald-400 flex-shrink-0 uppercase">
                       {(u.full_name || u.email)[0]}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <p className="text-[12.5px] font-semibold text-[#c8e0cc]">{u.full_name || "—"}</p>
+                        <p className="text-[12.5px] font-semibold text-crm-text">{u.full_name || "—"}</p>
                         {u.id === user?.id && (
                           <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-950 border border-amber-800 text-amber-400">you</span>
                         )}
                       </div>
-                      <p className="text-[10px] text-[#6b8f72]">{u.email}</p>
-                      <p className="text-[10px] text-[#4a6650]">{u.country || "—"}</p>
+                      <p className="text-[10px] text-crm-text-muted">{u.email}</p>
+                      <p className="text-[10px] text-crm-text-dim">{u.country || "—"}</p>
                     </div>
                     <div className="flex flex-col items-end gap-2 flex-shrink-0">
                       {/* Role badges */}
                       <div className="flex flex-wrap gap-1 justify-end">
                         {u.roles.length === 0 && (
-                          <span className="text-[10px] text-[#3a5040]">No roles</span>
+                          <span className="text-[10px] text-crm-text-faint">No roles</span>
                         )}
                         {u.roles.map(role => {
                           const cfg = ROLE_CONFIG[role];
@@ -441,14 +441,14 @@ export default function SuperAdminModule() {
                       {/* Add role */}
                       {u.id !== user?.id && (
                         <Select onValueChange={v => handleRoleChange(u.id, v as AppRole, "add")}>
-                          <SelectTrigger className="h-6 w-24 text-[10px] bg-[#111a14] border-[#1e2d22] text-[#6b8f72]">
+                          <SelectTrigger className="h-6 w-24 text-[10px] bg-crm-surface border-crm-border text-crm-text-muted">
                             <SelectValue placeholder="+ Role" />
                           </SelectTrigger>
-                          <SelectContent className="bg-[#0d1610] border-[#1e2d22]">
+                          <SelectContent className="bg-crm-card border-crm-border">
                             {(Object.keys(ROLE_CONFIG) as AppRole[])
                               .filter(r => !u.roles.includes(r))
                               .map(r => (
-                                <SelectItem key={r} value={r} className="text-[#c8e0cc] text-xs">
+                                <SelectItem key={r} value={r} className="text-crm-text text-xs">
                                   {ROLE_CONFIG[r]?.label ?? r}
                                 </SelectItem>
                               ))}
@@ -459,7 +459,7 @@ export default function SuperAdminModule() {
                   </div>
                 ))}
                 {filteredUsers.length === 0 && (
-                  <p className="text-[12px] text-[#3a5040] text-center py-8">No users found.</p>
+                  <p className="text-[12px] text-crm-text-faint text-center py-8">No users found.</p>
                 )}
               </div>
             )}
@@ -469,9 +469,9 @@ export default function SuperAdminModule() {
 
       {/* ══ INVITATIONS ══ */}
       {tab === "invitations" && (
-        <div className="bg-[#0d1610] border border-[#1e2d22] rounded-xl overflow-hidden">
-          <div className="px-4 py-3 border-b border-[#1e2d22] flex items-center justify-between">
-            <h3 className="text-[12px] font-semibold text-[#a0c4a8]">
+        <div className="bg-crm-card border border-crm-border rounded-xl overflow-hidden">
+          <div className="px-4 py-3 border-b border-crm-border flex items-center justify-between">
+            <h3 className="text-[12px] font-semibold text-crm-text-secondary">
               Invitations ({invitations.length} total · {stats.pendingInv} pending)
             </h3>
             <button onClick={() => setTab("users")} className="text-[11px] text-emerald-500 hover:text-emerald-400 flex items-center gap-1">
@@ -480,22 +480,22 @@ export default function SuperAdminModule() {
           </div>
           {invitations.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 gap-2">
-              <Mail size={28} className="text-[#2a3d2d]" />
-              <p className="text-[12px] text-[#3a5040]">No invitations sent yet.</p>
+              <Mail size={28} className="text-crm-text-faint" />
+              <p className="text-[12px] text-crm-text-faint">No invitations sent yet.</p>
             </div>
           ) : (
-            <div className="divide-y divide-[#1e2d22]">
+            <div className="divide-y divide-crm-border">
               {invitations.map(inv => {
                 const cfg = ROLE_CONFIG[inv.role];
                 const Icon = cfg?.icon ?? Mail;
                 return (
-                  <div key={inv.id} className="flex items-center gap-3 px-4 py-3 hover:bg-[#111a14] transition-colors">
-                    <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 border ${cfg?.badge ?? "text-[#6b8f72] bg-[#1e2d22] border-[#2a3d2d]"}`}>
+                  <div key={inv.id} className="flex items-center gap-3 px-4 py-3 hover:bg-crm-surface transition-colors">
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 border ${cfg?.badge ?? "text-crm-text-muted bg-[#1e2d22] border-crm-border-hover"}`}>
                       <Icon size={12} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[12px] font-medium text-[#c8e0cc]">{inv.email}</p>
-                      <p className="text-[10px] text-[#4a6650]">
+                      <p className="text-[12px] font-medium text-crm-text">{inv.email}</p>
+                      <p className="text-[10px] text-crm-text-dim">
                         {cfg?.label ?? inv.role} · Invited {new Date(inv.created_at).toLocaleDateString()}
                       </p>
                     </div>
@@ -510,7 +510,7 @@ export default function SuperAdminModule() {
                         </span>
                         <button
                           onClick={() => revokeInvitation(inv.id)}
-                          className="text-[#3a5040] hover:text-red-400 transition-colors"
+                          className="text-crm-text-faint hover:text-red-400 transition-colors"
                           title="Revoke"
                         >
                           <Trash2 size={12} />
@@ -527,9 +527,9 @@ export default function SuperAdminModule() {
 
       {/* ══ ACTIVITY LOG ══ */}
       {tab === "activity" && (
-        <div className="bg-[#0d1610] border border-[#1e2d22] rounded-xl overflow-hidden">
-          <div className="px-4 py-3 border-b border-[#1e2d22]">
-            <h3 className="text-[12px] font-semibold text-[#a0c4a8]">Activity log (last 50 actions)</h3>
+        <div className="bg-crm-card border border-crm-border rounded-xl overflow-hidden">
+          <div className="px-4 py-3 border-b border-crm-border">
+            <h3 className="text-[12px] font-semibold text-crm-text-secondary">Activity log (last 50 actions)</h3>
           </div>
           {loading ? (
             <div className="flex items-center justify-center h-24">
@@ -537,26 +537,26 @@ export default function SuperAdminModule() {
             </div>
           ) : activityLog.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 gap-2">
-              <Activity size={28} className="text-[#2a3d2d]" />
-              <p className="text-[12px] text-[#3a5040]">No activity recorded yet.</p>
+              <Activity size={28} className="text-crm-text-faint" />
+              <p className="text-[12px] text-crm-text-faint">No activity recorded yet.</p>
             </div>
           ) : (
-            <div className="divide-y divide-[#1e2d22]">
+            <div className="divide-y divide-crm-border">
               {activityLog.map(log => (
                 <div key={log.id} className="flex items-start gap-3 px-4 py-3">
                   <div className="w-6 h-6 rounded-full bg-emerald-950 border border-emerald-800 flex items-center justify-center flex-shrink-0 mt-0.5">
                     <Activity size={10} className="text-emerald-400" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[12px] text-[#c8e0cc]">
+                    <p className="text-[12px] text-crm-text">
                       <span className="font-semibold">{log.actor?.full_name || "System"}</span>
                       {" "}<span className="text-emerald-400">{log.action}</span>
                       {" "}on <span className="font-medium">{log.entity_type}</span>
                     </p>
                     {log.details && typeof log.details === "object" && Object.keys(log.details).length > 0 && (
-                      <p className="text-[10px] text-[#4a6650] font-mono truncate mt-0.5">{JSON.stringify(log.details)}</p>
+                      <p className="text-[10px] text-crm-text-dim font-mono truncate mt-0.5">{JSON.stringify(log.details)}</p>
                     )}
-                    <p className="text-[10px] text-[#3a5040] mt-0.5">{new Date(log.created_at).toLocaleString()}</p>
+                    <p className="text-[10px] text-crm-text-faint mt-0.5">{new Date(log.created_at).toLocaleString()}</p>
                   </div>
                 </div>
               ))}
@@ -568,7 +568,7 @@ export default function SuperAdminModule() {
       {/* ══ ROUTES ══ */}
       {tab === "routes" && (
         <div className="space-y-4">
-          <div className="flex items-center gap-3 p-3 rounded-xl bg-[#0d1610] border border-blue-800">
+          <div className="flex items-center gap-3 p-3 rounded-xl bg-crm-card border border-blue-800">
             <Globe size={14} className="text-blue-400 flex-shrink-0" />
             <p className="text-[12px] text-blue-300">
               {ROUTES.length} routes registered — <span className="text-emerald-400">Green</span> = public · <span className="text-amber-400">Amber</span> = staff · <span className="text-red-400">Red</span> = super_admin only
@@ -594,11 +594,11 @@ export default function SuperAdminModule() {
             : access === "sponsor"    ? "bg-violet-400"
             :                           "bg-red-400";
             return (
-              <div key={access} className={`bg-[#0d1610] border ${colour} rounded-xl p-4`}>
+              <div key={access} className={`bg-crm-card border ${colour} rounded-xl p-4`}>
                 <div className="flex items-center gap-2 mb-3">
                   <span className={`w-2 h-2 rounded-full ${dot}`} />
-                  <h3 className="text-[12px] font-bold text-[#c8e0cc]">{label}</h3>
-                  <span className="text-[10px] font-mono text-[#4a6650] bg-[#111a14] border border-[#1e2d22] rounded px-1.5">{group.length}</span>
+                  <h3 className="text-[12px] font-bold text-crm-text">{label}</h3>
+                  <span className="text-[10px] font-mono text-crm-text-dim bg-crm-surface border border-crm-border rounded px-1.5">{group.length}</span>
                 </div>
                 <div className="grid sm:grid-cols-2 gap-1.5">
                   {group.map(r => {
@@ -606,12 +606,12 @@ export default function SuperAdminModule() {
                     return (
                       <Link
                         key={r.path} to={r.path} target="_blank"
-                        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#080d0a] border border-[#1e2d22] hover:border-[#2a3d2d] transition-all text-[11px] group"
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-crm-card border border-crm-border hover:border-crm-border-hover transition-all text-[11px] group"
                       >
-                        <Icon size={12} className="text-[#4a6650] group-hover:text-[#6b8f72] flex-shrink-0" />
-                        <span className="font-medium text-[#c8e0cc] truncate">{r.label}</span>
-                        <code className="text-[9px] text-[#3a5040] ml-auto font-mono">{r.path}</code>
-                        <ChevronRight size={10} className="text-[#2a3d2d] flex-shrink-0" />
+                        <Icon size={12} className="text-crm-text-dim group-hover:text-crm-text-muted flex-shrink-0" />
+                        <span className="font-medium text-crm-text truncate">{r.label}</span>
+                        <code className="text-[9px] text-crm-text-faint ml-auto font-mono">{r.path}</code>
+                        <ChevronRight size={10} className="text-crm-text-faint flex-shrink-0" />
                       </Link>
                     );
                   })}
@@ -625,8 +625,8 @@ export default function SuperAdminModule() {
       {/* ══ SETTINGS ══ */}
       {tab === "settings" && (
         <div className="space-y-4">
-          <div className="bg-[#0d1610] border border-[#1e2d22] rounded-xl p-4">
-            <h3 className="text-[12px] font-semibold text-[#a0c4a8] flex items-center gap-2 mb-4">
+          <div className="bg-crm-card border border-crm-border rounded-xl p-4">
+            <h3 className="text-[12px] font-semibold text-crm-text-secondary flex items-center gap-2 mb-4">
               <Settings size={13} /> System information
             </h3>
             <div className="space-y-2">
@@ -638,19 +638,19 @@ export default function SuperAdminModule() {
                 { label:"Your user ID",  value:user?.id ?? "—"                      },
                 { label:"Your email",    value:user?.email ?? "—"                   },
               ].map(s => (
-                <div key={s.label} className="flex items-center justify-between py-2 border-b border-[#1e2d22] last:border-0">
-                  <p className="text-[11px] text-[#6b8f72]">{s.label}</p>
-                  <p className="text-[11px] font-mono text-[#c8e0cc] truncate max-w-xs text-right">{s.value}</p>
+                <div key={s.label} className="flex items-center justify-between py-2 border-b border-crm-border last:border-0">
+                  <p className="text-[11px] text-crm-text-muted">{s.label}</p>
+                  <p className="text-[11px] font-mono text-crm-text truncate max-w-xs text-right">{s.value}</p>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="bg-[#0d1610] border border-red-900 rounded-xl p-4">
+          <div className="bg-crm-card border border-red-900 rounded-xl p-4">
             <h3 className="text-[12px] font-semibold text-red-400 flex items-center gap-2 mb-3">
               <AlertTriangle size={13} /> Danger zone
             </h3>
-            <p className="text-[11px] text-[#6b8f72] mb-3">These actions are irreversible. Proceed with caution.</p>
+            <p className="text-[11px] text-crm-text-muted mb-3">These actions are irreversible. Proceed with caution.</p>
             <Button
               variant="outline"
               size="sm"

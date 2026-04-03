@@ -90,35 +90,35 @@ function ComposeModal({ account, replyTo, forwardOf, onClose, onSent }: ComposeP
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/50">
-      <div className="w-full max-w-xl bg-[#0d1610] border border-[#1e2d22] rounded-2xl shadow-2xl flex flex-col max-h-[85vh]">
+      <div className="w-full max-w-xl bg-crm-card border border-crm-border rounded-2xl shadow-2xl flex flex-col max-h-[85vh]">
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-[#1e2d22]">
-          <span className="text-[13px] font-semibold text-[#c8e0cc]">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-crm-border">
+          <span className="text-[13px] font-semibold text-crm-text">
             {replyTo ? "Reply" : forwardOf ? "Forward" : "New Message"}
           </span>
-          <button onClick={onClose} className="text-[#4a6650] hover:text-[#c8e0cc] transition-colors">
+          <button onClick={onClose} className="text-crm-text-dim hover:text-crm-text transition-colors">
             <X size={15} />
           </button>
         </div>
 
         {/* Fields */}
         <div className="px-4 pt-3 space-y-2 flex-shrink-0">
-          <div className="flex items-center gap-2 text-[12px] text-[#4a6650] border-b border-[#1e2d22] pb-2">
+          <div className="flex items-center gap-2 text-[12px] text-crm-text-dim border-b border-crm-border pb-2">
             <span className="w-8 flex-shrink-0">To:</span>
             <input value={to} onChange={e => setTo(e.target.value)}
-              className="flex-1 bg-transparent text-[#c8e0cc] outline-none placeholder-[#3a5040]"
+              className="flex-1 bg-transparent text-crm-text outline-none placeholder-crm-text-faint"
               placeholder="recipient@example.com" />
           </div>
-          <div className="flex items-center gap-2 text-[12px] text-[#4a6650] border-b border-[#1e2d22] pb-2">
+          <div className="flex items-center gap-2 text-[12px] text-crm-text-dim border-b border-crm-border pb-2">
             <span className="w-8 flex-shrink-0">CC:</span>
             <input value={cc} onChange={e => setCc(e.target.value)}
-              className="flex-1 bg-transparent text-[#c8e0cc] outline-none placeholder-[#3a5040]"
+              className="flex-1 bg-transparent text-crm-text outline-none placeholder-crm-text-faint"
               placeholder="Optional CC" />
           </div>
-          <div className="flex items-center gap-2 text-[12px] text-[#4a6650] border-b border-[#1e2d22] pb-2">
+          <div className="flex items-center gap-2 text-[12px] text-crm-text-dim border-b border-crm-border pb-2">
             <span className="w-8 flex-shrink-0">Re:</span>
             <input value={subject} onChange={e => setSubject(e.target.value)}
-              className="flex-1 bg-transparent text-[#c8e0cc] outline-none placeholder-[#3a5040]"
+              className="flex-1 bg-transparent text-crm-text outline-none placeholder-crm-text-faint"
               placeholder="Subject" />
           </div>
         </div>
@@ -127,13 +127,13 @@ function ComposeModal({ account, replyTo, forwardOf, onClose, onSent }: ComposeP
         <textarea
           value={body}
           onChange={e => setBody(e.target.value)}
-          className="flex-1 bg-transparent text-[#c8e0cc] text-[12.5px] outline-none px-4 pt-3 pb-2 resize-none placeholder-[#3a5040] min-h-[160px]"
+          className="flex-1 bg-transparent text-crm-text text-[12.5px] outline-none px-4 pt-3 pb-2 resize-none placeholder-crm-text-faint min-h-[160px]"
           placeholder="Write your message…"
         />
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-4 py-3 border-t border-[#1e2d22]">
-          <span className="text-[10px] text-[#4a6650] font-mono">From: {account.email_address}</span>
+        <div className="flex items-center justify-between px-4 py-3 border-t border-crm-border">
+          <span className="text-[10px] text-crm-text-dim font-mono">From: {account.email_address}</span>
           <button
             onClick={handleSend}
             disabled={sending || !to.trim() || !subject.trim()}
@@ -165,25 +165,25 @@ function EmailDetailPanel({ email, onReply, onForward, onStar, onTrash }: Detail
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="px-5 pt-5 pb-4 border-b border-[#1e2d22] flex-shrink-0">
-        <h2 className="text-[14px] font-bold text-[#c8e0cc] mb-3 leading-snug">{email.subject}</h2>
-        <div className="space-y-1 text-[11px] text-[#6b8f72]">
+      <div className="px-5 pt-5 pb-4 border-b border-crm-border flex-shrink-0">
+        <h2 className="text-[14px] font-bold text-crm-text mb-3 leading-snug">{email.subject}</h2>
+        <div className="space-y-1 text-[11px] text-crm-text-muted">
           <div className="flex gap-2">
-            <span className="text-[#4a6650] w-6">From</span>
-            <span className="text-[#a0c4a8]">{email.from_name || email.from_address} {email.from_name && <span className="text-[#4a6650]">&lt;{email.from_address}&gt;</span>}</span>
+            <span className="text-crm-text-dim w-6">From</span>
+            <span className="text-crm-text-secondary">{email.from_name || email.from_address} {email.from_name && <span className="text-crm-text-dim">&lt;{email.from_address}&gt;</span>}</span>
           </div>
           <div className="flex gap-2">
-            <span className="text-[#4a6650] w-6">To</span>
+            <span className="text-crm-text-dim w-6">To</span>
             <span>{email.to_address}</span>
           </div>
           {email.cc_address && (
             <div className="flex gap-2">
-              <span className="text-[#4a6650] w-6">CC</span>
+              <span className="text-crm-text-dim w-6">CC</span>
               <span>{email.cc_address}</span>
             </div>
           )}
           <div className="flex gap-2">
-            <span className="text-[#4a6650] w-6">Date</span>
+            <span className="text-crm-text-dim w-6">Date</span>
             <span>{email.sent_at ? format(parseISO(email.sent_at), "d MMM yyyy · h:mm a") : "—"}</span>
           </div>
         </div>
@@ -201,10 +201,10 @@ function EmailDetailPanel({ email, onReply, onForward, onStar, onTrash }: Detail
               onClick={action}
               className={`flex items-center gap-1 text-[11px] px-2.5 py-1.5 rounded-lg border transition-colors ${
                 label === "Trash"
-                  ? "border-red-900 text-[#4a6650] hover:text-red-400 hover:bg-red-950"
+                  ? "border-red-900 text-crm-text-dim hover:text-red-400 hover:bg-red-950"
                   : label.includes("Star") && email.is_starred
                   ? "border-amber-700 text-amber-400 bg-amber-950"
-                  : "border-[#1e2d22] text-[#4a6650] hover:text-[#a0c4a8] hover:bg-[#111a14]"
+                  : "border-crm-border text-crm-text-dim hover:text-crm-text-secondary hover:bg-crm-surface"
               }`}
             >
               <Icon size={11} />
@@ -212,7 +212,7 @@ function EmailDetailPanel({ email, onReply, onForward, onStar, onTrash }: Detail
             </button>
           ))}
           {email.has_attachments && (
-            <span className="flex items-center gap-1 text-[10px] text-[#4a6650] ml-auto">
+            <span className="flex items-center gap-1 text-[10px] text-crm-text-dim ml-auto">
               <Paperclip size={10} /> Attachments
             </span>
           )}
@@ -223,11 +223,11 @@ function EmailDetailPanel({ email, onReply, onForward, onStar, onTrash }: Detail
       <div className="flex-1 overflow-y-auto px-5 py-4">
         {email.body_html ? (
           <div
-            className="text-[12.5px] text-[#a0c4a8] leading-relaxed prose-sm max-w-none [&_a]:text-emerald-400 [&_a]:underline"
+            className="text-[12.5px] text-crm-text-secondary leading-relaxed prose-sm max-w-none [&_a]:text-emerald-400 [&_a]:underline"
             dangerouslySetInnerHTML={{ __html: safeHtml }}
           />
         ) : (
-          <p className="text-[12.5px] text-[#a0c4a8] leading-relaxed whitespace-pre-wrap">
+          <p className="text-[12.5px] text-crm-text-secondary leading-relaxed whitespace-pre-wrap">
             {email.body_text || "(No content)"}
           </p>
         )}
@@ -397,12 +397,12 @@ export default function EmailInboxModule() {
   if (!account && !isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4 text-center">
-        <div className="h-16 w-16 rounded-2xl bg-[#111a14] border border-[#1e2d22] flex items-center justify-center">
-          <Mail className="h-7 w-7 text-[#4a6650]" />
+        <div className="h-16 w-16 rounded-2xl bg-crm-surface border border-crm-border flex items-center justify-center">
+          <Mail className="h-7 w-7 text-crm-text-dim" />
         </div>
         <div>
-          <h2 className="text-lg font-bold text-[#c8e0cc]">No email account assigned</h2>
-          <p className="text-sm text-[#6b8f72] mt-1 max-w-sm">
+          <h2 className="text-lg font-bold text-crm-text">No email account assigned</h2>
+          <p className="text-sm text-crm-text-muted mt-1 max-w-sm">
             Contact your admin to have a <span className="font-mono text-emerald-500">@ecowasparliamentinitiatives.org</span> email address assigned to your account.
           </p>
         </div>
@@ -413,7 +413,7 @@ export default function EmailInboxModule() {
   return (
     <div className="flex h-[calc(100vh-3.5rem)] -m-6 overflow-hidden">
       {/* Folder sidebar */}
-      <div className="w-[160px] flex-shrink-0 border-r border-[#1e2d22] bg-[#080d0a] flex flex-col py-3">
+      <div className="w-[160px] flex-shrink-0 border-r border-crm-border bg-crm-card flex flex-col py-3">
         <div className="px-3 mb-3">
           <button
             onClick={() => { setReplyTarget(null); setForwardTarget(null); setComposeOpen(true); }}
@@ -434,7 +434,7 @@ export default function EmailInboxModule() {
                 className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left transition-colors ${
                   activeFolder === f.id
                     ? "bg-emerald-950 text-emerald-400 border border-emerald-800"
-                    : "text-[#6b8f72] hover:text-[#a0c4a8] hover:bg-[#111a14] border border-transparent"
+                    : "text-crm-text-muted hover:text-crm-text-secondary hover:bg-crm-surface border border-transparent"
                 }`}
               >
                 <Icon size={13} className="flex-shrink-0" />
@@ -450,29 +450,29 @@ export default function EmailInboxModule() {
         </nav>
 
         {account && (
-          <div className="px-3 mt-3 border-t border-[#1e2d22] pt-3">
-            <p className="text-[9px] text-[#3a5040] font-mono leading-tight break-all">{account.email_address}</p>
+          <div className="px-3 mt-3 border-t border-crm-border pt-3">
+            <p className="text-[9px] text-crm-text-faint font-mono leading-tight break-all">{account.email_address}</p>
           </div>
         )}
       </div>
 
       {/* Email list */}
-      <div className="w-[280px] flex-shrink-0 border-r border-[#1e2d22] flex flex-col bg-[#0a0f0d]">
+      <div className="w-[280px] flex-shrink-0 border-r border-crm-border flex flex-col bg-crm">
         {/* List header */}
-        <div className="px-3 py-2.5 border-b border-[#1e2d22] flex items-center gap-2 flex-shrink-0">
+        <div className="px-3 py-2.5 border-b border-crm-border flex items-center gap-2 flex-shrink-0">
           <div className="relative flex-1">
-            <Search size={11} className="absolute left-2 top-1/2 -translate-y-1/2 text-[#4a6650]" />
+            <Search size={11} className="absolute left-2 top-1/2 -translate-y-1/2 text-crm-text-dim" />
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Search emails…"
-              className="w-full bg-[#111a14] border border-[#1e2d22] rounded-md text-[11px] text-[#c8e0cc] placeholder-[#3a5040] pl-6 pr-2 py-1.5 outline-none focus:border-emerald-700"
+              className="w-full bg-crm-surface border border-crm-border rounded-md text-[11px] text-crm-text placeholder-crm-text-faint pl-6 pr-2 py-1.5 outline-none focus:border-emerald-700"
             />
           </div>
           <button
             onClick={syncEmails}
             disabled={syncing}
-            className="p-1.5 rounded text-[#4a6650] hover:text-[#a0c4a8] hover:bg-[#111a14] transition-colors"
+            className="p-1.5 rounded text-crm-text-dim hover:text-crm-text-secondary hover:bg-crm-surface transition-colors"
             title="Sync emails"
           >
             <RefreshCw size={12} className={syncing ? "animate-spin" : ""} />
@@ -487,16 +487,16 @@ export default function EmailInboxModule() {
             </div>
           ) : filteredEmails.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-40 gap-2">
-              <MailOpen size={24} className="text-[#2a3d2d]" />
-              <p className="text-[11px] text-[#3a5040]">{search ? "No results" : "No emails"}</p>
+              <MailOpen size={24} className="text-crm-text-faint" />
+              <p className="text-[11px] text-crm-text-faint">{search ? "No results" : "No emails"}</p>
             </div>
           ) : (
             filteredEmails.map(email => (
               <button
                 key={email.id}
                 onClick={() => handleSelectEmail(email)}
-                className={`w-full text-left px-3 py-3 transition-colors hover:bg-[#111a14] ${
-                  selectedEmail?.id === email.id ? "bg-[#111a14] border-l-2 border-emerald-600" : ""
+                className={`w-full text-left px-3 py-3 transition-colors hover:bg-crm-surface ${
+                  selectedEmail?.id === email.id ? "bg-crm-surface border-l-2 border-emerald-600" : ""
                 }`}
               >
                 <div className="flex items-start gap-2">
@@ -505,17 +505,17 @@ export default function EmailInboxModule() {
                   )}
                   <div className={`flex-1 min-w-0 ${!email.is_read ? "" : "pl-3.5"}`}>
                     <div className="flex items-center justify-between gap-1 mb-0.5">
-                      <p className={`text-[11.5px] truncate ${!email.is_read ? "font-bold text-[#c8e0cc]" : "font-medium text-[#8ab090]"}`}>
+                      <p className={`text-[11.5px] truncate ${!email.is_read ? "font-bold text-crm-text" : "font-medium text-[#8ab090]"}`}>
                         {email.from_name || email.from_address}
                       </p>
-                      <span className="text-[9px] text-[#3a5040] flex-shrink-0">
+                      <span className="text-[9px] text-crm-text-faint flex-shrink-0">
                         {email.sent_at ? format(parseISO(email.sent_at), "d MMM") : ""}
                       </span>
                     </div>
-                    <p className={`text-[11px] truncate ${!email.is_read ? "text-[#a0c4a8]" : "text-[#6b8f72]"}`}>
+                    <p className={`text-[11px] truncate ${!email.is_read ? "text-crm-text-secondary" : "text-crm-text-muted"}`}>
                       {email.subject}
                     </p>
-                    <p className="text-[10px] text-[#4a6650] truncate mt-0.5">
+                    <p className="text-[10px] text-crm-text-dim truncate mt-0.5">
                       {(email.body_text || "").slice(0, 80)}
                     </p>
                   </div>
@@ -530,7 +530,7 @@ export default function EmailInboxModule() {
       </div>
 
       {/* Detail panel */}
-      <div className="flex-1 overflow-hidden bg-[#0d1610]">
+      <div className="flex-1 overflow-hidden bg-crm-card">
         {selectedEmail ? (
           <EmailDetailPanel
             email={selectedEmail}
@@ -541,10 +541,10 @@ export default function EmailInboxModule() {
           />
         ) : (
           <div className="flex flex-col items-center justify-center h-full gap-3 text-center">
-            <div className="h-14 w-14 rounded-2xl bg-[#111a14] border border-[#1e2d22] flex items-center justify-center">
-              <Mail className="h-6 w-6 text-[#2a3d2d]" />
+            <div className="h-14 w-14 rounded-2xl bg-crm-surface border border-crm-border flex items-center justify-center">
+              <Mail className="h-6 w-6 text-crm-text-faint" />
             </div>
-            <p className="text-sm text-[#4a6650]">Select an email to read</p>
+            <p className="text-sm text-crm-text-dim">Select an email to read</p>
           </div>
         )}
       </div>
