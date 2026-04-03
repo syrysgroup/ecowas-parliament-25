@@ -85,7 +85,10 @@ export default function Auth() {
   const [submitting,  setSubmitting]  = useState(false);
   const [teamMode,    setTeamMode]    = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaError, setCaptchaError] = useState(false);
+  const [captchaLoading, setCaptchaLoading] = useState(true);
   const turnstileRef = useRef<any>(null);
+  const captchaTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (!loading && user) {
@@ -98,10 +101,19 @@ export default function Auth() {
     if (params.get("team") === "1") setTeamMode(true);
   }, [location.search]);
 
+  // Clear captcha timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (captchaTimeoutRef.current) clearTimeout(captchaTimeoutRef.current);
+    };
+  }, []);
+
   if (loading) return null;
 
   const resetTurnstile = () => {
     setCaptchaToken(null);
+    setCaptchaError(false);
+    setCaptchaLoading(true);
     turnstileRef.current?.reset();
   };
 
