@@ -6,9 +6,9 @@ import CountdownTimer from "@/components/home/CountdownTimer";
 import CountriesSection from "@/components/home/CountriesSection";
 import AnniversarySection from "@/components/home/AnniversarySection";
 import PillarsGrid from "@/components/home/PillarsGrid";
-import SponsorsSection from "@/components/home/SponsorsSection";
 import ImplementingPartnersSection from "@/components/home/ImplementingPartnersSection";
 import InstitutionalPartnersSection from "@/components/home/InstitutionalPartnersSection";
+import SponsorPlaceholderSection from "@/components/home/SponsorPlaceholderSection";
 import EventsSection from "@/components/home/EventsSection";
 import StatsSection from "@/components/home/StatsSection";
 import DidYouKnow from "@/components/home/DidYouKnow";
@@ -26,9 +26,9 @@ const Index = () => {
       <CountriesSection />
       <AnniversarySection />
       <PillarsGrid />
-      <SponsorsSection />
       <ImplementingPartnersSection />
       <InstitutionalPartnersSection />
+      <SponsorPlaceholderSection />
       <EventsSection />
       <StatsSection />
       <DidYouKnow />

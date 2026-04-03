@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import AnimatedSection from "@/components/shared/AnimatedSection";
 import SponsorLogo from "@/components/shared/SponsorLogo";
@@ -162,8 +163,58 @@ const Stakeholders = () => {
         </div>
       </section>
 
-      {/* Sponsors */}
+      {/* Institutional Partners */}
       <section className="py-16">
+        <div className="container">
+          <AnimatedSection className="mb-8">
+            <Badge className="mb-3 bg-ecowas-blue/10 text-ecowas-blue">
+              Strategic Alliances
+            </Badge>
+            <h2 className="text-2xl font-black text-foreground">
+              Institutional partners
+            </h2>
+          </AnimatedSection>
+
+          <div className="grid gap-6 md:grid-cols-2 max-w-4xl">
+            {[
+              {
+                name: "AWALCO",
+                fullName: "Association of West African Legislative Correspondents",
+                description: "A professional body uniting legislative journalists across West Africa to strengthen parliamentary reporting, media freedom, and public accountability in governance.",
+                slug: "awalco",
+              },
+              {
+                name: "Alliance for Economic Research and Ethics LTD/GTE",
+                fullName: "Alliance for Economic Research and Ethics",
+                description: "An organisation dedicated to evidence-based economic research and ethical governance, supporting policy development and institutional strengthening across the region.",
+                slug: "alliance-economic-research",
+              },
+            ].map((partner, index) => (
+              <AnimatedSection key={partner.name} delay={index * 70}>
+                <Link to={`/partners/${partner.slug}`} className="block h-full">
+                  <article className="overflow-hidden rounded-3xl border border-ecowas-blue/20 bg-card shadow-sm p-6 hover:border-ecowas-blue/40 transition-all hover:shadow-lg h-full flex flex-col">
+                    <h3 className="text-xl font-black text-card-foreground">
+                      {partner.name}
+                    </h3>
+                    <p className="text-xs text-muted-foreground mt-1 mb-3">
+                      {partner.fullName}
+                    </p>
+                    <p className="text-sm text-muted-foreground leading-relaxed flex-1">
+                      {partner.description}
+                    </p>
+                    <span className="mt-4 inline-flex items-center text-xs font-semibold text-primary">
+                      Learn more →
+                    </span>
+                  </article>
+                </Link>
+              </AnimatedSection>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Sponsors */}
+      <section className="bg-muted/30 py-16">
         <div className="container">
           <AnimatedSection className="mb-8">
             <h2 className="text-2xl font-black text-foreground">
