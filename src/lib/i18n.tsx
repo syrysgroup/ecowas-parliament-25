@@ -185,6 +185,10 @@ const translations: Record<Locale, Record<string, string>> = {
     "nav.partnerWithUs": "Seja parceiro",
     "nav.contact": "Contacto",
     "nav.events": "Eventos",
+    "nav.eventsMedia": "Eventos & Media",
+    "nav.people": "Pessoas",
+    "nav.volunteer": "Voluntariado",
+    "nav.partners": "Parceiros",
     // Programme names
     "prog.youth": "Inovação Juvenil",
     "prog.trade": "Comércio & PME",
