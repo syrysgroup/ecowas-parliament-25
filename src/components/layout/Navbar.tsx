@@ -46,15 +46,8 @@ const Navbar = () => {
         { label: t("common.mediaKit"), to: "/media-kit" },
       ],
     },
-    {
-      label: t("nav.people"),
-      to: "/stakeholders",
-      children: [
-        { label: t("nav.stakeholders"), to: "/stakeholders" },
-        { label: t("nav.team"), to: "/team" },
-        { label: t("nav.partners"), to: "/stakeholders#partners" },
-      ],
-    },
+    { label: t("nav.stakeholdersPartners"), to: "/stakeholders" },
+    { label: t("nav.team"), to: "/team" },
     { label: t("nav.volunteer"), to: "/volunteer" },
     { label: t("nav.contact"), to: "/contact" },
   ];
