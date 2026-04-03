@@ -91,7 +91,6 @@ const ImplementingPartnersSection = () => {
               </AnimatedSection>
           ))}
         </div>
-        </div>
       </div>
     </section>
   );
