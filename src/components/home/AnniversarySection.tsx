@@ -20,15 +20,15 @@ const AnniversarySection = () => {
           {/* Left: Logo in circular white shape */}
           <AnimatedSection className="flex justify-center">
             <div className="relative">
-              <div className="w-64 h-64 md:w-80 md:h-80 rounded-full bg-white shadow-xl flex items-center justify-center">
+              <div className="w-96 h-96 md:w-[28rem] md:h-[28rem] rounded-full bg-gray-200 border-4 border-ecowas-green shadow-xl flex items-center justify-center">
                 <img
                   src={parliament25Logo}
                   alt="Parliament at 25 Anniversary Logo"
-                  className="h-44 md:h-56 w-auto object-contain drop-shadow-[0_0_30px_hsl(152_100%_26%/0.15)]"
+                  className="h-72 md:h-80 w-auto object-contain drop-shadow-[0_0_30px_hsl(152_100%_26%/0.15)]"
                 />
               </div>
               {/* Subtle decorative ring */}
-              <div className="absolute inset-0 w-64 h-64 md:w-80 md:h-80 rounded-full border-2 border-primary/10 scale-110" />
+              <div className="absolute inset-0 w-96 h-96 md:w-[28rem] md:h-[28rem] rounded-full border-2 border-ecowas-green/20 scale-110" />
             </div>
           </AnimatedSection>
 
