@@ -383,7 +383,7 @@ export default function Auth() {
                   <button type="button" onClick={() => setMode("forgot")} className="text-primary hover:underline font-medium">Forgot password?</button>
                 </div>
                 {TurnstileWidget}
-                <Button type="submit" className={`w-full gap-2 h-11 text-sm font-bold ${teamMode ? "bg-accent text-accent-foreground hover:bg-accent/90" : ""}`} disabled={submitting || !captchaToken}>
+                <Button type="submit" className={`w-full gap-2 h-11 text-sm font-bold ${disabledClasses} ${teamMode ? "bg-accent text-accent-foreground hover:bg-accent/90" : ""}`} disabled={isButtonDisabled}>
                   {submitting ? <><span className="animate-spin inline-block">⟳</span> Signing in…</> :
                     <>{teamMode ? <Crown className="h-4 w-4" /> : <Lock className="h-4 w-4" />} Sign in</>}
                 </Button>
