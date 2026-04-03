@@ -1,39 +1,47 @@
 
 
-## Plan: Fix CAPTCHA Integration and Login Reliability
+## Plan: Hero Logo Enhancement + CRM Theme Redesign
 
-### Issues Found
+### Part 1 — Make Parliament 25 Logo the Hero Focal Point
 
-1. **Turnstile "loaded multiple times" warning** — The Turnstile script may be injected multiple times due to React strict mode or component re-renders, causing the widget to fail silently.
-2. **Sign in button not properly disabled** — The disabled state needs to be more visually apparent and functionally enforced.
-3. **CAPTCHA must be enabled on Supabase** — The Supabase project must have Cloudflare Turnstile CAPTCHA enabled in its auth settings for the `captchaToken` parameter to be validated server-side.
+The `parliament-25-logo.png` asset exists but isn't used on the homepage. We'll add it prominently below the ECOWAS flag in the hero section.
 
-### Changes
+**File: `src/components/home/HeroSection.tsx`**
+- Import `parliament-25-logo.png` from assets
+- After the ECOWAS logo/flag block, add a large Parliament 25 logo (roughly 200-280px on desktop, 140px on mobile) with a subtle glow/shadow effect
+- Give it a fade-in animation consistent with the existing staggered delays
 
-#### 1. Verify Supabase CAPTCHA Configuration
-- Check if Cloudflare Turnstile is enabled in the Supabase project's Auth settings (Auth > Settings > Bot Protection)
-- The site key `0x4AAAAAAAczus4H6t9WSW6Oy` must match what's configured in Supabase, and the corresponding **secret key** must be set on the Supabase side
-- Without this, the captchaToken is silently ignored by Supabase
+### Part 2 — CRM Dark/Light Theme Support
 
-#### 2. Fix Turnstile Widget Rendering (`src/pages/Auth.tsx`)
-- Add `scriptOptions={{ appendTo: "body" }}` to the Turnstile component to prevent double-loading conflicts
-- Add a key prop based on `mode` so the widget re-mounts cleanly when switching between sign-in/sign-up/forgot
-- Add a visible loading/fallback state while the widget loads, so the area isn't blank
+The entire CRM (layout, sidebar, dashboard module, and all other modules) uses hardcoded hex colors like `bg-[#0a0f0d]`, `text-[#c8e0cc]`, `border-[#1e2d22]` — these ignore the theme completely. The `CRMThemeToggle` component exists but toggling it does nothing visible.
 
-#### 3. Improve Button Disabled State (`src/pages/Auth.tsx`)
-- Ensure the disabled styling is visually clear (opacity, cursor) when `captchaToken` is null
-- Add explicit `opacity-50 cursor-not-allowed` classes when disabled to make it obvious
+**Strategy:** Replace all hardcoded CRM colors with Tailwind CSS variables (`bg-background`, `text-foreground`, `bg-card`, `border-border`, `text-muted-foreground`, etc.) that respond to the `.dark` class. Add CRM-specific CSS variables for the green-tinted accent palette.
 
-#### 4. Add Error Resilience
-- Add an `onError` handler that shows a toast asking the user to refresh if Turnstile fails to load
-- Add a timeout fallback: if CAPTCHA doesn't resolve within 10 seconds, show a "Retry CAPTCHA" button
+**Files to update:**
 
-### Files Changed
+1. **`src/index.css`** — Add CRM-specific CSS variables for both light and dark themes (e.g., `--crm-surface`, `--crm-sidebar`, `--crm-accent`) to preserve the distinctive green-tinted aesthetic while supporting both modes
 
-| File | Change |
-|------|--------|
-| `src/pages/Auth.tsx` | Fix Turnstile props, add loading state, improve disabled button styling, add error resilience |
+2. **`src/components/crm/CRMLayout.tsx`** — Replace all hardcoded colors:
+   - `bg-[#0a0f0d]` → `bg-background`
+   - `text-[#e8f5e9]` → `text-foreground`
+   - `border-[#1e2d22]` → `border-border`
+   - `bg-[#080d0a]` → `bg-card`
+   - Notification dropdown: swap hardcoded dark hex to theme-aware classes
+   - `CRMThemeToggle`: use theme-aware styling instead of hardcoded green hex
 
-### Supabase Action Required
-- Verify Turnstile CAPTCHA is enabled in the Supabase Auth settings dashboard with the matching site key and secret key
+3. **`src/components/crm/CRMSidebar.tsx`** — Same treatment:
+   - `bg-[#080d0a]` → `bg-card`
+   - Active states, hover states, text colors all converted to semantic Tailwind tokens
+   - Badge colors remain fixed (red/blue indicators) but backgrounds adapt
+
+4. **`src/components/crm/modules/DashboardModule.tsx`** — Convert `StatCard` and all hardcoded module colors to theme tokens. Status/priority badge colors stay vibrant but container backgrounds adapt.
+
+5. **All other CRM modules** (`TaskBoardModule`, `InboxModule`, `CalendarModule`, etc.) — Audit and replace hardcoded dark hex values with theme-aware equivalents. Most follow the same pattern as the dashboard.
+
+### Technical Details
+
+- The project uses `next-themes` with `darkMode: ["class"]` in Tailwind — the `.dark` class on `<html>` drives everything
+- Light mode CRM will use warm neutral greens (e.g., `--crm-surface: 150 20% 97%`) while dark mode keeps the current deep green tones
+- The `ThemeToggle` component already works correctly; only the CRM's hardcoded colors prevent it from having any visual effect
+- Status/priority accent colors (red, amber, blue, emerald badges) will remain consistent across themes for quick visual scanning
 
