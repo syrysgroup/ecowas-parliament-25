@@ -36,25 +36,27 @@ const Navbar = () => {
       ],
     },
     {
-      label: t("nav.events"),
+      label: t("nav.eventsMedia"),
       to: "/events",
       children: [
+        { label: t("nav.events"), to: "/events" },
         { label: t("nav.timeline"), to: "/timeline" },
         { label: t("nav.news"), to: "/news" },
         { label: t("nav.documents"), to: "/documents" },
-        { label: t("nav.events"), to: "/events" },
         { label: t("common.mediaKit"), to: "/media-kit" },
       ],
     },
     {
-      label: t("nav.stakeholders"),
+      label: t("nav.people"),
       to: "/stakeholders",
       children: [
         { label: t("nav.stakeholders"), to: "/stakeholders" },
         { label: t("nav.team"), to: "/team" },
-        { label: t("nav.contact"), to: "/contact" },
+        { label: t("nav.partners"), to: "/stakeholders#partners" },
       ],
     },
+    { label: t("nav.volunteer"), to: "/volunteer" },
+    { label: t("nav.contact"), to: "/contact" },
   ];
 
   const isActive = (to: string) =>
@@ -242,9 +244,6 @@ const Navbar = () => {
                     </div>
                     <Button asChild className="w-full" onClick={() => setMobileOpen(false)}>
                       <Link to="/sponsors">{t("nav.partnerWithUs")}</Link>
-                    </Button>
-                    <Button asChild variant="outline" className="w-full" onClick={() => setMobileOpen(false)}>
-                      <Link to="/contact">{t("nav.contact")}</Link>
                     </Button>
                   </div>
                 </nav>

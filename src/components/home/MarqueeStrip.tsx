@@ -3,7 +3,7 @@ const items = [
   "Youth Innovation & Entrepreneurship",
   "Trade & SME Forums",
   "Women's Empowerment Forum",
-  "Parliamentary Awards 2025",
+  "AWALCO Parliamentary Awards 2025",
   "12 Member States · One Parliament",
   "Youth Parliament Simulation",
   "Civic Education & Democracy",

@@ -17,7 +17,7 @@ const programmeMap: Record<string, { label: string; to: string; color: string; b
   civic: { label: "Civic Education", to: "/programmes/civic", color: "bg-ecowas-blue/10 text-ecowas-blue", borderColor: "border-l-ecowas-blue", icon: <Megaphone className="h-3.5 w-3.5" /> },
   culture: { label: "Culture & Creativity", to: "/programmes/culture", color: "bg-ecowas-lime/10 text-ecowas-lime", borderColor: "border-l-ecowas-lime", icon: <Palette className="h-3.5 w-3.5" /> },
   parliament: { label: "Youth Parliament", to: "/programmes/parliament", color: "bg-ecowas-red/10 text-ecowas-red", borderColor: "border-l-ecowas-red", icon: <Building2 className="h-3.5 w-3.5" /> },
-  awards: { label: "Parliamentary Awards", to: "/programmes/awards", color: "bg-accent/10 text-accent", borderColor: "border-l-accent", icon: <Award className="h-3.5 w-3.5" /> },
+  awards: { label: "AWALCO Parliamentary Awards", to: "/programmes/awards", color: "bg-accent/10 text-accent", borderColor: "border-l-accent", icon: <Award className="h-3.5 w-3.5" /> },
   general: { label: "General", to: "/about", color: "bg-muted text-muted-foreground", borderColor: "border-l-muted-foreground", icon: <Star className="h-3.5 w-3.5" /> },
 };
 
@@ -47,7 +47,7 @@ const events = [
     country: "🇳🇬 Nigeria",
     city: "Abuja",
     title: "Official Launch & Awards Nominations Open",
-    description: "The 25th Anniversary programme is officially launched at a press conference at Onomo Allure Abuja AATC Hotel on 5th March, with key stakeholders, diplomats, and programme champions in attendance. Simultaneously, nominations for the inaugural ECOWAS Parliamentary Awards open across all 12 Member States.",
+    description: "The 25th Anniversary programme is officially launched at a press conference at Onomo Allure Abuja AATC Hotel on 5th March, with key stakeholders, diplomats, and programme champions in attendance. Simultaneously, nominations for the inaugural AWALCO Parliamentary Awards open across all 12 Member States.",
     programme: "awards",
     deliverables: ["Public launch event", "Awards nominations portal opens", "Stakeholder reception"],
     highlight: true,
@@ -127,7 +127,7 @@ const events = [
     country: "🇳🇬 Nigeria",
     city: "Abuja",
     title: "Grand Finale & Awards Ceremony",
-    description: "Leaders, partners, youth champions, entrepreneurs, cultural ambassadors, and citizens gather in Abuja for the closing ceremony of the 25th Anniversary programme. The evening features the inaugural ECOWAS Parliamentary Awards gala, documentary storytelling, reflections on 25 years of democratic governance, and a vision statement for the next quarter-century of the ECOWAS Parliament.",
+    description: "Leaders, partners, youth champions, entrepreneurs, cultural ambassadors, and citizens gather in Abuja for the closing ceremony of the 25th Anniversary programme. The evening features the inaugural AWALCO Parliamentary Awards gala, documentary storytelling, reflections on 25 years of democratic governance, and a vision statement for the next quarter-century of the ECOWAS Parliament.",
     programme: "awards",
     deliverables: ["Awards gala ceremony", "Anniversary documentary premiere", "Vision 2050 statement"],
     highlight: true,

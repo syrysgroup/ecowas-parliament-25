@@ -79,7 +79,7 @@ const staticEvents = [
   {
     id: "ev6",
     title: "Grand Finale & Awards Ceremony",
-    description: "Leaders, partners, youth champions, and citizens gather for the closing ceremony and inaugural ECOWAS Parliamentary Awards.",
+    description: "Leaders, partners, youth champions, and citizens gather for the closing ceremony and inaugural AWALCO Parliamentary Awards.",
     date: "2026-11-20T18:00:00Z",
     location: "ECOWAS Parliament Complex, Abuja",
     country: "Nigeria",

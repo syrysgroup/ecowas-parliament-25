@@ -6,6 +6,7 @@ import duchessLogo from "@/assets/duchess-logo.png";
 import cmdLogo from "@/assets/cmd-logo.png";
 import borderlessLogo from "@/assets/borderless-trade-logo.png";
 import speakerImg from "@/assets/speaker-memounatou.jpeg";
+import secgenImg from "@/assets/stakeholder-secgen.jpg";
 import commsImage from "@/assets/stakeholder-comms.jpg";
 import directorImage from "@/assets/stakeholder-director.jpg";
 import teamPortrait1 from "@/assets/team-portrait-1.jpg";
@@ -14,6 +15,7 @@ import teamPortrait3 from "@/assets/team-portrait-3.jpg";
 
 const ecowasStakeholders = [
   { name: "Rt. Hon. Hadja Mémounatou Ibrahima", title: "Speaker of the ECOWAS Parliament", image: speakerImg },
+  { name: "Hon. Alhaji Bah", title: "Secretary General, ECOWAS Parliament", image: secgenImg },
   { name: "Mrs. Uche Duru", title: "Chief Communication Officer", image: commsImage },
   { name: "Dr. Kabeer Garba", title: "Ag. Director, Parliamentary Affairs", image: directorImage },
 ];
@@ -63,20 +65,20 @@ const Stakeholders = () => {
             </h2>
           </AnimatedSection>
 
-          {/* Featured Speaker */}
+          {/* Featured Speaker — prominent but not too large */}
           <AnimatedSection className="mb-10 flex justify-center">
-            <article className="overflow-hidden rounded-3xl border border-primary/20 bg-card shadow-sm w-1/2">
+            <article className="overflow-hidden rounded-3xl border border-primary/20 bg-card shadow-sm w-80 max-w-sm">
               <img
                 src={ecowasStakeholders[0].image}
                 alt={ecowasStakeholders[0].name}
-                className="w-full aspect-[14/16] object-cover object-top"
+                className="w-full aspect-[3/4] object-cover object-top"
                 loading="lazy"
               />
               <div className="p-4">
                 <Badge className="mb-3 bg-primary/90 text-primary-foreground border-0">
                   Speaker of the ECOWAS Parliament
                 </Badge>
-                <h3 className="text-2xl font-black text-card-foreground">
+                <h3 className="text-xl font-black text-card-foreground">
                   {ecowasStakeholders[0].name}
                 </h3>
                 <p className="mt-1 text-sm text-muted-foreground">
@@ -87,7 +89,7 @@ const Stakeholders = () => {
           </AnimatedSection>
 
           {/* Other leadership */}
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-6 md:grid-cols-3">
             {ecowasStakeholders.slice(1).map((person, index) => (
               <AnimatedSection key={person.name} delay={index * 60}>
                 <article className="overflow-hidden rounded-3xl border border-primary/20 bg-card shadow-sm w-full">

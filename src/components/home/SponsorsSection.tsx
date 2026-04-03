@@ -99,7 +99,7 @@ const programmes: Programme[] = [
     cta: { title: "Exclusive Presenting Sponsorship Open", subtitle: "Be the sole Presenting Sponsor for Culture & Creativity — maximum brand visibility." },
   },
   {
-    id: "awards", label: "Awards", emoji: "🏆",
+    id: "awards", label: "AWALCO Awards", emoji: "🏆",
     description: "Recognising outstanding contributions to regional integration, governance excellence, and community development across ECOWAS member states.",
     projects: ["Integration Excellence Awards", "Youth Achievement Awards", "Community Impact Recognition"],
     tiers: [

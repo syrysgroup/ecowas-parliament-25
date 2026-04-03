@@ -71,7 +71,7 @@ const Awards = () => (
             </div>
             <Badge variant="outline" className="border-primary-foreground/20 text-primary-foreground/70">Programme Pillar</Badge>
           </div>
-          <h1 className="text-4xl md:text-6xl font-black leading-tight">ECOWAS Parliamentary<br />Awards</h1>
+          <h1 className="text-4xl md:text-6xl font-black leading-tight">AWALCO Parliamentary<br />Awards</h1>
           <p className="mt-4 text-lg text-primary-foreground/70 max-w-2xl">
             Honouring excellence, leadership, and service — celebrating the legislators who have shaped West Africa's democratic journey.
           </p>
@@ -103,7 +103,7 @@ const Awards = () => (
         <AnimatedSection>
           <h2 className="text-2xl font-bold text-foreground mb-4">About the Awards</h2>
           <p className="text-muted-foreground leading-relaxed">
-            The ECOWAS Parliamentary Awards honour serving and former members of the ECOWAS Parliament who have demonstrated exceptional leadership, legislative impact, and service to regional integration. Inaugurated as part of the 25th Anniversary celebrations, these awards recognise the individuals whose work has strengthened democratic governance, advanced the rights of citizens, and built bridges between the fifteen Member States of the Community.
+            The AWALCO Parliamentary Awards honour serving and former members of the ECOWAS Parliament who have demonstrated exceptional leadership, legislative impact, and service to regional integration. Inaugurated as part of the 25th Anniversary celebrations, these awards recognise the individuals whose work has strengthened democratic governance, advanced the rights of citizens, and built bridges between the twelve Member States of the Community.
           </p>
         </AnimatedSection>
       </div>
