@@ -47,7 +47,7 @@ const events = [
     country: "🇳🇬 Nigeria",
     city: "Abuja",
     title: "Official Launch & Awards Nominations Open",
-    description: "The 25th Anniversary programme is officially launched at a press conference at Onomo Allure Abuja AATC Hotel on 5th March, with key stakeholders, diplomats, and programme champions in attendance. Simultaneously, nominations for the inaugural ECOWAS Parliamentary Awards open across all 12 Member States.",
+    description: "The 25th Anniversary programme is officially launched at a press conference at Onomo Allure Abuja AATC Hotel on 5th March, with key stakeholders, diplomats, and programme champions in attendance. Simultaneously, nominations for the inaugural AWALCO Parliamentary Awards open across all 12 Member States.",
     programme: "awards",
     deliverables: ["Public launch event", "Awards nominations portal opens", "Stakeholder reception"],
     highlight: true,
