@@ -439,7 +439,7 @@ export default function Auth() {
                 </div>
                 {EmailField}
                 {TurnstileWidget}
-                <Button type="submit" className="w-full h-11 font-bold" disabled={submitting || !captchaToken}>
+                <Button type="submit" className={`w-full h-11 font-bold ${disabledClasses}`} disabled={isButtonDisabled}>
                   {submitting ? "Sending…" : "Send reset link"}
                 </Button>
                 <button type="button" onClick={() => setMode("signin")}
