@@ -23,6 +23,7 @@ import MediaKit from "./pages/MediaKit";
 import SponsorPortal from "./pages/SponsorPortal";
 import Events from "./pages/Events";
 import Volunteer from "./pages/Volunteer";
+import PartnerPage from "./pages/partners/PartnerPage";
 
 // Programme pages
 import Youth from "./pages/programmes/Youth";
