@@ -11,7 +11,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import {
   Mail, Lock, User, ArrowLeft, Crown, Eye, EyeOff,
-  ShieldCheck, KeyRound, CheckCircle2, AlertCircle,
+  ShieldCheck, KeyRound, CheckCircle2, AlertCircle, RefreshCw, Loader2,
 } from "lucide-react";
 import { Turnstile } from "@marsidev/react-turnstile";
 import ecowasLogo from "@/assets/ecowas-parliament-logo.png";
@@ -85,7 +85,10 @@ export default function Auth() {
   const [submitting,  setSubmitting]  = useState(false);
   const [teamMode,    setTeamMode]    = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaError, setCaptchaError] = useState(false);
+  const [captchaLoading, setCaptchaLoading] = useState(true);
   const turnstileRef = useRef<any>(null);
+  const captchaTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (!loading && user) {
@@ -98,10 +101,19 @@ export default function Auth() {
     if (params.get("team") === "1") setTeamMode(true);
   }, [location.search]);
 
+  // Clear captcha timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (captchaTimeoutRef.current) clearTimeout(captchaTimeoutRef.current);
+    };
+  }, []);
+
   if (loading) return null;
 
   const resetTurnstile = () => {
     setCaptchaToken(null);
+    setCaptchaError(false);
+    setCaptchaLoading(true);
     turnstileRef.current?.reset();
   };
 
@@ -224,16 +236,61 @@ export default function Auth() {
     </div>
   );
 
+  const isButtonDisabled = submitting || !captchaToken;
+  const disabledClasses = isButtonDisabled ? "opacity-50 cursor-not-allowed" : "";
+
+  const handleCaptchaSuccess = (token: string) => {
+    setCaptchaToken(token);
+    setCaptchaLoading(false);
+    setCaptchaError(false);
+    if (captchaTimeoutRef.current) clearTimeout(captchaTimeoutRef.current);
+  };
+
+  const handleCaptchaError = () => {
+    setCaptchaToken(null);
+    setCaptchaLoading(false);
+    setCaptchaError(true);
+    toast({ title: "CAPTCHA failed to load", description: "Please click 'Retry' or refresh the page.", variant: "destructive" });
+  };
+
+  const handleCaptchaWidgetLoad = () => {
+    // Start a 10-second timeout — if token isn't received, show retry
+    captchaTimeoutRef.current = setTimeout(() => {
+      if (!captchaToken) {
+        setCaptchaLoading(false);
+        setCaptchaError(true);
+      }
+    }, 10000);
+  };
+
   const TurnstileWidget = (
-    <div className="flex justify-center">
+    <div className="flex flex-col items-center gap-2">
       <Turnstile
         ref={turnstileRef}
+        key={mode}
         siteKey={TURNSTILE_SITE_KEY}
-        onSuccess={(token) => setCaptchaToken(token)}
-        onError={() => setCaptchaToken(null)}
-        onExpire={() => setCaptchaToken(null)}
+        onSuccess={handleCaptchaSuccess}
+        onError={handleCaptchaError}
+        onExpire={() => { setCaptchaToken(null); setCaptchaLoading(true); }}
+        onWidgetLoad={handleCaptchaWidgetLoad}
+        scriptOptions={{ appendTo: "body" }}
         options={{ size: "normal", theme: "auto" }}
       />
+      {captchaLoading && !captchaToken && !captchaError && (
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Loader2 className="h-3 w-3 animate-spin" />
+          <span>Loading security check…</span>
+        </div>
+      )}
+      {captchaError && !captchaToken && (
+        <button
+          type="button"
+          onClick={resetTurnstile}
+          className="flex items-center gap-1.5 text-xs text-primary hover:underline font-medium"
+        >
+          <RefreshCw className="h-3 w-3" /> Retry CAPTCHA
+        </button>
+      )}
     </div>
   );
 
@@ -326,7 +383,7 @@ export default function Auth() {
                   <button type="button" onClick={() => setMode("forgot")} className="text-primary hover:underline font-medium">Forgot password?</button>
                 </div>
                 {TurnstileWidget}
-                <Button type="submit" className={`w-full gap-2 h-11 text-sm font-bold ${teamMode ? "bg-accent text-accent-foreground hover:bg-accent/90" : ""}`} disabled={submitting || !captchaToken}>
+                <Button type="submit" className={`w-full gap-2 h-11 text-sm font-bold ${disabledClasses} ${teamMode ? "bg-accent text-accent-foreground hover:bg-accent/90" : ""}`} disabled={isButtonDisabled}>
                   {submitting ? <><span className="animate-spin inline-block">⟳</span> Signing in…</> :
                     <>{teamMode ? <Crown className="h-4 w-4" /> : <Lock className="h-4 w-4" />} Sign in</>}
                 </Button>
@@ -363,7 +420,7 @@ export default function Auth() {
                 {PasswordField}
                 <p className="text-xs text-muted-foreground">Password must be at least 6 characters. By registering you agree to our privacy policy.</p>
                 {TurnstileWidget}
-                <Button type="submit" className="w-full gap-2 h-11 font-bold" disabled={submitting || !captchaToken}>
+                <Button type="submit" className={`w-full gap-2 h-11 font-bold ${disabledClasses}`} disabled={isButtonDisabled}>
                   {submitting ? "Creating account…" : "Create account"}
                 </Button>
                 <p className="text-sm text-center text-muted-foreground">
@@ -382,7 +439,7 @@ export default function Auth() {
                 </div>
                 {EmailField}
                 {TurnstileWidget}
-                <Button type="submit" className="w-full h-11 font-bold" disabled={submitting || !captchaToken}>
+                <Button type="submit" className={`w-full h-11 font-bold ${disabledClasses}`} disabled={isButtonDisabled}>
                   {submitting ? "Sending…" : "Send reset link"}
                 </Button>
                 <button type="button" onClick={() => setMode("signin")}
