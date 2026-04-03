@@ -16,22 +16,22 @@ function StatCard({ label, value, icon: Icon, accent }: {
   label: string; value: string | number; icon: React.ElementType; accent: string;
 }) {
   return (
-    <div className="bg-[#0d1610] border border-[#1e2d22] rounded-xl p-4 flex items-start gap-3">
+    <div className="bg-crm-card border border-crm-border rounded-xl p-4 flex items-start gap-3">
       <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 border ${accent}`}>
         <Icon size={15} />
       </div>
       <div>
-        <p className="text-[10px] font-mono uppercase tracking-widest text-[#4a6650]">{label}</p>
-        <p className="text-2xl font-bold text-[#c8e0cc]">{value}</p>
+        <p className="text-[10px] font-mono uppercase tracking-widest text-crm-text-dim">{label}</p>
+        <p className="text-2xl font-bold text-crm-text">{value}</p>
       </div>
     </div>
   );
 }
 
 const TOOLTIP_STYLE = {
-  contentStyle: { background: "#0d1610", border: "1px solid #1e2d22", borderRadius: 8 },
-  labelStyle: { color: "#6b8f72", fontSize: 10 },
-  itemStyle: { color: "#c8e0cc", fontSize: 11 },
+  contentStyle: { background: "hsl(var(--crm-card))", border: "1px solid hsl(var(--crm-border))", borderRadius: 8 },
+  labelStyle: { color: "hsl(var(--crm-text-muted))", fontSize: 10 },
+  itemStyle: { color: "hsl(var(--crm-text))", fontSize: 11 },
 };
 
 // ─── Main ──────────────────────────────────────────────────────────────────────
@@ -119,17 +119,17 @@ export default function AnalyticsModule() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-bold text-[#c8e0cc]">Analytics</h2>
-          <p className="text-[12px] text-[#6b8f72] mt-0.5">Platform-wide activity insights</p>
+          <h2 className="text-lg font-bold text-crm-text">Analytics</h2>
+          <p className="text-[12px] text-crm-text-muted mt-0.5">Platform-wide activity insights</p>
         </div>
         <Select value={range} onValueChange={v => setRange(v as "7" | "30" | "90")}>
-          <SelectTrigger className="bg-[#0d1610] border-[#1e2d22] text-[#c8e0cc] text-xs h-8 w-32">
+          <SelectTrigger className="bg-crm-card border-crm-border text-crm-text text-xs h-8 w-32">
             <SelectValue />
           </SelectTrigger>
-          <SelectContent className="bg-[#0d1610] border-[#1e2d22]">
-            <SelectItem value="7"  className="text-[#c8e0cc] text-xs">Last 7 days</SelectItem>
-            <SelectItem value="30" className="text-[#c8e0cc] text-xs">Last 30 days</SelectItem>
-            <SelectItem value="90" className="text-[#c8e0cc] text-xs">Last 90 days</SelectItem>
+          <SelectContent className="bg-crm-card border-crm-border">
+            <SelectItem value="7"  className="text-crm-text text-xs">Last 7 days</SelectItem>
+            <SelectItem value="30" className="text-crm-text text-xs">Last 30 days</SelectItem>
+            <SelectItem value="90" className="text-crm-text text-xs">Last 90 days</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -144,8 +144,8 @@ export default function AnalyticsModule() {
 
       {/* Task velocity + status */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="bg-[#0d1610] border border-[#1e2d22] rounded-xl p-4">
-          <p className="text-[11px] font-semibold text-[#c8e0cc] mb-3">Task velocity (weekly)</p>
+        <div className="bg-crm-card border border-crm-border rounded-xl p-4">
+          <p className="text-[11px] font-semibold text-crm-text mb-3">Task velocity (weekly)</p>
           <ResponsiveContainer width="100%" height={180}>
             <BarChart data={taskStats?.velocity ?? []}>
               <XAxis dataKey="week" tick={{ fill: "#4a6650", fontSize: 9 }} axisLine={false} tickLine={false} />
@@ -156,8 +156,8 @@ export default function AnalyticsModule() {
           </ResponsiveContainer>
         </div>
 
-        <div className="bg-[#0d1610] border border-[#1e2d22] rounded-xl p-4">
-          <p className="text-[11px] font-semibold text-[#c8e0cc] mb-3">Tasks by status</p>
+        <div className="bg-crm-card border border-crm-border rounded-xl p-4">
+          <p className="text-[11px] font-semibold text-crm-text mb-3">Tasks by status</p>
           <ResponsiveContainer width="100%" height={180}>
             <PieChart>
               <Pie data={taskStats?.byStatus ?? []} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={70} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={false}>
@@ -172,8 +172,8 @@ export default function AnalyticsModule() {
       </div>
 
       {/* Message activity */}
-      <div className="bg-[#0d1610] border border-[#1e2d22] rounded-xl p-4">
-        <p className="text-[11px] font-semibold text-[#c8e0cc] mb-3">Message activity</p>
+      <div className="bg-crm-card border border-crm-border rounded-xl p-4">
+        <p className="text-[11px] font-semibold text-crm-text mb-3">Message activity</p>
         {msgData && msgData.length > 0 ? (
           <ResponsiveContainer width="100%" height={160}>
             <LineChart data={msgData}>
@@ -184,15 +184,15 @@ export default function AnalyticsModule() {
             </LineChart>
           </ResponsiveContainer>
         ) : (
-          <div className="flex items-center justify-center h-32 text-[#4a6650] text-sm">
+          <div className="flex items-center justify-center h-32 text-crm-text-dim text-sm">
             No message activity in this period.
           </div>
         )}
       </div>
 
       {/* Application funnel */}
-      <div className="bg-[#0d1610] border border-[#1e2d22] rounded-xl p-4">
-        <p className="text-[11px] font-semibold text-[#c8e0cc] mb-3">Application funnel</p>
+      <div className="bg-crm-card border border-crm-border rounded-xl p-4">
+        <p className="text-[11px] font-semibold text-crm-text mb-3">Application funnel</p>
         {appStats && appStats.length > 0 ? (
           <ResponsiveContainer width="100%" height={160}>
             <BarChart data={appStats} layout="vertical">
@@ -207,7 +207,7 @@ export default function AnalyticsModule() {
             </BarChart>
           </ResponsiveContainer>
         ) : (
-          <div className="flex items-center justify-center h-32 text-[#4a6650] text-sm">
+          <div className="flex items-center justify-center h-32 text-crm-text-dim text-sm">
             No application data yet.
           </div>
         )}

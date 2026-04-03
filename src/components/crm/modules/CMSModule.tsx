@@ -22,7 +22,7 @@ interface CmsPage {
 }
 
 const STATUS_CONFIG = {
-  draft:     { label: "Draft",     classes: "bg-[#111a14] text-[#6b8f72] border-[#2a3d2d]",          icon: Clock },
+  draft:     { label: "Draft",     classes: "bg-crm-surface text-crm-text-muted border-crm-border-hover",          icon: Clock },
   review:    { label: "In Review", classes: "bg-amber-950 text-amber-400 border-amber-800",           icon: Eye },
   published: { label: "Published", classes: "bg-emerald-950 text-emerald-400 border-emerald-800",     icon: CheckCircle2 },
 };
@@ -70,49 +70,49 @@ function PageDialog({ open, onClose, page }: {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="bg-[#0d1610] border-[#1e2d22] text-[#c8e0cc] max-w-xl">
+      <DialogContent className="bg-crm-card border-crm-border text-crm-text max-w-xl">
         <DialogHeader>
-          <DialogTitle className="text-sm font-semibold text-[#c8e0cc]">
+          <DialogTitle className="text-sm font-semibold text-crm-text">
             {isEdit ? "Edit Page" : "New Page"}
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-3 py-1">
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <Label className="text-[11px] text-[#4a6650]">Title *</Label>
+              <Label className="text-[11px] text-crm-text-dim">Title *</Label>
               <Input value={title} onChange={e => setTitle(e.target.value)}
-                className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8"
+                className="bg-crm-surface border-crm-border text-crm-text text-xs h-8"
                 placeholder="Page title" />
             </div>
             <div className="space-y-1">
-              <Label className="text-[11px] text-[#4a6650]">Slug *</Label>
+              <Label className="text-[11px] text-crm-text-dim">Slug *</Label>
               <Input value={slug} onChange={e => setSlug(e.target.value)}
-                className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8 font-mono"
+                className="bg-crm-surface border-crm-border text-crm-text text-xs h-8 font-mono"
                 placeholder="e.g. about-us" />
             </div>
           </div>
           <div className="space-y-1">
-            <Label className="text-[11px] text-[#4a6650]">Status</Label>
+            <Label className="text-[11px] text-crm-text-dim">Status</Label>
             <Select value={status} onValueChange={v => setStatus(v as CmsPage["status"])}>
-              <SelectTrigger className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8">
+              <SelectTrigger className="bg-crm-surface border-crm-border text-crm-text text-xs h-8">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-[#0d1610] border-[#1e2d22]">
-                <SelectItem value="draft"     className="text-[#c8e0cc] text-xs">Draft</SelectItem>
-                <SelectItem value="review"    className="text-[#c8e0cc] text-xs">In Review</SelectItem>
-                <SelectItem value="published" className="text-[#c8e0cc] text-xs">Published</SelectItem>
+              <SelectContent className="bg-crm-card border-crm-border">
+                <SelectItem value="draft"     className="text-crm-text text-xs">Draft</SelectItem>
+                <SelectItem value="review"    className="text-crm-text text-xs">In Review</SelectItem>
+                <SelectItem value="published" className="text-crm-text text-xs">Published</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-1">
-            <Label className="text-[11px] text-[#4a6650]">Content</Label>
+            <Label className="text-[11px] text-crm-text-dim">Content</Label>
             <Textarea value={content} onChange={e => setContent(e.target.value)}
-              className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs min-h-[160px] resize-none font-mono"
+              className="bg-crm-surface border-crm-border text-crm-text text-xs min-h-[160px] resize-none font-mono"
               placeholder="Page content (markdown or plain text)" />
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" size="sm" onClick={onClose} className="border-[#1e2d22] text-[#6b8f72] text-xs">
+          <Button variant="outline" size="sm" onClick={onClose} className="border-crm-border text-crm-text-muted text-xs">
             Cancel
           </Button>
           <Button size="sm" disabled={!title.trim() || !slug.trim() || save.isPending}
@@ -178,8 +178,8 @@ export default function CMSModule() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-bold text-[#c8e0cc]">CMS Editor</h2>
-          <p className="text-[12px] text-[#6b8f72] mt-0.5">Manage public website pages and their content</p>
+          <h2 className="text-lg font-bold text-crm-text">CMS Editor</h2>
+          <p className="text-[12px] text-crm-text-muted mt-0.5">Manage public website pages and their content</p>
         </div>
         {isAdmin && (
           <Button size="sm" onClick={() => setAddOpen(true)}
@@ -221,8 +221,8 @@ export default function CMSModule() {
 
       {!isLoading && filtered.length === 0 && (
         <div className="flex flex-col items-center justify-center min-h-[30vh] gap-3 text-center">
-          <Layout className="h-6 w-6 text-[#4a6650]" />
-          <p className="text-sm text-[#6b8f72]">No pages found.</p>
+          <Layout className="h-6 w-6 text-crm-text-dim" />
+          <p className="text-sm text-crm-text-muted">No pages found.</p>
         </div>
       )}
 
@@ -233,27 +233,27 @@ export default function CMSModule() {
           const isConfirming = confirmDeleteId === page.id;
 
           return (
-            <div key={page.id} className="bg-[#0d1610] border border-[#1e2d22] rounded-xl p-4 hover:border-[#2a3d2d] transition-colors">
+            <div key={page.id} className="bg-crm-card border border-crm-border rounded-xl p-4 hover:border-crm-border-hover transition-colors">
               <div className="flex items-start gap-3">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap mb-1">
-                    <p className="text-[13px] font-semibold text-[#c8e0cc]">{page.title}</p>
+                    <p className="text-[13px] font-semibold text-crm-text">{page.title}</p>
                     <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded border ${statusCfg.classes}`}>{statusCfg.label}</span>
                   </div>
                   <div className="flex items-center gap-3 flex-wrap">
-                    <span className="text-[10px] font-mono text-emerald-500 bg-[#111a14] border border-[#1e2d22] rounded px-1.5 py-0.5">/{page.slug}</span>
-                    <span className="text-[10px] text-[#4a6650]">Updated {format(parseISO(page.updated_at), "d MMM yyyy, HH:mm")}</span>
-                    {page.editor_name && <span className="text-[10px] text-[#4a6650]">by {page.editor_name}</span>}
+                    <span className="text-[10px] font-mono text-emerald-500 bg-crm-surface border border-crm-border rounded px-1.5 py-0.5">/{page.slug}</span>
+                    <span className="text-[10px] text-crm-text-dim">Updated {format(parseISO(page.updated_at), "d MMM yyyy, HH:mm")}</span>
+                    {page.editor_name && <span className="text-[10px] text-crm-text-dim">by {page.editor_name}</span>}
                   </div>
                   {page.content && (
-                    <p className="text-[10px] text-[#4a6650] mt-1 line-clamp-1">{page.content.slice(0, 120)}</p>
+                    <p className="text-[10px] text-crm-text-dim mt-1 line-clamp-1">{page.content.slice(0, 120)}</p>
                   )}
                 </div>
 
                 <div className="flex items-center gap-1.5 flex-shrink-0">
                   <button
                     onClick={() => setPreviewTarget(page)}
-                    className="w-7 h-7 rounded flex items-center justify-center bg-[#111a14] border border-[#1e2d22] text-[#4a6650] hover:text-[#a0c4a8] transition-colors"
+                    className="w-7 h-7 rounded flex items-center justify-center bg-crm-surface border border-crm-border text-crm-text-dim hover:text-crm-text-secondary transition-colors"
                     title="Preview"
                   >
                     <Eye size={12} />
@@ -272,12 +272,12 @@ export default function CMSModule() {
                   {isAdmin && !isConfirming && (
                     <>
                       <button onClick={() => setEditTarget(page)}
-                        className="w-7 h-7 rounded flex items-center justify-center bg-[#111a14] border border-[#1e2d22] text-[#4a6650] hover:text-[#a0c4a8] transition-colors">
+                        className="w-7 h-7 rounded flex items-center justify-center bg-crm-surface border border-crm-border text-crm-text-dim hover:text-crm-text-secondary transition-colors">
                         <Pencil size={12} />
                       </button>
                       {page.status !== "published" && (
                         <button onClick={() => setConfirmDeleteId(page.id)}
-                          className="w-7 h-7 rounded flex items-center justify-center bg-[#111a14] border border-[#1e2d22] text-[#4a6650] hover:text-red-400 hover:border-red-900 transition-colors">
+                          className="w-7 h-7 rounded flex items-center justify-center bg-crm-surface border border-crm-border text-crm-text-dim hover:text-red-400 hover:border-red-900 transition-colors">
                           <Trash2 size={12} />
                         </button>
                       )}
@@ -291,7 +291,7 @@ export default function CMSModule() {
                         {deletePage.isPending ? "…" : "Delete"}
                       </button>
                       <button onClick={() => setConfirmDeleteId(null)}
-                        className="text-[10px] text-[#4a6650] bg-[#111a14] border border-[#1e2d22] rounded px-2 py-1">
+                        className="text-[10px] text-crm-text-dim bg-crm-surface border border-crm-border rounded px-2 py-1">
                         No
                       </button>
                     </div>
@@ -306,12 +306,12 @@ export default function CMSModule() {
       {/* Preview Dialog */}
       {previewTarget && (
         <Dialog open={!!previewTarget} onOpenChange={() => setPreviewTarget(null)}>
-          <DialogContent className="bg-[#0d1610] border-[#1e2d22] text-[#c8e0cc] max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogContent className="bg-crm-card border-crm-border text-crm-text max-w-2xl max-h-[80vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle className="text-sm font-semibold text-[#c8e0cc]">{previewTarget.title}</DialogTitle>
+              <DialogTitle className="text-sm font-semibold text-crm-text">{previewTarget.title}</DialogTitle>
               <p className="text-[10px] font-mono text-emerald-500">/{previewTarget.slug}</p>
             </DialogHeader>
-            <div className="mt-2 text-[12px] text-[#c8e0cc] whitespace-pre-wrap font-mono border border-[#1e2d22] rounded-lg p-4 bg-[#111a14] min-h-[120px]">
+            <div className="mt-2 text-[12px] text-crm-text whitespace-pre-wrap font-mono border border-crm-border rounded-lg p-4 bg-crm-surface min-h-[120px]">
               {previewTarget.content ?? "(No content)"}
             </div>
           </DialogContent>

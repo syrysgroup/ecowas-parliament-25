@@ -13,7 +13,7 @@ const PRIORITY_COLOURS: Record<string, string> = {
 };
 
 const STATUS_COLOURS: Record<string, string> = {
-  todo:        "text-[#6b8f72] bg-[#111a14] border-[#1e2d22]",
+  todo:        "text-crm-text-muted bg-crm-surface border-crm-border",
   in_progress: "text-blue-400 bg-blue-950 border-blue-800",
   review:      "text-amber-400 bg-amber-950 border-amber-800",
   done:        "text-emerald-400 bg-emerald-950 border-emerald-800",
@@ -33,16 +33,16 @@ interface StatCardProps {
 
 function StatCard({ label, value, icon, accent, loading }: StatCardProps) {
   return (
-    <div className={`bg-[#0d1610] border border-[#1e2d22] rounded-xl p-4 flex items-start gap-4`}>
+    <div className={`bg-crm-card border border-crm-border rounded-xl p-4 flex items-start gap-4`}>
       <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${accent}`}>
         {icon}
       </div>
       <div>
-        <p className="text-[11px] font-mono uppercase tracking-widest text-[#4a6650] mb-1">{label}</p>
+        <p className="text-[11px] font-mono uppercase tracking-widest text-crm-text-dim mb-1">{label}</p>
         {loading ? (
-          <div className="h-7 w-12 bg-[#1e2d22] rounded animate-pulse" />
+          <div className="h-7 w-12 bg-crm-border rounded animate-pulse" />
         ) : (
-          <p className="text-2xl font-bold text-[#c8e0cc]">{value}</p>
+          <p className="text-2xl font-bold text-crm-text">{value}</p>
         )}
       </div>
     </div>
@@ -120,12 +120,12 @@ export default function DashboardModule({ onNavigate }: { onNavigate: (s: string
   if (isSponsor) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center gap-4">
-        <div className="h-16 w-16 rounded-2xl bg-[#111a14] border border-[#1e2d22] flex items-center justify-center">
+        <div className="h-16 w-16 rounded-2xl bg-crm-surface border border-crm-border flex items-center justify-center">
           <CheckSquare className="h-7 w-7 text-emerald-500" />
         </div>
         <div>
-          <h2 className="text-xl font-bold text-[#c8e0cc]">Welcome to your Sponsor Portal</h2>
-          <p className="text-sm text-[#6b8f72] mt-1 max-w-xs">
+          <h2 className="text-xl font-bold text-crm-text">Welcome to your Sponsor Portal</h2>
+          <p className="text-sm text-crm-text-muted mt-1 max-w-xs">
             Use Sponsor Metrics to view your visibility reports and engagement data.
           </p>
         </div>
@@ -171,9 +171,9 @@ export default function DashboardModule({ onNavigate }: { onNavigate: (s: string
       {/* My tasks + upcoming events */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* My Tasks */}
-        <div className="bg-[#0d1610] border border-[#1e2d22] rounded-xl overflow-hidden">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-[#1e2d22]">
-            <h3 className="text-[11px] font-mono uppercase tracking-widest text-[#4a6650]">My Tasks</h3>
+        <div className="bg-crm-card border border-crm-border rounded-xl overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-crm-border">
+            <h3 className="text-[11px] font-mono uppercase tracking-widest text-crm-text-dim">My Tasks</h3>
             <button
               onClick={() => onNavigate("tasks")}
               className="flex items-center gap-1 text-[10px] font-mono text-emerald-600 hover:text-emerald-400 transition-colors"
@@ -181,26 +181,26 @@ export default function DashboardModule({ onNavigate }: { onNavigate: (s: string
               View all <ArrowRight size={10} />
             </button>
           </div>
-          <div className="divide-y divide-[#111a14]">
+          <div className="divide-y divide-crm-surface">
             {tasksLoading ? (
               Array.from({ length: 3 }).map((_, i) => (
                 <div key={i} className="px-4 py-3 flex gap-3">
-                  <div className="h-4 flex-1 bg-[#1e2d22] rounded animate-pulse" />
+                  <div className="h-4 flex-1 bg-crm-border rounded animate-pulse" />
                 </div>
               ))
             ) : myTasks?.length === 0 ? (
-              <p className="px-4 py-6 text-[12px] text-[#4a6650] text-center">No open tasks assigned to you</p>
+              <p className="px-4 py-6 text-[12px] text-crm-text-dim text-center">No open tasks assigned to you</p>
             ) : (
               myTasks?.map((task: any) => (
                 <div key={task.id} className="px-4 py-3 flex items-start gap-3">
                   <div className="flex-1 min-w-0">
-                    <p className="text-[12.5px] text-[#c8e0cc] font-medium truncate">{task.title}</p>
+                    <p className="text-[12.5px] text-crm-text font-medium truncate">{task.title}</p>
                     <div className="flex items-center gap-2 mt-1">
                       {task.pillar && (
-                        <span className="text-[9px] font-mono text-[#4a6650] uppercase">{task.pillar}</span>
+                        <span className="text-[9px] font-mono text-crm-text-dim uppercase">{task.pillar}</span>
                       )}
                       {task.due_date && (
-                        <span className="flex items-center gap-1 text-[10px] text-[#4a6650]">
+                        <span className="flex items-center gap-1 text-[10px] text-crm-text-dim">
                           <Clock size={9} />
                           {format(parseISO(task.due_date), "d MMM")}
                         </span>
@@ -222,9 +222,9 @@ export default function DashboardModule({ onNavigate }: { onNavigate: (s: string
         </div>
 
         {/* Upcoming Events */}
-        <div className="bg-[#0d1610] border border-[#1e2d22] rounded-xl overflow-hidden">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-[#1e2d22]">
-            <h3 className="text-[11px] font-mono uppercase tracking-widest text-[#4a6650]">Upcoming Events</h3>
+        <div className="bg-crm-card border border-crm-border rounded-xl overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-crm-border">
+            <h3 className="text-[11px] font-mono uppercase tracking-widest text-crm-text-dim">Upcoming Events</h3>
             <button
               onClick={() => onNavigate("calendar")}
               className="flex items-center gap-1 text-[10px] font-mono text-emerald-600 hover:text-emerald-400 transition-colors"
@@ -232,22 +232,22 @@ export default function DashboardModule({ onNavigate }: { onNavigate: (s: string
               Calendar <ArrowRight size={10} />
             </button>
           </div>
-          <div className="divide-y divide-[#111a14]">
+          <div className="divide-y divide-crm-surface">
             {eventsLoading ? (
               Array.from({ length: 3 }).map((_, i) => (
                 <div key={i} className="px-4 py-3 flex gap-3">
-                  <div className="h-4 flex-1 bg-[#1e2d22] rounded animate-pulse" />
+                  <div className="h-4 flex-1 bg-crm-border rounded animate-pulse" />
                 </div>
               ))
             ) : events?.length === 0 ? (
-              <p className="px-4 py-6 text-[12px] text-[#4a6650] text-center">No upcoming events scheduled</p>
+              <p className="px-4 py-6 text-[12px] text-crm-text-dim text-center">No upcoming events scheduled</p>
             ) : (
               events?.map((ev: any) => (
                 <div key={ev.id} className="px-4 py-3 flex items-center gap-3">
                   <div className={`w-2 h-2 rounded-full flex-shrink-0 ${EVENT_DOT[ev.colour] ?? "bg-emerald-500"}`} />
                   <div className="flex-1 min-w-0">
-                    <p className="text-[12.5px] text-[#c8e0cc] font-medium truncate">{ev.title}</p>
-                    <p className="text-[10px] text-[#4a6650] mt-0.5">
+                    <p className="text-[12.5px] text-crm-text font-medium truncate">{ev.title}</p>
+                    <p className="text-[10px] text-crm-text-dim mt-0.5">
                       {format(parseISO(ev.start_time), "EEE d MMM · h:mm a")}
                     </p>
                   </div>

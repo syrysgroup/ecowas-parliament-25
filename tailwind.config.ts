@@ -57,6 +57,18 @@ export default {
           blue: "hsl(var(--ecowas-blue))",
           lime: "hsl(var(--ecowas-lime))",
         },
+        crm: {
+          DEFAULT: "hsl(var(--crm-bg))",
+          card: "hsl(var(--crm-card))",
+          surface: "hsl(var(--crm-surface))",
+          border: "hsl(var(--crm-border))",
+          "border-hover": "hsl(var(--crm-border-hover))",
+          text: "hsl(var(--crm-text))",
+          "text-secondary": "hsl(var(--crm-text-secondary))",
+          "text-muted": "hsl(var(--crm-text-muted))",
+          "text-dim": "hsl(var(--crm-text-dim))",
+          "text-faint": "hsl(var(--crm-text-faint))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",

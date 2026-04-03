@@ -52,29 +52,29 @@ function InviteSponsorDialog({ open, onClose }: { open: boolean; onClose: () => 
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="bg-[#0d1610] border-[#1e2d22] text-[#c8e0cc] max-w-sm">
+      <DialogContent className="bg-crm-card border-crm-border text-crm-text max-w-sm">
         <DialogHeader>
-          <DialogTitle className="text-sm font-semibold text-[#c8e0cc]">Invite Sponsor</DialogTitle>
+          <DialogTitle className="text-sm font-semibold text-crm-text">Invite Sponsor</DialogTitle>
         </DialogHeader>
         <div className="space-y-3 py-1">
           <div className="space-y-1">
-            <Label className="text-[11px] text-[#4a6650]">Email *</Label>
+            <Label className="text-[11px] text-crm-text-dim">Email *</Label>
             <Input value={email} onChange={e => setEmail(e.target.value)}
-              className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8"
+              className="bg-crm-surface border-crm-border text-crm-text text-xs h-8"
               placeholder="sponsor@organisation.com" />
           </div>
           <div className="space-y-1">
-            <Label className="text-[11px] text-[#4a6650]">Name (optional)</Label>
+            <Label className="text-[11px] text-crm-text-dim">Name (optional)</Label>
             <Input value={name} onChange={e => setName(e.target.value)}
-              className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8"
+              className="bg-crm-surface border-crm-border text-crm-text text-xs h-8"
               placeholder="Organisation name" />
           </div>
-          <p className="text-[10px] text-[#4a6650]">
+          <p className="text-[10px] text-crm-text-dim">
             An invitation email will be sent. The sponsor can set their tier after onboarding.
           </p>
         </div>
         <DialogFooter>
-          <Button variant="outline" size="sm" onClick={onClose} className="border-[#1e2d22] text-[#6b8f72] text-xs">
+          <Button variant="outline" size="sm" onClick={onClose} className="border-crm-border text-crm-text-muted text-xs">
             Cancel
           </Button>
           <Button size="sm" disabled={!email.trim() || isPending}
@@ -116,37 +116,37 @@ function EditSponsorDialog({ sponsor, tier, open, onClose, onTierChange }: {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="bg-[#0d1610] border-[#1e2d22] text-[#c8e0cc] max-w-sm">
+      <DialogContent className="bg-crm-card border-crm-border text-crm-text max-w-sm">
         <DialogHeader>
-          <DialogTitle className="text-sm font-semibold text-[#c8e0cc]">Edit Sponsor</DialogTitle>
+          <DialogTitle className="text-sm font-semibold text-crm-text">Edit Sponsor</DialogTitle>
         </DialogHeader>
         <div className="space-y-3 py-1">
           <div className="space-y-1">
-            <Label className="text-[11px] text-[#4a6650]">Name</Label>
+            <Label className="text-[11px] text-crm-text-dim">Name</Label>
             <Input value={fullName} onChange={e => setFullName(e.target.value)}
-              className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8" />
+              className="bg-crm-surface border-crm-border text-crm-text text-xs h-8" />
           </div>
           <div className="space-y-1">
-            <Label className="text-[11px] text-[#4a6650]">Country</Label>
+            <Label className="text-[11px] text-crm-text-dim">Country</Label>
             <Input value={country} onChange={e => setCountry(e.target.value)}
-              className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8" />
+              className="bg-crm-surface border-crm-border text-crm-text text-xs h-8" />
           </div>
           <div className="space-y-1">
-            <Label className="text-[11px] text-[#4a6650]">Tier</Label>
+            <Label className="text-[11px] text-crm-text-dim">Tier</Label>
             <Select value={selectedTier} onValueChange={v => setSelectedTier(v as Tier)}>
-              <SelectTrigger className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8">
+              <SelectTrigger className="bg-crm-surface border-crm-border text-crm-text text-xs h-8">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-[#0d1610] border-[#1e2d22]">
-                <SelectItem value="gold"   className="text-[#c8e0cc] text-xs">Gold</SelectItem>
-                <SelectItem value="silver" className="text-[#c8e0cc] text-xs">Silver</SelectItem>
-                <SelectItem value="bronze" className="text-[#c8e0cc] text-xs">Bronze</SelectItem>
+              <SelectContent className="bg-crm-card border-crm-border">
+                <SelectItem value="gold"   className="text-crm-text text-xs">Gold</SelectItem>
+                <SelectItem value="silver" className="text-crm-text text-xs">Silver</SelectItem>
+                <SelectItem value="bronze" className="text-crm-text text-xs">Bronze</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" size="sm" onClick={onClose} className="border-[#1e2d22] text-[#6b8f72] text-xs">
+          <Button variant="outline" size="sm" onClick={onClose} className="border-crm-border text-crm-text-muted text-xs">
             Cancel
           </Button>
           <Button size="sm" disabled={!fullName.trim() || update.isPending}
@@ -221,8 +221,8 @@ export default function SponsorMetricsModule() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-bold text-[#c8e0cc]">Sponsor Metrics</h2>
-          <p className="text-[12px] text-[#6b8f72] mt-0.5">
+          <h2 className="text-lg font-bold text-crm-text">Sponsor Metrics</h2>
+          <p className="text-[12px] text-crm-text-muted mt-0.5">
             Visibility reports and engagement tracking for each sponsor partner
           </p>
         </div>
@@ -244,13 +244,13 @@ export default function SponsorMetricsModule() {
         ].map(s => {
           const Icon = s.icon;
           return (
-            <div key={s.label} className="bg-[#0d1610] border border-[#1e2d22] rounded-xl p-4 flex items-start gap-3">
+            <div key={s.label} className="bg-crm-card border border-crm-border rounded-xl p-4 flex items-start gap-3">
               <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 border ${s.accent}`}>
                 <Icon size={15} />
               </div>
               <div>
-                <p className="text-[10px] font-mono uppercase tracking-widest text-[#4a6650]">{s.label}</p>
-                <p className="text-2xl font-bold text-[#c8e0cc]">{s.value}</p>
+                <p className="text-[10px] font-mono uppercase tracking-widest text-crm-text-dim">{s.label}</p>
+                <p className="text-2xl font-bold text-crm-text">{s.value}</p>
               </div>
             </div>
           );
@@ -265,10 +265,10 @@ export default function SponsorMetricsModule() {
 
       {!isLoading && sponsors.length === 0 && (
         <div className="flex flex-col items-center justify-center min-h-[30vh] gap-3 text-center">
-          <div className="h-14 w-14 rounded-2xl bg-[#111a14] border border-[#1e2d22] flex items-center justify-center">
-            <TrendingUp className="h-6 w-6 text-[#4a6650]" />
+          <div className="h-14 w-14 rounded-2xl bg-crm-surface border border-crm-border flex items-center justify-center">
+            <TrendingUp className="h-6 w-6 text-crm-text-dim" />
           </div>
-          <p className="text-sm text-[#6b8f72]">
+          <p className="text-sm text-crm-text-muted">
             No sponsor accounts yet. Invite sponsors via the People &amp; Access module.
           </p>
         </div>
@@ -285,22 +285,22 @@ export default function SponsorMetricsModule() {
             return (
               <div
                 key={sp.id}
-                className={`bg-[#0d1610] border border-[#1e2d22] rounded-xl p-4 border-l-4 ${cfg.accent}`}
+                className={`bg-crm-card border border-crm-border rounded-xl p-4 border-l-4 ${cfg.accent}`}
               >
                 <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-full bg-[#1e2d22] flex items-center justify-center text-sm font-bold text-emerald-400 flex-shrink-0 uppercase">
+                  <div className="w-10 h-10 rounded-full bg-crm-border flex items-center justify-center text-sm font-bold text-emerald-400 flex-shrink-0 uppercase">
                     {initials}
                   </div>
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap mb-1">
-                      <p className="text-[13px] font-semibold text-[#c8e0cc]">{sp.full_name}</p>
+                      <p className="text-[13px] font-semibold text-crm-text">{sp.full_name}</p>
                       <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded border ${cfg.classes}`}>
                         {cfg.label}
                       </span>
                     </div>
-                    <p className="text-[11px] text-[#6b8f72]">{sp.email}</p>
-                    <p className="text-[10px] text-[#4a6650] mt-0.5">{sp.country}</p>
+                    <p className="text-[11px] text-crm-text-muted">{sp.email}</p>
+                    <p className="text-[10px] text-crm-text-dim mt-0.5">{sp.country}</p>
                   </div>
 
                   <div className="flex items-center gap-1.5 flex-shrink-0">
@@ -309,10 +309,10 @@ export default function SponsorMetricsModule() {
                         { label: "Impressions", icon: Eye },
                         { label: "Report",      icon: TrendingUp },
                       ].map(({ label, icon: Icon }) => (
-                        <div key={label} className="flex items-center gap-1 bg-[#111a14] border border-[#1e2d22] rounded-lg px-2 py-1">
-                          <Icon size={11} className="text-[#4a6650]" />
-                          <span className="text-[10px] text-[#4a6650]">{label}</span>
-                          <span className="text-[10px] text-[#2a3d2d] font-mono ml-1">—</span>
+                        <div key={label} className="flex items-center gap-1 bg-crm-surface border border-crm-border rounded-lg px-2 py-1">
+                          <Icon size={11} className="text-crm-text-dim" />
+                          <span className="text-[10px] text-crm-text-dim">{label}</span>
+                          <span className="text-[10px] text-crm-text-faint font-mono ml-1">—</span>
                         </div>
                       ))}
                     </div>
@@ -320,7 +320,7 @@ export default function SponsorMetricsModule() {
                     {isAdmin && !isConfirming && (
                       <button
                         onClick={() => { setEditTarget(sp); setEditOpen(true); }}
-                        className="w-7 h-7 rounded flex items-center justify-center bg-[#111a14] border border-[#1e2d22] text-[#4a6650] hover:text-[#a0c4a8] hover:bg-[#1e2d22] transition-colors"
+                        className="w-7 h-7 rounded flex items-center justify-center bg-crm-surface border border-crm-border text-crm-text-dim hover:text-crm-text-secondary hover:bg-crm-border transition-colors"
                         title="Edit sponsor"
                       >
                         <Pencil size={12} />
@@ -330,7 +330,7 @@ export default function SponsorMetricsModule() {
                     {isSuperAdmin && !isConfirming && (
                       <button
                         onClick={() => setConfirmRemoveId(sp.id)}
-                        className="w-7 h-7 rounded flex items-center justify-center bg-[#111a14] border border-[#1e2d22] text-[#4a6650] hover:text-red-400 hover:border-red-900 hover:bg-red-950 transition-colors"
+                        className="w-7 h-7 rounded flex items-center justify-center bg-crm-surface border border-crm-border text-crm-text-dim hover:text-red-400 hover:border-red-900 hover:bg-red-950 transition-colors"
                         title="Remove sponsor role"
                       >
                         <UserMinus size={12} />
@@ -348,7 +348,7 @@ export default function SponsorMetricsModule() {
                         </button>
                         <button
                           onClick={() => setConfirmRemoveId(null)}
-                          className="text-[10px] text-[#4a6650] hover:text-[#a0c4a8] bg-[#111a14] border border-[#1e2d22] rounded px-2 py-1 transition-colors"
+                          className="text-[10px] text-crm-text-dim hover:text-crm-text-secondary bg-crm-surface border border-crm-border rounded px-2 py-1 transition-colors"
                         >
                           No
                         </button>
@@ -357,9 +357,9 @@ export default function SponsorMetricsModule() {
                   </div>
                 </div>
 
-                <div className="mt-3 pt-3 border-t border-[#1e2d22] flex items-center gap-2">
-                  <Clock size={10} className="text-[#3a5040]" />
-                  <p className="text-[10px] text-[#3a5040] font-mono">
+                <div className="mt-3 pt-3 border-t border-crm-border flex items-center gap-2">
+                  <Clock size={10} className="text-crm-text-faint" />
+                  <p className="text-[10px] text-crm-text-faint font-mono">
                     Detailed visibility metrics will be available once sponsor reporting is configured.
                   </p>
                 </div>

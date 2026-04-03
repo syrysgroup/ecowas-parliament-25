@@ -78,13 +78,13 @@ export default function CRMSidebar({ activeSection, onNavigate }: CRMSidebarProp
   return (
     <aside
       className={`
-        flex flex-col h-screen bg-[#080d0a] border-r border-[#1e2d22]
+        flex flex-col h-screen bg-crm-card border-r border-crm-border
         transition-all duration-200 ease-in-out flex-shrink-0
         ${collapsed ? "w-[56px]" : "w-[220px]"}
       `}
     >
       {/* Logo + collapse toggle */}
-      <div className={`flex items-center border-b border-[#1e2d22] px-3 h-14 ${collapsed ? "justify-center" : "justify-between"}`}>
+      <div className={`flex items-center border-b border-crm-border px-3 h-14 ${collapsed ? "justify-center" : "justify-between"}`}>
         {!collapsed && (
           <div className="flex items-center gap-2 min-w-0">
             <div className="w-7 h-7 rounded bg-emerald-600 flex items-center justify-center flex-shrink-0">
@@ -102,7 +102,7 @@ export default function CRMSidebar({ activeSection, onNavigate }: CRMSidebarProp
         {!collapsed && (
           <button
             onClick={() => setCollapsed(true)}
-            className="text-[#4a6650] hover:text-[#a0c4a8] transition-colors p-1 rounded flex-shrink-0"
+            className="text-crm-text-dim hover:text-crm-text-secondary transition-colors p-1 rounded flex-shrink-0"
             title="Collapse sidebar"
           >
             <ChevronLeft size={14} />
@@ -114,7 +114,7 @@ export default function CRMSidebar({ activeSection, onNavigate }: CRMSidebarProp
       {collapsed && (
         <button
           onClick={() => setCollapsed(false)}
-          className="mx-auto mt-2 text-[#4a6650] hover:text-[#a0c4a8] transition-colors p-1 rounded"
+          className="mx-auto mt-2 text-crm-text-dim hover:text-crm-text-secondary transition-colors p-1 rounded"
           title="Expand sidebar"
         >
           <ChevronRight size={14} />
@@ -136,7 +136,7 @@ export default function CRMSidebar({ activeSection, onNavigate }: CRMSidebarProp
                     relative w-full flex items-center gap-3 px-2.5 py-2 rounded-lg text-left transition-all duration-100
                     ${isActive
                       ? "bg-emerald-950 text-emerald-400 border border-emerald-800"
-                      : "text-[#6b8f72] hover:text-[#a0c4a8] hover:bg-[#111a14] border border-transparent"
+                      : "text-crm-text-muted hover:text-crm-text-secondary hover:bg-crm-surface border border-transparent"
                     }
                     ${collapsed ? "justify-center" : ""}
                   `}
@@ -146,7 +146,7 @@ export default function CRMSidebar({ activeSection, onNavigate }: CRMSidebarProp
                     <span className="text-[12.5px] font-medium truncate flex-1">{mod.label}</span>
                   )}
                   {!collapsed && mod.isStub && (
-                    <span className="ml-auto text-[9px] font-mono text-[#3a5040] bg-[#111a14] border border-[#1e2d22] rounded px-1 flex-shrink-0">
+                    <span className="ml-auto text-[9px] font-mono text-crm-text-faint bg-crm-surface border border-crm-border rounded px-1 flex-shrink-0">
                       soon
                     </span>
                   )}
@@ -174,15 +174,15 @@ export default function CRMSidebar({ activeSection, onNavigate }: CRMSidebarProp
       </nav>
 
       {/* User profile + sign out */}
-      <div className={`border-t border-[#1e2d22] p-3 ${collapsed ? "flex justify-center" : ""}`}>
+      <div className={`border-t border-crm-border p-3 ${collapsed ? "flex justify-center" : ""}`}>
         {!collapsed ? (
           <div className="space-y-2">
             <div className="flex items-center gap-2 min-w-0">
-              <div className="w-7 h-7 rounded-full bg-[#1e2d22] flex items-center justify-center flex-shrink-0 text-emerald-400 text-xs font-bold uppercase">
+              <div className="w-7 h-7 rounded-full bg-crm-border flex items-center justify-center flex-shrink-0 text-emerald-400 text-xs font-bold uppercase">
                 {displayName.charAt(0)}
               </div>
               <div className="min-w-0">
-                <p className="text-[11.5px] font-medium text-[#c8e0cc] truncate">{displayName}</p>
+                <p className="text-[11.5px] font-medium text-crm-text truncate">{displayName}</p>
                 {roleMeta && (
                   <p className={`text-[10px] font-mono ${roleMeta.colour} truncate`}>
                     {roleMeta.label}
@@ -192,7 +192,7 @@ export default function CRMSidebar({ activeSection, onNavigate }: CRMSidebarProp
             </div>
             <button
               onClick={signOut}
-              className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-[11px] text-[#4a6650] hover:text-[#ef5350] hover:bg-[#2a1010] transition-colors"
+              className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-[11px] text-crm-text-dim hover:text-[#ef5350] hover:bg-[#2a1010] transition-colors"
             >
               <LogOut size={12} />
               Sign out
@@ -202,7 +202,7 @@ export default function CRMSidebar({ activeSection, onNavigate }: CRMSidebarProp
           <button
             onClick={signOut}
             title="Sign out"
-            className="text-[#4a6650] hover:text-[#ef5350] transition-colors p-1"
+            className="text-crm-text-dim hover:text-[#ef5350] transition-colors p-1"
           >
             <LogOut size={14} />
           </button>

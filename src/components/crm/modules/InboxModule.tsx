@@ -48,22 +48,22 @@ function ComposeDialog({ open, onClose, profiles, replyTo }: {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="bg-[#0d1610] border-[#1e2d22] text-[#c8e0cc] max-w-lg">
+      <DialogContent className="bg-crm-card border-crm-border text-crm-text max-w-lg">
         <DialogHeader>
-          <DialogTitle className="text-sm font-semibold text-[#c8e0cc]">
+          <DialogTitle className="text-sm font-semibold text-crm-text">
             {replyTo ? "Reply" : "New Message"}
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-3 py-1">
           <div className="space-y-1">
-            <Label className="text-[11px] text-[#4a6650]">To</Label>
+            <Label className="text-[11px] text-crm-text-dim">To</Label>
             <Select value={toUserId} onValueChange={setToUserId}>
-              <SelectTrigger className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8">
+              <SelectTrigger className="bg-crm-surface border-crm-border text-crm-text text-xs h-8">
                 <SelectValue placeholder="Select recipient" />
               </SelectTrigger>
-              <SelectContent className="bg-[#0d1610] border-[#1e2d22]">
+              <SelectContent className="bg-crm-card border-crm-border">
                 {profiles.filter(p => p.id !== user?.id).map((p: any) => (
-                  <SelectItem key={p.id} value={p.id} className="text-[#c8e0cc] text-xs">
+                  <SelectItem key={p.id} value={p.id} className="text-crm-text text-xs">
                     {p.full_name} — {p.email}
                   </SelectItem>
                 ))}
@@ -71,20 +71,20 @@ function ComposeDialog({ open, onClose, profiles, replyTo }: {
             </Select>
           </div>
           <div className="space-y-1">
-            <Label className="text-[11px] text-[#4a6650]">Subject</Label>
+            <Label className="text-[11px] text-crm-text-dim">Subject</Label>
             <Input value={subject} onChange={e => setSubject(e.target.value)}
-              className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8"
+              className="bg-crm-surface border-crm-border text-crm-text text-xs h-8"
               placeholder="Message subject" />
           </div>
           <div className="space-y-1">
-            <Label className="text-[11px] text-[#4a6650]">Message</Label>
+            <Label className="text-[11px] text-crm-text-dim">Message</Label>
             <Textarea value={body} onChange={e => setBody(e.target.value)}
-              className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs resize-none"
+              className="bg-crm-surface border-crm-border text-crm-text text-xs resize-none"
               rows={5} placeholder="Write your message…" />
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" size="sm" onClick={onClose} className="border-[#1e2d22] text-[#6b8f72] text-xs">
+          <Button variant="outline" size="sm" onClick={onClose} className="border-crm-border text-crm-text-muted text-xs">
             Discard
           </Button>
           <Button size="sm"
@@ -137,48 +137,48 @@ function ThreadView({ message, profiles, onBack, onReply }: {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-[#1e2d22]">
-        <button onClick={onBack} className="text-[#4a6650] hover:text-[#a0c4a8] transition-colors">
+      <div className="flex items-center gap-3 px-4 py-3 border-b border-crm-border">
+        <button onClick={onBack} className="text-crm-text-dim hover:text-crm-text-secondary transition-colors">
           <ArrowLeft size={14} />
         </button>
-        <h3 className="text-[13px] font-semibold text-[#c8e0cc] flex-1 truncate">{message.subject}</h3>
+        <h3 className="text-[13px] font-semibold text-crm-text flex-1 truncate">{message.subject}</h3>
         <button
           onClick={() => archive.mutate()}
           title="Archive"
-          className="text-[#4a6650] hover:text-[#a0c4a8] transition-colors"
+          className="text-crm-text-dim hover:text-crm-text-secondary transition-colors"
         >
           <Archive size={13} />
         </button>
       </div>
-      <div className="flex-1 overflow-y-auto divide-y divide-[#111a14]">
+      <div className="flex-1 overflow-y-auto divide-y divide-crm-surface">
         {thread.map((msg: any) => {
           const from = getProfile(msg.from_user_id);
           const isOwn = msg.from_user_id === user?.id;
           return (
             <div key={msg.id} className="px-4 py-4">
               <div className="flex items-start gap-3">
-                <div className="w-7 h-7 rounded-full bg-[#1e2d22] flex items-center justify-center text-[10px] font-bold text-emerald-400 uppercase flex-shrink-0">
+                <div className="w-7 h-7 rounded-full bg-crm-border flex items-center justify-center text-[10px] font-bold text-emerald-400 uppercase flex-shrink-0">
                   {from?.full_name?.charAt(0) ?? "?"}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-[12px] font-semibold text-[#c8e0cc]">
+                    <span className="text-[12px] font-semibold text-crm-text">
                       {isOwn ? "You" : (from?.full_name ?? "Unknown")}
                     </span>
-                    <span className="text-[10px] text-[#4a6650]">
+                    <span className="text-[10px] text-crm-text-dim">
                       {format(parseISO(msg.sent_at), "d MMM · h:mm a")}
                     </span>
                   </div>
-                  <p className="text-[12.5px] text-[#a0c4a8] whitespace-pre-wrap leading-relaxed">{msg.body}</p>
+                  <p className="text-[12.5px] text-crm-text-secondary whitespace-pre-wrap leading-relaxed">{msg.body}</p>
                 </div>
               </div>
             </div>
           );
         })}
       </div>
-      <div className="p-4 border-t border-[#1e2d22]">
+      <div className="p-4 border-t border-crm-border">
         <Button size="sm" onClick={() => onReply(message)}
-          className="bg-[#111a14] border border-[#1e2d22] hover:bg-[#1e2d22] text-[#c8e0cc] text-xs gap-1.5">
+          className="bg-crm-surface border border-crm-border hover:bg-crm-border text-crm-text text-xs gap-1.5">
           Reply
         </Button>
       </div>
@@ -292,10 +292,10 @@ export default function InboxModule() {
   ];
 
   return (
-    <div className="flex h-[calc(100vh-120px)] bg-[#0a0f0d] border border-[#1e2d22] rounded-xl overflow-hidden">
+    <div className="flex h-[calc(100vh-120px)] bg-crm border border-crm-border rounded-xl overflow-hidden">
       {/* Folder pane */}
-      <div className="w-[140px] border-r border-[#1e2d22] flex flex-col flex-shrink-0">
-        <div className="p-3 border-b border-[#1e2d22] space-y-2">
+      <div className="w-[140px] border-r border-crm-border flex flex-col flex-shrink-0">
+        <div className="p-3 border-b border-crm-border space-y-2">
           <Button size="sm" onClick={() => { setComposeOpen(true); setReplyMsg(null); }}
             className="w-full bg-emerald-700 hover:bg-emerald-600 text-white text-xs gap-1.5">
             <Plus size={12} /> Compose
@@ -308,7 +308,7 @@ export default function InboxModule() {
               </span>
             </div>
           ) : (
-            <p className="text-[9px] text-[#3a5040] px-1 text-center">No email configured</p>
+            <p className="text-[9px] text-crm-text-faint px-1 text-center">No email configured</p>
           )}
         </div>
         <nav className="flex-1 p-2 space-y-0.5">
@@ -317,7 +317,7 @@ export default function InboxModule() {
               className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left text-[11.5px] transition-colors
                 ${folder === f.id
                   ? "bg-emerald-950 text-emerald-400 border border-emerald-800"
-                  : "text-[#6b8f72] hover:text-[#a0c4a8] hover:bg-[#111a14]"
+                  : "text-crm-text-muted hover:text-crm-text-secondary hover:bg-crm-surface"
                 }`}
             >
               {f.icon}
@@ -331,24 +331,24 @@ export default function InboxModule() {
       </div>
 
       {/* Thread list */}
-      <div className={`flex flex-col border-r border-[#1e2d22] ${selected ? "w-[280px] flex-shrink-0" : "flex-1"}`}>
-        <div className="px-4 py-3 border-b border-[#1e2d22]">
-          <span className="text-[11px] font-mono uppercase tracking-widest text-[#4a6650]">
+      <div className={`flex flex-col border-r border-crm-border ${selected ? "w-[280px] flex-shrink-0" : "flex-1"}`}>
+        <div className="px-4 py-3 border-b border-crm-border">
+          <span className="text-[11px] font-mono uppercase tracking-widest text-crm-text-dim">
             {folder === "inbox" ? "Inbox" : folder === "sent" ? "Sent" : "Archived"}
           </span>
         </div>
-        <div className="flex-1 overflow-y-auto divide-y divide-[#111a14]">
+        <div className="flex-1 overflow-y-auto divide-y divide-crm-surface">
           {isLoading ? (
             Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="px-4 py-3 space-y-2">
-                <div className="h-3 bg-[#1e2d22] rounded animate-pulse" />
-                <div className="h-3 w-2/3 bg-[#1e2d22] rounded animate-pulse" />
+                <div className="h-3 bg-crm-border rounded animate-pulse" />
+                <div className="h-3 w-2/3 bg-crm-border rounded animate-pulse" />
               </div>
             ))
           ) : currentMsgs.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full gap-3 text-center px-4 py-8">
-              <Mail size={24} className="text-[#2a3d2d]" />
-              <p className="text-[11px] text-[#4a6650]">No messages</p>
+              <Mail size={24} className="text-crm-text-faint" />
+              <p className="text-[11px] text-crm-text-dim">No messages</p>
             </div>
           ) : (
             currentMsgs.map((msg: any) => {
@@ -359,8 +359,8 @@ export default function InboxModule() {
                 <button
                   key={msg.id}
                   onClick={() => openMessage(msg)}
-                  className={`w-full px-4 py-3 text-left transition-colors hover:bg-[#111a14]
-                    ${selected?.id === msg.id ? "bg-[#111a14]" : ""}
+                  className={`w-full px-4 py-3 text-left transition-colors hover:bg-crm-surface
+                    ${selected?.id === msg.id ? "bg-crm-surface" : ""}
                   `}
                 >
                   <div className="flex items-start gap-2">
@@ -368,17 +368,17 @@ export default function InboxModule() {
                     {!isUnread && <span className="w-[6px] flex-shrink-0" />}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-1 mb-0.5">
-                        <span className={`text-[11.5px] truncate ${isUnread ? "font-semibold text-[#c8e0cc]" : "text-[#a0c4a8]"}`}>
+                        <span className={`text-[11.5px] truncate ${isUnread ? "font-semibold text-crm-text" : "text-crm-text-secondary"}`}>
                           {contact?.full_name ?? (folder === "sent" ? "Unknown" : "Unknown")}
                         </span>
-                        <span className="text-[9px] text-[#4a6650] flex-shrink-0">
+                        <span className="text-[9px] text-crm-text-dim flex-shrink-0">
                           {format(parseISO(msg.sent_at), "d MMM")}
                         </span>
                       </div>
-                      <p className={`text-[11px] truncate ${isUnread ? "text-[#6b8f72]" : "text-[#4a6650]"}`}>
+                      <p className={`text-[11px] truncate ${isUnread ? "text-crm-text-muted" : "text-crm-text-dim"}`}>
                         {msg.subject}
                       </p>
-                      <p className="text-[10px] text-[#2a3d2d] truncate mt-0.5">
+                      <p className="text-[10px] text-crm-text-faint truncate mt-0.5">
                         {msg.body.slice(0, 60)}…
                       </p>
                     </div>

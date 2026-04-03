@@ -90,8 +90,8 @@ export default function ParliamentOpsModule() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h2 className="text-lg font-bold text-[#c8e0cc]">Parliament Operations</h2>
-        <p className="text-[12px] text-[#6b8f72] mt-0.5">
+        <h2 className="text-lg font-bold text-crm-text">Parliament Operations</h2>
+        <p className="text-[12px] text-crm-text-muted mt-0.5">
           Review applications, track nominations, and manage verified delegates
         </p>
       </div>
@@ -105,13 +105,13 @@ export default function ParliamentOpsModule() {
         ].map(s => {
           const Icon = s.icon;
           return (
-            <div key={s.label} className="bg-[#0d1610] border border-[#1e2d22] rounded-xl p-4 flex items-start gap-3">
+            <div key={s.label} className="bg-crm-card border border-crm-border rounded-xl p-4 flex items-start gap-3">
               <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 border ${s.accent}`}>
                 <Icon size={15} />
               </div>
               <div>
-                <p className="text-[10px] font-mono uppercase tracking-widest text-[#4a6650]">{s.label}</p>
-                <p className="text-2xl font-bold text-[#c8e0cc]">{s.value}</p>
+                <p className="text-[10px] font-mono uppercase tracking-widest text-crm-text-dim">{s.label}</p>
+                <p className="text-2xl font-bold text-crm-text">{s.value}</p>
               </div>
             </div>
           );
@@ -199,22 +199,22 @@ export default function ParliamentOpsModule() {
 
 function Section({ title, icon: Icon, children }: { title: string; icon: React.ElementType; children: React.ReactNode }) {
   return (
-    <div className="bg-[#0d1610] border border-[#1e2d22] rounded-xl overflow-hidden">
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-[#1e2d22]">
-        <Icon size={13} className="text-[#4a6650]" />
-        <h3 className="text-[12px] font-semibold text-[#a0c4a8]">{title}</h3>
+    <div className="bg-crm-card border border-crm-border rounded-xl overflow-hidden">
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-crm-border">
+        <Icon size={13} className="text-crm-text-dim" />
+        <h3 className="text-[12px] font-semibold text-crm-text-secondary">{title}</h3>
       </div>
-      <div className="divide-y divide-[#1e2d22]">{children}</div>
+      <div className="divide-y divide-crm-border">{children}</div>
     </div>
   );
 }
 
 function ItemRow({ item, actions }: { item: QueueItem; actions: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-between gap-2 px-4 py-3 hover:bg-[#111a14] transition-colors">
+    <div className="flex items-center justify-between gap-2 px-4 py-3 hover:bg-crm-surface transition-colors">
       <div className="min-w-0">
-        <p className="text-[12.5px] font-medium text-[#c8e0cc] truncate">{item.full_name}</p>
-        <p className="text-[10px] text-[#4a6650]">{item.country}</p>
+        <p className="text-[12.5px] font-medium text-crm-text truncate">{item.full_name}</p>
+        <p className="text-[10px] text-crm-text-dim">{item.country}</p>
       </div>
       <div className="flex-shrink-0">{actions}</div>
     </div>
@@ -224,7 +224,7 @@ function ItemRow({ item, actions }: { item: QueueItem; actions: React.ReactNode 
 function Empty({ text }: { text: string }) {
   return (
     <div className="px-4 py-8 text-center">
-      <p className="text-[12px] text-[#3a5040]">{text}</p>
+      <p className="text-[12px] text-crm-text-faint">{text}</p>
     </div>
   );
 }

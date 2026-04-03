@@ -63,33 +63,33 @@ function AddDocumentDialog({ open, onClose }: { open: boolean; onClose: () => vo
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="bg-[#0d1610] border-[#1e2d22] text-[#c8e0cc] max-w-md">
+      <DialogContent className="bg-crm-card border-crm-border text-crm-text max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-sm font-semibold text-[#c8e0cc]">Add Document</DialogTitle>
+          <DialogTitle className="text-sm font-semibold text-crm-text">Add Document</DialogTitle>
         </DialogHeader>
         <div className="space-y-3 py-1">
           <div className="space-y-1">
-            <Label className="text-[11px] text-[#4a6650]">Title *</Label>
+            <Label className="text-[11px] text-crm-text-dim">Title *</Label>
             <Input value={title} onChange={e => setTitle(e.target.value)}
-              className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8"
+              className="bg-crm-surface border-crm-border text-crm-text text-xs h-8"
               placeholder="Document title" />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <Label className="text-[11px] text-[#4a6650]">Category</Label>
+              <Label className="text-[11px] text-crm-text-dim">Category</Label>
               <Input value={category} onChange={e => setCategory(e.target.value)}
-                className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8"
+                className="bg-crm-surface border-crm-border text-crm-text text-xs h-8"
                 placeholder="General" />
             </div>
             <div className="space-y-1">
-              <Label className="text-[11px] text-[#4a6650]">File type</Label>
+              <Label className="text-[11px] text-crm-text-dim">File type</Label>
               <Select value={fileType} onValueChange={setFileType}>
-                <SelectTrigger className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8">
+                <SelectTrigger className="bg-crm-surface border-crm-border text-crm-text text-xs h-8">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-[#0d1610] border-[#1e2d22]">
+                <SelectContent className="bg-crm-card border-crm-border">
                   {FILE_TYPES.map(t => (
-                    <SelectItem key={t} value={t} className="text-[#c8e0cc] text-xs">{t}</SelectItem>
+                    <SelectItem key={t} value={t} className="text-crm-text text-xs">{t}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -97,23 +97,23 @@ function AddDocumentDialog({ open, onClose }: { open: boolean; onClose: () => vo
           </div>
           <div className="grid grid-cols-2 gap-3 items-end">
             <div className="space-y-1">
-              <Label className="text-[11px] text-[#4a6650]">Size (KB)</Label>
+              <Label className="text-[11px] text-crm-text-dim">Size (KB)</Label>
               <Input
                 type="number"
                 value={fileSizeKb}
                 onChange={e => setFileSizeKb(e.target.value)}
-                className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8"
+                className="bg-crm-surface border-crm-border text-crm-text text-xs h-8"
                 placeholder="Optional"
               />
             </div>
             <div className="flex items-center gap-2 pb-1">
               <Switch checked={restricted} onCheckedChange={setRestricted} />
-              <Label className="text-[11px] text-[#4a6650]">Restricted</Label>
+              <Label className="text-[11px] text-crm-text-dim">Restricted</Label>
             </div>
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" size="sm" onClick={onClose} className="border-[#1e2d22] text-[#6b8f72] text-xs">
+          <Button variant="outline" size="sm" onClick={onClose} className="border-crm-border text-crm-text-muted text-xs">
             Cancel
           </Button>
           <Button size="sm" disabled={!title.trim() || create.isPending}
@@ -154,33 +154,33 @@ function EditDocumentDialog({ doc, open, onClose }: { doc: Doc; open: boolean; o
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="bg-[#0d1610] border-[#1e2d22] text-[#c8e0cc] max-w-md">
+      <DialogContent className="bg-crm-card border-crm-border text-crm-text max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-sm font-semibold text-[#c8e0cc]">Edit Document</DialogTitle>
+          <DialogTitle className="text-sm font-semibold text-crm-text">Edit Document</DialogTitle>
         </DialogHeader>
         <div className="space-y-3 py-1">
           <div className="space-y-1">
-            <Label className="text-[11px] text-[#4a6650]">Title *</Label>
+            <Label className="text-[11px] text-crm-text-dim">Title *</Label>
             <Input value={title} onChange={e => setTitle(e.target.value)}
-              className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8"
+              className="bg-crm-surface border-crm-border text-crm-text text-xs h-8"
               placeholder="Document title" />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <Label className="text-[11px] text-[#4a6650]">Category</Label>
+              <Label className="text-[11px] text-crm-text-dim">Category</Label>
               <Input value={category} onChange={e => setCategory(e.target.value)}
-                className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8"
+                className="bg-crm-surface border-crm-border text-crm-text text-xs h-8"
                 placeholder="General" />
             </div>
             <div className="space-y-1">
-              <Label className="text-[11px] text-[#4a6650]">File type</Label>
+              <Label className="text-[11px] text-crm-text-dim">File type</Label>
               <Select value={fileType} onValueChange={setFileType}>
-                <SelectTrigger className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8">
+                <SelectTrigger className="bg-crm-surface border-crm-border text-crm-text text-xs h-8">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-[#0d1610] border-[#1e2d22]">
+                <SelectContent className="bg-crm-card border-crm-border">
                   {FILE_TYPES.map(t => (
-                    <SelectItem key={t} value={t} className="text-[#c8e0cc] text-xs">{t}</SelectItem>
+                    <SelectItem key={t} value={t} className="text-crm-text text-xs">{t}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -188,23 +188,23 @@ function EditDocumentDialog({ doc, open, onClose }: { doc: Doc; open: boolean; o
           </div>
           <div className="grid grid-cols-2 gap-3 items-end">
             <div className="space-y-1">
-              <Label className="text-[11px] text-[#4a6650]">Size (KB)</Label>
+              <Label className="text-[11px] text-crm-text-dim">Size (KB)</Label>
               <Input
                 type="number"
                 value={fileSizeKb}
                 onChange={e => setFileSizeKb(e.target.value)}
-                className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8"
+                className="bg-crm-surface border-crm-border text-crm-text text-xs h-8"
                 placeholder="Optional"
               />
             </div>
             <div className="flex items-center gap-2 pb-1">
               <Switch checked={restricted} onCheckedChange={setRestricted} />
-              <Label className="text-[11px] text-[#4a6650]">Restricted</Label>
+              <Label className="text-[11px] text-crm-text-dim">Restricted</Label>
             </div>
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" size="sm" onClick={onClose} className="border-[#1e2d22] text-[#6b8f72] text-xs">
+          <Button variant="outline" size="sm" onClick={onClose} className="border-crm-border text-crm-text-muted text-xs">
             Cancel
           </Button>
           <Button size="sm" disabled={!title.trim() || update.isPending}
@@ -263,15 +263,15 @@ export default function DocumentsModule() {
   if (!isLoading && data === null) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4 text-center">
-        <div className="h-16 w-16 rounded-2xl bg-[#111a14] border border-[#1e2d22] flex items-center justify-center">
+        <div className="h-16 w-16 rounded-2xl bg-crm-surface border border-crm-border flex items-center justify-center">
           <AlertCircle className="h-7 w-7 text-amber-500" />
         </div>
         <div>
-          <h2 className="text-xl font-bold text-[#c8e0cc]">Documents table not set up</h2>
-          <p className="text-sm text-[#6b8f72] mt-2 max-w-sm">
+          <h2 className="text-xl font-bold text-crm-text">Documents table not set up</h2>
+          <p className="text-sm text-crm-text-muted mt-2 max-w-sm">
             Create a <span className="font-mono text-emerald-500">documents</span> table in Supabase with columns:
             <br />
-            <span className="font-mono text-[11px] text-[#4a6650]">
+            <span className="font-mono text-[11px] text-crm-text-dim">
               id, title, category, file_type, file_size_kb, restricted, uploaded_by (FK → profiles), created_at
             </span>
           </p>
@@ -285,8 +285,8 @@ export default function DocumentsModule() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-bold text-[#c8e0cc]">Documents</h2>
-          <p className="text-[12px] text-[#6b8f72] mt-0.5">
+          <h2 className="text-lg font-bold text-crm-text">Documents</h2>
+          <p className="text-[12px] text-crm-text-muted mt-0.5">
             Shared files, MoU templates, budget documents, and reports
           </p>
         </div>
@@ -306,10 +306,10 @@ export default function DocumentsModule() {
 
       {!isLoading && Array.isArray(data) && data.length === 0 && (
         <div className="flex flex-col items-center justify-center min-h-[40vh] gap-3 text-center">
-          <div className="h-14 w-14 rounded-2xl bg-[#111a14] border border-[#1e2d22] flex items-center justify-center">
-            <FolderOpen className="h-6 w-6 text-[#4a6650]" />
+          <div className="h-14 w-14 rounded-2xl bg-crm-surface border border-crm-border flex items-center justify-center">
+            <FolderOpen className="h-6 w-6 text-crm-text-dim" />
           </div>
-          <p className="text-sm text-[#6b8f72]">No documents uploaded yet.</p>
+          <p className="text-sm text-crm-text-muted">No documents uploaded yet.</p>
         </div>
       )}
 
@@ -327,7 +327,7 @@ export default function DocumentsModule() {
             return (
               <div
                 key={doc.id}
-                className="bg-[#0d1610] border border-[#1e2d22] rounded-xl p-4 flex items-center gap-3 hover:border-[#2a3d2d] transition-colors"
+                className="bg-crm-card border border-crm-border rounded-xl p-4 flex items-center gap-3 hover:border-crm-border-hover transition-colors"
               >
                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-[10px] font-bold flex-shrink-0 border ${typeStyle}`}>
                   {doc.file_type}
@@ -335,7 +335,7 @@ export default function DocumentsModule() {
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <p className="text-[13px] font-semibold text-[#c8e0cc] truncate">{doc.title}</p>
+                    <p className="text-[13px] font-semibold text-crm-text truncate">{doc.title}</p>
                     {doc.restricted && (
                       <span className="flex items-center gap-0.5 text-[9px] font-mono text-amber-400 bg-amber-950 border border-amber-800 rounded px-1.5 py-0.5 flex-shrink-0">
                         <Lock size={8} /> Restricted
@@ -343,22 +343,22 @@ export default function DocumentsModule() {
                     )}
                   </div>
                   <div className="flex items-center gap-3 mt-0.5 flex-wrap">
-                    <span className="text-[10px] font-mono text-[#4a6650] bg-[#111a14] border border-[#1e2d22] rounded px-1.5 py-0.5">
+                    <span className="text-[10px] font-mono text-crm-text-dim bg-crm-surface border border-crm-border rounded px-1.5 py-0.5">
                       {doc.category}
                     </span>
-                    {sizeStr && <span className="text-[10px] text-[#4a6650]">{sizeStr}</span>}
-                    <span className="text-[10px] text-[#4a6650]">
+                    {sizeStr && <span className="text-[10px] text-crm-text-dim">{sizeStr}</span>}
+                    <span className="text-[10px] text-crm-text-dim">
                       {format(parseISO(doc.created_at), "d MMM yyyy")}
                     </span>
                     {doc.uploader_name && (
-                      <span className="text-[10px] text-[#4a6650]">by {doc.uploader_name}</span>
+                      <span className="text-[10px] text-crm-text-dim">by {doc.uploader_name}</span>
                     )}
                   </div>
                 </div>
 
                 <div className="flex items-center gap-1.5 flex-shrink-0">
                   <button
-                    className="flex items-center gap-1.5 text-[11px] text-[#4a6650] hover:text-[#a0c4a8] bg-[#111a14] border border-[#1e2d22] rounded-lg px-2.5 py-1.5 transition-colors"
+                    className="flex items-center gap-1.5 text-[11px] text-crm-text-dim hover:text-crm-text-secondary bg-crm-surface border border-crm-border rounded-lg px-2.5 py-1.5 transition-colors"
                     title="Download"
                   >
                     <Download size={12} />
@@ -367,7 +367,7 @@ export default function DocumentsModule() {
                   {isAdmin && !isConfirming && (
                     <button
                       onClick={() => setEditTarget(doc)}
-                      className="flex items-center gap-1 text-[11px] text-[#4a6650] hover:text-[#a0c4a8] bg-[#111a14] border border-[#1e2d22] rounded-lg px-2.5 py-1.5 transition-colors"
+                      className="flex items-center gap-1 text-[11px] text-crm-text-dim hover:text-crm-text-secondary bg-crm-surface border border-crm-border rounded-lg px-2.5 py-1.5 transition-colors"
                       title="Edit"
                     >
                       <Pencil size={12} />
@@ -377,7 +377,7 @@ export default function DocumentsModule() {
                   {isAdmin && !isConfirming && (
                     <button
                       onClick={() => setConfirmDeleteId(doc.id)}
-                      className="flex items-center gap-1 text-[11px] text-[#4a6650] hover:text-red-400 bg-[#111a14] border border-[#1e2d22] hover:border-red-900 rounded-lg px-2.5 py-1.5 transition-colors"
+                      className="flex items-center gap-1 text-[11px] text-crm-text-dim hover:text-red-400 bg-crm-surface border border-crm-border hover:border-red-900 rounded-lg px-2.5 py-1.5 transition-colors"
                       title="Delete"
                     >
                       <Trash2 size={12} />
@@ -395,7 +395,7 @@ export default function DocumentsModule() {
                       </button>
                       <button
                         onClick={() => setConfirmDeleteId(null)}
-                        className="text-[10px] text-[#4a6650] hover:text-[#a0c4a8] bg-[#111a14] border border-[#1e2d22] rounded px-2 py-1 transition-colors"
+                        className="text-[10px] text-crm-text-dim hover:text-crm-text-secondary bg-crm-surface border border-crm-border rounded px-2 py-1 transition-colors"
                       >
                         No
                       </button>

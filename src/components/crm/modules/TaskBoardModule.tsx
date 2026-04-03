@@ -46,17 +46,17 @@ function TaskCard({ task, onStatusChange, canUpdateStatus, isAdmin, onEdit, onDe
   return (
     <>
       <div
-        className="bg-[#0d1610] border border-[#1e2d22] rounded-lg p-3 space-y-2 hover:border-[#2a3d2d] transition-colors"
+        className="bg-crm-card border border-crm-border rounded-lg p-3 space-y-2 hover:border-crm-border-hover transition-colors"
       >
         <p
-          className="text-[12.5px] font-medium text-[#c8e0cc] leading-snug cursor-pointer"
+          className="text-[12.5px] font-medium text-crm-text leading-snug cursor-pointer"
           onClick={() => canUpdateStatus && setOpen(true)}
         >
           {task.title}
         </p>
         <div className="flex items-center gap-2 flex-wrap">
           {task.pillar && (
-            <span className="text-[9px] font-mono text-[#4a6650] uppercase bg-[#111a14] border border-[#1e2d22] rounded px-1.5 py-0.5">
+            <span className="text-[9px] font-mono text-crm-text-dim uppercase bg-crm-surface border border-crm-border rounded px-1.5 py-0.5">
               {task.pillar}
             </span>
           )}
@@ -67,16 +67,16 @@ function TaskCard({ task, onStatusChange, canUpdateStatus, isAdmin, onEdit, onDe
         <div className="flex items-center justify-between">
           {task.assignee ? (
             <div className="flex items-center gap-1.5">
-              <div className="w-5 h-5 rounded-full bg-[#1e2d22] flex items-center justify-center text-[9px] font-bold text-emerald-400 uppercase">
+              <div className="w-5 h-5 rounded-full bg-crm-border flex items-center justify-center text-[9px] font-bold text-emerald-400 uppercase">
                 {task.assignee.full_name?.charAt(0) ?? "?"}
               </div>
-              <span className="text-[10px] text-[#6b8f72] truncate max-w-[80px]">
+              <span className="text-[10px] text-crm-text-muted truncate max-w-[80px]">
                 {task.assignee.full_name?.split(" ")[0]}
               </span>
             </div>
           ) : <span />}
           {task.due_date && (
-            <span className="flex items-center gap-1 text-[10px] text-[#4a6650]">
+            <span className="flex items-center gap-1 text-[10px] text-crm-text-dim">
               <Clock size={9} />
               {format(parseISO(task.due_date), "d MMM")}
             </span>
@@ -85,18 +85,18 @@ function TaskCard({ task, onStatusChange, canUpdateStatus, isAdmin, onEdit, onDe
 
         {/* Admin actions */}
         {isAdmin && (
-          <div className="pt-1 border-t border-[#1e2d22] flex items-center gap-1.5">
+          <div className="pt-1 border-t border-crm-border flex items-center gap-1.5">
             {!confirmDelete ? (
               <>
                 <button
                   onClick={() => onEdit(task)}
-                  className="flex items-center gap-1 text-[10px] text-[#4a6650] hover:text-[#a0c4a8] transition-colors px-1.5 py-0.5 rounded hover:bg-[#111a14]"
+                  className="flex items-center gap-1 text-[10px] text-crm-text-dim hover:text-crm-text-secondary transition-colors px-1.5 py-0.5 rounded hover:bg-crm-surface"
                 >
                   <Pencil size={10} /> Edit
                 </button>
                 <button
                   onClick={() => setConfirmDelete(true)}
-                  className="flex items-center gap-1 text-[10px] text-[#4a6650] hover:text-red-400 transition-colors px-1.5 py-0.5 rounded hover:bg-red-950"
+                  className="flex items-center gap-1 text-[10px] text-crm-text-dim hover:text-red-400 transition-colors px-1.5 py-0.5 rounded hover:bg-red-950"
                 >
                   <Trash2 size={10} /> Delete
                 </button>
@@ -112,7 +112,7 @@ function TaskCard({ task, onStatusChange, canUpdateStatus, isAdmin, onEdit, onDe
                 </button>
                 <button
                   onClick={() => setConfirmDelete(false)}
-                  className="text-[10px] text-[#4a6650] hover:text-[#a0c4a8] px-1.5 py-0.5 rounded hover:bg-[#111a14] transition-colors"
+                  className="text-[10px] text-crm-text-dim hover:text-crm-text-secondary px-1.5 py-0.5 rounded hover:bg-crm-surface transition-colors"
                 >
                   No
                 </button>
@@ -124,30 +124,30 @@ function TaskCard({ task, onStatusChange, canUpdateStatus, isAdmin, onEdit, onDe
 
       {canUpdateStatus && (
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogContent className="bg-[#0d1610] border-[#1e2d22] text-[#c8e0cc] max-w-sm">
+          <DialogContent className="bg-crm-card border-crm-border text-crm-text max-w-sm">
             <DialogHeader>
               <DialogTitle className="text-sm font-semibold">{task.title}</DialogTitle>
             </DialogHeader>
             <div className="space-y-3 py-2">
               {task.description && (
-                <p className="text-[12px] text-[#6b8f72]">{task.description}</p>
+                <p className="text-[12px] text-crm-text-muted">{task.description}</p>
               )}
               <div className="space-y-1">
-                <Label className="text-[11px] text-[#4a6650]">Update status</Label>
+                <Label className="text-[11px] text-crm-text-dim">Update status</Label>
                 <Select value={newStatus} onValueChange={setNewStatus}>
-                  <SelectTrigger className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8">
+                  <SelectTrigger className="bg-crm-surface border-crm-border text-crm-text text-xs h-8">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#0d1610] border-[#1e2d22]">
+                  <SelectContent className="bg-crm-card border-crm-border">
                     {COLUMNS.map(c => (
-                      <SelectItem key={c.id} value={c.id} className="text-[#c8e0cc] text-xs">{c.label}</SelectItem>
+                      <SelectItem key={c.id} value={c.id} className="text-crm-text text-xs">{c.label}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" size="sm" onClick={() => setOpen(false)} className="border-[#1e2d22] text-[#6b8f72] text-xs">
+              <Button variant="outline" size="sm" onClick={() => setOpen(false)} className="border-crm-border text-crm-text-muted text-xs">
                 Cancel
               </Button>
               <Button size="sm" onClick={() => { onStatusChange(task.id, newStatus); setOpen(false); }}
@@ -183,40 +183,40 @@ function TaskFormFields({
   return (
     <div className="space-y-3 py-1">
       <div className="space-y-1">
-        <Label className="text-[11px] text-[#4a6650]">Title *</Label>
+        <Label className="text-[11px] text-crm-text-dim">Title *</Label>
         <Input value={title} onChange={e => setTitle(e.target.value)}
-          className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8"
+          className="bg-crm-surface border-crm-border text-crm-text text-xs h-8"
           placeholder="Task title" />
       </div>
       <div className="space-y-1">
-        <Label className="text-[11px] text-[#4a6650]">Description</Label>
+        <Label className="text-[11px] text-crm-text-dim">Description</Label>
         <Textarea value={description} onChange={e => setDescription(e.target.value)}
-          className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs resize-none"
+          className="bg-crm-surface border-crm-border text-crm-text text-xs resize-none"
           rows={2} placeholder="Optional description" />
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1">
-          <Label className="text-[11px] text-[#4a6650]">Pillar</Label>
+          <Label className="text-[11px] text-crm-text-dim">Pillar</Label>
           <Select value={pillar} onValueChange={setPillar}>
-            <SelectTrigger className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8">
+            <SelectTrigger className="bg-crm-surface border-crm-border text-crm-text text-xs h-8">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="bg-[#0d1610] border-[#1e2d22]">
+            <SelectContent className="bg-crm-card border-crm-border">
               {PILLARS.map(p => (
-                <SelectItem key={p} value={p} className="text-[#c8e0cc] text-xs capitalize">{p}</SelectItem>
+                <SelectItem key={p} value={p} className="text-crm-text text-xs capitalize">{p}</SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
         <div className="space-y-1">
-          <Label className="text-[11px] text-[#4a6650]">Priority</Label>
+          <Label className="text-[11px] text-crm-text-dim">Priority</Label>
           <Select value={priority} onValueChange={setPriority}>
-            <SelectTrigger className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8">
+            <SelectTrigger className="bg-crm-surface border-crm-border text-crm-text text-xs h-8">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="bg-[#0d1610] border-[#1e2d22]">
+            <SelectContent className="bg-crm-card border-crm-border">
               {PRIORITIES.map(p => (
-                <SelectItem key={p} value={p} className="text-[#c8e0cc] text-xs capitalize">{p}</SelectItem>
+                <SelectItem key={p} value={p} className="text-crm-text text-xs capitalize">{p}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -224,22 +224,22 @@ function TaskFormFields({
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1">
-          <Label className="text-[11px] text-[#4a6650]">Assign to</Label>
+          <Label className="text-[11px] text-crm-text-dim">Assign to</Label>
           <Select value={assigneeId} onValueChange={setAssigneeId}>
-            <SelectTrigger className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8">
+            <SelectTrigger className="bg-crm-surface border-crm-border text-crm-text text-xs h-8">
               <SelectValue placeholder="Unassigned" />
             </SelectTrigger>
-            <SelectContent className="bg-[#0d1610] border-[#1e2d22]">
+            <SelectContent className="bg-crm-card border-crm-border">
               {profiles.map((p: any) => (
-                <SelectItem key={p.id} value={p.id} className="text-[#c8e0cc] text-xs">{p.full_name}</SelectItem>
+                <SelectItem key={p.id} value={p.id} className="text-crm-text text-xs">{p.full_name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
         <div className="space-y-1">
-          <Label className="text-[11px] text-[#4a6650]">Due date</Label>
+          <Label className="text-[11px] text-crm-text-dim">Due date</Label>
           <Input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)}
-            className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8" />
+            className="bg-crm-surface border-crm-border text-crm-text text-xs h-8" />
         </div>
       </div>
     </div>
@@ -286,9 +286,9 @@ function CreateTaskDialog({ open, onClose, profiles }: {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="bg-[#0d1610] border-[#1e2d22] text-[#c8e0cc] max-w-md">
+      <DialogContent className="bg-crm-card border-crm-border text-crm-text max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-sm font-semibold text-[#c8e0cc]">New Task</DialogTitle>
+          <DialogTitle className="text-sm font-semibold text-crm-text">New Task</DialogTitle>
         </DialogHeader>
         <TaskFormFields
           title={title} setTitle={setTitle}
@@ -300,7 +300,7 @@ function CreateTaskDialog({ open, onClose, profiles }: {
           profiles={profiles}
         />
         <DialogFooter>
-          <Button variant="outline" size="sm" onClick={onClose} className="border-[#1e2d22] text-[#6b8f72] text-xs">
+          <Button variant="outline" size="sm" onClick={onClose} className="border-crm-border text-crm-text-muted text-xs">
             Cancel
           </Button>
           <Button size="sm" disabled={!title.trim() || create.isPending}
@@ -364,9 +364,9 @@ function EditTaskDialog({ task, open, onClose, profiles }: {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="bg-[#0d1610] border-[#1e2d22] text-[#c8e0cc] max-w-md">
+      <DialogContent className="bg-crm-card border-crm-border text-crm-text max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-sm font-semibold text-[#c8e0cc]">Edit Task</DialogTitle>
+          <DialogTitle className="text-sm font-semibold text-crm-text">Edit Task</DialogTitle>
         </DialogHeader>
         <TaskFormFields
           title={title} setTitle={setTitle}
@@ -378,7 +378,7 @@ function EditTaskDialog({ task, open, onClose, profiles }: {
           profiles={profiles}
         />
         <DialogFooter>
-          <Button variant="outline" size="sm" onClick={onClose} className="border-[#1e2d22] text-[#6b8f72] text-xs">
+          <Button variant="outline" size="sm" onClick={onClose} className="border-crm-border text-crm-text-muted text-xs">
             Cancel
           </Button>
           <Button size="sm" disabled={!title.trim() || update.isPending}
@@ -463,8 +463,8 @@ export default function TaskBoardModule() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-[11px] font-mono uppercase tracking-widest text-[#4a6650]">Task Board</h2>
-          <p className="text-[13px] font-semibold text-[#c8e0cc] mt-0.5">
+          <h2 className="text-[11px] font-mono uppercase tracking-widest text-crm-text-dim">Task Board</h2>
+          <p className="text-[13px] font-semibold text-crm-text mt-0.5">
             {(isSuperAdmin || isProjectDirector) ? "All Tasks" : "My Tasks"}
           </p>
         </div>
@@ -481,19 +481,19 @@ export default function TaskBoardModule() {
         {COLUMNS.map(col => {
           const colTasks = tasksByStatus[col.id] ?? [];
           return (
-            <div key={col.id} className={`flex flex-col gap-2 bg-[#0a0f0d] border-t-2 ${col.accent} border border-[#1e2d22] rounded-xl p-3 min-h-[200px]`}>
+            <div key={col.id} className={`flex flex-col gap-2 bg-crm border-t-2 ${col.accent} border border-crm-border rounded-xl p-3 min-h-[200px]`}>
               <div className="flex items-center justify-between mb-1">
-                <span className="text-[11px] font-mono uppercase tracking-wider text-[#6b8f72]">{col.label}</span>
-                <span className="text-[10px] font-mono text-[#2a3d2d] bg-[#111a14] border border-[#1e2d22] rounded-full px-1.5">
+                <span className="text-[11px] font-mono uppercase tracking-wider text-crm-text-muted">{col.label}</span>
+                <span className="text-[10px] font-mono text-crm-text-faint bg-crm-surface border border-crm-border rounded-full px-1.5">
                   {isLoading ? "…" : colTasks.length}
                 </span>
               </div>
               {isLoading ? (
                 Array.from({ length: 2 }).map((_, i) => (
-                  <div key={i} className="h-16 bg-[#111a14] rounded-lg animate-pulse" />
+                  <div key={i} className="h-16 bg-crm-surface rounded-lg animate-pulse" />
                 ))
               ) : colTasks.length === 0 ? (
-                <p className="text-[10px] text-[#2a3d2d] text-center py-4">No tasks</p>
+                <p className="text-[10px] text-crm-text-faint text-center py-4">No tasks</p>
               ) : (
                 colTasks.map((task: any) => (
                   <TaskCard

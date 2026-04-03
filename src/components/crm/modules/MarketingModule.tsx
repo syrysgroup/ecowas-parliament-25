@@ -30,7 +30,7 @@ const TYPE_CONFIG = {
 };
 
 const STATUS_CONFIG = {
-  draft:     { label: "Draft",     classes: "bg-[#111a14] text-[#6b8f72] border-[#2a3d2d]", icon: Clock },
+  draft:     { label: "Draft",     classes: "bg-crm-surface text-crm-text-muted border-crm-border-hover", icon: Clock },
   active:    { label: "Active",    classes: "bg-emerald-950 text-emerald-400 border-emerald-800", icon: Play },
   completed: { label: "Completed", classes: "bg-slate-900 text-slate-400 border-slate-700", icon: CheckCircle2 },
 };
@@ -82,69 +82,69 @@ function CampaignDialog({ open, onClose, campaign }: {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="bg-[#0d1610] border-[#1e2d22] text-[#c8e0cc] max-w-md">
+      <DialogContent className="bg-crm-card border-crm-border text-crm-text max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-sm font-semibold text-[#c8e0cc]">
+          <DialogTitle className="text-sm font-semibold text-crm-text">
             {isEdit ? "Edit Campaign" : "New Campaign"}
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-3 py-1">
           <div className="space-y-1">
-            <Label className="text-[11px] text-[#4a6650]">Title *</Label>
+            <Label className="text-[11px] text-crm-text-dim">Title *</Label>
             <Input value={title} onChange={e => setTitle(e.target.value)}
-              className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8"
+              className="bg-crm-surface border-crm-border text-crm-text text-xs h-8"
               placeholder="Campaign name" />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <Label className="text-[11px] text-[#4a6650]">Type</Label>
+              <Label className="text-[11px] text-crm-text-dim">Type</Label>
               <Select value={type} onValueChange={v => setType(v as Campaign["type"])}>
-                <SelectTrigger className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8">
+                <SelectTrigger className="bg-crm-surface border-crm-border text-crm-text text-xs h-8">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-[#0d1610] border-[#1e2d22]">
-                  <SelectItem value="email"  className="text-[#c8e0cc] text-xs">Email</SelectItem>
-                  <SelectItem value="social" className="text-[#c8e0cc] text-xs">Social</SelectItem>
-                  <SelectItem value="press"  className="text-[#c8e0cc] text-xs">Press</SelectItem>
+                <SelectContent className="bg-crm-card border-crm-border">
+                  <SelectItem value="email"  className="text-crm-text text-xs">Email</SelectItem>
+                  <SelectItem value="social" className="text-crm-text text-xs">Social</SelectItem>
+                  <SelectItem value="press"  className="text-crm-text text-xs">Press</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1">
-              <Label className="text-[11px] text-[#4a6650]">Status</Label>
+              <Label className="text-[11px] text-crm-text-dim">Status</Label>
               <Select value={status} onValueChange={v => setStatus(v as Campaign["status"])}>
-                <SelectTrigger className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8">
+                <SelectTrigger className="bg-crm-surface border-crm-border text-crm-text text-xs h-8">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-[#0d1610] border-[#1e2d22]">
-                  <SelectItem value="draft"     className="text-[#c8e0cc] text-xs">Draft</SelectItem>
-                  <SelectItem value="active"    className="text-[#c8e0cc] text-xs">Active</SelectItem>
-                  <SelectItem value="completed" className="text-[#c8e0cc] text-xs">Completed</SelectItem>
+                <SelectContent className="bg-crm-card border-crm-border">
+                  <SelectItem value="draft"     className="text-crm-text text-xs">Draft</SelectItem>
+                  <SelectItem value="active"    className="text-crm-text text-xs">Active</SelectItem>
+                  <SelectItem value="completed" className="text-crm-text text-xs">Completed</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <Label className="text-[11px] text-[#4a6650]">Target audience</Label>
+              <Label className="text-[11px] text-crm-text-dim">Target audience</Label>
               <Input value={audience} onChange={e => setAudience(e.target.value)}
-                className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8"
+                className="bg-crm-surface border-crm-border text-crm-text text-xs h-8"
                 placeholder="e.g. All delegates" />
             </div>
             <div className="space-y-1">
-              <Label className="text-[11px] text-[#4a6650]">Schedule</Label>
+              <Label className="text-[11px] text-crm-text-dim">Schedule</Label>
               <Input type="datetime-local" value={scheduledAt} onChange={e => setScheduledAt(e.target.value)}
-                className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8" />
+                className="bg-crm-surface border-crm-border text-crm-text text-xs h-8" />
             </div>
           </div>
           <div className="space-y-1">
-            <Label className="text-[11px] text-[#4a6650]">Notes</Label>
+            <Label className="text-[11px] text-crm-text-dim">Notes</Label>
             <Textarea value={notes} onChange={e => setNotes(e.target.value)}
-              className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs min-h-[60px] resize-none"
+              className="bg-crm-surface border-crm-border text-crm-text text-xs min-h-[60px] resize-none"
               placeholder="Brief description or objectives" />
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" size="sm" onClick={onClose} className="border-[#1e2d22] text-[#6b8f72] text-xs">
+          <Button variant="outline" size="sm" onClick={onClose} className="border-crm-border text-crm-text-muted text-xs">
             Cancel
           </Button>
           <Button size="sm" disabled={!title.trim() || save.isPending}
@@ -213,8 +213,8 @@ export default function MarketingModule() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-bold text-[#c8e0cc]">Marketing Console</h2>
-          <p className="text-[12px] text-[#6b8f72] mt-0.5">Campaign management and audience targeting</p>
+          <h2 className="text-lg font-bold text-crm-text">Marketing Console</h2>
+          <p className="text-[12px] text-crm-text-muted mt-0.5">Campaign management and audience targeting</p>
         </div>
         {isAdmin && (
           <Button size="sm" onClick={() => setAddOpen(true)}
@@ -240,25 +240,25 @@ export default function MarketingModule() {
       {/* Filters */}
       <div className="flex items-center gap-2 flex-wrap">
         <Select value={filterType} onValueChange={setFilterType}>
-          <SelectTrigger className="bg-[#0d1610] border-[#1e2d22] text-[#c8e0cc] text-xs h-8 w-32">
+          <SelectTrigger className="bg-crm-card border-crm-border text-crm-text text-xs h-8 w-32">
             <SelectValue placeholder="All types" />
           </SelectTrigger>
-          <SelectContent className="bg-[#0d1610] border-[#1e2d22]">
-            <SelectItem value="all"    className="text-[#c8e0cc] text-xs">All types</SelectItem>
-            <SelectItem value="email"  className="text-[#c8e0cc] text-xs">Email</SelectItem>
-            <SelectItem value="social" className="text-[#c8e0cc] text-xs">Social</SelectItem>
-            <SelectItem value="press"  className="text-[#c8e0cc] text-xs">Press</SelectItem>
+          <SelectContent className="bg-crm-card border-crm-border">
+            <SelectItem value="all"    className="text-crm-text text-xs">All types</SelectItem>
+            <SelectItem value="email"  className="text-crm-text text-xs">Email</SelectItem>
+            <SelectItem value="social" className="text-crm-text text-xs">Social</SelectItem>
+            <SelectItem value="press"  className="text-crm-text text-xs">Press</SelectItem>
           </SelectContent>
         </Select>
         <Select value={filterStatus} onValueChange={setFilterStatus}>
-          <SelectTrigger className="bg-[#0d1610] border-[#1e2d22] text-[#c8e0cc] text-xs h-8 w-32">
+          <SelectTrigger className="bg-crm-card border-crm-border text-crm-text text-xs h-8 w-32">
             <SelectValue placeholder="All statuses" />
           </SelectTrigger>
-          <SelectContent className="bg-[#0d1610] border-[#1e2d22]">
-            <SelectItem value="all"       className="text-[#c8e0cc] text-xs">All statuses</SelectItem>
-            <SelectItem value="draft"     className="text-[#c8e0cc] text-xs">Draft</SelectItem>
-            <SelectItem value="active"    className="text-[#c8e0cc] text-xs">Active</SelectItem>
-            <SelectItem value="completed" className="text-[#c8e0cc] text-xs">Completed</SelectItem>
+          <SelectContent className="bg-crm-card border-crm-border">
+            <SelectItem value="all"       className="text-crm-text text-xs">All statuses</SelectItem>
+            <SelectItem value="draft"     className="text-crm-text text-xs">Draft</SelectItem>
+            <SelectItem value="active"    className="text-crm-text text-xs">Active</SelectItem>
+            <SelectItem value="completed" className="text-crm-text text-xs">Completed</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -271,8 +271,8 @@ export default function MarketingModule() {
 
       {!isLoading && filtered.length === 0 && (
         <div className="flex flex-col items-center justify-center min-h-[30vh] gap-3 text-center">
-          <Megaphone className="h-6 w-6 text-[#4a6650]" />
-          <p className="text-sm text-[#6b8f72]">No campaigns found.</p>
+          <Megaphone className="h-6 w-6 text-crm-text-dim" />
+          <p className="text-sm text-crm-text-muted">No campaigns found.</p>
         </div>
       )}
 
@@ -285,7 +285,7 @@ export default function MarketingModule() {
           const TypeIcon = typeCfg.icon;
 
           return (
-            <div key={c.id} className="bg-[#0d1610] border border-[#1e2d22] rounded-xl p-4 hover:border-[#2a3d2d] transition-colors">
+            <div key={c.id} className="bg-crm-card border border-crm-border rounded-xl p-4 hover:border-crm-border-hover transition-colors">
               <div className="flex items-start gap-3">
                 <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 border ${typeCfg.classes}`}>
                   <TypeIcon size={14} />
@@ -293,23 +293,23 @@ export default function MarketingModule() {
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap mb-1">
-                    <p className="text-[13px] font-semibold text-[#c8e0cc]">{c.title}</p>
+                    <p className="text-[13px] font-semibold text-crm-text">{c.title}</p>
                     <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded border ${typeCfg.classes}`}>{typeCfg.label}</span>
                     <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded border ${statusCfg.classes}`}>{statusCfg.label}</span>
                   </div>
                   <div className="flex items-center gap-3 flex-wrap">
                     {c.target_audience && (
-                      <span className="text-[10px] font-mono text-[#4a6650] bg-[#111a14] border border-[#1e2d22] rounded px-1.5 py-0.5">{c.target_audience}</span>
+                      <span className="text-[10px] font-mono text-crm-text-dim bg-crm-surface border border-crm-border rounded px-1.5 py-0.5">{c.target_audience}</span>
                     )}
                     {c.scheduled_at && (
-                      <span className="text-[10px] text-[#6b8f72]">
+                      <span className="text-[10px] text-crm-text-muted">
                         Scheduled {format(parseISO(c.scheduled_at), "d MMM yyyy, HH:mm")}
                       </span>
                     )}
-                    <span className="text-[10px] text-[#4a6650]">{format(parseISO(c.created_at), "d MMM yyyy")}</span>
-                    {c.created_by_name && <span className="text-[10px] text-[#4a6650]">by {c.created_by_name}</span>}
+                    <span className="text-[10px] text-crm-text-dim">{format(parseISO(c.created_at), "d MMM yyyy")}</span>
+                    {c.created_by_name && <span className="text-[10px] text-crm-text-dim">by {c.created_by_name}</span>}
                   </div>
-                  {c.notes && <p className="text-[10px] text-[#4a6650] mt-1 truncate">{c.notes}</p>}
+                  {c.notes && <p className="text-[10px] text-crm-text-dim mt-1 truncate">{c.notes}</p>}
                 </div>
 
                 <div className="flex items-center gap-1.5 flex-shrink-0">
@@ -325,11 +325,11 @@ export default function MarketingModule() {
                   {isAdmin && !isConfirming && (
                     <>
                       <button onClick={() => setEditTarget(c)}
-                        className="w-7 h-7 rounded flex items-center justify-center bg-[#111a14] border border-[#1e2d22] text-[#4a6650] hover:text-[#a0c4a8] transition-colors">
+                        className="w-7 h-7 rounded flex items-center justify-center bg-crm-surface border border-crm-border text-crm-text-dim hover:text-crm-text-secondary transition-colors">
                         <Pencil size={12} />
                       </button>
                       <button onClick={() => setConfirmDeleteId(c.id)}
-                        className="w-7 h-7 rounded flex items-center justify-center bg-[#111a14] border border-[#1e2d22] text-[#4a6650] hover:text-red-400 hover:border-red-900 transition-colors">
+                        className="w-7 h-7 rounded flex items-center justify-center bg-crm-surface border border-crm-border text-crm-text-dim hover:text-red-400 hover:border-red-900 transition-colors">
                         <Trash2 size={12} />
                       </button>
                     </>
@@ -341,7 +341,7 @@ export default function MarketingModule() {
                         {deleteCampaign.isPending ? "…" : "Delete"}
                       </button>
                       <button onClick={() => setConfirmDeleteId(null)}
-                        className="text-[10px] text-[#4a6650] bg-[#111a14] border border-[#1e2d22] rounded px-2 py-1">
+                        className="text-[10px] text-crm-text-dim bg-crm-surface border border-crm-border rounded px-2 py-1">
                         No
                       </button>
                     </div>
