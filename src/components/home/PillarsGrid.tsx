@@ -60,7 +60,7 @@ const pillars = [
     sponsors: [],
   },
   {
-    title: "Parliamentary Awards",
+    title: "AWALCO Parliamentary Awards",
     description: "Recognising outstanding contributions to regional parliamentary democracy across 3 award categories — honouring individuals and institutions.",
     emoji: "🏆",
     to: "/programmes/awards",

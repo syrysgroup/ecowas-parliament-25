@@ -103,7 +103,7 @@ const Awards = () => (
         <AnimatedSection>
           <h2 className="text-2xl font-bold text-foreground mb-4">About the Awards</h2>
           <p className="text-muted-foreground leading-relaxed">
-            The ECOWAS Parliamentary Awards honour serving and former members of the ECOWAS Parliament who have demonstrated exceptional leadership, legislative impact, and service to regional integration. Inaugurated as part of the 25th Anniversary celebrations, these awards recognise the individuals whose work has strengthened democratic governance, advanced the rights of citizens, and built bridges between the fifteen Member States of the Community.
+            The AWALCO Parliamentary Awards honour serving and former members of the ECOWAS Parliament who have demonstrated exceptional leadership, legislative impact, and service to regional integration. Inaugurated as part of the 25th Anniversary celebrations, these awards recognise the individuals whose work has strengthened democratic governance, advanced the rights of citizens, and built bridges between the twelve Member States of the Community.
           </p>
         </AnimatedSection>
       </div>

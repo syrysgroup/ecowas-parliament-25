@@ -127,7 +127,7 @@ const events = [
     country: "🇳🇬 Nigeria",
     city: "Abuja",
     title: "Grand Finale & Awards Ceremony",
-    description: "Leaders, partners, youth champions, entrepreneurs, cultural ambassadors, and citizens gather in Abuja for the closing ceremony of the 25th Anniversary programme. The evening features the inaugural ECOWAS Parliamentary Awards gala, documentary storytelling, reflections on 25 years of democratic governance, and a vision statement for the next quarter-century of the ECOWAS Parliament.",
+    description: "Leaders, partners, youth champions, entrepreneurs, cultural ambassadors, and citizens gather in Abuja for the closing ceremony of the 25th Anniversary programme. The evening features the inaugural AWALCO Parliamentary Awards gala, documentary storytelling, reflections on 25 years of democratic governance, and a vision statement for the next quarter-century of the ECOWAS Parliament.",
     programme: "awards",
     deliverables: ["Awards gala ceremony", "Anniversary documentary premiere", "Vision 2050 statement"],
     highlight: true,
