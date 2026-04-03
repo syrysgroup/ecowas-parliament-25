@@ -97,6 +97,7 @@ const translations: Record<Locale, Record<string, string>> = {
     "nav.news": "Actualités",
     "nav.documents": "Documents",
     "nav.stakeholders": "Parties prenantes",
+    "nav.stakeholdersPartners": "Parties prenantes & Partenaires",
     "nav.team": "Équipe",
     "nav.getInvolved": "Participer",
     "nav.partnerWithUs": "Devenir partenaire",
