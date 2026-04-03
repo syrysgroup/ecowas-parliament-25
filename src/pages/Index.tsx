@@ -4,8 +4,7 @@ import SpeakerSection from "@/components/home/SpeakerSection";
 import MarqueeStrip from "@/components/home/MarqueeStrip";
 import CountdownTimer from "@/components/home/CountdownTimer";
 import CountriesSection from "@/components/home/CountriesSection";
-import Parliament25Section from "@/components/home/Parliament25Section";
-import AboutSection from "@/components/home/AboutSection";
+import AnniversarySection from "@/components/home/AnniversarySection";
 import PillarsGrid from "@/components/home/PillarsGrid";
 import SponsorsSection from "@/components/home/SponsorsSection";
 import ImplementingPartnersSection from "@/components/home/ImplementingPartnersSection";
@@ -25,8 +24,7 @@ const Index = () => {
       <MarqueeStrip />
       <CountdownTimer />
       <CountriesSection />
-      <Parliament25Section />
-      <AboutSection />
+      <AnniversarySection />
       <PillarsGrid />
       <SponsorsSection />
       <ImplementingPartnersSection />

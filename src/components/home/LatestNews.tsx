@@ -1,13 +1,10 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, Newspaper, CalendarDays, Megaphone } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import AnimatedSection from "@/components/shared/AnimatedSection";
 import { Button } from "@/components/ui/button";
-
-const categoryStyles: Record<string, { gradient: string; icon: typeof Newspaper }> = {
-  "Press Release": { gradient: "from-primary/30 to-ecowas-lime/20", icon: Newspaper },
-  "Event": { gradient: "from-ecowas-yellow/30 to-accent/20", icon: CalendarDays },
-  "Announcement": { gradient: "from-ecowas-blue/30 to-primary/20", icon: Megaphone },
-};
+import newsImg1 from "@/assets/news-1.jpg";
+import newsImg2 from "@/assets/news-2.jpg";
+import newsImg3 from "@/assets/news-3.jpg";
 
 const placeholderNews = [
   {
@@ -16,6 +13,7 @@ const placeholderNews = [
     excerpt: "The ECOWAS Parliament celebrates 25 years with a multi-country commemorative programme spanning January to November 2026.",
     date: "2 March 2026",
     category: "Press Release",
+    image: newsImg1,
   },
   {
     id: "2",
@@ -23,6 +21,7 @@ const placeholderNews = [
     excerpt: "Dignitaries and media gather at Onomo Allure Abuja for the official media launch of the @25 programme.",
     date: "28 February 2026",
     category: "Event",
+    image: newsImg2,
   },
   {
     id: "3",
@@ -30,6 +29,7 @@ const placeholderNews = [
     excerpt: "AWALCO and institutional sponsors join as partners to support ECOWAS Parliament Initiatives across West Africa.",
     date: "25 February 2026",
     category: "Announcement",
+    image: newsImg3,
   },
 ];
 
@@ -52,32 +52,34 @@ const LatestNews = () => {
         </AnimatedSection>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {placeholderNews.map((article, i) => {
-            const style = categoryStyles[article.category] || categoryStyles["Press Release"];
-            const Icon = style.icon;
-            return (
-              <AnimatedSection key={article.id} delay={i * 100}>
-                <div className="group rounded-2xl border border-border bg-card overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
-                  <div className={`h-44 bg-gradient-to-br ${style.gradient} flex items-center justify-center relative overflow-hidden`}>
-                    <div className="absolute inset-0 bg-gradient-to-t from-card/20 to-transparent" />
-                    <Icon className="h-12 w-12 text-primary/30 group-hover:scale-110 transition-transform duration-500" />
-                  </div>
-                  <div className="p-5">
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className="text-xs font-semibold uppercase tracking-wider text-primary bg-primary/10 px-2.5 py-1 rounded-full">
-                        {article.category}
-                      </span>
-                      <span className="text-xs text-muted-foreground">{article.date}</span>
-                    </div>
-                    <h3 className="font-bold text-card-foreground group-hover:text-primary transition-colors leading-snug">
-                      {article.title}
-                    </h3>
-                    <p className="mt-2 text-sm text-muted-foreground line-clamp-2">{article.excerpt}</p>
-                  </div>
+          {placeholderNews.map((article, i) => (
+            <AnimatedSection key={article.id} delay={i * 100}>
+              <div className="group rounded-2xl border border-border bg-card overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
+                <div className="aspect-square overflow-hidden">
+                  <img
+                    src={article.image}
+                    alt={article.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    loading="lazy"
+                    width={800}
+                    height={800}
+                  />
                 </div>
-              </AnimatedSection>
-            );
-          })}
+                <div className="p-5">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-primary bg-primary/10 px-2.5 py-1 rounded-full">
+                      {article.category}
+                    </span>
+                    <span className="text-xs text-muted-foreground">{article.date}</span>
+                  </div>
+                  <h3 className="font-bold text-card-foreground group-hover:text-primary transition-colors leading-snug">
+                    {article.title}
+                  </h3>
+                  <p className="mt-2 text-sm text-muted-foreground line-clamp-2">{article.excerpt}</p>
+                </div>
+              </div>
+            </AnimatedSection>
+          ))}
         </div>
       </div>
     </section>
