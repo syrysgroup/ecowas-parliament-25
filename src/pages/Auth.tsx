@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthContext";
@@ -13,10 +13,13 @@ import {
   Mail, Lock, User, ArrowLeft, Crown, Eye, EyeOff,
   ShieldCheck, KeyRound, CheckCircle2, AlertCircle,
 } from "lucide-react";
+import { Turnstile } from "@marsidev/react-turnstile";
 import ecowasLogo from "@/assets/ecowas-parliament-logo.png";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type AuthMode = "signin" | "signup" | "forgot" | "reset_sent";
+
+const TURNSTILE_SITE_KEY = "0x4AAAAAAAczus4H6t9WSW6Oy";
 
 const ECOWAS_COUNTRIES = [
   "Benin","Burkina Faso","Cape Verde","Côte d'Ivoire","Gambia",
@@ -81,6 +84,8 @@ export default function Auth() {
   const [country,     setCountry]     = useState("");
   const [submitting,  setSubmitting]  = useState(false);
   const [teamMode,    setTeamMode]    = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const turnstileRef = useRef<any>(null);
 
   useEffect(() => {
     if (!loading && user) {
@@ -95,10 +100,15 @@ export default function Auth() {
 
   if (loading) return null;
 
+  const resetTurnstile = () => {
+    setCaptchaToken(null);
+    turnstileRef.current?.reset();
+  };
+
   const handleAuthError = (err: any) => {
     let message = err.message;
     if (message?.toLowerCase().includes("captcha")) {
-      message = "CAPTCHA verification issue. Please contact the administrator to check Supabase CAPTCHA settings.";
+      message = "CAPTCHA verification failed. Please wait a moment and try again.";
     } else if (message === "Invalid login credentials") {
       message = "Email or password is incorrect.";
     }
@@ -107,9 +117,17 @@ export default function Auth() {
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!captchaToken) {
+      toast({ title: "Please wait for CAPTCHA verification", variant: "destructive" });
+      return;
+    }
     setSubmitting(true);
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+        options: { captchaToken },
+      });
       if (error) throw error;
       if (data.user) {
         const path = await getRoleBasedRedirect(data.user.id, from ?? null);
@@ -119,6 +137,7 @@ export default function Auth() {
       toast({ title: "Sign-in failed", description: handleAuthError(err), variant: "destructive" });
     } finally {
       setSubmitting(false);
+      resetTurnstile();
     }
   };
 
@@ -128,12 +147,17 @@ export default function Auth() {
       toast({ title: "Please fill all fields", variant: "destructive" });
       return;
     }
+    if (!captchaToken) {
+      toast({ title: "Please wait for CAPTCHA verification", variant: "destructive" });
+      return;
+    }
     setSubmitting(true);
     try {
       const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
+          captchaToken,
           emailRedirectTo: `${window.location.origin}/auth`,
           data: { full_name: fullName.trim(), country },
         },
@@ -145,16 +169,22 @@ export default function Auth() {
       toast({ title: "Sign-up failed", description: handleAuthError(err), variant: "destructive" });
     } finally {
       setSubmitting(false);
+      resetTurnstile();
     }
   };
 
   const handleForgot = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) { toast({ title: "Enter your email address first", variant: "destructive" }); return; }
+    if (!captchaToken) {
+      toast({ title: "Please wait for CAPTCHA verification", variant: "destructive" });
+      return;
+    }
     setSubmitting(true);
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/auth?mode=reset`,
+        captchaToken,
       });
       if (error) throw error;
       setMode("reset_sent");
@@ -162,6 +192,7 @@ export default function Auth() {
       toast({ title: "Error", description: handleAuthError(err), variant: "destructive" });
     } finally {
       setSubmitting(false);
+      resetTurnstile();
     }
   };
 
@@ -193,6 +224,19 @@ export default function Auth() {
     </div>
   );
 
+  const TurnstileWidget = (
+    <div className="flex justify-center">
+      <Turnstile
+        ref={turnstileRef}
+        siteKey={TURNSTILE_SITE_KEY}
+        onSuccess={(token) => setCaptchaToken(token)}
+        onError={() => setCaptchaToken(null)}
+        onExpire={() => setCaptchaToken(null)}
+        options={{ size: "normal", theme: "auto" }}
+      />
+    </div>
+  );
+
   const modeTitle = mode === "signin" ? "Welcome back" : mode === "signup" ? "Create account" : mode === "forgot" ? "Reset password" : "Check your email";
   const modeSubtitle = mode === "signin" ? "Sign in to your account" : mode === "signup" ? "Register to apply as a Youth Representative" : mode === "forgot" ? "We'll email you a reset link" : "Password reset email sent";
 
@@ -204,7 +248,7 @@ export default function Auth() {
         <FloatingShapes />
 
         <div className="relative z-10 flex flex-col items-center text-center">
-          <div className="bg-primary-foreground/10 backdrop-blur-sm rounded-3xl p-6 lg:p-10 border border-primary-foreground/10">
+          <div className="bg-white backdrop-blur-sm rounded-3xl p-6 lg:p-10 border border-primary-foreground/10">
             <img
               src={ecowasLogo}
               alt="ECOWAS Parliament"
@@ -212,10 +256,10 @@ export default function Auth() {
             />
           </div>
           <h1 className="mt-6 text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-black text-primary-foreground tracking-tight">
-            ECOWAS Parliament
+            ECOWAS PARLIAMENT Initiative
           </h1>
           <p className="mt-2 text-sm lg:text-base text-primary-foreground/70 max-w-xs lg:max-w-sm">
-            25th Anniversary Celebration Platform
+            ECOWAS of the Peoples: Peace and Prosperity for All
           </p>
 
           {/* Decorative line */}
@@ -281,7 +325,8 @@ export default function Auth() {
                   </label>
                   <button type="button" onClick={() => setMode("forgot")} className="text-primary hover:underline font-medium">Forgot password?</button>
                 </div>
-                <Button type="submit" className={`w-full gap-2 h-11 text-sm font-bold ${teamMode ? "bg-accent text-accent-foreground hover:bg-accent/90" : ""}`} disabled={submitting}>
+                {TurnstileWidget}
+                <Button type="submit" className={`w-full gap-2 h-11 text-sm font-bold ${teamMode ? "bg-accent text-accent-foreground hover:bg-accent/90" : ""}`} disabled={submitting || !captchaToken}>
                   {submitting ? <><span className="animate-spin inline-block">⟳</span> Signing in…</> :
                     <>{teamMode ? <Crown className="h-4 w-4" /> : <Lock className="h-4 w-4" />} Sign in</>}
                 </Button>
@@ -317,7 +362,8 @@ export default function Auth() {
                 {EmailField}
                 {PasswordField}
                 <p className="text-xs text-muted-foreground">Password must be at least 6 characters. By registering you agree to our privacy policy.</p>
-                <Button type="submit" className="w-full gap-2 h-11 font-bold" disabled={submitting}>
+                {TurnstileWidget}
+                <Button type="submit" className="w-full gap-2 h-11 font-bold" disabled={submitting || !captchaToken}>
                   {submitting ? "Creating account…" : "Create account"}
                 </Button>
                 <p className="text-sm text-center text-muted-foreground">
@@ -335,7 +381,8 @@ export default function Auth() {
                   <p className="text-xs text-muted-foreground">Enter your email address and we'll send a password reset link.</p>
                 </div>
                 {EmailField}
-                <Button type="submit" className="w-full h-11 font-bold" disabled={submitting}>
+                {TurnstileWidget}
+                <Button type="submit" className="w-full h-11 font-bold" disabled={submitting || !captchaToken}>
                   {submitting ? "Sending…" : "Send reset link"}
                 </Button>
                 <button type="button" onClick={() => setMode("signin")}
