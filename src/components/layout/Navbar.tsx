@@ -62,8 +62,8 @@ const Navbar = () => {
         <div className="container flex h-16 items-center justify-between">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-3 flex-shrink-0">
-            <div className="bg-white rounded-full p-1.5 shadow-sm">
-              <img src={ecowasLogo} alt="ECOWAS Parliament" className="h-9 w-9 object-contain" />
+            <div className="bg-gray-200 rounded-full p-2 shadow-sm border-2 border-ecowas-green">
+              <img src={ecowasLogo} alt="ECOWAS Parliament" className="h-12 w-12 object-contain" />
             </div>
             <div className="hidden sm:block">
               <p className="text-sm font-bold text-foreground leading-tight">ECOWAS Parliament</p>
