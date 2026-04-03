@@ -23,6 +23,7 @@ import MediaKit from "./pages/MediaKit";
 import SponsorPortal from "./pages/SponsorPortal";
 import Events from "./pages/Events";
 import Volunteer from "./pages/Volunteer";
+import PartnerPage from "./pages/partners/PartnerPage";
 
 // Programme pages
 import Youth from "./pages/programmes/Youth";
@@ -79,6 +80,7 @@ const App = () => (
               <Route path="/sponsors"           element={<SponsorPortal />}  />
               <Route path="/events"             element={<Events />}         />
               <Route path="/volunteer"          element={<Volunteer />}      />
+              <Route path="/partners/:slug"     element={<PartnerPage />}    />
 
               {/* Programme pillars */}
               <Route path="/programmes/youth"      element={<Youth />}      />

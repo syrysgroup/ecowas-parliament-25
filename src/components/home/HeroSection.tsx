@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useEffect, useState, useRef } from "react";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import ecowasLogo from "@/assets/ecowas-parliament-logo.png";
-import parliament25Logo from "@/assets/parliament-25-logo.png";
+
 
 import parliamentBg from "@/assets/parliament-chamber.png";
 
@@ -89,15 +89,6 @@ const HeroSection = () => {
               <p className="text-sm font-bold text-white">ECOWAS Parliament</p>
               <p className="text-[10px] uppercase tracking-widest text-white/50">Parlement de la CEDEAO</p>
             </div>
-          </div>
-          {/* Parliament 25 Logo — main focal point */}
-          <div className="mt-6 animate-slide-up" style={{ animationDelay: "0.2s" }}>
-            <img
-              src={parliament25Logo}
-              alt="Parliament at 25"
-              className="h-36 w-auto md:h-56 lg:h-72 object-contain drop-shadow-[0_0_40px_hsl(152_100%_26%/0.25)] animate-float"
-              style={{ animationDuration: "5s" }}
-            />
           </div>
         </div>
 
