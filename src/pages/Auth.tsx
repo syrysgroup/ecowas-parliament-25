@@ -19,7 +19,7 @@ import ecowasLogo from "@/assets/ecowas-parliament-logo.png";
 // ─── Types ────────────────────────────────────────────────────────────────────
 type AuthMode = "signin" | "signup" | "forgot" | "reset_sent";
 
-const TURNSTILE_SITE_KEY = "0x4AAAAAAAczus4H6t9WSW6Oy";
+const TURNSTILE_SITE_KEY = "0x4AAAAAACzus4H6t9WSW6Oy";
 
 const ECOWAS_COUNTRIES = [
   "Benin","Burkina Faso","Cape Verde","Côte d'Ivoire","Gambia",
