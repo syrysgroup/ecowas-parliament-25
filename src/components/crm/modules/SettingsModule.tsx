@@ -312,8 +312,53 @@ function NotificationSettings() {
 function SecuritySettings() {
   const { user } = useAuthContext();
   const { toast } = useToast();
-  const [sending, setSending] = useState(false);
+  const [sending, setSending]   = useState(false);
+  const [newPw, setNewPw]       = useState("");
+  const [confirmPw, setConfirmPw] = useState("");
+  const [hasEmailAcct, setHasEmailAcct] = useState(false);
 
+  // Check if user has an email account (Zoho)
+  useEffect(() => {
+    if (!user?.id) return;
+    (supabase as any)
+      .from("email_accounts")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("is_active", true)
+      .single()
+      .then(({ data }: any) => setHasEmailAcct(!!data));
+  }, [user?.id]);
+
+  // For users with Zoho email: inline change form calling sync-password
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPw.length < 8) {
+      toast({ title: "Too short", description: "Password must be at least 8 characters.", variant: "destructive" });
+      return;
+    }
+    if (newPw !== confirmPw) {
+      toast({ title: "Mismatch", description: "Passwords do not match.", variant: "destructive" });
+      return;
+    }
+    setSending(true);
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      const token = session?.session?.access_token;
+      const res = await supabase.functions.invoke("sync-password", {
+        body: { newPassword: newPw },
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.error) throw new Error(res.error.message);
+      const data = res.data as { success?: boolean; error?: string };
+      if (data?.error) throw new Error(data.error);
+      toast({ title: "Password updated", description: hasEmailAcct ? "Password synced to your email account." : undefined });
+      setNewPw(""); setConfirmPw("");
+    } catch (err: any) {
+      toast({ title: "Failed", description: err.message || "Could not update password.", variant: "destructive" });
+    } finally { setSending(false); }
+  };
+
+  // For users without Zoho email: send reset link (existing behaviour)
   const sendPasswordReset = async () => {
     if (!user?.email) return;
     setSending(true);
@@ -335,18 +380,53 @@ function SecuritySettings() {
             <p className="text-[11px] text-[#6b8f72] font-mono">{user?.email}</p>
           </div>
         </div>
-        <div className="flex items-center justify-between py-2">
-          <div>
-            <p className="text-[12px] font-medium text-[#c8e0cc]">Change password</p>
-            <p className="text-[10px] text-[#4a6650]">Send a password reset link to your email</p>
-          </div>
-          <Button
-            size="sm" variant="outline" onClick={sendPasswordReset} disabled={sending}
-            className="border-[#1e2d22] text-[#6b8f72] hover:text-[#a0c4a8] text-xs gap-1.5 h-7"
-          >
-            {sending ? <Loader2 size={11} className="animate-spin" /> : <Mail size={11} />}
-            Send reset link
-          </Button>
+
+        <div className="py-2">
+          <p className="text-[12px] font-medium text-[#c8e0cc] mb-1">Change password</p>
+          {hasEmailAcct ? (
+            // Inline form — syncs to Zoho
+            <form onSubmit={handleChangePassword} className="space-y-2 mt-2">
+              <p className="text-[10px] text-[#4a6650]">
+                Password change will sync automatically to your <span className="font-mono text-emerald-500">@ecowasparliamentinitiatives.org</span> email account.
+              </p>
+              <Input
+                type="password"
+                value={newPw}
+                onChange={e => setNewPw(e.target.value)}
+                placeholder="New password (min 8 chars)"
+                minLength={8}
+                className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8"
+              />
+              <Input
+                type="password"
+                value={confirmPw}
+                onChange={e => setConfirmPw(e.target.value)}
+                placeholder="Confirm new password"
+                className="bg-[#111a14] border-[#1e2d22] text-[#c8e0cc] text-xs h-8"
+              />
+              <Button
+                type="submit"
+                size="sm"
+                disabled={sending || newPw.length < 8 || newPw !== confirmPw}
+                className="bg-emerald-700 hover:bg-emerald-600 text-white text-xs gap-1.5 h-7"
+              >
+                {sending ? <Loader2 size={11} className="animate-spin" /> : <Shield size={11} />}
+                {sending ? "Updating…" : "Update Password"}
+              </Button>
+            </form>
+          ) : (
+            // No Zoho account — send reset link
+            <div className="flex items-center justify-between mt-1">
+              <p className="text-[10px] text-[#4a6650]">Send a password reset link to your email</p>
+              <Button
+                size="sm" variant="outline" onClick={sendPasswordReset} disabled={sending}
+                className="border-[#1e2d22] text-[#6b8f72] hover:text-[#a0c4a8] text-xs gap-1.5 h-7"
+              >
+                {sending ? <Loader2 size={11} className="animate-spin" /> : <Mail size={11} />}
+                Send reset link
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </Section>

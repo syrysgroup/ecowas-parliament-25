@@ -1,0 +1,247 @@
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Loader2, Eye, EyeOff, CheckCircle2, AlertCircle } from "lucide-react";
+import ecowasLogo from "@/assets/ecowas-parliament-logo.png";
+
+type PageState = "loading" | "form" | "success" | "expired";
+
+export default function SetPassword() {
+  const navigate = useNavigate();
+  const [pageState, setPageState] = useState<PageState>("loading");
+  const [password, setPassword]   = useState("");
+  const [confirm, setConfirm]     = useState("");
+  const [showPw, setShowPw]       = useState(false);
+  const [showCf, setShowCf]       = useState(false);
+  const [saving, setSaving]       = useState(false);
+  const [error, setError]         = useState<string | null>(null);
+
+  // Parse the hash tokens Supabase puts in the URL
+  useEffect(() => {
+    const hash = window.location.hash;
+    const params = new URLSearchParams(hash.replace("#", "?").replace("?", ""));
+    const accessToken  = params.get("access_token");
+    const refreshToken = params.get("refresh_token");
+    const type         = params.get("type"); // "recovery" or "invite"
+
+    if (!accessToken || !refreshToken) {
+      setPageState("expired");
+      return;
+    }
+
+    supabase.auth
+      .setSession({ access_token: accessToken, refresh_token: refreshToken })
+      .then(({ error }) => {
+        if (error) {
+          setPageState("expired");
+        } else {
+          setPageState("form");
+        }
+      });
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters.");
+      return;
+    }
+    if (password !== confirm) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      const token = session?.session?.access_token;
+      if (!token) throw new Error("Session expired. Please request a new invite link.");
+
+      // Call sync-password edge function — updates Supabase + Zoho in one step
+      const res = await supabase.functions.invoke("sync-password", {
+        body: { newPassword: password },
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (res.error) throw new Error(res.error.message);
+      const data = res.data as { success?: boolean; error?: string };
+      if (data?.error) throw new Error(data.error);
+
+      setPageState("success");
+      setTimeout(() => navigate("/crm"), 2500);
+    } catch (err: any) {
+      setError(err.message || "Something went wrong. Please try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex bg-gradient-to-br from-[hsl(152,100%,20%)] via-[hsl(150,80%,10%)] to-[hsl(150,60%,6%)]">
+      {/* Left branding panel */}
+      <div className="hidden lg:flex lg:w-1/2 flex-col items-center justify-center p-12 gap-8">
+        <div className="bg-white/10 backdrop-blur-sm rounded-3xl p-10 flex flex-col items-center gap-6 border border-white/20">
+          <div className="bg-white rounded-full p-4 shadow-2xl">
+            <img src={ecowasLogo} alt="ECOWAS Parliament" className="h-20 w-20 object-contain" />
+          </div>
+          <div className="text-center">
+            <h1 className="text-3xl font-black text-white tracking-tight">ECOWAS Parliament</h1>
+            <p className="text-white/70 mt-2 text-sm font-medium">25th Anniversary Programme Platform</p>
+          </div>
+          <div className="w-16 h-0.5 bg-white/30 rounded" />
+          <p className="text-white/60 text-sm text-center max-w-xs leading-relaxed">
+            Set your password to access the EP25 CRM and your assigned email account.
+          </p>
+        </div>
+      </div>
+
+      {/* Right form panel */}
+      <div className="flex-1 flex items-center justify-center p-6">
+        <div className="w-full max-w-sm">
+          {/* Mobile logo */}
+          <div className="flex justify-center mb-8 lg:hidden">
+            <div className="bg-white rounded-full p-3 shadow-xl">
+              <img src={ecowasLogo} alt="ECOWAS Parliament" className="h-12 w-12 object-contain" />
+            </div>
+          </div>
+
+          <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-8 shadow-2xl">
+
+            {/* Loading */}
+            {pageState === "loading" && (
+              <div className="flex flex-col items-center gap-4 py-8">
+                <Loader2 className="animate-spin text-white" size={32} />
+                <p className="text-white/70 text-sm">Verifying your link…</p>
+              </div>
+            )}
+
+            {/* Expired */}
+            {pageState === "expired" && (
+              <div className="flex flex-col items-center gap-4 py-6 text-center">
+                <div className="w-14 h-14 rounded-full bg-red-500/20 flex items-center justify-center">
+                  <AlertCircle size={28} className="text-red-300" />
+                </div>
+                <div>
+                  <h2 className="text-white font-bold text-lg">Link expired or invalid</h2>
+                  <p className="text-white/60 text-sm mt-2">
+                    This password setup link has expired (links are valid for 24 hours). Ask your admin to resend the invitation.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Success */}
+            {pageState === "success" && (
+              <div className="flex flex-col items-center gap-4 py-6 text-center">
+                <div className="w-14 h-14 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                  <CheckCircle2 size={28} className="text-emerald-300" />
+                </div>
+                <div>
+                  <h2 className="text-white font-bold text-lg">Password set successfully</h2>
+                  <p className="text-white/60 text-sm mt-2">Redirecting you to the dashboard…</p>
+                </div>
+              </div>
+            )}
+
+            {/* Form */}
+            {pageState === "form" && (
+              <>
+                <div className="mb-6">
+                  <h2 className="text-white font-bold text-xl">Set your password</h2>
+                  <p className="text-white/60 text-sm mt-1">Choose a strong password for your EP25 account.</p>
+                </div>
+
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="space-y-1.5">
+                    <Label className="text-white/70 text-xs font-semibold">New password</Label>
+                    <div className="relative">
+                      <Input
+                        type={showPw ? "text" : "password"}
+                        value={password}
+                        onChange={e => setPassword(e.target.value)}
+                        placeholder="Minimum 8 characters"
+                        required
+                        minLength={8}
+                        className="bg-white/10 border-white/20 text-white placeholder-white/30 pr-10 focus:border-white/50 focus:bg-white/15"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPw(v => !v)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70 transition-colors"
+                      >
+                        {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-white/70 text-xs font-semibold">Confirm password</Label>
+                    <div className="relative">
+                      <Input
+                        type={showCf ? "text" : "password"}
+                        value={confirm}
+                        onChange={e => setConfirm(e.target.value)}
+                        placeholder="Repeat your password"
+                        required
+                        className="bg-white/10 border-white/20 text-white placeholder-white/30 pr-10 focus:border-white/50 focus:bg-white/15"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowCf(v => !v)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70 transition-colors"
+                      >
+                        {showCf ? <EyeOff size={15} /> : <Eye size={15} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Strength hints */}
+                  <div className="flex gap-1.5">
+                    {[8, 12, 16].map(len => (
+                      <div
+                        key={len}
+                        className={`h-1 flex-1 rounded-full transition-colors ${
+                          password.length >= len ? "bg-emerald-400" : "bg-white/15"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <p className="text-white/40 text-[10px]">
+                    {password.length < 8 ? "At least 8 characters required" :
+                     password.length < 12 ? "Good — consider a longer password" :
+                     "Strong password"}
+                  </p>
+
+                  {error && (
+                    <div className="flex items-start gap-2 bg-red-500/15 border border-red-500/30 rounded-lg px-3 py-2.5">
+                      <AlertCircle size={14} className="text-red-300 flex-shrink-0 mt-0.5" />
+                      <p className="text-red-300 text-xs">{error}</p>
+                    </div>
+                  )}
+
+                  <Button
+                    type="submit"
+                    disabled={saving || password.length < 8 || password !== confirm}
+                    className="w-full bg-white text-[hsl(152,100%,20%)] hover:bg-white/90 font-bold gap-2 mt-2"
+                  >
+                    {saving ? <Loader2 size={15} className="animate-spin" /> : null}
+                    {saving ? "Setting password…" : "Set Password & Access CRM"}
+                  </Button>
+                </form>
+              </>
+            )}
+          </div>
+
+          <p className="text-white/30 text-[10px] text-center mt-6">
+            ECOWAS Parliament 25th Anniversary Programme · EP25 Platform
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}

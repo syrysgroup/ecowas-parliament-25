@@ -21,7 +21,7 @@ export default function CRMSidebar({ activeSection, onNavigate }: CRMSidebarProp
     catch { return false; }
   });
 
-  // Unread inbox count for badge
+  // Unread CRM inbox count (crm_messages)
   const { data: unreadCount = 0 } = useQuery<number>({
     queryKey: ["crm-inbox-unread", user?.id],
     queryFn: async () => {
@@ -31,6 +31,29 @@ export default function CRMSidebar({ activeSection, onNavigate }: CRMSidebarProp
         .eq("to_user_id", user!.id)
         .eq("is_read", false)
         .eq("is_archived", false);
+      return count ?? 0;
+    },
+    enabled: !!user?.id,
+    refetchInterval: 60_000,
+  });
+
+  // Unread Email inbox count (Zoho emails)
+  const { data: emailUnreadCount = 0 } = useQuery<number>({
+    queryKey: ["email-inbox-unread", user?.id],
+    queryFn: async () => {
+      const acctRes = await (supabase as any)
+        .from("email_accounts")
+        .select("id")
+        .eq("user_id", user!.id)
+        .eq("is_active", true)
+        .single();
+      if (!acctRes.data?.id) return 0;
+      const { count } = await (supabase as any)
+        .from("emails")
+        .select("id", { count: "exact", head: true })
+        .eq("account_id", acctRes.data.id)
+        .eq("folder", "inbox")
+        .eq("is_read", false);
       return count ?? 0;
     },
     enabled: !!user?.id,
@@ -134,6 +157,14 @@ export default function CRMSidebar({ activeSection, onNavigate }: CRMSidebarProp
                   )}
                   {collapsed && mod.section === "inbox" && unreadCount > 0 && (
                     <span className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-red-500 flex-shrink-0" />
+                  )}
+                  {!collapsed && mod.section === "email-inbox" && emailUnreadCount > 0 && (
+                    <span className="ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-blue-950 border border-blue-800 text-blue-400 flex-shrink-0">
+                      {emailUnreadCount > 99 ? "99+" : emailUnreadCount}
+                    </span>
+                  )}
+                  {collapsed && mod.section === "email-inbox" && emailUnreadCount > 0 && (
+                    <span className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-blue-500 flex-shrink-0" />
                   )}
                 </button>
               </li>

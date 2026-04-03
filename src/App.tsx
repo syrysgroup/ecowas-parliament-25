@@ -35,6 +35,7 @@ import Parliament from "./pages/programmes/Parliament";
 
 // Auth
 import Auth from "./pages/Auth";
+import SetPassword from "./pages/SetPassword";
 
 // Admin pages
 import UserManagement from "./pages/admin/UserManagement";
@@ -90,6 +91,7 @@ const App = () => (
 
               {/* Auth */}
               <Route path="/auth" element={<Auth />} />
+              <Route path="/set-password" element={<SetPassword />} />
 
               {/* Protected admin area */}
               <Route path="/admin/users" element={

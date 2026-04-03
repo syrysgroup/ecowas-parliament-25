@@ -4,6 +4,7 @@ import {
   LayoutDashboard,
   CheckSquare,
   Mail,
+  Inbox,
   Calendar,
   MessageSquare,
   FolderOpen,
@@ -23,6 +24,7 @@ export type ModuleId =
   | "dashboard"
   | "tasks"
   | "inbox"
+  | "email-inbox"
   | "calendar"
   | "comms"
   | "documents"
@@ -80,6 +82,14 @@ export const CRM_MODULES: CRMModule[] = [
     isStub: false,
   },
   {
+    id: "email-inbox",
+    label: "Email",
+    icon: Inbox,
+    section: "email-inbox",
+    allowedRoles: TIER_2_AND_SPONSOR,
+    isStub: false,
+  },
+  {
     id: "calendar",
     label: "Calendar",
     icon: Calendar,
@@ -97,7 +107,7 @@ export const CRM_MODULES: CRMModule[] = [
     icon: MessageSquare,
     section: "comms",
     allowedRoles: ALL_STAFF,
-    isStub: true,
+    isStub: false,
   },
   {
     id: "documents",
@@ -153,7 +163,7 @@ export const CRM_MODULES: CRMModule[] = [
     icon: BarChart2,
     section: "analytics",
     allowedRoles: ["super_admin", "admin", "project_director", "marketing_manager"],
-    isStub: true,
+    isStub: false,
   },
   {
     id: "finance",
@@ -161,7 +171,7 @@ export const CRM_MODULES: CRMModule[] = [
     icon: DollarSign,
     section: "finance",
     allowedRoles: ["super_admin", "finance_coordinator"],
-    isStub: true,
+    isStub: false,
   },
   {
     id: "marketing",
@@ -169,7 +179,7 @@ export const CRM_MODULES: CRMModule[] = [
     icon: Megaphone,
     section: "marketing",
     allowedRoles: ["super_admin", "marketing_manager"],
-    isStub: true,
+    isStub: false,
   },
   {
     id: "cms",
@@ -180,7 +190,7 @@ export const CRM_MODULES: CRMModule[] = [
       "super_admin", "admin", "project_director", "programme_lead",
       "website_editor", "marketing_manager", "communications_officer",
     ],
-    isStub: true,
+    isStub: false,
   },
   {
     id: "super-admin",
