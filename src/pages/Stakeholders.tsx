@@ -21,7 +21,7 @@ const ecowasStakeholders = [
 const implementingPartners = [
   { name: "Duchess NL", lead: "Dr. Victoria Akai IIPM", role: "CEO", logo: duchessLogo, image: teamPortrait1, description: "Leading implementing partner coordinating the programme direction and executive partnerships." },
   { name: "Borderless Trade & Investment", lead: "Dr. Olori Boye-Ajayi", role: "Managing Partner", logo: borderlessLogo, image: teamPortrait2, description: "Driving trade diplomacy, regional engagement, and private-sector mobilisation." },
-  { name: "CMD Tourism & Trade Enterprises", lead: "Blessing Okpale", role: "Lead", logo: cmdLogo, image: teamPortrait3, description: "Supporting programming, event experience, and community-facing delivery." },
+  { name: "CMD Tourism & Trade Enterprises", lead: "Madam Cecile Mambo Doumbe", role: "Lead", logo: cmdLogo, image: teamPortrait3, description: "Supporting programming, event experience, and community-facing delivery." },
 ];
 
 const sponsors = [

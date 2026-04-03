@@ -116,7 +116,7 @@ const ProgrammePageTemplate = ({
                     <p className="text-xs uppercase tracking-widest text-muted-foreground mb-1">ECOWAS Parliament</p>
                     <p className="text-xs uppercase tracking-wider text-muted-foreground/60">Parlement de la CEDEAO</p>
                     <p className="text-lg font-bold text-foreground mt-3">Office of the Speaker</p>
-                    <p className="text-xs text-muted-foreground">101 Yakubu Gowon Crescent, Asokoro · Abuja, Nigeria</p>
+                    <p className="text-xs text-muted-foreground">Herbert Macaulay Way, Central Business District, P.M.B. 576, Abuja, Nigeria</p>
                   </div>
 
                   {/* Body */}

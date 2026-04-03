@@ -74,7 +74,7 @@ const AboutSection = () => {
                 <div>
                   <p className="text-sm font-bold text-card-foreground">ECOWAS Parliament</p>
                   <p className="text-[11px] text-muted-foreground">
-                    101 Yakubu Gowon Crescent, Asokoro · Abuja, Nigeria
+                    Herbert Macaulay Way, Central Business District, P.M.B. 576, Abuja, Nigeria
                   </p>
                 </div>
               </div>

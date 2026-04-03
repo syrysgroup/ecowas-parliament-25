@@ -20,8 +20,8 @@ const partners = [
   },
   {
     name: "CMD Tourism & Trade Enterprises",
-    lead: "Blessing Okpale",
-    role: "Lead",
+    lead: "Madam Cecile Mambo Doumbe",
+    role: "CEO",
     description: "Supporting programming, event experience, and community-facing delivery.",
     icon: Sparkles,
     accent: "bg-secondary/10 text-secondary",

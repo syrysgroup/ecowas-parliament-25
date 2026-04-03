@@ -16,14 +16,14 @@ const departments = [
     members: [
       { name: "Dr. Victoria Akai IIPM", role: "Programme Director", org: "Duchess NL", image: teamPortrait1 },
       { name: "Dr. Olori Boye-Ajayi", role: "Regional Strategy Lead", org: "Borderless Trade & Investment", image: teamPortrait2 },
-      { name: "Blessing Okpale", role: "Operations Lead", org: "CMD Tourism & Trade Enterprises", image: teamPortrait3 },
+      { name: "Madam Cecile Mambo Doumbe", role: "Operations Lead", org: "CMD Tourism & Trade Enterprises", image: teamPortrait3 },
       { name: "Amina Toure", role: "Stakeholder Relations Director", org: "Regional Partnerships Desk", image: teamPortrait4 },
     ],
   },
   {
     name: "Programme delivery",
     members: [
-      { name: "Kwame Ofori", role: "Parliament Programme Manager", org: "Youth Parliament Secretariat", image: representative2 },
+      { name: "Temile Emmanuel", role: "Parliament Programme Manager", org: "Youth Parliament Secretariat", image: representative2 },
       { name: "Nene Coker", role: "Community Mobilisation Lead", org: "National Outreach Unit", image: representative3 },
       { name: "Joseph Toe", role: "Monitoring & Learning Manager", org: "Programme Quality Unit", image: representative4 },
       { name: "Aissatou Mensah", role: "Volunteer Network Coordinator", org: "Regional Volunteer Corps", image: representative1 },

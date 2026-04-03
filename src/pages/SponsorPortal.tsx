@@ -138,8 +138,8 @@ const implementingPartners = [
   },
   {
     name: "CMD Tourism & Trade Enterprises",
-    lead: "Blessing Okpale",
-    role: "Lead",
+    lead: "Madam Cecile Mambo Doumbe",
+    role: "CEO",
     logo: cmdLogo,
     description: "Tourism and trade enterprise development, media production, and event management.",
   },
