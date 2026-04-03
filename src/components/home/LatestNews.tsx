@@ -59,7 +59,7 @@ const LatestNews = () => {
           </Button>
         </AnimatedSection>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {placeholderNews.map((article, i) => (
             <AnimatedSection key={article.id} delay={i * 100}>
               <div className="group rounded-2xl border border-border bg-card overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
