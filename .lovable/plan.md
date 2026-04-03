@@ -1,47 +1,88 @@
 
 
-## Plan: Hero Logo Enhancement + CRM Theme Redesign
+## Plan: Multiple Updates Across Homepage, Navigation, Stakeholders, and Content
 
-### Part 1 — Make Parliament 25 Logo the Hero Focal Point
+### Summary of Changes
 
-The `parliament-25-logo.png` asset exists but isn't used on the homepage. We'll add it prominently below the ECOWAS flag in the hero section.
+This plan covers 7 distinct tasks the user requested:
 
-**File: `src/components/home/HeroSection.tsx`**
-- Import `parliament-25-logo.png` from assets
-- After the ECOWAS logo/flag block, add a large Parliament 25 logo (roughly 200-280px on desktop, 140px on mobile) with a subtle glow/shadow effect
-- Give it a fade-in animation consistent with the existing staggered delays
+1. **Combine "Parliament at 25" and "About the 25th Anniversary" into one section** with the P@25 logo prominent in front of a circular white shape
+2. **Generate placeholder images for Partners & Sponsors section** per programme tab
+3. **News cards redesign** — add 1:1 square Instagram-style placeholder images to news cards (both homepage LatestNews and /news page)
+4. **Stakeholders page fixes** — reduce Speaker photo size, add Secretary General card before Mrs Uche Duru
+5. **Rename "Parliamentary Awards" → "AWALCO Parliamentary Awards"** everywhere
+6. **Add Volunteer to main menu**
+7. **Redesign and reorganize the main navigation**
 
-### Part 2 — CRM Dark/Light Theme Support
+---
 
-The entire CRM (layout, sidebar, dashboard module, and all other modules) uses hardcoded hex colors like `bg-[#0a0f0d]`, `text-[#c8e0cc]`, `border-[#1e2d22]` — these ignore the theme completely. The `CRMThemeToggle` component exists but toggling it does nothing visible.
+### 1. Combine Parliament25Section + AboutSection into One Section
 
-**Strategy:** Replace all hardcoded CRM colors with Tailwind CSS variables (`bg-background`, `text-foreground`, `bg-card`, `border-border`, `text-muted-foreground`, etc.) that respond to the `.dark` class. Add CRM-specific CSS variables for the green-tinted accent palette.
+- Delete `Parliament25Section.tsx` and `AboutSection.tsx` as separate components
+- Create a new `AnniversarySection.tsx` that merges both:
+  - Left side: Parliament@25 logo placed prominently over a large circular white shape (a CSS circle with white bg + shadow behind the logo image)
+  - Right side: Combined text — the anniversary identity writeup + about content (trimmed to avoid redundancy), stats grid below
+  - Tags row at the bottom
+- Update `Index.tsx` to import the new combined section instead of the two old ones
 
-**Files to update:**
+### 2. Add Generated Placeholder Images to Partners & Sponsors Section
 
-1. **`src/index.css`** — Add CRM-specific CSS variables for both light and dark themes (e.g., `--crm-surface`, `--crm-sidebar`, `--crm-accent`) to preserve the distinctive green-tinted aesthetic while supporting both modes
+- Use the AI image generation API (Nano banana) to generate 7 programme-specific placeholder images (youth, trade, women, civic, culture, awards, yparl)
+- Save them as assets and reference them in `SponsorsSection.tsx` as a visual header/illustration for each programme tab content area, replacing the inline SVG `ProgrammeIllustration`
 
-2. **`src/components/crm/CRMLayout.tsx`** — Replace all hardcoded colors:
-   - `bg-[#0a0f0d]` → `bg-background`
-   - `text-[#e8f5e9]` → `text-foreground`
-   - `border-[#1e2d22]` → `border-border`
-   - `bg-[#080d0a]` → `bg-card`
-   - Notification dropdown: swap hardcoded dark hex to theme-aware classes
-   - `CRMThemeToggle`: use theme-aware styling instead of hardcoded green hex
+### 3. News Cards with 1:1 Instagram-Style Photos
 
-3. **`src/components/crm/CRMSidebar.tsx`** — Same treatment:
-   - `bg-[#080d0a]` → `bg-card`
-   - Active states, hover states, text colors all converted to semantic Tailwind tokens
-   - Badge colors remain fixed (red/blue indicators) but backgrounds adapt
+- Generate 3 placeholder news images (1:1 square) using AI image generation
+- Update `LatestNews.tsx` homepage component: replace the gradient placeholder div with the square image
+- Update `News.tsx` page: same treatment — replace gradient header with 1:1 image
+- Add 6 placeholder images for the news page articles
 
-4. **`src/components/crm/modules/DashboardModule.tsx`** — Convert `StatCard` and all hardcoded module colors to theme tokens. Status/priority badge colors stay vibrant but container backgrounds adapt.
+### 4. Stakeholders Page Adjustments
 
-5. **All other CRM modules** (`TaskBoardModule`, `InboxModule`, `CalendarModule`, etc.) — Audit and replace hardcoded dark hex values with theme-aware equivalents. Most follow the same pattern as the dashboard.
+- **Speaker photo**: Change from `w-1/2` to a smaller width like `w-80 max-w-sm` and reduce the aspect ratio so it's prominent but not overwhelming
+- **Add Secretary General card**: Insert a new card before Mrs. Uche Duru for the Secretary General of ECOWAS Parliament. Generate a placeholder portrait image for this card
+- Reorder the `ecowasStakeholders` array: Speaker → Secretary General → Mrs. Uche Duru → Dr. Kabeer Garba
+
+### 5. Rename Parliamentary Awards → AWALCO Parliamentary Awards
+
+Files to update:
+- `src/lib/i18n.tsx` — all 3 locale entries for `prog.awards`
+- `src/pages/programmes/Awards.tsx` — title, descriptions
+- `src/pages/Timeline.tsx` — pillar label and event descriptions
+- `src/components/home/PillarsGrid.tsx` — title
+- `src/components/home/MarqueeStrip.tsx` — marquee text
+- `src/components/home/SponsorsSection.tsx` — awards programme label
+- `src/pages/Events.tsx` — event title referencing awards
+
+### 6. Add Volunteer to Main Menu
+
+- Add "Volunteer" as a top-level nav item in the `navLinks` array in `Navbar.tsx`
+- Add translation key `nav.volunteer` to i18n (all 3 locales)
+
+### 7. Redesign & Reorganize Main Navigation
+
+Proposed new structure:
+- **Home** (top-level link)
+- **About** (top-level link)
+- **Programmes** (dropdown): Youth Innovation, Trade & SME Forums, Women's Empowerment, Civic Education, Culture & Creativity, AWALCO Parliamentary Awards, Youth Parliament
+- **Events & Media** (dropdown): Events, Timeline, News, Documents, Press & Media Kit
+- **People** (dropdown): Stakeholders, Team, Partners
+- **Volunteer** (top-level link)
+- **Contact** (top-level link)
+
+CTA button remains "Partner with us".
+
+This reorganization:
+- Elevates Volunteer to top-level visibility
+- Groups media/events content together under one dropdown
+- Renames "Stakeholders" dropdown to "People" for clarity
+- Adds Partners link under People
+- Contact becomes a visible top-level link
 
 ### Technical Details
 
-- The project uses `next-themes` with `darkMode: ["class"]` in Tailwind — the `.dark` class on `<html>` drives everything
-- Light mode CRM will use warm neutral greens (e.g., `--crm-surface: 150 20% 97%`) while dark mode keeps the current deep green tones
-- The `ThemeToggle` component already works correctly; only the CRM's hardcoded colors prevent it from having any visual effect
-- Status/priority accent colors (red, amber, blue, emerald badges) will remain consistent across themes for quick visual scanning
+- **Image generation**: Will use `google/gemini-2.5-flash-image` via the Lovable AI gateway to generate placeholder images. Images will be saved as assets in `src/assets/` or `public/` and imported where needed.
+- **Combined section**: Uses Tailwind for the circular white shape behind the logo (`rounded-full bg-white shadow-xl w-64 h-64 flex items-center justify-center`).
+- **News card images**: Will use `aspect-square object-cover` for the 1:1 ratio.
+- **No backend changes** — all updates are frontend/visual only.
 
