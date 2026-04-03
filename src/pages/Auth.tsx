@@ -420,7 +420,7 @@ export default function Auth() {
                 {PasswordField}
                 <p className="text-xs text-muted-foreground">Password must be at least 6 characters. By registering you agree to our privacy policy.</p>
                 {TurnstileWidget}
-                <Button type="submit" className="w-full gap-2 h-11 font-bold" disabled={submitting || !captchaToken}>
+                <Button type="submit" className={`w-full gap-2 h-11 font-bold ${disabledClasses}`} disabled={isButtonDisabled}>
                   {submitting ? "Creating account…" : "Create account"}
                 </Button>
                 <p className="text-sm text-center text-muted-foreground">
