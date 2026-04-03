@@ -31,6 +31,14 @@ const placeholderNews = [
     category: "Announcement",
     image: newsImg3,
   },
+  {
+    id: "4",
+    title: "Youth Innovation Programme Opens Applications Across 12 States",
+    excerpt: "Young entrepreneurs and innovators are invited to apply for the flagship youth programme running throughout 2026.",
+    date: "20 February 2026",
+    category: "Programme",
+    image: newsImg1,
+  },
 ];
 
 const LatestNews = () => {
