@@ -1,5 +1,9 @@
 import AnimatedSection from "@/components/shared/AnimatedSection";
-import { Crown, Globe, Sparkles } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Crown, Globe, Sparkles, ExternalLink } from "lucide-react";
+import duchessLogo from "@/assets/duchess-logo.png";
+import borderlessLogo from "@/assets/borderless-trade-logo.png";
+import cmdLogo from "@/assets/cmd-logo.png";
 
 const partners = [
   {
@@ -9,6 +13,8 @@ const partners = [
     description: "Leading implementing partner coordinating the programme direction and executive partnerships.",
     icon: Crown,
     accent: "bg-primary/10 text-primary",
+    logo: duchessLogo,
+    slug: "duchess-nl",
   },
   {
     name: "Borderless Trade & Investment",
@@ -17,6 +23,8 @@ const partners = [
     description: "Driving trade diplomacy, regional engagement, and private-sector mobilisation.",
     icon: Globe,
     accent: "bg-ecowas-blue/10 text-ecowas-blue",
+    logo: borderlessLogo,
+    slug: "borderless-trade",
   },
   {
     name: "CMD Tourism & Trade Enterprises",
@@ -25,6 +33,8 @@ const partners = [
     description: "Supporting programming, event experience, and community-facing delivery.",
     icon: Sparkles,
     accent: "bg-secondary/10 text-secondary",
+    logo: cmdLogo,
+    slug: "cmd-tourism",
   },
 ];
 
