@@ -434,8 +434,8 @@ export default function FinanceModule() {
 
       <Tabs defaultValue="budget">
         <TabsList className="bg-crm-surface border border-crm-border h-8">
-          <TabsTrigger value="budget"   className="text-xs data-[state=active]:bg-[#1e2d22] data-[state=active]:text-crm-text text-crm-text-dim">Budget</TabsTrigger>
-          <TabsTrigger value="signoffs" className="text-xs data-[state=active]:bg-[#1e2d22] data-[state=active]:text-crm-text text-crm-text-dim">Sign-offs</TabsTrigger>
+          <TabsTrigger value="budget"   className="text-xs data-[state=active]:bg-crm-border data-[state=active]:text-crm-text text-crm-text-dim">Budget</TabsTrigger>
+          <TabsTrigger value="signoffs" className="text-xs data-[state=active]:bg-crm-border data-[state=active]:text-crm-text text-crm-text-dim">Sign-offs</TabsTrigger>
         </TabsList>
         <TabsContent value="budget"   className="mt-4"><BudgetList /></TabsContent>
         <TabsContent value="signoffs" className="mt-4"><SignOffsTab /></TabsContent>

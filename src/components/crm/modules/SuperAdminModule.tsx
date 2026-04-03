@@ -400,7 +400,7 @@ export default function SuperAdminModule() {
               <div className="divide-y divide-crm-border">
                 {filteredUsers.map(u => (
                   <div key={u.id} className="flex items-start gap-3 px-4 py-3 hover:bg-crm-surface transition-colors">
-                    <div className="w-8 h-8 rounded-full bg-[#1e2d22] flex items-center justify-center text-xs font-bold text-emerald-400 flex-shrink-0 uppercase">
+                    <div className="w-8 h-8 rounded-full bg-crm-border flex items-center justify-center text-xs font-bold text-emerald-400 flex-shrink-0 uppercase">
                       {(u.full_name || u.email)[0]}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -490,7 +490,7 @@ export default function SuperAdminModule() {
                 const Icon = cfg?.icon ?? Mail;
                 return (
                   <div key={inv.id} className="flex items-center gap-3 px-4 py-3 hover:bg-crm-surface transition-colors">
-                    <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 border ${cfg?.badge ?? "text-crm-text-muted bg-[#1e2d22] border-crm-border-hover"}`}>
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 border ${cfg?.badge ?? "text-crm-text-muted bg-crm-border border-crm-border-hover"}`}>
                       <Icon size={12} />
                     </div>
                     <div className="flex-1 min-w-0">

@@ -67,7 +67,7 @@ function TaskCard({ task, onStatusChange, canUpdateStatus, isAdmin, onEdit, onDe
         <div className="flex items-center justify-between">
           {task.assignee ? (
             <div className="flex items-center gap-1.5">
-              <div className="w-5 h-5 rounded-full bg-[#1e2d22] flex items-center justify-center text-[9px] font-bold text-emerald-400 uppercase">
+              <div className="w-5 h-5 rounded-full bg-crm-border flex items-center justify-center text-[9px] font-bold text-emerald-400 uppercase">
                 {task.assignee.full_name?.charAt(0) ?? "?"}
               </div>
               <span className="text-[10px] text-crm-text-muted truncate max-w-[80px]">

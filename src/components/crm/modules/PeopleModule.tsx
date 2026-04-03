@@ -86,7 +86,7 @@ function ViewUserDialog({ target, onClose }: { target: UserWithRoles; onClose: (
         <div className="space-y-5 py-1">
           {/* Avatar + name */}
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-full bg-[#1e2d22] flex items-center justify-center text-lg font-bold text-emerald-400 uppercase flex-shrink-0">
+            <div className="w-14 h-14 rounded-full bg-crm-border flex items-center justify-center text-lg font-bold text-emerald-400 uppercase flex-shrink-0">
               {initials}
             </div>
             <div>
@@ -139,7 +139,7 @@ function ViewUserDialog({ target, onClose }: { target: UserWithRoles; onClose: (
                   <span className={`font-mono rounded px-1.5 py-0.5 text-[9px] border ${
                     emailCfg.auto_connect
                       ? "bg-emerald-950 text-emerald-400 border-emerald-800"
-                      : "bg-[#1e2d22] text-crm-text-dim border-crm-border-hover"
+                      : "bg-crm-border text-crm-text-dim border-crm-border-hover"
                   }`}>
                     {emailCfg.auto_connect ? "● Auto-connect ON" : "● Manual"}
                   </span>
@@ -405,7 +405,7 @@ function EditUserDialog({
                       type="button"
                       onClick={() => setEmailCfg(c => ({ ...c, auto_connect: !c.auto_connect }))}
                       className={`relative w-9 h-5 rounded-full transition-colors flex-shrink-0 ml-3 ${
-                        emailCfg.auto_connect ? "bg-emerald-600" : "bg-[#2a3d2d]"
+                        emailCfg.auto_connect ? "bg-emerald-600" : "bg-crm-border-hover"
                       }`}
                     >
                       <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all ${
@@ -677,7 +677,7 @@ export default function PeopleModule() {
                   const addableRoles = assignableRoles.filter(r => !u.roles.includes(r));
                   return (
                     <div key={u.id} className="flex items-start gap-3 px-4 py-3 hover:bg-crm-surface transition-colors">
-                      <div className="w-9 h-9 rounded-full bg-[#1e2d22] flex items-center justify-center text-xs font-bold text-emerald-400 flex-shrink-0 uppercase">
+                      <div className="w-9 h-9 rounded-full bg-crm-border flex items-center justify-center text-xs font-bold text-emerald-400 flex-shrink-0 uppercase">
                         {initials}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -798,7 +798,7 @@ export default function PeopleModule() {
                 const accepted = !!inv.accepted_at;
                 return (
                   <div key={inv.id} className="flex items-center gap-3 px-4 py-3 hover:bg-crm-surface transition-colors">
-                    <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${accepted ? "bg-emerald-950" : "bg-[#1e2d22]"}`}>
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${accepted ? "bg-emerald-950" : "bg-crm-border"}`}>
                       {accepted
                         ? <CheckCircle2 size={13} className="text-emerald-400" />
                         : <Clock size={13} className="text-crm-text-dim" />

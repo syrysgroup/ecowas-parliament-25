@@ -172,7 +172,7 @@ function NotificationBell({ onNavigate }: { onNavigate: (s: string) => void }) {
       <button
         onClick={() => setOpen(v => !v)}
         className={`relative p-1.5 rounded-lg transition-colors ${
-          open ? "bg-[#1e2d22] text-crm-text-secondary" : "text-crm-text-dim hover:text-crm-text-secondary hover:bg-crm-surface"
+          open ? "bg-crm-border text-crm-text-secondary" : "text-crm-text-dim hover:text-crm-text-secondary hover:bg-crm-surface"
         }`}
         title="Notifications"
       >
@@ -288,7 +288,7 @@ export default function CRMLayout({ activeSection, onNavigate, children }: CRMLa
             <span className="text-[10px] font-mono text-crm-text-dim tracking-widest uppercase hidden sm:block">
               ECOWAS Parliament 25
             </span>
-            <span className="text-[#1e2d22] hidden sm:block">/</span>
+            <span className="text-crm-border hidden sm:block">/</span>
             <span className="text-[13px] font-semibold text-crm-text truncate">{moduleLabel}</span>
           </div>
 
@@ -302,7 +302,7 @@ export default function CRMLayout({ activeSection, onNavigate, children }: CRMLa
               onClick={() => onNavigate("settings")}
               className={`p-1.5 rounded-lg transition-colors ${
                 activeSection === "settings"
-                  ? "bg-[#1e2d22] text-crm-text-secondary"
+                  ? "bg-crm-border text-crm-text-secondary"
                   : "text-crm-text-dim hover:text-crm-text-secondary hover:bg-crm-surface"
               }`}
               title="Settings"
@@ -316,7 +316,7 @@ export default function CRMLayout({ activeSection, onNavigate, children }: CRMLa
               className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-crm-surface transition-colors"
               title="Go to settings"
             >
-              <div className="w-6 h-6 rounded-full bg-[#1e2d22] flex items-center justify-center text-[10px] font-bold text-emerald-400 uppercase flex-shrink-0">
+              <div className="w-6 h-6 rounded-full bg-crm-border flex items-center justify-center text-[10px] font-bold text-emerald-400 uppercase flex-shrink-0">
                 {initial}
               </div>
               <span className="text-[11px] text-crm-text-muted hidden md:block truncate max-w-[100px]">

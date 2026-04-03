@@ -288,7 +288,7 @@ export default function SponsorMetricsModule() {
                 className={`bg-crm-card border border-crm-border rounded-xl p-4 border-l-4 ${cfg.accent}`}
               >
                 <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-full bg-[#1e2d22] flex items-center justify-center text-sm font-bold text-emerald-400 flex-shrink-0 uppercase">
+                  <div className="w-10 h-10 rounded-full bg-crm-border flex items-center justify-center text-sm font-bold text-emerald-400 flex-shrink-0 uppercase">
                     {initials}
                   </div>
 
@@ -320,7 +320,7 @@ export default function SponsorMetricsModule() {
                     {isAdmin && !isConfirming && (
                       <button
                         onClick={() => { setEditTarget(sp); setEditOpen(true); }}
-                        className="w-7 h-7 rounded flex items-center justify-center bg-crm-surface border border-crm-border text-crm-text-dim hover:text-crm-text-secondary hover:bg-[#1e2d22] transition-colors"
+                        className="w-7 h-7 rounded flex items-center justify-center bg-crm-surface border border-crm-border text-crm-text-dim hover:text-crm-text-secondary hover:bg-crm-border transition-colors"
                         title="Edit sponsor"
                       >
                         <Pencil size={12} />

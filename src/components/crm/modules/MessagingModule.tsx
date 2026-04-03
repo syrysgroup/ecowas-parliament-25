@@ -150,7 +150,7 @@ export default function MessagingModule() {
               onClick={() => setSelectedContact(c)}
               className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-left hover:bg-crm-surface transition-colors ${selectedContact?.id === c.id ? "bg-crm-surface border-r-2 border-emerald-600" : ""}`}
             >
-              <div className="w-7 h-7 rounded-full bg-[#1e2d22] flex items-center justify-center text-[10px] font-bold text-emerald-400 flex-shrink-0 uppercase">
+              <div className="w-7 h-7 rounded-full bg-crm-border flex items-center justify-center text-[10px] font-bold text-emerald-400 flex-shrink-0 uppercase">
                 {initials(c.full_name)}
               </div>
               <div className="min-w-0">
@@ -176,7 +176,7 @@ export default function MessagingModule() {
           <>
             {/* Chat header */}
             <div className="px-4 py-3 border-b border-crm-border flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-full bg-[#1e2d22] flex items-center justify-center text-[10px] font-bold text-emerald-400 uppercase">
+              <div className="w-7 h-7 rounded-full bg-crm-border flex items-center justify-center text-[10px] font-bold text-emerald-400 uppercase">
                 {initials(selectedContact.full_name)}
               </div>
               <div>

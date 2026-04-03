@@ -157,7 +157,7 @@ function ThreadView({ message, profiles, onBack, onReply }: {
           return (
             <div key={msg.id} className="px-4 py-4">
               <div className="flex items-start gap-3">
-                <div className="w-7 h-7 rounded-full bg-[#1e2d22] flex items-center justify-center text-[10px] font-bold text-emerald-400 uppercase flex-shrink-0">
+                <div className="w-7 h-7 rounded-full bg-crm-border flex items-center justify-center text-[10px] font-bold text-emerald-400 uppercase flex-shrink-0">
                   {from?.full_name?.charAt(0) ?? "?"}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -178,7 +178,7 @@ function ThreadView({ message, profiles, onBack, onReply }: {
       </div>
       <div className="p-4 border-t border-crm-border">
         <Button size="sm" onClick={() => onReply(message)}
-          className="bg-crm-surface border border-crm-border hover:bg-[#1e2d22] text-crm-text text-xs gap-1.5">
+          className="bg-crm-surface border border-crm-border hover:bg-crm-border text-crm-text text-xs gap-1.5">
           Reply
         </Button>
       </div>
@@ -341,8 +341,8 @@ export default function InboxModule() {
           {isLoading ? (
             Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="px-4 py-3 space-y-2">
-                <div className="h-3 bg-[#1e2d22] rounded animate-pulse" />
-                <div className="h-3 w-2/3 bg-[#1e2d22] rounded animate-pulse" />
+                <div className="h-3 bg-crm-border rounded animate-pulse" />
+                <div className="h-3 w-2/3 bg-crm-border rounded animate-pulse" />
               </div>
             ))
           ) : currentMsgs.length === 0 ? (

@@ -178,7 +178,7 @@ export default function CRMSidebar({ activeSection, onNavigate }: CRMSidebarProp
         {!collapsed ? (
           <div className="space-y-2">
             <div className="flex items-center gap-2 min-w-0">
-              <div className="w-7 h-7 rounded-full bg-[#1e2d22] flex items-center justify-center flex-shrink-0 text-emerald-400 text-xs font-bold uppercase">
+              <div className="w-7 h-7 rounded-full bg-crm-border flex items-center justify-center flex-shrink-0 text-emerald-400 text-xs font-bold uppercase">
                 {displayName.charAt(0)}
               </div>
               <div className="min-w-0">

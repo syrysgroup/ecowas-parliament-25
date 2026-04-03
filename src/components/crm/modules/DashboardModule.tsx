@@ -40,7 +40,7 @@ function StatCard({ label, value, icon, accent, loading }: StatCardProps) {
       <div>
         <p className="text-[11px] font-mono uppercase tracking-widest text-crm-text-dim mb-1">{label}</p>
         {loading ? (
-          <div className="h-7 w-12 bg-[#1e2d22] rounded animate-pulse" />
+          <div className="h-7 w-12 bg-crm-border rounded animate-pulse" />
         ) : (
           <p className="text-2xl font-bold text-crm-text">{value}</p>
         )}
@@ -185,7 +185,7 @@ export default function DashboardModule({ onNavigate }: { onNavigate: (s: string
             {tasksLoading ? (
               Array.from({ length: 3 }).map((_, i) => (
                 <div key={i} className="px-4 py-3 flex gap-3">
-                  <div className="h-4 flex-1 bg-[#1e2d22] rounded animate-pulse" />
+                  <div className="h-4 flex-1 bg-crm-border rounded animate-pulse" />
                 </div>
               ))
             ) : myTasks?.length === 0 ? (
@@ -236,7 +236,7 @@ export default function DashboardModule({ onNavigate }: { onNavigate: (s: string
             {eventsLoading ? (
               Array.from({ length: 3 }).map((_, i) => (
                 <div key={i} className="px-4 py-3 flex gap-3">
-                  <div className="h-4 flex-1 bg-[#1e2d22] rounded animate-pulse" />
+                  <div className="h-4 flex-1 bg-crm-border rounded animate-pulse" />
                 </div>
               ))
             ) : events?.length === 0 ? (

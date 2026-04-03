@@ -137,7 +137,7 @@ function ComposeModal({ account, replyTo, forwardOf, onClose, onSent }: ComposeP
           <button
             onClick={handleSend}
             disabled={sending || !to.trim() || !subject.trim()}
-            className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-[#008244] hover:bg-[#006d38] text-white text-[12px] font-semibold transition-colors disabled:opacity-50"
+            className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-primary hover:bg-primary/90 text-white text-[12px] font-semibold transition-colors disabled:opacity-50"
           >
             {sending ? <Loader2 size={12} className="animate-spin" /> : <Send size={12} />}
             {sending ? "Sending…" : "Send"}
@@ -417,7 +417,7 @@ export default function EmailInboxModule() {
         <div className="px-3 mb-3">
           <button
             onClick={() => { setReplyTarget(null); setForwardTarget(null); setComposeOpen(true); }}
-            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-[#008244] hover:bg-[#006d38] text-white text-[12px] font-semibold transition-colors"
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-primary hover:bg-primary/90 text-white text-[12px] font-semibold transition-colors"
           >
             <Pencil size={12} /> Compose
           </button>
@@ -505,7 +505,7 @@ export default function EmailInboxModule() {
                   )}
                   <div className={`flex-1 min-w-0 ${!email.is_read ? "" : "pl-3.5"}`}>
                     <div className="flex items-center justify-between gap-1 mb-0.5">
-                      <p className={`text-[11.5px] truncate ${!email.is_read ? "font-bold text-crm-text" : "font-medium text-[#8ab090]"}`}>
+                      <p className={`text-[11.5px] truncate ${!email.is_read ? "font-bold text-crm-text" : "font-medium text-crm-text-muted"}`}>
                         {email.from_name || email.from_address}
                       </p>
                       <span className="text-[9px] text-crm-text-faint flex-shrink-0">
