@@ -560,156 +560,6 @@ export type Database = {
         }
         Relationships: []
       }
-      tasks: {
-        Row: {
-          id: string
-          title: string
-          description: string | null
-          pillar: string | null
-          assignee_id: string | null
-          created_by: string
-          status: string
-          priority: string
-          due_date: string | null
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          title: string
-          description?: string | null
-          pillar?: string | null
-          assignee_id?: string | null
-          created_by: string
-          status?: string
-          priority?: string
-          due_date?: string | null
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          title?: string
-          description?: string | null
-          pillar?: string | null
-          assignee_id?: string | null
-          created_by?: string
-          status?: string
-          priority?: string
-          due_date?: string | null
-          created_at?: string
-        }
-        Relationships: []
-      }
-      crm_messages: {
-        Row: {
-          id: string
-          from_user_id: string
-          to_user_id: string | null
-          to_email: string | null
-          subject: string
-          body: string
-          is_read: boolean
-          is_archived: boolean
-          thread_id: string | null
-          label: string | null
-          sent_at: string
-        }
-        Insert: {
-          id?: string
-          from_user_id: string
-          to_user_id?: string | null
-          to_email?: string | null
-          subject: string
-          body: string
-          is_read?: boolean
-          is_archived?: boolean
-          thread_id?: string | null
-          label?: string | null
-          sent_at?: string
-        }
-        Update: {
-          id?: string
-          from_user_id?: string
-          to_user_id?: string | null
-          to_email?: string | null
-          subject?: string
-          body?: string
-          is_read?: boolean
-          is_archived?: boolean
-          thread_id?: string | null
-          label?: string | null
-          sent_at?: string
-        }
-        Relationships: []
-      }
-      crm_calendar_events: {
-        Row: {
-          id: string
-          title: string
-          description: string | null
-          start_time: string
-          end_time: string | null
-          all_day: boolean
-          colour: string
-          created_by: string
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          title: string
-          description?: string | null
-          start_time: string
-          end_time?: string | null
-          all_day?: boolean
-          colour?: string
-          created_by: string
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          title?: string
-          description?: string | null
-          start_time?: string
-          end_time?: string | null
-          all_day?: boolean
-          colour?: string
-          created_by?: string
-          created_at?: string
-        }
-        Relationships: []
-      }
-      project_emails: {
-        Row: {
-          id: string
-          user_id: string
-          project_id: string
-          email_handle: string
-          display_name: string
-          is_active: boolean
-          created_by: string | null
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          project_id?: string
-          email_handle: string
-          display_name: string
-          is_active?: boolean
-          created_by?: string | null
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          project_id?: string
-          email_handle?: string
-          display_name?: string
-          is_active?: boolean
-          created_by?: string | null
-          created_at?: string
-        }
-        Relationships: []
-      }
     }
     Views: {
       public_nominee_leaderboard: {
@@ -760,23 +610,9 @@ export type Database = {
         }
         Returns: boolean
       }
-      is_crm_staff: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
-      app_role:
-        | "admin"
-        | "moderator"
-        | "super_admin"
-        | "sponsor"
-        | "project_director"
-        | "programme_lead"
-        | "website_editor"
-        | "marketing_manager"
-        | "communications_officer"
-        | "finance_coordinator"
-        | "logistics_coordinator"
-        | "sponsor_manager"
-        | "consultant"
+      app_role: "admin" | "moderator" | "super_admin" | "sponsor"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -904,21 +740,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: [
-        "admin",
-        "moderator",
-        "super_admin",
-        "sponsor",
-        "project_director",
-        "programme_lead",
-        "website_editor",
-        "marketing_manager",
-        "communications_officer",
-        "finance_coordinator",
-        "logistics_coordinator",
-        "sponsor_manager",
-        "consultant",
-      ],
+      app_role: ["admin", "moderator", "super_admin", "sponsor"],
     },
   },
 } as const
