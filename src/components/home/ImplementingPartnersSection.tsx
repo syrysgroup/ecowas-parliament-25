@@ -55,9 +55,7 @@ const ImplementingPartnersSection = () => {
         </AnimatedSection>
 
         <div className="grid md:grid-cols-3 gap-5 max-w-5xl mx-auto">
-          {partners.map((partner, i) => {
-            return (
-            return (
+          {partners.map((partner, i) => (
               <AnimatedSection key={partner.name} delay={i * 100}>
                 <Link to={`/partners/${partner.slug}`} className="block h-full">
                   <div className="bg-card border border-border rounded-2xl p-6 hover:border-primary/30 transition-all hover:shadow-lg group h-full">
