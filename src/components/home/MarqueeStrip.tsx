@@ -1,15 +1,11 @@
-const items = [
-  "ECOWAS Parliament 25th Anniversary",
-  "Youth Innovation & Entrepreneurship",
-  "Trade & SME Forums",
-  "Women's Empowerment Forum",
-  "AWALCO Parliamentary Awards 2025",
-  "12 Member States · One Parliament",
-  "Youth Parliament Simulation",
-  "Civic Education & Democracy",
-];
+import { useTranslation } from "@/lib/i18n";
 
 const MarqueeStrip = () => {
+  const { t } = useTranslation();
+  const items = [
+    t("marquee.item1"), t("marquee.item2"), t("marquee.item3"), t("marquee.item4"),
+    t("marquee.item5"), t("marquee.item6"), t("marquee.item7"), t("marquee.item8"),
+  ];
   const doubled = [...items, ...items];
 
   return (

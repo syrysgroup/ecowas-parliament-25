@@ -1,13 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
-
-const stats = [
-  { target: 12, label: "Member States" },
-  { target: 25, label: "Years of Representation" },
-  { target: 7, label: "Programmes" },
-  { target: 1200, label: "Expected Delegates", suffix: "+" },
-  { target: 3, label: "Award Categories" },
-];
+import { useTranslation } from "@/lib/i18n";
 
 const CountUp = ({ target, suffix, delay = 0 }: { target: number; suffix?: string; delay?: number }) => {
   const [count, setCount] = useState(0);
@@ -39,11 +32,20 @@ const CountUp = ({ target, suffix, delay = 0 }: { target: number; suffix?: strin
 };
 
 const StatsSection = () => {
+  const { t } = useTranslation();
+  const stats = [
+    { target: 12, label: t("stats.memberStates") },
+    { target: 25, label: t("stats.yearsRepresentation") },
+    { target: 7, label: t("stats.programmes") },
+    { target: 1200, label: t("stats.expectedDelegates"), suffix: "+" },
+    { target: 3, label: t("stats.awardCategories") },
+  ];
+
   return (
     <section className="py-16 md:py-20 bg-gradient-ecowas border-t border-b border-primary/20 text-center">
       <div className="container">
         <p className="text-[10.5px] font-bold uppercase tracking-[0.14em] text-primary-foreground/60 mb-3">
-          25 Years of Impact
+          {t("stats.heading")}
         </p>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-8 max-w-4xl mx-auto">
           {stats.map((s, i) => (

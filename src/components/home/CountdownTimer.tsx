@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { CalendarClock } from "lucide-react";
+import { useTranslation } from "@/lib/i18n";
 
 const UPCOMING_EVENT = {
   name: "ECOWAS Parliament 25th Anniversary Ceremony — Abuja, Nigeria",
@@ -9,6 +10,7 @@ const UPCOMING_EVENT = {
 };
 
 const CountdownTimer = () => {
+  const { t } = useTranslation();
   const [timeLeft, setTimeLeft] = useState(getTimeLeft());
 
   function getTimeLeft() {
@@ -30,22 +32,20 @@ const CountdownTimer = () => {
   }, []);
 
   const blocks = [
-    { label: "Days", value: timeLeft.days },
-    { label: "Hours", value: timeLeft.hours },
-    { label: "Mins", value: timeLeft.minutes },
-    { label: "Secs", value: timeLeft.seconds },
+    { label: t("countdown.days"), value: timeLeft.days },
+    { label: t("countdown.hours"), value: timeLeft.hours },
+    { label: t("countdown.mins"), value: timeLeft.minutes },
+    { label: t("countdown.secs"), value: timeLeft.seconds },
   ];
 
   return (
     <div className="relative overflow-hidden border-y border-white/10 py-5 px-6 md:px-11" style={{
       background: "linear-gradient(135deg, hsl(152 80% 14%) 0%, hsl(152 60% 10%) 40%, hsl(200 40% 8%) 100%)",
     }}>
-      {/* Subtle pattern overlay */}
       <div className="absolute inset-0 opacity-[0.04]" style={{
         backgroundImage: "radial-gradient(circle at 1px 1px, white 1px, transparent 0)",
         backgroundSize: "24px 24px",
       }} />
-
       <div className="relative max-w-screen-xl mx-auto flex items-center justify-between gap-5 flex-wrap">
         <div className="flex items-center gap-3">
           <div className="hidden sm:flex items-center justify-center w-10 h-10 rounded-full bg-white/10 border border-white/10">
@@ -53,14 +53,13 @@ const CountdownTimer = () => {
           </div>
           <div>
             <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-accent mb-0.5">
-              {timeLeft.past ? "Event Started" : "Event Countdown"}
+              {timeLeft.past ? t("countdown.eventStarted") : t("countdown.eventCountdown")}
             </p>
             <p className="text-sm md:text-base font-bold text-white">
               {UPCOMING_EVENT.name}
             </p>
           </div>
         </div>
-
         <div className="flex items-center gap-2">
           {blocks.map((block) => (
             <div key={block.label} className="text-center rounded-lg px-3 py-2 min-w-[56px] md:min-w-[64px]" style={{
@@ -77,9 +76,8 @@ const CountdownTimer = () => {
             </div>
           ))}
         </div>
-
         <Button asChild size="sm" className="bg-accent hover:bg-accent/90 text-accent-foreground font-bold text-xs shadow-lg">
-          <Link to="/events">View Details →</Link>
+          <Link to="/events">{t("countdown.viewDetails")}</Link>
         </Button>
       </div>
     </div>
