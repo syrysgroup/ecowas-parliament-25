@@ -29,9 +29,9 @@ function StatCard({ label, value, icon: Icon, accent }: {
 }
 
 const TOOLTIP_STYLE = {
-  contentStyle: { background: "#0d1610", border: "1px solid #1e2d22", borderRadius: 8 },
-  labelStyle: { color: "#6b8f72", fontSize: 10 },
-  itemStyle: { color: "#c8e0cc", fontSize: 11 },
+  contentStyle: { background: "hsl(var(--crm-card))", border: "1px solid hsl(var(--crm-border))", borderRadius: 8 },
+  labelStyle: { color: "hsl(var(--crm-text-muted))", fontSize: 10 },
+  itemStyle: { color: "hsl(var(--crm-text))", fontSize: 11 },
 };
 
 // ─── Main ──────────────────────────────────────────────────────────────────────
