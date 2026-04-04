@@ -33,13 +33,13 @@ const Trade = () => {
   ];
 
   const countries = [
-    { name: "Nigeria", flag: "🇳🇬", role: t("trade.country.ng") },
-    { name: "Ghana", flag: "🇬🇭", role: t("trade.country.gh") },
-    { name: "Côte d'Ivoire", flag: "🇨🇮", role: t("trade.country.ci") },
-    { name: "Senegal", flag: "🇸🇳", role: t("trade.country.sn") },
-    { name: "Togo", flag: "🇹🇬", role: t("trade.country.tg") },
-    { name: "Cabo Verde", flag: "🇨🇻", role: t("trade.country.cv") },
-    { name: "Sierra Leone", flag: "🇸🇱", role: t("trade.country.sl") },
+    { name: "Nigeria", role: t("trade.country.ng") },
+    { name: "Ghana", role: t("trade.country.gh") },
+    { name: "Côte d'Ivoire", role: t("trade.country.ci") },
+    { name: "Senegal", role: t("trade.country.sn") },
+    { name: "Togo", role: t("trade.country.tg") },
+    { name: "Cabo Verde", role: t("trade.country.cv") },
+    { name: "Sierra Leone", role: t("trade.country.sl") },
   ];
 
   const challenges = [
