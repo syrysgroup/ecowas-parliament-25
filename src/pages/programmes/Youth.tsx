@@ -153,7 +153,7 @@ const Youth = () => {
               <AnimatedSection key={i} delay={i * 60}>
                 <Card className="hover:shadow-md transition-shadow duration-300">
                   <CardContent className="pt-6 flex items-center gap-4">
-                    <span className="text-3xl">{c.flag}</span>
+                    <FlagImg country={c.name} className="h-8 w-8" />
                     <div>
                       <p className="font-semibold text-card-foreground">{c.name}</p>
                       <Badge variant={c.status === t("common.registering") ? "default" : "secondary"} className="text-xs mt-1">{c.status}</Badge>

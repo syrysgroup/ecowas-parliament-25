@@ -125,6 +125,23 @@ const Trade = () => {
         </div>
       </section>
 
+      {/* CTA Banner */}
+      <section className="py-6 bg-primary">
+        <div className="container flex flex-col sm:flex-row items-center justify-center gap-4">
+          <p className="text-primary-foreground font-bold text-lg">{t("trade.ctaBanner")}</p>
+          <div className="flex gap-3">
+            <Button asChild size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90 font-bold shadow-lg">
+              <a href="https://www.t2tprogramme.com/" target="_blank" rel="noopener noreferrer">
+                {t("trade.applyNow")} <ExternalLink className="ml-2 h-4 w-4" />
+              </a>
+            </Button>
+            <Button asChild variant="outline" size="lg" className="border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10">
+              <Link to="/contact">{t("trade.partnerWithUs")}</Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+
       {/* Programme Overview */}
       <section className="py-16">
         <div className="container max-w-5xl">

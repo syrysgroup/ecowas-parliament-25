@@ -161,7 +161,7 @@ const Women = () => {
       <section className="py-16 bg-muted/30"><div className="container">
         <AnimatedSection className="mb-8"><h2 className="text-2xl font-bold text-foreground">{t("women.participatingCountries")}</h2></AnimatedSection>
         <AnimatedSection delay={100}><div className="flex flex-wrap gap-3">
-          {countries.map((c) => (<div key={c.name} className="flex items-center gap-2 px-5 py-3 rounded-full bg-card border border-border text-sm font-medium text-foreground"><span className="text-lg">{c.flag}</span>{c.name}</div>))}
+          {countries.map((c) => (<div key={c.name} className="flex items-center gap-2 px-5 py-3 rounded-full bg-card border border-border text-sm font-medium text-foreground"><FlagImg country={c.name} className="h-5 w-5" />{c.name}</div>))}
         </div></AnimatedSection>
       </div></section>
 
