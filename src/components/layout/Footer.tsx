@@ -1,46 +1,49 @@
 import { Link } from "react-router-dom";
-import { useTranslation } from "@/lib/i18n";
+import { useTranslation, Locale } from "@/lib/i18n";
 import { useAuthContext } from "@/contexts/AuthContext";
 import ecowasLogo from "@/assets/ecowas-parliament-logo.png";
 import anniversary25Logo from "@/assets/parliament-25-logo.png";
 import SocialMediaBar from "@/components/shared/SocialMediaBar";
 
+const localeLabels: Record<Locale, string> = { en: "EN", fr: "FR", pt: "PT" };
+const localeOrder: Locale[] = ["en", "fr", "pt"];
+
 const Footer = () => {
-  const { t } = useTranslation();
+  const { t, locale, setLocale } = useTranslation();
   const { user } = useAuthContext();
 
   const footerLinks = [
     {
       heading: t("footer.programme"),
       links: [
-        { label: t("prog.youth"),      to: "/programmes/youth"      },
-        { label: t("prog.trade"),       to: "/programmes/trade"      },
-        { label: t("prog.women"),       to: "/programmes/women"      },
-        { label: t("prog.civic"),       to: "/programmes/civic"      },
-        { label: t("prog.culture"),     to: "/programmes/culture"    },
-        { label: t("prog.awards"),      to: "/programmes/awards"     },
-        { label: t("prog.parliament"),  to: "/programmes/parliament" },
+        { label: t("prog.youth"), to: "/programmes/youth" },
+        { label: t("prog.trade"), to: "/programmes/trade" },
+        { label: t("prog.women"), to: "/programmes/women" },
+        { label: t("prog.civic"), to: "/programmes/civic" },
+        { label: t("prog.culture"), to: "/programmes/culture" },
+        { label: t("prog.awards"), to: "/programmes/awards" },
+        { label: t("prog.parliament"), to: "/programmes/parliament" },
       ],
     },
     {
       heading: t("footer.organisation"),
       links: [
-        { label: t("nav.about"),        to: "/about"        },
-        { label: t("nav.timeline"),      to: "/timeline"     },
-        { label: t("nav.team"),          to: "/team"         },
-        { label: t("nav.stakeholders"),  to: "/stakeholders" },
-        { label: t("nav.news"),          to: "/news"         },
-        { label: t("nav.documents"),     to: "/documents"    },
-        { label: t("nav.events"),        to: "/events"       },
+        { label: t("nav.about"), to: "/about" },
+        { label: t("nav.timeline"), to: "/timeline" },
+        { label: t("nav.team"), to: "/team" },
+        { label: t("nav.stakeholders"), to: "/stakeholders" },
+        { label: t("nav.news"), to: "/news" },
+        { label: t("nav.documents"), to: "/documents" },
+        { label: t("nav.events"), to: "/events" },
       ],
     },
     {
       heading: t("footer.getInvolved"),
       links: [
-        { label: t("common.sponsor"),    to: "/sponsors"   },
-        { label: t("common.mediaKit"),   to: "/media-kit"  },
-        { label: t("common.contact"),    to: "/contact"    },
-        { label: t("common.volunteer"),  to: "/volunteer"  },
+        { label: t("common.sponsor"), to: "/sponsors" },
+        { label: t("common.mediaKit"), to: "/media-kit" },
+        { label: t("common.contact"), to: "/contact" },
+        { label: t("common.volunteer"), to: "/volunteer" },
       ],
     },
   ];
@@ -58,9 +61,7 @@ const Footer = () => {
                 <img src={anniversary25Logo} alt="25th Anniversary" className="h-8 w-auto object-contain" />
               </div>
             </div>
-            <p className="text-sm text-muted-foreground leading-relaxed mb-4">
-              {t("footer.tagline")}
-            </p>
+            <p className="text-sm text-muted-foreground leading-relaxed mb-4">{t("footer.tagline")}</p>
             <div className="space-y-1.5 text-xs text-muted-foreground mb-4">
               <p>📍 Herbert Macaulay Way, Garki, Abuja 900103, Federal Capital Territory</p>
               <p>📧 info@ecowasparliamentinitiatives.org</p>
@@ -68,6 +69,21 @@ const Footer = () => {
               <p>📧 sponsors@ecowasparliamentinitiatives.org</p>
             </div>
             <SocialMediaBar variant="full" showParliamentLink={true} />
+
+            {/* Language switcher */}
+            <div className="flex gap-1 mt-4" aria-label={t("nav.languageLabel")}>
+              {localeOrder.map((l) => (
+                <button
+                  key={l}
+                  onClick={() => setLocale(l)}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                    l === locale ? "bg-primary text-primary-foreground" : "bg-muted text-foreground/70 hover:bg-muted/80"
+                  }`}
+                >
+                  {localeLabels[l]}
+                </button>
+              ))}
+            </div>
           </div>
 
           {footerLinks.map(col => (
@@ -76,9 +92,7 @@ const Footer = () => {
               <ul className="space-y-2">
                 {col.links.map(l => (
                   <li key={l.to}>
-                    <Link to={l.to} className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                      {l.label}
-                    </Link>
+                    <Link to={l.to} className="text-sm text-muted-foreground hover:text-primary transition-colors">{l.label}</Link>
                   </li>
                 ))}
               </ul>
@@ -89,33 +103,20 @@ const Footer = () => {
         <div className="mt-6 pt-5 border-t border-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div>
             <p className="text-xs text-muted-foreground">{t("footer.copyright")}</p>
-            <p className="text-[10px] text-muted-foreground/60 mt-1">
-              This is the official website of ECOWAS Parliament Initiatives — not the ECOWAS Parliament itself.
-            </p>
+            <p className="text-[10px] text-muted-foreground/60 mt-1">{t("footer.disclaimer")}</p>
             <p className="text-[10px] text-muted-foreground/40 mt-0.5">{t("footer.builtBy")}</p>
           </div>
           <div className="flex flex-wrap items-center gap-4">
             <Link to="/contact" className="text-xs text-muted-foreground hover:text-primary transition-colors">{t("nav.contact")}</Link>
             <Link to="/media-kit" className="text-xs text-muted-foreground hover:text-primary transition-colors">{t("common.mediaKit")}</Link>
             <Link to="/sponsors" className="text-xs text-muted-foreground hover:text-primary transition-colors">{t("common.sponsor")}</Link>
-            <a href="https://parl.ecowas.int" target="_blank" rel="noreferrer"
-              className="text-xs text-muted-foreground hover:text-primary transition-colors">
-              ECOWAS Parliament Official Site ↗
+            <a href="https://parl.ecowas.int" target="_blank" rel="noreferrer" className="text-xs text-muted-foreground hover:text-primary transition-colors">
+              {t("footer.officialSite")} ↗
             </a>
             {user ? (
-              <Link
-                to="/crm"
-                className="text-xs font-medium px-3 py-1.5 rounded-md border border-border text-foreground/70 hover:text-primary hover:border-primary transition-colors"
-              >
-                {t("footer.dashboard")}
-              </Link>
+              <Link to="/crm" className="text-xs font-medium px-3 py-1.5 rounded-md border border-border text-foreground/70 hover:text-primary hover:border-primary transition-colors">{t("footer.dashboard")}</Link>
             ) : (
-              <Link
-                to="/auth"
-                className="text-xs font-medium px-3 py-1.5 rounded-md border border-border text-foreground/70 hover:text-primary hover:border-primary transition-colors"
-              >
-                {t("footer.signIn")}
-              </Link>
+              <Link to="/auth" className="text-xs font-medium px-3 py-1.5 rounded-md border border-border text-foreground/70 hover:text-primary hover:border-primary transition-colors">{t("footer.signIn")}</Link>
             )}
           </div>
         </div>
