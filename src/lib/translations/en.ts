@@ -514,7 +514,6 @@ export const en: Record<string, string> = {
   "common.officeOfSpeaker": "Office of the Speaker",
   "common.mandateBody1": "By the authority vested in the Office of the Speaker, ECOWAS Parliament, and in furtherance of the Parliament's mandate of representation of the peoples of West Africa, this mandate letter formally establishes the {title} as an official programme of the ECOWAS Parliament 25th Anniversary celebration.",
   "common.mandateBody2": "This initiative aligns with the ECOWAS 2050 Vision and the Parliament's commitment to the transition from an ECOWAS of States to an ECOWAS of the People.",
-  "common.backToHome": "Back to Home",
   "common.download": "Download",
 
   // ─── Events Section Items ─────────────────────────────────────────
