@@ -18,7 +18,7 @@ const Parliament25Section = () => {
               {t("anniversary.badge")}
             </span>
             <h2 className="text-3xl md:text-4xl font-black text-foreground leading-tight mb-5">
-              Parliament at <span className="text-primary">25</span>
+              {t("anniversary.headingPrefix")} <span className="text-primary">25</span>
             </h2>
             <div className="space-y-4 text-[15px] text-muted-foreground leading-relaxed">
               <p>{t("anniversary.p1")}</p>
