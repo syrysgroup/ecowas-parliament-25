@@ -150,6 +150,7 @@ const Navbar = () => {
               }}
             >
               <button
+                aria-label={t("nav.languageLabel")}
                 className="flex items-center justify-center w-9 h-9 rounded-md border border-border text-xs font-bold text-foreground/70 hover:bg-muted transition-colors"
               >
                 {localeLabels[locale]}

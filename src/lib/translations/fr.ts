@@ -514,4 +514,27 @@ export const fr: Record<string, string> = {
   "common.officeOfSpeaker": "Bureau de la Présidente",
   "common.mandateBody1": "Par l'autorité conférée au Bureau de la Présidente, Parlement de la CEDEAO, et dans le cadre du mandat de représentation des peuples de l'Afrique de l'Ouest, cette lettre de mandat établit officiellement le programme {title} comme programme officiel de la célébration du 25e anniversaire du Parlement de la CEDEAO.",
   "common.mandateBody2": "Cette initiative s'inscrit dans la Vision 2050 de la CEDEAO et l'engagement du Parlement pour la transition d'une CEDEAO des États vers une CEDEAO des Peuples.",
+  "common.download": "Télécharger",
+
+  "eventsSection.ev1.title": "Date limite de rapport financier T1",
+  "eventsSection.ev2.title": "Cérémonie de signature du partenariat BAD",
+  "eventsSection.ev3.title": "Session de planification du Forum sur l'autonomisation des femmes",
+  "eventsSection.ev4.title": "Forum Commerce & PME — Abuja",
+  "eventsSection.ev5.title": "Parlement des jeunes — Clôture des candidatures",
+
+  "implPartners.duchess.desc": "Partenaire de mise en œuvre principal, coordonnant la direction du programme et les partenariats exécutifs.",
+  "implPartners.borderless.desc": "Pilotage de la diplomatie commerciale, de l'engagement régional et de la mobilisation du secteur privé.",
+  "implPartners.cmd.desc": "Appui à la programmation, à l'expérience événementielle et aux activités communautaires.",
+
+  "instPartners.awalco.fullName": "Association des correspondants législatifs ouest-africains",
+  "instPartners.awalco.desc": "Un organisme professionnel qui rassemble les journalistes législatifs d'Afrique de l'Ouest pour renforcer la couverture parlementaire, la liberté de la presse et la redevabilité publique en matière de gouvernance.",
+  "instPartners.alliance.fullName": "Alliance pour la recherche économique et l'éthique",
+  "instPartners.alliance.desc": "Une organisation dédiée à la recherche économique fondée sur les preuves et à la gouvernance éthique, soutenant l'élaboration de politiques et le renforcement institutionnel dans la région.",
+
+  "common.ecowasParliament": "Parlement de la CEDEAO",
+  "common.parlementCedeao": "ECOWAS Parliament",
+  "common.programmeMandate2": "Mandat du programme : {title}",
+  "common.speakerName": "Rt. Hon. Hadja Mémounatou Ibrahima",
+  "common.speakerRole": "Présidente du Parlement de la CEDEAO",
+  "common.addressLine": "Herbert Macaulay Way, Central Business District, P.M.B. 576, Abuja, Nigeria",
 };

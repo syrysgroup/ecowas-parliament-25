@@ -1,5 +1,7 @@
 import Layout from "@/components/layout/Layout";
 import AnimatedSection from "@/components/shared/AnimatedSection";
+import { Badge } from "@/components/ui/badge";
+import { useTranslation } from "@/lib/i18n";
 import teamPortrait1 from "@/assets/team-portrait-1.jpg";
 import teamPortrait2 from "@/assets/team-portrait-2.jpg";
 import teamPortrait3 from "@/assets/team-portrait-3.jpg";
@@ -8,11 +10,10 @@ import representative1 from "@/assets/representative-1.jpg";
 import representative2 from "@/assets/representative-2.jpg";
 import representative3 from "@/assets/representative-3.jpg";
 import representative4 from "@/assets/representative-4.jpg";
-import { Badge } from "@/components/ui/badge";
 
 const departments = [
   {
-    name: "Executive leadership",
+    nameKey: "team.executiveLeadership",
     members: [
       { name: "Dr. Victoria Akai IIPM", role: "Programme Director", org: "Duchess NL", image: teamPortrait1 },
       { name: "Dr. Olori Boye-Ajayi", role: "Regional Strategy Lead", org: "Borderless Trade & Investment", image: teamPortrait2 },
@@ -21,7 +22,7 @@ const departments = [
     ],
   },
   {
-    name: "Programme delivery",
+    nameKey: "team.programmeDelivery",
     members: [
       { name: "Temile Emmanuel", role: "Parliament Programme Manager", org: "Youth Parliament Secretariat", image: representative2 },
       { name: "Nene Coker", role: "Community Mobilisation Lead", org: "National Outreach Unit", image: representative3 },
@@ -30,7 +31,7 @@ const departments = [
     ],
   },
   {
-    name: "Communications and media",
+    nameKey: "team.commsMedia",
     members: [
       { name: "Fatou Sarr", role: "Creative Content Lead", org: "Communications Studio", image: teamPortrait4 },
       { name: "Moussa Diallo", role: "Press & Editorial Coordinator", org: "Media Relations", image: teamPortrait2 },
@@ -41,16 +42,16 @@ const departments = [
 ];
 
 const Team = () => {
+  const { t } = useTranslation();
+
   return (
     <Layout>
       <section className="bg-gradient-hero py-20 text-primary-foreground">
         <div className="container">
           <AnimatedSection>
-            <Badge className="border-primary-foreground/20 bg-primary-foreground/10 text-primary-foreground">Expanded Team</Badge>
-            <h1 className="mt-4 text-4xl font-black md:text-5xl">Implementation Team</h1>
-            <p className="mt-4 max-w-3xl text-lg text-primary-foreground/75">
-              A larger cross-functional team now powers stakeholder engagement, parliament operations, communications, curation, and delegate support across the ECOWAS commemorative programme.
-            </p>
+            <Badge className="border-primary-foreground/20 bg-primary-foreground/10 text-primary-foreground">{t("team.badge")}</Badge>
+            <h1 className="mt-4 text-4xl font-black md:text-5xl">{t("team.heroTitle")}</h1>
+            <p className="mt-4 max-w-3xl text-lg text-primary-foreground/75">{t("team.heroDesc")}</p>
           </AnimatedSection>
         </div>
       </section>
@@ -58,9 +59,9 @@ const Team = () => {
       <section className="py-16">
         <div className="container space-y-14">
           {departments.map((department, departmentIndex) => (
-            <div key={department.name}>
+            <div key={department.nameKey}>
               <AnimatedSection>
-                <h2 className="text-2xl font-black text-foreground">{department.name}</h2>
+                <h2 className="text-2xl font-black text-foreground">{t(department.nameKey)}</h2>
               </AnimatedSection>
               <div className="mt-6 grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
                 {department.members.map((member, index) => (

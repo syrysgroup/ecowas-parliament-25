@@ -514,4 +514,27 @@ export const pt: Record<string, string> = {
   "common.officeOfSpeaker": "Gabinete da Presidente",
   "common.mandateBody1": "Pela autoridade investida no Gabinete da Presidente, Parlamento da CEDEAO, e em prossecução do mandato de representação dos povos da África Ocidental, esta carta de mandato estabelece formalmente o programa {title} como programa oficial da celebração do 25.º Aniversário do Parlamento da CEDEAO.",
   "common.mandateBody2": "Esta iniciativa alinha-se com a Visão 2050 da CEDEAO e o compromisso do Parlamento com a transição de uma CEDEAO de Estados para uma CEDEAO dos Povos.",
+  "common.download": "Descarregar",
+
+  "eventsSection.ev1.title": "Prazo de relatório financeiro T1",
+  "eventsSection.ev2.title": "Cerimónia de assinatura de parceria BAD",
+  "eventsSection.ev3.title": "Sessão de planeamento do Fórum de Empoderamento das Mulheres",
+  "eventsSection.ev4.title": "Fórum Comércio & PME — Abuja",
+  "eventsSection.ev5.title": "Parlamento da Juventude — Encerramento das candidaturas",
+
+  "implPartners.duchess.desc": "Parceiro de implementação principal, coordenando a direcção do programa e as parcerias executivas.",
+  "implPartners.borderless.desc": "Impulso da diplomacia comercial, do envolvimento regional e da mobilização do sector privado.",
+  "implPartners.cmd.desc": "Apoio à programação, à experiência de eventos e às actividades comunitárias.",
+
+  "instPartners.awalco.fullName": "Associação dos Correspondentes Legislativos da África Ocidental",
+  "instPartners.awalco.desc": "Um organismo profissional que une jornalistas legislativos de toda a África Ocidental para fortalecer a cobertura parlamentar, a liberdade de imprensa e a responsabilização pública na governação.",
+  "instPartners.alliance.fullName": "Aliança para a Investigação Económica e a Ética",
+  "instPartners.alliance.desc": "Uma organização dedicada à investigação económica baseada em evidências e à governação ética, apoiando o desenvolvimento de políticas e o fortalecimento institucional na região.",
+
+  "common.ecowasParliament": "Parlamento da CEDEAO",
+  "common.parlementCedeao": "ECOWAS Parliament",
+  "common.programmeMandate2": "Mandato do Programa: {title}",
+  "common.speakerName": "Exma. Hadja Mémounatou Ibrahima",
+  "common.speakerRole": "Presidente do Parlamento da CEDEAO",
+  "common.addressLine": "Herbert Macaulay Way, Central Business District, P.M.B. 576, Abuja, Nigéria",
 };
