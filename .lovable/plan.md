@@ -1,117 +1,53 @@
 
 
-## Plan: Multiple UI Enhancements Across Index, Trade, Youth, and Country Flags
+# Plan: Youth Sub-Pages for Innovators Challenge and Smart Challenge
 
-### Summary of Changes
+## Summary
 
-Six distinct changes across the project:
+Create two new sub-pages (`/programmes/youth/innovators` and `/programmes/youth/smart`), update the Youth landing page to remove the footer and link buttons to the new pages, generate hero background images for each, and build rich animated pages with mock sponsor logos.
 
----
+## Changes
 
-### 1. Trade Page — CTA Button After Hero
+### 1. Update Youth Landing Page (`src/pages/programmes/Youth.tsx`)
+- Replace `<Layout>` with just `<Navbar />` (no Footer)
+- Change both buttons from `scrollToDetails` to `<Link>` navigating to `/programmes/youth/innovators` and `/programmes/youth/smart`
+- Add mock sponsor logos below each half using `SponsorLogo` component:
+  - Innovators: NASENI, SMEDAN, Canada
+  - Smart Challenge: AfDB, SYRYS, Resident Technology
 
-Add an "Apply Now" call-to-action button strip immediately after the hero section (before Programme Overview). This will be a prominent banner with the same apply link (`https://www.t2tprogramme.com/`) that currently exists only at the bottom of the page.
+### 2. Create Innovators Challenge Page (`src/pages/programmes/InnovatorsChallenge.tsx`)
+- Full-featured modern page with Layout (navbar + footer)
+- AI-generated hero background image (gradient fallback + abstract tech/innovation pattern)
+- Animated sections using `AnimatedSection` and CSS keyframe animations
+- Content sections: Hero, About/Mission, Innovation Tracks (AgriTech, HealthTech, FinTech, Clean Energy, EdTech), Phases/Timeline, Prizes, Countries, CTA
+- Sponsor strip at bottom showing NASENI, SMEDAN, Canada using `SponsorLogo`
+- Modern design: parallax-like scroll effects, staggered card animations, glassmorphism cards, gradient accents
 
-**File:** `src/pages/programmes/Trade.tsx`
-- Insert a CTA banner section between the hero (line 125) and Programme Overview (line 127)
-- Include the "Apply Now" button linking to t2tprogramme.com and a "Partner With Us" button linking to /contact
+### 3. Create Smart Challenge Page (`src/pages/programmes/SmartChallenge.tsx`)
+- Full-featured modern page with Layout
+- AI-generated hero background image (academic/quiz competition theme)
+- Content driven by concept note: 7-round competition structure, 4 subjects, dual-track scoring, 12 ECOWAS nations, live broadcast finale
+- Sections: Hero, Executive Summary, How It Works (7 rounds visualized), Subjects & Major Declaration, Scoring System, Live Show format, Technology/Platform, CTA
+- Animated interactive elements: round progression timeline, score track visualization, animated stat counters
+- Sponsor strip: AfDB, SYRYS, Resident Technology using `SponsorLogo`
 
----
+### 4. Generate Hero Background Images
+- Use AI image generation (Nano banana) to create two unique hero backgrounds:
+  - Innovators: abstract tech/startup themed with green/gold tones
+  - Smart Challenge: academic competition themed with gold/blue tones
+- Save to `src/assets/` and import in respective pages
 
-### 2. Index Hero — Large Logo + Two-Column Layout
+### 5. Add Routes (`src/App.tsx`)
+- Add imports for `InnovatorsChallenge` and `SmartChallenge`
+- Add routes: `/programmes/youth/innovators` and `/programmes/youth/smart`
 
-Redesign the hero section in `src/components/home/HeroSection.tsx` to use a two-column layout:
-- **Left column:** Text content (eyebrow badge, title, description, CTA buttons)
-- **Right column:** Large ECOWAS Parliament logo (significantly bigger than current, ~200-250px) centered with decorative glow effects
+### 6. Add Translation Keys (`src/lib/translations/en.ts`, `fr.ts`, `pt.ts`)
+- Add keys for both new pages (headings, descriptions, section content)
 
-The stats bar remains full-width below both columns. Particles and gradient background stay unchanged.
+## Technical Details
 
-**File:** `src/components/home/HeroSection.tsx`
-
----
-
-### 3. Replace Emoji Flags with Real Flag Images Everywhere
-
-Multiple files currently use emoji flags (e.g., `🇳🇬`). Replace them with the actual PNG flag images from `src/assets/flags/`. The affected files:
-
-- `src/pages/programmes/Trade.tsx` — 7 countries
-- `src/pages/programmes/Youth.tsx` — 7 countries
-- `src/pages/programmes/Women.tsx` — 6 countries
-- `src/pages/programmes/Culture.tsx` — 5 countries
-- `src/pages/programmes/Parliament.tsx` — 12 countries
-- `src/pages/Contact.tsx` — 2 offices (Nigeria flag)
-- `src/components/parliament/HemicycleChart.tsx` — 12 countries
-- `src/pages/programmes/Civic.tsx` and `src/pages/programmes/Awards.tsx` — check for flags
-
-Each emoji will be replaced with an `<img>` tag using the corresponding PNG from `src/assets/flags/`. Missing flags (Mali, Niger, Burkina Faso) would need fallback handling if referenced.
-
----
-
-### 4. New "People-Oriented Mandate" Section on Index
-
-Create a new section component `src/components/home/PeopleMandateSection.tsx` that speaks to Parliament as an institution demonstrating its people-oriented mandate over the past 25 years.
-
-Content will emphasize:
-- Parliament's role as the voice of ECOWAS peoples
-- Legislative oversight achievements
-- Community engagement and democratic representation
-- The "ECOWAS of the Peoples" slogan
-
-Design: Full-width section with a prominent heading, descriptive text, and 3-4 highlight cards showcasing mandate pillars (Legislative Oversight, Democratic Representation, Peace & Security, Regional Integration).
-
-**File:** New `src/components/home/PeopleMandateSection.tsx`
-**File:** `src/pages/Index.tsx` — add the section after AnniversarySection
-
----
-
-### 5. Parliament @25 Section — Balanced Achievements Layout
-
-Modify `src/components/home/AnniversarySection.tsx` to redistribute the stats/achievements:
-- Move the 4 achievement stat cards beneath the logo column OR distribute them evenly in a 4-column grid spanning the full width below both columns
-- This prevents the left column (logo) from looking empty while the right column has all the content
-- The ECOWAS address card moves to full-width below the stats
-
-**File:** `src/components/home/AnniversarySection.tsx`
-
----
-
-### 6. Youth Page — Bold Split Landing Design
-
-Completely redesign `src/pages/programmes/Youth.tsx` as a bold split-screen landing:
-
-```text
-┌─────────────────┬─────────────────┐
-│                  │                  │
-│   INNOVATORS    │  SMART CHALLENGE │
-│   CHALLENGE     │      QUIZ       │
-│                  │                  │
-│   [Learn More]  │   [Learn More]  │
-│                  │                  │
-└────────┬────────┴────────┬────────┘
-         │   ┌──────────┐  │
-         │   │  25th     │  │
-         │   │  Logo on  │  │
-         │   │  Silver   │  │
-         │   │  Circle   │  │
-         │   └──────────┘  │
-         └─────────────────┘
-```
-
-- Two vertical halves: left for Innovators Challenge (green-tinted), right for Smart Challenge Quiz (gold-tinted)
-- The Parliament @25 logo sits in a circular pure silver/light-gray background, overlapping the vertical dividing line between both sections (using absolute positioning and z-index)
-- Each half has a brief description and a "Learn More" CTA button
-- Scrolling below reveals the detailed content (phases, tracks, prizes, etc.) that currently exists
-- The existing detailed sections remain intact below the split hero
-
-**Files:** `src/pages/programmes/Youth.tsx`
-
----
-
-### Translation Keys
-
-New translation keys will be needed for:
-- People-oriented mandate section headings and descriptions
-- Youth page split-screen labels ("Innovators Challenge", "Smart Challenge Quiz")
-
-Added to `src/lib/translations/en.ts`, `fr.ts`, and `pt.ts`.
+- Both pages use existing `AnimatedSection`, `SponsorLogo`, `Layout`, `FlagImg` components
+- CSS animations: staggered fade-ins, scale-on-scroll, floating elements, gradient shifts
+- Responsive design with mobile-first approach
+- The Smart Challenge page content is derived from the uploaded concept note (7 rounds, 4 subjects, 12 nations, dual scoring, live broadcast)
 
