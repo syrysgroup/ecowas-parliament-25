@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { CheckCircle2, Mail, MapPin, Phone, Globe, Send } from "lucide-react";
 import { useTranslation } from "@/lib/i18n";
+import FlagImg from "@/components/shared/FlagImg";
 
 export default function Contact() {
   const { t } = useTranslation();
