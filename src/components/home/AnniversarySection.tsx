@@ -20,15 +20,31 @@ const AnniversarySection = () => {
     <section className="py-20 bg-muted/20 border-t border-b border-border">
       <div className="container">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
-          <AnimatedSection className="flex justify-center">
-            <div className="relative">
-              <div className="w-96 h-96 md:w-[28rem] md:h-[28rem] rounded-full bg-gray-200 border-4 border-ecowas-green shadow-xl flex items-center justify-center">
-                <img src={parliament25Logo} alt={t("anniversary.badge")} className="h-72 md:h-80 w-auto object-contain drop-shadow-[0_0_30px_hsl(152_100%_26%/0.15)]" />
+          {/* Left: Logo + Stats underneath */}
+          <div>
+            <AnimatedSection className="flex justify-center">
+              <div className="relative">
+                <div className="w-72 h-72 md:w-80 md:h-80 rounded-full bg-muted border-4 border-ecowas-green shadow-xl flex items-center justify-center">
+                  <img src={parliament25Logo} alt={t("anniversary.badge")} className="h-56 md:h-64 w-auto object-contain drop-shadow-[0_0_30px_hsl(152_100%_26%/0.15)]" />
+                </div>
+                <div className="absolute inset-0 w-72 h-72 md:w-80 md:h-80 rounded-full border-2 border-ecowas-green/20 scale-110" />
               </div>
-              <div className="absolute inset-0 w-96 h-96 md:w-[28rem] md:h-[28rem] rounded-full border-2 border-ecowas-green/20 scale-110" />
-            </div>
-          </AnimatedSection>
+            </AnimatedSection>
 
+            {/* Stats grid below logo */}
+            <AnimatedSection delay={200} className="mt-8">
+              <div className="grid grid-cols-2 gap-3">
+                {stats.map((stat) => (
+                  <div key={stat.label} className="bg-card border border-border rounded-2xl p-5 hover:border-primary/30 transition-colors">
+                    <p className={`text-4xl font-black leading-none mb-1.5 ${stat.color}`}>{stat.value}</p>
+                    <p className="text-xs text-muted-foreground leading-snug">{stat.label}</p>
+                  </div>
+                ))}
+              </div>
+            </AnimatedSection>
+          </div>
+
+          {/* Right: Text content */}
           <div>
             <AnimatedSection delay={100}>
               <Badge className="bg-primary/10 text-primary border-primary/20 mb-3">{t("anniversary.badge")}</Badge>
@@ -47,22 +63,14 @@ const AnniversarySection = () => {
               </div>
             </AnimatedSection>
 
-            <AnimatedSection delay={250} className="mt-8">
-              <div className="grid grid-cols-2 gap-3">
-                {stats.map((stat) => (
-                  <div key={stat.label} className="bg-card border border-border rounded-2xl p-5 hover:border-primary/30 transition-colors">
-                    <p className={`text-4xl font-black leading-none mb-1.5 ${stat.color}`}>{stat.value}</p>
-                    <p className="text-xs text-muted-foreground leading-snug">{stat.label}</p>
-                  </div>
-                ))}
-                <div className="col-span-2 flex items-center gap-3.5 bg-card border border-border rounded-2xl p-4">
-                  <div className="bg-white rounded-full p-1.5 shadow-sm shrink-0">
-                    <img src={ecowasLogo} alt="ECOWAS Parliament" className="h-9 w-9 object-contain" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-card-foreground">ECOWAS Parliament</p>
-                    <p className="text-[11px] text-muted-foreground">Herbert Macaulay Way, Central Business District, P.M.B. 576, Abuja, Nigeria</p>
-                  </div>
+            <AnimatedSection delay={300} className="mt-8">
+              <div className="flex items-center gap-3.5 bg-card border border-border rounded-2xl p-4">
+                <div className="bg-white rounded-full p-1.5 shadow-sm shrink-0">
+                  <img src={ecowasLogo} alt="ECOWAS Parliament" className="h-9 w-9 object-contain" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-card-foreground">ECOWAS Parliament</p>
+                  <p className="text-[11px] text-muted-foreground">Herbert Macaulay Way, Central Business District, P.M.B. 576, Abuja, Nigeria</p>
                 </div>
               </div>
             </AnimatedSection>

@@ -8,6 +8,7 @@ import {
   ArrowLeft, Award, Trophy, MapPin, Calendar, Target, Users,
   Scale, Shield, Heart, Megaphone, Star, Crown, ArrowRight,
 } from "lucide-react";
+import FlagImg from "@/components/shared/FlagImg";
 
 const categories = [
   { title: "Legislative Excellence Award", desc: "For outstanding contributions to lawmaking and regional policy development that have advanced the ECOWAS integration agenda.", icon: <Scale className="h-6 w-6" />, color: "bg-primary/10 text-primary" },
@@ -28,12 +29,12 @@ const nominationSteps = [
 ];
 
 const honourees = [
-  { name: "Hon. Aminata Touré", country: "🇸🇳 Senegal", category: "Legislative Excellence", year: "2026", quote: "Regional integration begins with the laws we craft together." },
-  { name: "Hon. Kojo Mensah-Bonsu", country: "🇬🇭 Ghana", category: "Champion of Integration", year: "2026", quote: "Building bridges between nations is the highest calling of a parliamentarian." },
-  { name: "Hon. Fatima Diallo", country: "🇲🇱 Mali", category: "Women's Empowerment", year: "2026", quote: "When women lead, communities thrive and nations prosper." },
-  { name: "Hon. Chief Emeka Okonkwo", country: "🇳🇬 Nigeria", category: "Lifetime Achievement", year: "2026", quote: "Twenty-five years of service to West Africa's democratic dream." },
-  { name: "Hon. Mariama Bah", country: "🇬🇲 The Gambia", category: "Youth Advocacy", year: "2026", quote: "The future belongs to the young people we empower today." },
-  { name: "Hon. Ibrahima Koné", country: "🇨🇮 Côte d'Ivoire", category: "Peace & Security", year: "2026", quote: "Dialogue and diplomacy are our most powerful instruments." },
+  { name: "Hon. Aminata Touré", country: "Senegal", category: "Legislative Excellence", year: "2026", quote: "Regional integration begins with the laws we craft together." },
+  { name: "Hon. Kojo Mensah-Bonsu", country: "Ghana", category: "Champion of Integration", year: "2026", quote: "Building bridges between nations is the highest calling of a parliamentarian." },
+  { name: "Hon. Fatima Diallo", country: "Mali", category: "Women's Empowerment", year: "2026", quote: "When women lead, communities thrive and nations prosper." },
+  { name: "Hon. Chief Emeka Okonkwo", country: "Nigeria", category: "Lifetime Achievement", year: "2026", quote: "Twenty-five years of service to West Africa's democratic dream." },
+  { name: "Hon. Mariama Bah", country: "The Gambia", category: "Youth Advocacy", year: "2026", quote: "The future belongs to the young people we empower today." },
+  { name: "Hon. Ibrahima Koné", country: "Côte d'Ivoire", category: "Peace & Security", year: "2026", quote: "Dialogue and diplomacy are our most powerful instruments." },
 ];
 
 const objectives = [
@@ -179,7 +180,7 @@ const Awards = () => (
                   </div>
                   <div className="text-center">
                     <h3 className="font-bold text-card-foreground">{h.name}</h3>
-                    <p className="text-sm text-muted-foreground">{h.country}</p>
+                    <p className="text-sm text-muted-foreground"><FlagImg country={h.country} className="h-4 w-4 inline mr-1" />{h.country}</p>
                     <Badge variant="outline" className="mt-2 text-[10px]">{h.category}</Badge>
                     <p className="mt-3 text-sm italic text-muted-foreground">"{h.quote}"</p>
                   </div>

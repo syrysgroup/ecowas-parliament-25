@@ -9,6 +9,8 @@ import {
   ArrowLeft, Palette, MapPin, Calendar, Target, Music, Film,
   UtensilsCrossed, BookOpen, Paintbrush, Dumbbell, Theater, Sparkles,
 } from "lucide-react";
+import FlagImg from "@/components/shared/FlagImg";
+import { getFlagSrc } from "@/lib/flags";
 
 const artForms = [
   { title: "Fashion", desc: "West African textile traditions — from Kente and Adire to contemporary haute couture — showcased on the runway.", icon: <Sparkles className="h-5 w-5" /> },
@@ -32,18 +34,18 @@ const festivalSchedule = [
 ];
 
 const culturalContributions = [
-  { country: "Nigeria", flag: "🇳🇬", contributions: ["Nollywood", "Afrobeats", "Adire Textiles"] },
-  { country: "Ghana", flag: "🇬🇭", contributions: ["Kente Weaving", "Highlife Music", "Jollof Culture"] },
-  { country: "Senegal", flag: "🇸🇳", contributions: ["Mbalax", "Thieboudienne", "Teranga Hospitality"] },
-  { country: "Côte d'Ivoire", flag: "🇨🇮", contributions: ["Coupé-Décalé", "Attieke", "Contemporary Art"] },
-  { country: "Cabo Verde", flag: "🇨🇻", contributions: ["Morna Music", "Cachupa", "Creole Literature"] },
+  { country: "Nigeria", contributions: ["Nollywood", "Afrobeats", "Adire Textiles"] },
+  { country: "Ghana", contributions: ["Kente Weaving", "Highlife Music", "Jollof Culture"] },
+  { country: "Senegal", contributions: ["Mbalax", "Thieboudienne", "Teranga Hospitality"] },
+  { country: "Côte d'Ivoire", contributions: ["Coupé-Décalé", "Attieke", "Contemporary Art"] },
+  { country: "Cabo Verde", contributions: ["Morna Music", "Cachupa", "Creole Literature"] },
 ];
 
 const featuredArtists = [
-  { name: "Amara Diop", country: "🇸🇳 Senegal", discipline: "Fashion Designer", bio: "Award-winning designer blending traditional Senegalese textiles with contemporary silhouettes." },
-  { name: "Kwame Asante", country: "🇬🇭 Ghana", discipline: "Filmmaker", bio: "Director whose documentaries on West African diaspora communities have screened at international festivals." },
-  { name: "Lúcia Évora", country: "🇨🇻 Cabo Verde", discipline: "Musician", bio: "Morna and jazz fusion artist carrying forward the legacy of Cabo Verdean musical tradition." },
-  { name: "Chioma Nwosu", country: "🇳🇬 Nigeria", discipline: "Visual Artist", bio: "Mixed-media artist exploring identity, migration, and belonging through large-scale installations." },
+  { name: "Amara Diop", country: "Senegal", discipline: "Fashion Designer", bio: "Award-winning designer blending traditional Senegalese textiles with contemporary silhouettes." },
+  { name: "Kwame Asante", country: "Ghana", discipline: "Filmmaker", bio: "Director whose documentaries on West African diaspora communities have screened at international festivals." },
+  { name: "Lúcia Évora", country: "Cabo Verde", discipline: "Musician", bio: "Morna and jazz fusion artist carrying forward the legacy of Cabo Verdean musical tradition." },
+  { name: "Chioma Nwosu", country: "Nigeria", discipline: "Visual Artist", bio: "Mixed-media artist exploring identity, migration, and belonging through large-scale installations." },
 ];
 
 const objectives = [
@@ -172,7 +174,7 @@ const Culture = () => (
               <Card className="h-full hover:shadow-md transition-shadow duration-300">
                 <CardContent className="pt-6">
                   <div className="flex items-center gap-3 mb-4">
-                    <span className="text-3xl">{c.flag}</span>
+                    <FlagImg country={c.country} className="h-8 w-8" />
                     <h3 className="font-bold text-card-foreground text-lg">{c.country}</h3>
                   </div>
                   <div className="flex flex-wrap gap-2">
@@ -204,7 +206,7 @@ const Culture = () => (
                     <Palette className="h-7 w-7 text-ecowas-lime" />
                   </div>
                   <h3 className="font-bold text-card-foreground">{a.name}</h3>
-                  <p className="text-sm text-muted-foreground">{a.country}</p>
+                  <p className="text-sm text-muted-foreground"><FlagImg country={a.country} className="h-4 w-4 inline mr-1" />{a.country}</p>
                   <Badge variant="outline" className="mt-2 text-[10px]">{a.discipline}</Badge>
                   <p className="mt-3 text-xs text-muted-foreground leading-relaxed">{a.bio}</p>
                 </CardContent>

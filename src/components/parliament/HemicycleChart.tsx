@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import AnimatedSection from "@/components/shared/AnimatedSection";
+import FlagImg from "@/components/shared/FlagImg";
 
 export interface HemicycleCountryData {
   name: string;
@@ -107,7 +108,7 @@ const HemicycleChart = ({ countries = defaultCountries }: HemicycleChartProps) =
                 style={{ left: tooltipPos.x, top: tooltipPos.y, transform: "translate(-50%, -120%)" }}
               >
                 <div className="flex items-center gap-2">
-                  <span className="text-base">{hoveredData.flag}</span>
+                  <FlagImg country={hoveredData.name} className="h-5 w-5" />
                   <span className="font-semibold text-popover-foreground">{hoveredData.name}</span>
                 </div>
                 <p className="mt-0.5 text-xs text-muted-foreground">{hoveredData.seats} seats allocated</p>
@@ -128,7 +129,7 @@ const HemicycleChart = ({ countries = defaultCountries }: HemicycleChartProps) =
                   onMouseLeave={() => setHoveredCountry(null)}
                 >
                   <span className="h-3 w-3 rounded-full" style={{ backgroundColor: country.color }} />
-                  <span className="text-foreground">{country.flag} {country.name}</span>
+                  <span className="text-foreground"><FlagImg country={country.name} className="h-4 w-4 inline mr-1" />{country.name}</span>
                   <span className="ml-auto text-muted-foreground">{country.seats}</span>
                 </button>
               ))}

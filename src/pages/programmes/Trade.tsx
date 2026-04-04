@@ -15,6 +15,7 @@ import {
   ExternalLink, Zap, Award, Shield, Network, Calendar,
 } from "lucide-react";
 import { useTranslation } from "@/lib/i18n";
+import FlagImg from "@/components/shared/FlagImg";
 
 const Trade = () => {
   const { t } = useTranslation();
@@ -33,13 +34,13 @@ const Trade = () => {
   ];
 
   const countries = [
-    { name: "Nigeria", flag: "🇳🇬", role: t("trade.country.ng") },
-    { name: "Ghana", flag: "🇬🇭", role: t("trade.country.gh") },
-    { name: "Côte d'Ivoire", flag: "🇨🇮", role: t("trade.country.ci") },
-    { name: "Senegal", flag: "🇸🇳", role: t("trade.country.sn") },
-    { name: "Togo", flag: "🇹🇬", role: t("trade.country.tg") },
-    { name: "Cabo Verde", flag: "🇨🇻", role: t("trade.country.cv") },
-    { name: "Sierra Leone", flag: "🇸🇱", role: t("trade.country.sl") },
+    { name: "Nigeria", role: t("trade.country.ng") },
+    { name: "Ghana", role: t("trade.country.gh") },
+    { name: "Côte d'Ivoire", role: t("trade.country.ci") },
+    { name: "Senegal", role: t("trade.country.sn") },
+    { name: "Togo", role: t("trade.country.tg") },
+    { name: "Cabo Verde", role: t("trade.country.cv") },
+    { name: "Sierra Leone", role: t("trade.country.sl") },
   ];
 
   const challenges = [
@@ -121,6 +122,23 @@ const Trade = () => {
               ))}
             </div>
           </AnimatedSection>
+        </div>
+      </section>
+
+      {/* CTA Banner */}
+      <section className="py-6 bg-primary">
+        <div className="container flex flex-col sm:flex-row items-center justify-center gap-4">
+          <p className="text-primary-foreground font-bold text-lg">{t("trade.ctaBanner")}</p>
+          <div className="flex gap-3">
+            <Button asChild size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90 font-bold shadow-lg">
+              <a href="https://www.t2tprogramme.com/" target="_blank" rel="noopener noreferrer">
+                {t("trade.applyNow")} <ExternalLink className="ml-2 h-4 w-4" />
+              </a>
+            </Button>
+            <Button asChild variant="outline" size="lg" className="border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10">
+              <Link to="/contact">{t("trade.partnerWithUs")}</Link>
+            </Button>
+          </div>
         </div>
       </section>
 
@@ -216,7 +234,7 @@ const Trade = () => {
               <AnimatedSection key={i} delay={i * 60}>
                 <Card className="hover:shadow-md transition-shadow duration-300 h-full">
                   <CardContent className="pt-6">
-                    <span className="text-4xl mb-3 block">{c.flag}</span>
+                    <FlagImg country={c.name} className="h-10 w-10 mb-3" />
                     <p className="font-bold text-card-foreground">{c.name}</p>
                     <p className="text-xs text-muted-foreground mt-1">{c.role}</p>
                   </CardContent>

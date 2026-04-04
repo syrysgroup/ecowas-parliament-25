@@ -1078,4 +1078,29 @@ export const pt: Record<string, string> = {
 
   // ─── Parliament25Section heading ──────────────────────────────────
   "anniversary.headingPrefix": "Parlamento aos",
+
+  "mandate.badge": "Mandato orientado para os povos",
+  "mandate.title": "Uma CEDEAO dos",
+  "mandate.titleAccent": "Povos",
+  "mandate.desc": "Há 25 anos, o Parlamento da CEDEAO defende a representação democrática, a supervisão legislativa e o envolvimento comunitário na África Ocidental — dando voz a 400 milhões de cidadãos.",
+  "mandate.pillar1Title": "Supervisão legislativa",
+  "mandate.pillar1Desc": "Exame de políticas regionais, orçamentos e tratados para garantir transparência e responsabilidade.",
+  "mandate.pillar2Title": "Representação democrática",
+  "mandate.pillar2Desc": "Amplificar as vozes dos cidadãos dos 12 Estados-Membros nos processos de governação regional.",
+  "mandate.pillar3Title": "Paz e segurança",
+  "mandate.pillar3Desc": "Papel fundamental na prevenção de conflitos, mediação e monitorização de eleições.",
+  "mandate.pillar4Title": "Integração regional",
+  "mandate.pillar4Desc": "Promover a livre circulação, facilitação do comércio e harmonização legislativa.",
+  "mandate.quote": "CEDEAO dos Povos: Paz e Prosperidade para Todos.",
+  "mandate.quoteAttr": "— Visão do Parlamento da CEDEAO",
+
+  "youth.innovatorsTitle": "Desafio dos Inovadores",
+  "youth.innovatorsDesc": "Uma competição de startups multi-país capacitando jovens empreendedores da África Ocidental a criar soluções em AgriTech, HealthTech, FinTech, energia limpa e EdTech.",
+  "youth.smartTitle": "Smart Challenge",
+  "youth.smartDesc": "Um concurso de conhecimentos que testa a compreensão dos jovens sobre a história, governação e cultura da CEDEAO.",
+  "youth.learnMore": "Saber mais",
+
+  "trade.ctaBanner": "Pronto para participar no Programa T2T?",
+  "trade.applyNow": "Candidatar-se agora",
+  "trade.partnerWithUs": "Torne-se parceiro",
 };

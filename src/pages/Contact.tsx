@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { CheckCircle2, Mail, MapPin, Phone, Globe, Send } from "lucide-react";
 import { useTranslation } from "@/lib/i18n";
+import FlagImg from "@/components/shared/FlagImg";
 
 export default function Contact() {
   const { t } = useTranslation();
@@ -32,8 +33,8 @@ export default function Contact() {
   ];
 
   const offices = [
-    { city: "Abuja", country: "Nigeria", role: t("contact.hqRole"), address: "ECOWAS Parliament Complex, Abuja, Nigeria", flag: "🇳🇬" },
-    { city: "Lagos", country: "Nigeria", role: t("contact.opsRole"), address: "c/o Duchess NL, Victoria Island, Lagos", flag: "🇳🇬" },
+    { city: "Abuja", country: "Nigeria", role: t("contact.hqRole"), address: "ECOWAS Parliament Complex, Abuja, Nigeria" },
+    { city: "Lagos", country: "Nigeria", role: t("contact.opsRole"), address: "c/o Duchess NL, Victoria Island, Lagos" },
   ];
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
@@ -145,7 +146,7 @@ export default function Contact() {
                   <Card key={o.city} className="mb-4">
                     <CardContent className="pt-4">
                       <div className="flex items-start gap-3">
-                        <span className="text-2xl">{o.flag}</span>
+                        <FlagImg country={o.country} className="h-7 w-7" />
                         <div>
                           <p className="font-bold">{o.city}, {o.country}</p>
                           <p className="text-xs text-primary font-medium mt-0.5">{o.role}</p>

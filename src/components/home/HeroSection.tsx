@@ -72,46 +72,65 @@ const HeroSection = () => {
         <Particle size={3} x="60%" y="80%" delay="0.8s" color="hsl(152 100% 30%)" />
       </div>
 
-      <div className="relative z-10 text-center max-w-4xl px-6 md:px-10 py-20 md:py-28">
-        <div className="flex flex-col items-center mb-11 animate-slide-up" style={{ animationDelay: "0.1s" }}>
-          <div className="flex flex-col items-center gap-2.5">
-            <div className="bg-white rounded-full p-2 shadow-lg"><img src={ecowasLogo} alt={t("hero.ecowasParliament")} className="h-16 w-16 md:h-20 md:w-20 object-contain animate-float" /></div>
-            <div className="text-center">
-              <p className="text-sm font-bold text-white">{t("hero.ecowasParliament")}</p>
-              <p className="text-[10px] uppercase tracking-widest text-white/50">{t("hero.ecowasParliamentFr")}</p>
+      <div className="relative z-10 w-full max-w-6xl px-6 md:px-10 py-20 md:py-28">
+        {/* Two-column layout */}
+        <div className="grid lg:grid-cols-[1.2fr_0.8fr] gap-12 lg:gap-16 items-center">
+          {/* Left column — text content */}
+          <div className="text-center lg:text-left">
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/50 px-5 py-1.5 text-[11.5px] font-semibold uppercase tracking-widest text-white bg-white/10 backdrop-blur-sm mb-6 animate-slide-up" style={{ animationDelay: "0.3s" }}>
+              <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse-dot" />
+              {t("hero.eyebrow")}
+            </div>
+
+            <h1 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-black leading-[1.06] text-primary-foreground mb-5 animate-slide-up" style={{ animationDelay: "0.5s" }}>
+              {t("hero.title1")} <span className="text-accent">{t("hero.title2")}</span>
+              <span className="block text-lg md:text-2xl lg:text-3xl font-bold text-primary-foreground/70 mt-3">
+                {t("hero.title3")}
+              </span>
+            </h1>
+
+            <p className="text-base text-primary-foreground/60 max-w-xl mx-auto lg:mx-0 leading-relaxed mb-9 animate-slide-up" style={{ animationDelay: "0.7s" }}>
+              {t("hero.description")}
+            </p>
+
+            <div className="flex items-center justify-center lg:justify-start flex-wrap gap-3 animate-slide-up" style={{ animationDelay: "0.9s" }}>
+              <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-lg">
+                <Link to="/about">
+                  {t("hero.explore")}
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+              <Button asChild variant="outline" size="lg" className="border-primary-foreground/20 text-primary-foreground bg-primary-foreground/5 hover:bg-primary-foreground/10 backdrop-blur-sm">
+                <Link to="/contact">{t("hero.register")}</Link>
+              </Button>
+            </div>
+          </div>
+
+          {/* Right column — large ECOWAS Parliament logo */}
+          <div className="flex justify-center animate-slide-up" style={{ animationDelay: "0.6s" }}>
+            <div className="relative">
+              {/* Glow rings */}
+              <div className="absolute inset-0 w-[280px] h-[280px] md:w-[340px] md:h-[340px] rounded-full border-2 border-white/10 scale-[1.15] mx-auto" />
+              <div className="absolute inset-0 w-[280px] h-[280px] md:w-[340px] md:h-[340px] rounded-full border border-white/5 scale-[1.3] mx-auto" />
+              {/* Logo container */}
+              <div className="w-[280px] h-[280px] md:w-[340px] md:h-[340px] rounded-full bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center shadow-[0_0_80px_hsl(152_100%_26%/0.2)]">
+                <img
+                  src={ecowasLogo}
+                  alt={t("hero.ecowasParliament")}
+                  className="h-48 w-48 md:h-60 md:w-60 object-contain animate-float drop-shadow-[0_0_40px_hsl(152_100%_26%/0.3)]"
+                />
+              </div>
+              {/* Label beneath */}
+              <div className="text-center mt-4">
+                <p className="text-sm font-bold text-white">{t("hero.ecowasParliament")}</p>
+                <p className="text-[10px] uppercase tracking-widest text-white/50">{t("hero.ecowasParliamentFr")}</p>
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="inline-flex items-center gap-2 rounded-full border border-white/50 px-5 py-1.5 text-[11.5px] font-semibold uppercase tracking-widest text-white bg-white/10 backdrop-blur-sm mb-6 animate-slide-up" style={{ animationDelay: "0.3s" }}>
-          <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse-dot" />
-          {t("hero.eyebrow")}
-        </div>
-
-        <h1 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-black leading-[1.06] text-primary-foreground mb-5 animate-slide-up" style={{ animationDelay: "0.5s" }}>
-          {t("hero.title1")} <span className="text-accent">{t("hero.title2")}</span>
-          <span className="block text-lg md:text-2xl lg:text-3xl font-bold text-primary-foreground/70 mt-3">
-            {t("hero.title3")}
-          </span>
-        </h1>
-
-        <p className="text-base text-primary-foreground/60 max-w-xl mx-auto leading-relaxed mb-9 animate-slide-up" style={{ animationDelay: "0.7s" }}>
-          {t("hero.description")}
-        </p>
-
-        <div className="flex items-center justify-center flex-wrap gap-3 mb-14 animate-slide-up" style={{ animationDelay: "0.9s" }}>
-          <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-lg">
-            <Link to="/about">
-              {t("hero.explore")}
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
-          <Button asChild variant="outline" size="lg" className="border-primary-foreground/20 text-primary-foreground bg-primary-foreground/5 hover:bg-primary-foreground/10 backdrop-blur-sm">
-            <Link to="/contact">{t("hero.register")}</Link>
-          </Button>
-        </div>
-
-        <div className="flex justify-center flex-wrap gap-0 bg-primary-foreground/[0.03] border border-primary-foreground/10 rounded-2xl px-7 py-5 animate-slide-up" style={{ animationDelay: "1.1s" }}>
+        {/* Stats bar — full width below */}
+        <div className="flex justify-center flex-wrap gap-0 bg-primary-foreground/[0.03] border border-primary-foreground/10 rounded-2xl px-7 py-5 mt-14 animate-slide-up" style={{ animationDelay: "1.1s" }}>
           {stats.map((stat, i) => (
             <div key={stat.label} className="text-center px-7 relative">
               {i < stats.length - 1 && (

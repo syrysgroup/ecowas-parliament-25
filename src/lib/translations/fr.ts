@@ -1078,4 +1078,29 @@ export const fr: Record<string, string> = {
 
   // ─── Parliament25Section heading ──────────────────────────────────
   "anniversary.headingPrefix": "Le Parlement à",
+
+  "mandate.badge": "Mandat axé sur les peuples",
+  "mandate.title": "Une CEDEAO des",
+  "mandate.titleAccent": "Peuples",
+  "mandate.desc": "Depuis 25 ans, le Parlement de la CEDEAO défend la représentation démocratique, le contrôle législatif et l'engagement communautaire en Afrique de l'Ouest — donnant voix à 400 millions de citoyens.",
+  "mandate.pillar1Title": "Contrôle législatif",
+  "mandate.pillar1Desc": "Examen des politiques régionales, des budgets et des traités pour assurer la transparence et la responsabilité.",
+  "mandate.pillar2Title": "Représentation démocratique",
+  "mandate.pillar2Desc": "Amplifier la voix des citoyens des 12 États membres dans les processus de gouvernance régionale.",
+  "mandate.pillar3Title": "Paix et sécurité",
+  "mandate.pillar3Desc": "Rôle clé dans la prévention des conflits, la médiation et l'observation des élections.",
+  "mandate.pillar4Title": "Intégration régionale",
+  "mandate.pillar4Desc": "Promouvoir la libre circulation, la facilitation du commerce et l'harmonisation législative.",
+  "mandate.quote": "La CEDEAO des Peuples : Paix et Prospérité pour Tous.",
+  "mandate.quoteAttr": "— Vision du Parlement de la CEDEAO",
+
+  "youth.innovatorsTitle": "Défi des Innovateurs",
+  "youth.innovatorsDesc": "Une compétition de startups multi-pays donnant aux jeunes entrepreneurs ouest-africains les moyens de créer des solutions en AgriTech, HealthTech, FinTech, énergie propre et EdTech.",
+  "youth.smartTitle": "Smart Challenge",
+  "youth.smartDesc": "Un concours de connaissances testant la compréhension des jeunes de l'histoire, la gouvernance et la culture ouest-africaine de la CEDEAO.",
+  "youth.learnMore": "En savoir plus",
+
+  "trade.ctaBanner": "Prêt à rejoindre le Programme T2T ?",
+  "trade.applyNow": "Postuler maintenant",
+  "trade.partnerWithUs": "Devenir partenaire",
 };
