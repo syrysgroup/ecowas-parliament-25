@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import AnimatedSection from "@/components/shared/AnimatedSection";
+import FlagImg from "@/components/shared/FlagImg";
 
 export interface HemicycleCountryData {
   name: string;
