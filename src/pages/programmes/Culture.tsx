@@ -32,11 +32,11 @@ const festivalSchedule = [
 ];
 
 const culturalContributions = [
-  { country: "Nigeria", flag: "🇳🇬", contributions: ["Nollywood", "Afrobeats", "Adire Textiles"] },
-  { country: "Ghana", flag: "🇬🇭", contributions: ["Kente Weaving", "Highlife Music", "Jollof Culture"] },
-  { country: "Senegal", flag: "🇸🇳", contributions: ["Mbalax", "Thieboudienne", "Teranga Hospitality"] },
-  { country: "Côte d'Ivoire", flag: "🇨🇮", contributions: ["Coupé-Décalé", "Attieke", "Contemporary Art"] },
-  { country: "Cabo Verde", flag: "🇨🇻", contributions: ["Morna Music", "Cachupa", "Creole Literature"] },
+  { country: "Nigeria", contributions: ["Nollywood", "Afrobeats", "Adire Textiles"] },
+  { country: "Ghana", contributions: ["Kente Weaving", "Highlife Music", "Jollof Culture"] },
+  { country: "Senegal", contributions: ["Mbalax", "Thieboudienne", "Teranga Hospitality"] },
+  { country: "Côte d'Ivoire", contributions: ["Coupé-Décalé", "Attieke", "Contemporary Art"] },
+  { country: "Cabo Verde", contributions: ["Morna Music", "Cachupa", "Creole Literature"] },
 ];
 
 const featuredArtists = [
