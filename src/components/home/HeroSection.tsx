@@ -117,7 +117,7 @@ const HeroSection = () => {
                 <img
                   src={ecowasLogo}
                   alt={t("hero.ecowasParliament")}
-                  className="h-48 w-48 md:h-60 md:w-60 object-contain animate-float drop-shadow-[0_0_40px_hsl(152_100%_26%/0.3)]"
+                  className="h-55 w-55 md:h-60 md:w-60 object-contain animate-float drop-shadow-[0_0_40px_hsl(152_100%_26%/0.3)]"
                 />
               </div>
               {/* Label beneath */}
