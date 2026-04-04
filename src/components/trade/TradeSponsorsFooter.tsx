@@ -3,28 +3,20 @@ import SponsorLogo from "@/components/shared/SponsorLogo";
 
 const tiers = [
   {
-    label: "Strategic Partners",
-    sponsors: [
-      { name: "African Development Bank", color: "hsl(152, 100%, 26%)" },
-      { name: "Afreximbank", color: "hsl(190, 35%, 53%)" },
-      { name: "ECOWAS Commission", color: "hsl(50, 87%, 45%)" },
-    ],
-  },
-  {
     label: "Programme Partners",
     sponsors: [
-      { name: "AfCFTA Secretariat", color: "hsl(340, 66%, 34%)" },
-      { name: "ITC Geneva", color: "hsl(50, 87%, 45%)" },
-      { name: "Providus Bank", color: "hsl(152, 100%, 26%)" },
-      { name: "UNCTAD", color: "hsl(190, 35%, 53%)" },
+      { name: "Providus Bank", color: "hsl(340, 66%, 34%)" },
+      { name: "Global African Business Assoc.", color: "hsl(50, 87%, 45%)" },
+      { name: "VALCERTRA", color: "hsl(152, 100%, 26%)" },
+      { name: "SMEDAN", color: "hsl(190, 35%, 53%)" },
     ],
   },
   {
-    label: "Supporting Institutions",
+    label: "Institutional Partners",
     sponsors: [
-      { name: "World Bank", color: "hsl(190, 35%, 53%)" },
-      { name: "AU Commission", color: "hsl(340, 66%, 34%)" },
-      { name: "ECOWAS Parliament", color: "hsl(152, 100%, 26%)" },
+      { name: "Awalco", color: "hsl(190, 35%, 53%)" },
+      { name: "African Development Bank", color: "hsl(340, 66%, 34%)" },
+      { name: "ECOWAS Commission", color: "hsl(152, 100%, 26%)" },
     ],
   },
 ];

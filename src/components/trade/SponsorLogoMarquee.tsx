@@ -1,16 +1,13 @@
 import SponsorLogo from "@/components/shared/SponsorLogo";
 
 const sponsors = [
-  { name: "African Development Bank", color: "hsl(152, 100%, 26%)" },
-  { name: "ECOWAS Commission", color: "hsl(50, 87%, 45%)" },
-  { name: "AfCFTA Secretariat", color: "hsl(340, 66%, 34%)" },
-  { name: "Afreximbank", color: "hsl(190, 35%, 53%)" },
   { name: "Providus Bank", color: "hsl(152, 100%, 26%)" },
-  { name: "UNCTAD", color: "hsl(190, 35%, 53%)" },
-  { name: "ITC Geneva", color: "hsl(50, 87%, 45%)" },
-  { name: "ECOWAS Parliament", color: "hsl(152, 100%, 26%)" },
-  { name: "AU Commission", color: "hsl(340, 66%, 34%)" },
-  { name: "World Bank", color: "hsl(190, 35%, 53%)" },
+  { name: "Global African Business Assoc.", color: "hsl(50, 87%, 45%)" },
+  { name: "VALCERTRA", color: "hsl(340, 66%, 34%)" },
+  { name: "SMEDAN", color: "hsl(190, 35%, 53%)" },
+  { name: "Awalco", color: "hsl(152, 100%, 26%)" },
+  { name: "African Development Bank", color: "hsl(190, 35%, 53%)" },
+  { name: "ECOWAS Commission", color: "hsl(50, 87%, 45%)" },
 ];
 
 const SponsorLogoMarquee = () => {
