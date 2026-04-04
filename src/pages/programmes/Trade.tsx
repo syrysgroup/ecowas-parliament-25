@@ -15,6 +15,7 @@ import {
   ExternalLink, Zap, Award, Shield, Network, Calendar,
 } from "lucide-react";
 import { useTranslation } from "@/lib/i18n";
+import FlagImg from "@/components/shared/FlagImg";
 
 const Trade = () => {
   const { t } = useTranslation();
