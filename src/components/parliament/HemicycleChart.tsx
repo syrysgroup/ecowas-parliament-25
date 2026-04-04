@@ -108,7 +108,7 @@ const HemicycleChart = ({ countries = defaultCountries }: HemicycleChartProps) =
                 style={{ left: tooltipPos.x, top: tooltipPos.y, transform: "translate(-50%, -120%)" }}
               >
                 <div className="flex items-center gap-2">
-                  <span className="text-base">{hoveredData.flag}</span>
+                  <FlagImg country={hoveredData.name} className="h-5 w-5" />
                   <span className="font-semibold text-popover-foreground">{hoveredData.name}</span>
                 </div>
                 <p className="mt-0.5 text-xs text-muted-foreground">{hoveredData.seats} seats allocated</p>
