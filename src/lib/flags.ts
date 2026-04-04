@@ -17,29 +17,17 @@ export const flagMap: Record<string, string> = {
   "Côte d'Ivoire": coteDivoireFlag,
   "Senegal": senegalFlag,
   "Togo": togoFlag,
-  "Cabo Verde": coteDivoireFlag, // will fix below
+  "Cabo Verde": caboVerdeFlag,
   "Cape Verde": caboVerdeFlag,
   "Sierra Leone": sierraLeoneFlag,
   "Benin": beninFlag,
   "Gambia": gambiaFlag,
+  "The Gambia": gambiaFlag,
   "Guinea": guineaFlag,
   "Guinea-Bissau": guineaBissauFlag,
   "Liberia": liberiaFlag,
-  "Mali": "",
-  "Niger": "",
-  "Burkina Faso": "",
-  "The Gambia": gambiaFlag,
 };
-
-// Fix Cabo Verde
-flagMap["Cabo Verde"] = caboVerdeFlag;
 
 export const getFlagSrc = (countryName: string): string => {
   return flagMap[countryName] || "";
-};
-
-export const FlagImg = ({ country, className = "h-6 w-6" }: { country: string; className?: string }) => {
-  const src = getFlagSrc(country);
-  if (!src) return <span className={className}>🏳️</span>;
-  return <img src={src} alt={`${country} flag`} className={`${className} object-cover rounded-sm`} />;
 };
