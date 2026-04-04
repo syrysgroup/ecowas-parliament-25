@@ -10,6 +10,7 @@ import {
   GraduationCap, ShoppingBag, Smartphone, Radio, Bus, Globe,
   Calendar, Star, Play,
 } from "lucide-react";
+import FlagImg from "@/components/shared/FlagImg";
 
 const caravanStops = [
   { type: "Airports", desc: "Branded installations at major West African airports reaching thousands of travellers daily.", icon: <Plane className="h-6 w-6" /> },
