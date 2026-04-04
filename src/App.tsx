@@ -33,6 +33,8 @@ import Civic from "./pages/programmes/Civic";
 import Culture from "./pages/programmes/Culture";
 import Awards from "./pages/programmes/Awards";
 import Parliament from "./pages/programmes/Parliament";
+import InnovatorsChallenge from "./pages/programmes/InnovatorsChallenge";
+import SmartChallenge from "./pages/programmes/SmartChallenge";
 
 // Auth
 import Auth from "./pages/Auth";
