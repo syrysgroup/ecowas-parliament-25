@@ -33,6 +33,8 @@ import Civic from "./pages/programmes/Civic";
 import Culture from "./pages/programmes/Culture";
 import Awards from "./pages/programmes/Awards";
 import Parliament from "./pages/programmes/Parliament";
+import InnovatorsChallenge from "./pages/programmes/InnovatorsChallenge";
+import SmartChallenge from "./pages/programmes/SmartChallenge";
 
 // Auth
 import Auth from "./pages/Auth";
@@ -90,6 +92,8 @@ const App = () => (
               <Route path="/programmes/culture"    element={<Culture />}    />
               <Route path="/programmes/awards"     element={<Awards />}     />
               <Route path="/programmes/parliament" element={<Parliament />} />
+              <Route path="/programmes/youth/innovators" element={<InnovatorsChallenge />} />
+              <Route path="/programmes/youth/smart" element={<SmartChallenge />} />
 
               {/* Auth */}
               <Route path="/auth" element={<Auth />} />
