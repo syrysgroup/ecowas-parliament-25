@@ -30,13 +30,13 @@ const Youth = () => {
   ];
 
   const countries = [
-    { name: "Nigeria", flag: "🇳🇬", status: t("common.registering") },
-    { name: "Ghana", flag: "🇬🇭", status: t("common.registering") },
-    { name: "Côte d'Ivoire", flag: "🇨🇮", status: t("common.upcoming") },
-    { name: "Senegal", flag: "🇸🇳", status: t("common.upcoming") },
-    { name: "Cabo Verde", flag: "🇨🇻", status: t("common.upcoming") },
-    { name: "Togo", flag: "🇹🇬", status: t("common.upcoming") },
-    { name: "Sierra Leone", flag: "🇸🇱", status: t("common.upcoming") },
+    { name: "Nigeria", status: t("common.registering") },
+    { name: "Ghana", status: t("common.registering") },
+    { name: "Côte d'Ivoire", status: t("common.upcoming") },
+    { name: "Senegal", status: t("common.upcoming") },
+    { name: "Cabo Verde", status: t("common.upcoming") },
+    { name: "Togo", status: t("common.upcoming") },
+    { name: "Sierra Leone", status: t("common.upcoming") },
   ];
 
   const prizes = [
