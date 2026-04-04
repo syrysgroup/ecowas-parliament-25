@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, FileText, Medal, Vote } from "lucide-react";
+import FlagImg from "@/components/shared/FlagImg";
 
 interface CountryDelegationCardProps {
   name: string;
