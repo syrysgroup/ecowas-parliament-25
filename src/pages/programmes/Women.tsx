@@ -10,6 +10,7 @@ import {
   ShoppingBag, GraduationCap, Handshake, Quote, TrendingUp,
 } from "lucide-react";
 import { useTranslation } from "@/lib/i18n";
+import FlagImg from "@/components/shared/FlagImg";
 
 const Women = () => {
   const { t } = useTranslation();
