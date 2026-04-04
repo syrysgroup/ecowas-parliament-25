@@ -19,7 +19,7 @@ const CountryDelegationCard = ({ name, flag, seats, applications, nominees, repr
     <div className="rounded-3xl border border-border bg-card p-5 shadow-sm transition-transform duration-300 hover:-translate-y-1">
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
-          <p className="text-2xl">{flag}</p>
+          <FlagImg country={name} className="h-8 w-8" />
           <h3 className="text-xl font-black text-card-foreground">{name}</h3>
           <p className="text-sm text-muted-foreground">{seats} parliamentary seats</p>
         </div>
