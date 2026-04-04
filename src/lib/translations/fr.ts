@@ -514,7 +514,6 @@ export const fr: Record<string, string> = {
   "common.officeOfSpeaker": "Bureau de la Présidente",
   "common.mandateBody1": "Par l'autorité conférée au Bureau de la Présidente, Parlement de la CEDEAO, et dans le cadre du mandat de représentation des peuples de l'Afrique de l'Ouest, cette lettre de mandat établit officiellement le programme {title} comme programme officiel de la célébration du 25e anniversaire du Parlement de la CEDEAO.",
   "common.mandateBody2": "Cette initiative s'inscrit dans la Vision 2050 de la CEDEAO et l'engagement du Parlement pour la transition d'une CEDEAO des États vers une CEDEAO des Peuples.",
-  "common.backToHome": "Retour à l'accueil",
   "common.download": "Télécharger",
 
   "eventsSection.ev1.title": "Date limite de rapport financier T1",

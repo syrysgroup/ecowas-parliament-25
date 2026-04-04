@@ -514,7 +514,6 @@ export const pt: Record<string, string> = {
   "common.officeOfSpeaker": "Gabinete da Presidente",
   "common.mandateBody1": "Pela autoridade investida no Gabinete da Presidente, Parlamento da CEDEAO, e em prossecução do mandato de representação dos povos da África Ocidental, esta carta de mandato estabelece formalmente o programa {title} como programa oficial da celebração do 25.º Aniversário do Parlamento da CEDEAO.",
   "common.mandateBody2": "Esta iniciativa alinha-se com a Visão 2050 da CEDEAO e o compromisso do Parlamento com a transição de uma CEDEAO de Estados para uma CEDEAO dos Povos.",
-  "common.backToHome": "Voltar ao início",
   "common.download": "Descarregar",
 
   "eventsSection.ev1.title": "Prazo de relatório financeiro T1",
