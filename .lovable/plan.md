@@ -1,111 +1,83 @@
 
 
-# Complete Multilingual Support (EN/FR/PT) — Implementation Plan
+# Complete Multilingual Support — Implementation Plan
 
-## Scope Assessment
+## Current State
 
-The current i18n system (`src/lib/i18n.tsx`) already has the correct architecture: a React context with `locale`, `setLocale`, and `t()` function, browser detection, and localStorage persistence. However, only ~90 keys exist per language, covering navbar, footer, hero, volunteer, events, and speaker sections. The vast majority of the application — approximately **500+ strings across 30+ files** — remains hardcoded in English.
+The i18n infrastructure is already solid: `src/lib/i18n.tsx` provides a React context with `locale`, `setLocale`, `t()` (with interpolation), browser detection, localStorage persistence (`preferredLanguage`), `formatDate()`, `formatNumber()`, and dynamic `document.documentElement.lang`. Three translation files exist with ~540 keys each covering: navbar, footer, hero, speaker, countdown, marquee, countries, anniversary, pillars, events, stats, did-you-know, news, newsletter, sponsor CTA, partners, about, contact, auth, documents, news, media kit headers, team, timeline, stakeholders, volunteer, events page, and common strings.
 
-## What Needs to Change
+**What's missing:** ~15 pages still have hardcoded English strings in their component bodies and static data arrays. These need ~400+ new translation keys across all three languages.
 
-### 1. Expand `src/lib/i18n.tsx` translation dictionaries (~400+ new keys)
+## Files With Hardcoded Strings to Fix
 
-Split the monolithic translation object into separate files for maintainability:
+### Programme Pages (7 files, ~1,800 lines total)
+Each has hardcoded: hero text, overview paragraphs, phase/track titles & descriptions, country statuses, prize tiers/benefits, objectives, CTA text.
 
-- Create `src/lib/translations/en.ts`, `fr.ts`, `pt.ts` — each exporting a flat Record of all keys
-- Import and compose them in `src/lib/i18n.tsx`
-- Add string interpolation support: modify `t()` to accept a second argument for variable substitution (e.g., `t("hello.user", { name })` → `"Hello, {name}!"`)
+- `src/pages/programmes/Youth.tsx` — phases, tracks, countries, prizes, objectives, all section headings
+- `src/pages/programmes/Trade.tsx` — similar structure
+- `src/pages/programmes/Women.tsx` — similar structure
+- `src/pages/programmes/Civic.tsx` — similar structure
+- `src/pages/programmes/Culture.tsx` — similar structure
+- `src/pages/programmes/Awards.tsx` — similar structure
+- `src/pages/programmes/Parliament.tsx` — similar structure
 
-New keys needed for every file group:
-- **Home page components** (HeroSection, CountdownTimer, MarqueeStrip, CountriesSection, AnniversarySection, PillarsGrid, EventsSection, StatsSection, DidYouKnow, LatestNews, NewsletterSection, SponsorCTA, SponsorPlaceholderSection, ImplementingPartnersSection, InstitutionalPartnersSection)
-- **Pages** (About, Contact, Documents, News, MediaKit, Team, Timeline, Stakeholders, NotFound, Auth, Volunteer, Events, SponsorPortal)
-- **Programme pages** (Youth, Trade, Women, Civic, Culture, Awards, Parliament) — these are content-heavy with paragraphs, stats, stream descriptions, quotes
-- **Shared components** (SocialMediaBar, ProgrammePageTemplate)
-- **CRM/admin** — lower priority but form labels, headers still need translation
+### Other Pages (5 files)
+- `src/pages/MediaKit.tsx` (330 lines) — press releases, spokespeople, key facts, event calendar, asset packs, all section text (hero badge already has translation keys but uses hardcoded strings)
+- `src/pages/SponsorPortal.tsx` (414 lines) — all sponsor tier info, form labels, section headings
+- `src/pages/SponsorDashboard.tsx` (164 lines) — dashboard labels
+- `src/pages/News.tsx` — news item titles, excerpts, dates in the `allNews` array
+- `src/pages/Events.tsx` — event item content
 
-### 2. Update `src/lib/i18n.tsx` core functionality
+### Components with partial hardcoding
+- `src/components/home/LatestNews.tsx` — news card titles/excerpts/dates
+- `src/components/layout/Footer.tsx` — verify all strings use `t()`
+- `src/pages/SetPassword.tsx` — form labels
 
-- Change localStorage key from `"locale"` to `"preferredLanguage"` per spec
-- Add interpolation to `t()`: replace `{varName}` patterns in translated strings
-- Add locale-aware date/number formatting helpers: `formatDate(date, locale)`, `formatNumber(num, locale)`
-- Dynamically set `document.documentElement.lang` when locale changes
+## Implementation Steps
 
-### 3. Update `index.html`
+### Step 1: Add ~400 new keys to `en.ts`
+Organized by section:
+- `youth.*` — ~40 keys (hero, overview, phases, tracks, countries, prizes, objectives, CTA)
+- `trade.*` — ~40 keys
+- `women.*` — ~40 keys
+- `civic.*` — ~40 keys
+- `culture.*` — ~40 keys
+- `awards.*` — ~40 keys
+- `parliament.*` — ~40 keys (programme page, not the institution)
+- `mediaKit.*` — ~40 keys (press releases, spokespeople, facts, calendar, assets)
+- `sponsorPortal.*` — ~30 keys
+- `sponsorDashboard.*` — ~15 keys
+- `news.item*` — ~20 keys (news content)
+- `events.item*` — ~15 keys
+- `setPassword.*` — ~5 keys
 
-- Set initial `lang="en"` on `<html>` tag (will be overridden dynamically)
+### Step 2: Add matching keys to `fr.ts` and `pt.ts`
+Natural, grammatically correct institutional-register translations for all new keys.
 
-### 4. Wire every component to use `t()`
-
-Each of the ~30+ files with hardcoded strings needs:
+### Step 3: Wire each component to use `t()`
+For each of the ~15 files:
 - Import `useTranslation`
-- Replace every string literal with `t("key.name")`
-- For arrays of objects (pillars, facts, events, partners, etc.), restructure to use `t()` for each translatable field
+- Move static arrays inside the component (after `const { t } = useTranslation()`)
+- Replace every hardcoded string with `t("key")`
+- For data arrays (phases, tracks, prizes, etc.), use `t()` for each translatable field while keeping non-translatable data (icons, amounts, colors) as-is
 
-### 5. Language switcher enhancements
+### Step 4: Verify `index.html`
+Already has `lang="en"` on `<html>` — confirmed the i18n provider updates it dynamically via `document.documentElement.lang = locale`.
 
-- Add `aria-label` translated as "Language" / "Langue" / "Idioma"
-- Ensure keyboard navigability (already mostly works with buttons)
-- Add language switcher in footer
+### Step 5: Verify language switcher
+Already present in navbar and mobile menu with EN/FR/PT, aria-label translated, keyboard navigable. No changes needed.
 
-### 6. Locale-aware formatting
+## Technical Notes
 
-- Dates: use `Intl.DateTimeFormat` with locale mapping (`en` → `en-GB`, `fr` → `fr-FR`, `pt` → `pt-PT`)
-- Numbers: use `Intl.NumberFormat` with appropriate locale
-- Apply in CountdownTimer, EventsSection, News dates, etc.
+- Translation files will grow from ~540 to ~940 keys each (~400 new keys)
+- No architectural changes needed — the existing `t()` with interpolation and fallback-to-English already handles everything
+- `formatDate()` and `formatNumber()` already exist in `i18n.tsx` with proper locale mapping
+- Country names (Nigeria, Ghana, etc.) and proper nouns remain untranslated per convention
+- Prize amounts ($10,000 etc.) remain as-is since they're USD values
 
-## Technical Architecture
-
-```text
-src/lib/
-├── i18n.tsx              # Provider, context, t() with interpolation
-├── translations/
-│   ├── en.ts             # ~500 keys - English
-│   ├── fr.ts             # ~500 keys - French  
-│   └── pt.ts             # ~500 keys - Portuguese
-└── formatters.ts         # formatDate(), formatNumber(), formatCurrency()
-```
-
-The `t()` function signature becomes:
-```typescript
-t(key: string, vars?: Record<string, string | number>): string
-```
-
-With interpolation: `t("greeting", { name: "Amina" })` where the translation is `"Hello, {name}!"` → `"Hello, Amina!"`
-
-## Files to Modify (grouped by priority)
-
-**Core infrastructure** (3 files):
-- `src/lib/i18n.tsx` — refactor, add interpolation, lang attribute
-- `src/lib/translations/en.ts` — new file, all English strings
-- `src/lib/translations/fr.ts` — new file, all French strings  
-- `src/lib/translations/pt.ts` — new file, all Portuguese strings
-- `index.html` — add `lang="en"`
-
-**Home page components** (15 files):
-- HeroSection, SpeakerSection, MarqueeStrip, CountdownTimer, CountriesSection, AnniversarySection, PillarsGrid, EventsSection, StatsSection, DidYouKnow, LatestNews, NewsletterSection, SponsorCTA, SponsorPlaceholderSection, ImplementingPartnersSection, InstitutionalPartnersSection
-
-**Public pages** (11 files):
-- About, Contact, Documents, News, MediaKit, Team, Timeline, Stakeholders, NotFound, Events, Volunteer
-
-**Programme pages** (7 files):
-- Youth, Trade, Women, Civic, Culture, Awards, Parliament
-
-**Layout/shared** (3 files):
-- Navbar (minor updates — aria-label, footer switcher)
-- Footer (add language switcher)
-- SocialMediaBar
-
-**Auth** (1 file):
-- Auth.tsx — form labels, error messages
-
-## Translation Quality
-
-All French and Portuguese translations will be natural, grammatically correct, and culturally appropriate — not word-for-word literal translations. Proper use of formal register appropriate for a parliamentary/institutional context.
-
-## Estimated Scope
-
-- ~500 translation keys across 3 languages = ~1,500 translated strings
-- ~35 component files modified to use `t()`
-- 4 new files created (3 translation files + formatters)
-- 1 core file refactored (i18n.tsx)
+## Estimated Changes
+- 3 translation files modified (~400 new keys each)
+- ~15 component/page files modified to use `t()`
+- 0 new files created
+- 0 architectural changes
 
