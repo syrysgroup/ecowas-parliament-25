@@ -1185,4 +1185,32 @@ export const en: Record<string, string> = {
 
   // ─── Parliament25Section heading ──────────────────────────────────
   "anniversary.headingPrefix": "Parliament at",
+
+  // ─── People-Oriented Mandate Section ──────────────────────────────
+  "mandate.badge": "People-Oriented Mandate",
+  "mandate.title": "An ECOWAS of the",
+  "mandate.titleAccent": "Peoples",
+  "mandate.desc": "For 25 years, the ECOWAS Parliament has championed democratic representation, legislative oversight, and community engagement across West Africa — giving voice to 400 million citizens and advancing the vision of an ECOWAS that truly belongs to its peoples.",
+  "mandate.pillar1Title": "Legislative Oversight",
+  "mandate.pillar1Desc": "Scrutinising regional policies, budgets, and treaties to ensure transparency and accountability across ECOWAS institutions.",
+  "mandate.pillar2Title": "Democratic Representation",
+  "mandate.pillar2Desc": "Amplifying the voices of citizens from all 12 Member States in regional decision-making and governance processes.",
+  "mandate.pillar3Title": "Peace & Security",
+  "mandate.pillar3Desc": "Playing a pivotal role in conflict prevention, mediation, and election monitoring across West Africa.",
+  "mandate.pillar4Title": "Regional Integration",
+  "mandate.pillar4Desc": "Advancing free movement, trade facilitation, and harmonised legislation to build a more connected West Africa.",
+  "mandate.quote": "ECOWAS of the Peoples: Peace and Prosperity for All.",
+  "mandate.quoteAttr": "— ECOWAS Parliament Vision",
+
+  // ─── Youth Split Landing ──────────────────────────────────────────
+  "youth.innovatorsTitle": "Innovators Challenge",
+  "youth.innovatorsDesc": "A multi-country startup competition empowering young West African entrepreneurs to build solutions in AgriTech, HealthTech, FinTech, Clean Energy, and EdTech.",
+  "youth.smartTitle": "Smart Challenge",
+  "youth.smartDesc": "A knowledge quiz competition testing young people's understanding of ECOWAS history, governance, regional integration, and West African culture.",
+  "youth.learnMore": "Learn More",
+
+  // ─── Trade CTA Banner ─────────────────────────────────────────────
+  "trade.ctaBanner": "Ready to join the T2T Programme?",
+  "trade.applyNow": "Apply Now",
+  "trade.partnerWithUs": "Partner With Us",
 };
