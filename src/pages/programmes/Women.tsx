@@ -43,8 +43,8 @@ const Women = () => {
   ];
 
   const countries = [
-    { name: "Nigeria", flag: "🇳🇬" }, { name: "Ghana", flag: "🇬🇭" }, { name: "Côte d'Ivoire", flag: "🇨🇮" },
-    { name: "Senegal", flag: "🇸🇳" }, { name: "Togo", flag: "🇹🇬" }, { name: "Sierra Leone", flag: "🇸🇱" },
+    { name: "Nigeria" }, { name: "Ghana" }, { name: "Côte d'Ivoire" },
+    { name: "Senegal" }, { name: "Togo" }, { name: "Sierra Leone" },
   ];
 
   const objectives = [t("women.obj1"), t("women.obj2"), t("women.obj3"), t("women.obj4"), t("women.obj5")];
