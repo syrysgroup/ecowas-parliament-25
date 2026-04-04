@@ -11,6 +11,8 @@ import {
   Cpu, Stethoscope, Landmark, Leaf, GraduationCap, ArrowRight, Rocket, Star,
 } from "lucide-react";
 import { useTranslation } from "@/lib/i18n";
+import FlagImg from "@/components/shared/FlagImg";
+import parliament25Logo from "@/assets/parliament-25-logo.png";
 
 const Youth = () => {
   const { t } = useTranslation();
