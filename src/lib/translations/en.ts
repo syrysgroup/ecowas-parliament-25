@@ -283,7 +283,7 @@ export const en: Record<string, string> = {
   "contact.successTitle": "Message received",
   "contact.successDesc": "Thank you for reaching out. A member of the team will respond within 2 working days.",
   "contact.sendAnother": "Send another message",
-  "contact.offices": "Our offices",
+  "contact.offices": "ECOWAS Parliament Headquarters",
   "contact.followUs": "Follow @ecoparl_hub",
   "contact.web": "Web",
   "contact.sponsorCardTitle": "For sponsorship enquiries",

@@ -34,7 +34,6 @@ export default function Contact() {
 
   const offices = [
     { city: "Abuja", country: "Nigeria", role: t("contact.hqRole"), address: "ECOWAS Parliament Complex, Abuja, Nigeria" },
-    { city: "Lagos", country: "Nigeria", role: t("contact.opsRole"), address: "c/o Duchess NL, Victoria Island, Lagos" },
   ];
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
