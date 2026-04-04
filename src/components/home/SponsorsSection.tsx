@@ -62,7 +62,7 @@ const programmes: Programme[] = [
       { tier: "gold", sponsors: [{ name: "AfDB", subtitle: "African Development Bank", role: "Funding digital skills bootcamps and youth entrepreneurship grants across 15 member states" }] },
       { tier: "silver", sponsors: [{ name: "UNDP", subtitle: "UNDP West Africa", role: "Technical assistance for youth innovation hubs and mentorship programme design" }] },
     ],
-    cta: { title: "Sponsor Youth Innovation", subtitle: "Presenting and Gold opportunities available — shape the next generation of West African leaders." },
+    cta: { title: "Sponsor Youth Innovation", subtitle: "Presenting and Gold opportunities available shape the next generation of West African leaders." },
   },
   {
     id: "trade", label: "Trade & SME", emoji: "🤝",
@@ -81,7 +81,7 @@ const programmes: Programme[] = [
     tiers: [
       { tier: "silver", sponsors: [{ name: "UNDP", subtitle: "UNDP West Africa", role: "Supporting gender mainstreaming initiatives and women's leadership training" }] },
     ],
-    cta: { title: "Partner with Women's Empowerment", subtitle: "Gold and Presenting tiers open — champion gender equality in West Africa." },
+    cta: { title: "Partner with Women's Empowerment", subtitle: "Gold and Presenting tiers open  champion gender equality in West Africa." },
   },
   {
     id: "civic", label: "Civic Education", emoji: "🏛️",
@@ -96,7 +96,7 @@ const programmes: Programme[] = [
     description: "Celebrating and preserving West African cultural heritage through arts festivals, creative industries development, and cultural exchange programmes.",
     projects: ["West African Arts Festival", "Creative Industries Development Programme", "Cultural Heritage Documentation"],
     tiers: [],
-    cta: { title: "Exclusive Presenting Sponsorship Open", subtitle: "Be the sole Presenting Sponsor for Culture & Creativity — maximum brand visibility." },
+    cta: { title: "Exclusive Presenting Sponsorship Open", subtitle: "Be the sole Presenting Sponsor for Culture & Creativity  maximum brand visibility." },
   },
   {
     id: "awards", label: "AWALCO Awards", emoji: "🏆",
@@ -134,7 +134,7 @@ const SponsorsSection = () => {
             <Badge className="bg-primary/10 text-primary border-primary/20 mb-3">Partners & Sponsors</Badge>
             <h2 className="text-3xl md:text-4xl font-black text-foreground">Our Partner Ecosystem</h2>
             <p className="mt-3 text-sm text-muted-foreground max-w-xl">
-              Each programme is powered by dedicated partners scoped exclusively to their designated initiative — never cross-attributed.
+              Each programme is powered by dedicated partners scoped exclusively to their designated initiative  never cross-attributed.
             </p>
           </AnimatedSection>
         </div>

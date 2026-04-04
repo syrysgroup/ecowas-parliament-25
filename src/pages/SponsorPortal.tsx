@@ -20,7 +20,7 @@ const whyPoints = [
   },
   {
     title: "Real ROI, fully measured",
-    desc: "Every sponsor receives a dedicated impact dashboard with logo impressions, event placements, press mentions, and audience reach — updated monthly.",
+    desc: "Every sponsor receives a dedicated impact dashboard with logo impressions, event placements, press mentions, and audience reach  updated monthly.",
   },
   {
     title: "Direct access to decision-makers",
@@ -104,7 +104,7 @@ const currentSponsors = [
     tierClass: "bg-amber-100 text-amber-800",
   },
   {
-    name: "European Union — ECOWAS Delegation",
+    name: "European Union  ECOWAS Delegation",
     tier: "Gold",
     tierClass: "bg-amber-100 text-amber-800",
   },
@@ -114,7 +114,7 @@ const currentSponsors = [
     tierClass: "bg-slate-100 text-slate-700",
   },
   {
-    name: "UN Women — West Africa",
+    name: "UN Women  West Africa",
     tier: "Silver",
     tierClass: "bg-slate-100 text-slate-700",
   },
@@ -160,7 +160,7 @@ export default function SponsorPortal() {
               Partner with West Africa's Premier Parliamentary Anniversary
             </h1>
             <p className="mt-4 text-lg text-primary-foreground/70 max-w-2xl">
-              The ECOWAS Parliament 25th Anniversary Programme runs across all 12 member states throughout 2026 — 40+ events, 7 programme pillars, and a combined audience reach exceeding 2.4 million. Become part of history.
+              The ECOWAS Parliament 25th Anniversary Programme runs across all 12 member states throughout 2026  40+ events, 7 programme pillars, and a combined audience reach exceeding 2.4 million. Become part of history.
             </p>
             <div className="flex flex-wrap gap-3 mt-6">
               <Button variant="secondary" size="lg" className="gap-2">
@@ -232,7 +232,7 @@ export default function SponsorPortal() {
           <AnimatedSection className="text-center mb-10">
             <h2 className="text-2xl md:text-3xl font-bold">Sponsorship tiers</h2>
             <p className="mt-3 text-muted-foreground max-w-xl mx-auto">
-              Three tiers of partnership — each with full visibility tracking and a dedicated team contact.
+              Three tiers of partnership  each with full visibility tracking and a dedicated team contact.
             </p>
           </AnimatedSection>
 
@@ -330,7 +330,7 @@ export default function SponsorPortal() {
         <div className="container">
           <div className="grid md:grid-cols-2 gap-10 items-center">
             <AnimatedSection>
-              <h2 className="text-2xl md:text-3xl font-bold mb-4">Full visibility — tracked and reported</h2>
+              <h2 className="text-2xl md:text-3xl font-bold mb-4">Full visibility  tracked and reported</h2>
               <p className="text-muted-foreground mb-4 leading-relaxed">
                 Every sponsor receives a real-time dashboard showing exactly what their investment is delivering. No ambiguity. No end-of-year PDF guesswork. You see your reach as it grows.
               </p>
