@@ -3,6 +3,7 @@ import AnimatedSection from "@/components/shared/AnimatedSection";
 import { FileText, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useTranslation } from "@/lib/i18n";
 
 const documents = [
   { title: "Press Release — 25th Anniversary Programme Launch", type: "Press Release", date: "2 March 2026", size: "120 KB" },
@@ -13,15 +14,15 @@ const documents = [
 ];
 
 const Documents = () => {
+  const { t } = useTranslation();
+
   return (
     <Layout>
       <section className="bg-gradient-hero text-primary-foreground py-20">
         <div className="container">
           <AnimatedSection>
-            <h1 className="text-4xl md:text-5xl font-black">Documents & Reports</h1>
-            <p className="mt-4 text-lg text-primary-foreground/70 max-w-2xl">
-              Access official documents, reports, and publications from the programme.
-            </p>
+            <h1 className="text-4xl md:text-5xl font-black">{t("documents.heroTitle")}</h1>
+            <p className="mt-4 text-lg text-primary-foreground/70 max-w-2xl">{t("documents.heroDesc")}</p>
           </AnimatedSection>
         </div>
       </section>
@@ -45,7 +46,7 @@ const Documents = () => {
                   </div>
                   <Button variant="outline" size="sm" className="flex-shrink-0">
                     <Download className="h-4 w-4 mr-1" />
-                    Download
+                    {t("documents.download")}
                   </Button>
                 </div>
               </AnimatedSection>
