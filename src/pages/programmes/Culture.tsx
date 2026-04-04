@@ -174,7 +174,7 @@ const Culture = () => (
               <Card className="h-full hover:shadow-md transition-shadow duration-300">
                 <CardContent className="pt-6">
                   <div className="flex items-center gap-3 mb-4">
-                    <span className="text-3xl">{c.flag}</span>
+                    <FlagImg country={c.country} className="h-8 w-8" />
                     <h3 className="font-bold text-card-foreground text-lg">{c.country}</h3>
                   </div>
                   <div className="flex flex-wrap gap-2">
