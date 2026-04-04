@@ -1102,4 +1102,7 @@ export const en: Record<string, string> = {
   "setPw.setting": "Setting password…",
   "setPw.submit": "Set Password & Access CRM",
   "setPw.footer": "ECOWAS Parliament 25th Anniversary Programme · EP25 Platform",
+
+  // ─── Parliament25Section heading ──────────────────────────────────
+  "anniversary.headingPrefix": "Parliament at",
 };
