@@ -146,7 +146,7 @@ export default function Contact() {
                   <Card key={o.city} className="mb-4">
                     <CardContent className="pt-4">
                       <div className="flex items-start gap-3">
-                        <span className="text-2xl">{o.flag}</span>
+                        <FlagImg country={o.country} className="h-7 w-7" />
                         <div>
                           <p className="font-bold">{o.city}, {o.country}</p>
                           <p className="text-xs text-primary font-medium mt-0.5">{o.role}</p>

@@ -48,13 +48,13 @@ const impactStats = [
 ];
 
 const countries = [
-  { name: "Nigeria", flag: "🇳🇬" },
-  { name: "Ghana", flag: "🇬🇭" },
-  { name: "Côte d'Ivoire", flag: "🇨🇮" },
-  { name: "Senegal", flag: "🇸🇳" },
-  { name: "Cabo Verde", flag: "🇨🇻" },
-  { name: "Togo", flag: "🇹🇬" },
-  { name: "Sierra Leone", flag: "🇸🇱" },
+  { name: "Nigeria" },
+  { name: "Ghana" },
+  { name: "Côte d'Ivoire" },
+  { name: "Senegal" },
+  { name: "Cabo Verde" },
+  { name: "Togo" },
+  { name: "Sierra Leone" },
 ];
 
 const objectives = [

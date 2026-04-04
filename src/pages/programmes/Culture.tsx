@@ -206,7 +206,7 @@ const Culture = () => (
                     <Palette className="h-7 w-7 text-ecowas-lime" />
                   </div>
                   <h3 className="font-bold text-card-foreground">{a.name}</h3>
-                  <p className="text-sm text-muted-foreground">{a.country}</p>
+                  <p className="text-sm text-muted-foreground"><FlagImg country={a.country} className="h-4 w-4 inline mr-1" />{a.country}</p>
                   <Badge variant="outline" className="mt-2 text-[10px]">{a.discipline}</Badge>
                   <p className="mt-3 text-xs text-muted-foreground leading-relaxed">{a.bio}</p>
                 </CardContent>

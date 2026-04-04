@@ -8,6 +8,7 @@ import {
   ArrowLeft, Award, Trophy, MapPin, Calendar, Target, Users,
   Scale, Shield, Heart, Megaphone, Star, Crown, ArrowRight,
 } from "lucide-react";
+import FlagImg from "@/components/shared/FlagImg";
 
 const categories = [
   { title: "Legislative Excellence Award", desc: "For outstanding contributions to lawmaking and regional policy development that have advanced the ECOWAS integration agenda.", icon: <Scale className="h-6 w-6" />, color: "bg-primary/10 text-primary" },

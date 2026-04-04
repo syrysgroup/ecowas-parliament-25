@@ -234,7 +234,7 @@ const Trade = () => {
               <AnimatedSection key={i} delay={i * 60}>
                 <Card className="hover:shadow-md transition-shadow duration-300 h-full">
                   <CardContent className="pt-6">
-                    <span className="text-4xl mb-3 block">{c.flag}</span>
+                    <FlagImg country={c.name} className="h-10 w-10 mb-3" />
                     <p className="font-bold text-card-foreground">{c.name}</p>
                     <p className="text-xs text-muted-foreground mt-1">{c.role}</p>
                   </CardContent>
