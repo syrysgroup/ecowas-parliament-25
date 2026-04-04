@@ -514,4 +514,32 @@ export const en: Record<string, string> = {
   "common.officeOfSpeaker": "Office of the Speaker",
   "common.mandateBody1": "By the authority vested in the Office of the Speaker, ECOWAS Parliament, and in furtherance of the Parliament's mandate of representation of the peoples of West Africa, this mandate letter formally establishes the {title} as an official programme of the ECOWAS Parliament 25th Anniversary celebration.",
   "common.mandateBody2": "This initiative aligns with the ECOWAS 2050 Vision and the Parliament's commitment to the transition from an ECOWAS of States to an ECOWAS of the People.",
+  "common.backToHome": "Back to Home",
+  "common.download": "Download",
+
+  // ─── Events Section Items ─────────────────────────────────────────
+  "eventsSection.ev1.title": "Q1 Financial Reporting Deadline",
+  "eventsSection.ev2.title": "AfDB Partnership Signing Ceremony",
+  "eventsSection.ev3.title": "Women's Empowerment Forum Planning Session",
+  "eventsSection.ev4.title": "Trade & SME Forum — Abuja",
+  "eventsSection.ev5.title": "Youth Parliament — Delegate Selection Closes",
+
+  // ─── Implementing Partner Descriptions ────────────────────────────
+  "implPartners.duchess.desc": "Leading implementing partner coordinating the programme direction and executive partnerships.",
+  "implPartners.borderless.desc": "Driving trade diplomacy, regional engagement, and private-sector mobilisation.",
+  "implPartners.cmd.desc": "Supporting programming, event experience, and community-facing delivery.",
+
+  // ─── Institutional Partner Details ────────────────────────────────
+  "instPartners.awalco.fullName": "Association of West African Legislative Correspondents",
+  "instPartners.awalco.desc": "A professional body uniting legislative journalists across West Africa to strengthen parliamentary reporting, media freedom, and public accountability in governance.",
+  "instPartners.alliance.fullName": "Alliance for Economic Research and Ethics",
+  "instPartners.alliance.desc": "An organisation dedicated to evidence-based economic research and ethical governance, supporting policy development and institutional strengthening across the region.",
+
+  // ─── ProgrammePageTemplate ────────────────────────────────────────
+  "common.ecowasParliament": "ECOWAS Parliament",
+  "common.parlementCedeao": "Parlement de la CEDEAO",
+  "common.programmeMandate2": "Programme Mandate: {title}",
+  "common.speakerName": "Rt. Hon. Hadja Mémounatou Ibrahima",
+  "common.speakerRole": "Speaker, ECOWAS Parliament",
+  "common.addressLine": "Herbert Macaulay Way, Central Business District, P.M.B. 576, Abuja, Nigeria",
 };
