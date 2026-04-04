@@ -34,24 +34,39 @@ const HeroIllustration = ({ theme }: { theme: Theme }) => {
   if (theme === "trade") {
     return (
       <div className={cn(base, "inset-0 overflow-hidden opacity-15")}>
-        <svg className="absolute top-8 right-8 w-72 h-72" viewBox="0 0 200 200" fill="none">
-          <path d="M20 100 C60 60, 140 60, 180 100" stroke="currentColor" strokeWidth="1.5" className="text-primary-foreground" strokeDasharray="6 3" />
-          <path d="M20 130 C60 170, 140 170, 180 130" stroke="currentColor" strokeWidth="1.5" className="text-primary-foreground" strokeDasharray="6 3" />
-          <polygon points="175,95 185,100 175,105" fill="currentColor" className="text-primary-foreground" />
-          <polygon points="25,125 15,130 25,135" fill="currentColor" className="text-primary-foreground" />
-          {[{x:30,y:80},{x:70,y:60},{x:110,y:70},{x:150,y:65},{x:170,y:90}].map((p,i) => (
+        {/* Trade corridors / arrows */}
+        <svg className="absolute top-8 right-8 w-72 h-72 animate-[pulse_5s_ease-in-out_infinite]" viewBox="0 0 200 200" fill="none">
+          {/* Globe / circle network */}
+          <circle cx="100" cy="100" r="60" stroke="currentColor" strokeWidth="1" className="text-primary-foreground" strokeDasharray="8 4" />
+          <circle cx="100" cy="100" r="40" stroke="currentColor" strokeWidth="0.8" className="text-primary-foreground" strokeDasharray="4 4" opacity="0.6" />
+          <ellipse cx="100" cy="100" rx="60" ry="25" stroke="currentColor" strokeWidth="0.8" className="text-primary-foreground" strokeDasharray="6 3" opacity="0.5" />
+          {/* Connection nodes */}
+          {[{x:60,y:60},{x:140,y:70},{x:155,y:120},{x:45,y:130},{x:100,y:45},{x:100,y:155},{x:70,y:90},{x:130,y:110}].map((p,i) => (
             <g key={i}>
-              <circle cx={p.x} cy={p.y} r="5" fill="currentColor" className="text-primary-foreground" opacity="0.5" />
-              <circle cx={p.x} cy={p.y} r="2" fill="currentColor" className="text-primary-foreground" />
+              <circle cx={p.x} cy={p.y} r="4" fill="currentColor" className="text-primary-foreground" opacity={0.3 + (i % 3) * 0.15} />
+              <circle cx={p.x} cy={p.y} r="1.5" fill="currentColor" className="text-primary-foreground" />
             </g>
           ))}
+          {/* Connection lines */}
+          <line x1="60" y1="60" x2="140" y2="70" stroke="currentColor" strokeWidth="0.5" className="text-primary-foreground" opacity="0.3" />
+          <line x1="140" y1="70" x2="155" y2="120" stroke="currentColor" strokeWidth="0.5" className="text-primary-foreground" opacity="0.3" />
+          <line x1="45" y1="130" x2="100" y2="155" stroke="currentColor" strokeWidth="0.5" className="text-primary-foreground" opacity="0.3" />
+          <line x1="70" y1="90" x2="130" y2="110" stroke="currentColor" strokeWidth="0.5" className="text-primary-foreground" opacity="0.3" />
+          {/* Arrows for trade flow */}
+          <path d="M30 170 L50 160 L70 170 L90 155 L110 165 L130 150 L150 160 L170 145" stroke="currentColor" strokeWidth="1.5" className="text-primary-foreground" fill="none" strokeDasharray="4 2" opacity="0.4" />
+          <polygon points="168,143 175,142 170,149" fill="currentColor" className="text-primary-foreground" opacity="0.4" />
         </svg>
-        <svg className="absolute bottom-8 left-8 w-48 h-48 opacity-40" viewBox="0 0 100 100" fill="none">
-          {Array.from({ length: 25 }, (_, i) => (
-            <circle key={i} cx={15 + (i % 5) * 20} cy={15 + Math.floor(i / 5) * 20} r="1.5" fill="currentColor" className="text-primary-foreground" />
+        {/* Bottom grid pattern */}
+        <svg className="absolute bottom-8 left-8 w-56 h-56 opacity-30" viewBox="0 0 120 120" fill="none">
+          {Array.from({ length: 36 }, (_, i) => (
+            <circle key={i} cx={10 + (i % 6) * 20} cy={10 + Math.floor(i / 6) * 20} r="1.2" fill="currentColor" className="text-primary-foreground" />
           ))}
+          {/* Container / box icons */}
+          <rect x="20" y="80" width="16" height="12" rx="1" stroke="currentColor" strokeWidth="0.8" className="text-primary-foreground" fill="none" />
+          <rect x="80" y="20" width="16" height="12" rx="1" stroke="currentColor" strokeWidth="0.8" className="text-primary-foreground" fill="none" />
         </svg>
         <div className="absolute top-1/2 left-1/3 w-12 h-12 rounded-full border border-primary-foreground/20 animate-[pulse_4s_ease-in-out_infinite]" />
+        <div className="absolute top-1/4 left-1/2 w-6 h-6 rotate-45 border border-primary-foreground/15 animate-[pulse_3s_ease-in-out_infinite_0.5s]" />
       </div>
     );
   }
