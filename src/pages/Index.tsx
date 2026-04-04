@@ -5,6 +5,7 @@ import MarqueeStrip from "@/components/home/MarqueeStrip";
 import CountdownTimer from "@/components/home/CountdownTimer";
 import CountriesSection from "@/components/home/CountriesSection";
 import AnniversarySection from "@/components/home/AnniversarySection";
+import PeopleMandateSection from "@/components/home/PeopleMandateSection";
 import PillarsGrid from "@/components/home/PillarsGrid";
 import ImplementingPartnersSection from "@/components/home/ImplementingPartnersSection";
 import InstitutionalPartnersSection from "@/components/home/InstitutionalPartnersSection";
@@ -25,6 +26,7 @@ const Index = () => {
       <CountdownTimer />
       <CountriesSection />
       <AnniversarySection />
+      <PeopleMandateSection />
       <PillarsGrid />
       <ImplementingPartnersSection />
       <InstitutionalPartnersSection />
