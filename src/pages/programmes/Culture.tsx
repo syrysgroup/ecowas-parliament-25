@@ -42,10 +42,10 @@ const culturalContributions = [
 ];
 
 const featuredArtists = [
-  { name: "Amara Diop", country: "🇸🇳 Senegal", discipline: "Fashion Designer", bio: "Award-winning designer blending traditional Senegalese textiles with contemporary silhouettes." },
-  { name: "Kwame Asante", country: "🇬🇭 Ghana", discipline: "Filmmaker", bio: "Director whose documentaries on West African diaspora communities have screened at international festivals." },
-  { name: "Lúcia Évora", country: "🇨🇻 Cabo Verde", discipline: "Musician", bio: "Morna and jazz fusion artist carrying forward the legacy of Cabo Verdean musical tradition." },
-  { name: "Chioma Nwosu", country: "🇳🇬 Nigeria", discipline: "Visual Artist", bio: "Mixed-media artist exploring identity, migration, and belonging through large-scale installations." },
+  { name: "Amara Diop", country: "Senegal", discipline: "Fashion Designer", bio: "Award-winning designer blending traditional Senegalese textiles with contemporary silhouettes." },
+  { name: "Kwame Asante", country: "Ghana", discipline: "Filmmaker", bio: "Director whose documentaries on West African diaspora communities have screened at international festivals." },
+  { name: "Lúcia Évora", country: "Cabo Verde", discipline: "Musician", bio: "Morna and jazz fusion artist carrying forward the legacy of Cabo Verdean musical tradition." },
+  { name: "Chioma Nwosu", country: "Nigeria", discipline: "Visual Artist", bio: "Mixed-media artist exploring identity, migration, and belonging through large-scale installations." },
 ];
 
 const objectives = [
