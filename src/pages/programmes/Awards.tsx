@@ -180,7 +180,7 @@ const Awards = () => (
                   </div>
                   <div className="text-center">
                     <h3 className="font-bold text-card-foreground">{h.name}</h3>
-                    <p className="text-sm text-muted-foreground">{h.country}</p>
+                    <p className="text-sm text-muted-foreground"><FlagImg country={h.country} className="h-4 w-4 inline mr-1" />{h.country}</p>
                     <Badge variant="outline" className="mt-2 text-[10px]">{h.category}</Badge>
                     <p className="mt-3 text-sm italic text-muted-foreground">"{h.quote}"</p>
                   </div>

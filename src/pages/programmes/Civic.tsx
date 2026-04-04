@@ -222,7 +222,7 @@ const Civic = () => (
           <div className="flex flex-wrap gap-3">
             {countries.map((c) => (
               <div key={c.name} className="flex items-center gap-2 px-5 py-3 rounded-full bg-card border border-border text-sm font-medium text-foreground">
-                <span className="text-lg">{c.flag}</span>{c.name}
+                <FlagImg country={c.name} className="h-5 w-5" />{c.name}
               </div>
             ))}
           </div>

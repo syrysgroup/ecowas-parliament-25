@@ -129,7 +129,7 @@ const HemicycleChart = ({ countries = defaultCountries }: HemicycleChartProps) =
                   onMouseLeave={() => setHoveredCountry(null)}
                 >
                   <span className="h-3 w-3 rounded-full" style={{ backgroundColor: country.color }} />
-                  <span className="text-foreground">{country.flag} {country.name}</span>
+                  <span className="text-foreground"><FlagImg country={country.name} className="h-4 w-4 inline mr-1" />{country.name}</span>
                   <span className="ml-auto text-muted-foreground">{country.seats}</span>
                 </button>
               ))}
