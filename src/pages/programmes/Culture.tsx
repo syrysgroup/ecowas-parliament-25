@@ -11,6 +11,8 @@ import {
 } from "lucide-react";
 import FlagImg from "@/components/shared/FlagImg";
 import { getFlagSrc } from "@/lib/flags";
+import ProgrammeSponsorMarquee from "@/components/shared/ProgrammeSponsorMarquee";
+import ProgrammeSponsorsFooter from "@/components/shared/ProgrammeSponsorsFooter";
 
 const artForms = [
   { title: "Fashion", desc: "West African textile traditions — from Kente and Adire to contemporary haute couture — showcased on the runway.", icon: <Sparkles className="h-5 w-5" /> },
