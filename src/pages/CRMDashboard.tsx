@@ -18,13 +18,19 @@ import SuperAdminModule   from "@/components/crm/modules/SuperAdminModule";
 import SettingsModule     from "@/components/crm/modules/SettingsModule";
 import GeoAnalyticsModule from "@/components/crm/modules/GeoAnalyticsModule";
 import EmailInboxModule   from "@/components/crm/modules/EmailInboxModule";
+import EventsManagerModule from "@/components/crm/modules/EventsManagerModule";
+import SponsorsManagerModule from "@/components/crm/modules/SponsorsManagerModule";
 
-// Lazy — stub modules
+// Lazy — less frequently used modules
 const MessagingModule = lazy(() => import("@/components/crm/modules/MessagingModule"));
 const AnalyticsModule = lazy(() => import("@/components/crm/modules/AnalyticsModule"));
 const FinanceModule   = lazy(() => import("@/components/crm/modules/FinanceModule"));
 const MarketingModule = lazy(() => import("@/components/crm/modules/MarketingModule"));
 const CMSModule       = lazy(() => import("@/components/crm/modules/CMSModule"));
+const NewsEditorModule = lazy(() => import("@/components/crm/modules/NewsEditorModule"));
+const SiteContentModule = lazy(() => import("@/components/crm/modules/SiteContentModule"));
+const ContactSubmissionsModule = lazy(() => import("@/components/crm/modules/ContactSubmissionsModule"));
+const NewsletterModule = lazy(() => import("@/components/crm/modules/NewsletterModule"));
 
 function ModuleLoader() {
   return (
@@ -81,6 +87,12 @@ export default function CRMDashboard() {
       case "super-admin":     return <SuperAdminModule />;
       case "settings":        return <SettingsModule />;
       case "geo-analytics":   return <GeoAnalyticsModule />;
+      case "events-manager":  return <EventsManagerModule />;
+      case "sponsors-partners": return <SponsorsManagerModule />;
+      case "news-editor":     return <Suspense fallback={<ModuleLoader />}><NewsEditorModule /></Suspense>;
+      case "site-content":    return <Suspense fallback={<ModuleLoader />}><SiteContentModule /></Suspense>;
+      case "contact-submissions": return <Suspense fallback={<ModuleLoader />}><ContactSubmissionsModule /></Suspense>;
+      case "newsletter":      return <Suspense fallback={<ModuleLoader />}><NewsletterModule /></Suspense>;
       default:                return <DashboardModule onNavigate={navigateSection} />;
     }
   };
