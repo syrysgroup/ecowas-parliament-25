@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { useTranslation } from "@/lib/i18n";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const CountUp = ({ target, suffix, delay = 0 }: { target: number; suffix?: string; delay?: number }) => {
   const [count, setCount] = useState(0);
@@ -33,12 +35,25 @@ const CountUp = ({ target, suffix, delay = 0 }: { target: number; suffix?: strin
 
 const StatsSection = () => {
   const { t } = useTranslation();
+
+  const { data: siteContent } = useQuery({
+    queryKey: ["site-content-stats"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("site_content")
+        .select("content")
+        .eq("section_key", "stats")
+        .single();
+      return data?.content as any;
+    },
+  });
+
   const stats = [
-    { target: 12, label: t("stats.memberStates") },
-    { target: 25, label: t("stats.yearsRepresentation") },
-    { target: 7, label: t("stats.programmes") },
-    { target: 1200, label: t("stats.expectedDelegates"), suffix: "+" },
-    { target: 3, label: t("stats.awardCategories") },
+    { target: siteContent?.memberStates ?? 12, label: t("stats.memberStates") },
+    { target: siteContent?.yearsRepresentation ?? 25, label: t("stats.yearsRepresentation") },
+    { target: siteContent?.programmes ?? 7, label: t("stats.programmes") },
+    { target: siteContent?.expectedDelegates ?? 1200, label: t("stats.expectedDelegates"), suffix: "+" },
+    { target: siteContent?.awardCategories ?? 3, label: t("stats.awardCategories") },
   ];
 
   return (

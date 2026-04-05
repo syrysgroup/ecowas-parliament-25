@@ -4,16 +4,36 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { useTranslation } from "@/lib/i18n";
+import { supabase } from "@/integrations/supabase/client";
 
 const NewsletterSection = () => {
   const { t } = useTranslation();
   const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
-    toast.success(t("newsletter.success"));
-    setEmail("");
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from("newsletter_subscribers")
+        .insert({ email });
+      if (error) {
+        if (error.code === "23505") {
+          toast.info("You're already subscribed!");
+        } else {
+          throw error;
+        }
+      } else {
+        toast.success(t("newsletter.success"));
+      }
+      setEmail("");
+    } catch {
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -33,9 +53,10 @@ const NewsletterSection = () => {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="flex-1"
+            required
           />
-          <Button type="submit" className="font-bold whitespace-nowrap">
-            {t("newsletter.submit")}
+          <Button type="submit" className="font-bold whitespace-nowrap" disabled={loading}>
+            {loading ? "…" : t("newsletter.submit")}
           </Button>
         </form>
       </div>
