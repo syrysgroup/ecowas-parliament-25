@@ -1,91 +1,51 @@
 
 
-# Plan: Sponsor Logos, Event Fliers, and Team Restructure
+# Implementation Plan — 7 Changes
 
-## Summary
-Five interconnected changes: (1) Replace all SVG-generated sponsor placeholders with the Parliament @25 logo across the site, (2) add sponsor marquee + footer to all programme pages, (3) redesign Events page with Instagram-sized fliers, (4) restructure Team page groups, (5) update Youth page with logo placeholders and generated column backgrounds.
+## 1. Redesign People-Oriented Mandate Section (Homepage)
+Copy the uploaded parliament chamber photo (`IMG_9724.png`) to `src/assets/parliament-chamber.jpg`. Redesign `PeopleMandateSection.tsx` to feature this image prominently — large hero-style photo with overlay text about the people's mandate, caption "ECOWAS Parliament during the 25th Anniversary ordinary session in Abuja". Keep the four pillar cards below but add the founding date: "Founded 16 November 2000". Add a visual note about the 25th anniversary milestone.
 
----
+**Files:** `src/components/home/PeopleMandateSection.tsx`, asset copy
 
-## 1. Create a Shared Sponsor Placeholder Component
+## 2. Increase Sponsor Logo Sizes (2x)
+Double the logo/icon sizes in `SponsorPlaceholderSection.tsx` (size 40→80), `SponsorsSection.tsx` (w-12 h-12 → w-24 h-24, img w-10 h-10 → w-20 h-20), and `SponsorPlaceholderLogo.tsx` default size. Also increase logos in programme sponsor marquees and footer sponsor strips.
 
-**New file: `src/components/shared/SponsorPlaceholderLogo.tsx`**
+**Files:** `SponsorPlaceholderSection.tsx`, `SponsorsSection.tsx`, `ProgrammeSponsorMarquee.tsx`, `SponsorLogoMarquee.tsx`
 
-A reusable component that renders the Parliament @25 logo (`parliament-25-logo.png`) at a given size with the sponsor name underneath. This replaces all uses of the SVG `SponsorLogo` component for placeholder purposes.
+## 3. Fix Transparent Buttons/Text Across the Project
+Audit all `variant="ghost"` and `variant="outline"` buttons, especially those on hero gradients. Replace ghost back-buttons with solid/semi-opaque backgrounds (`bg-white/10` or `bg-primary-foreground/15`). Fix the MediaKit outline button that uses `bg-transparent`. Ensure all buttons have visible backgrounds in both light and dark themes.
 
----
+**Files:** `ProgrammePageTemplate.tsx`, `Parliament.tsx`, `MediaKit.tsx`, `SponsorCTA.tsx`, `Youth.tsx`, `Trade.tsx`, `Women.tsx`, `Civic.tsx`, `Culture.tsx`, `Awards.tsx`, `InnovatorsChallenge.tsx`, `SmartChallenge.tsx`
 
-## 2. Create a Reusable Sponsor Marquee + Footer
+## 4. Update Social Media Handle & Add Natural Colors
+Change `@ecoparl_hub` to `@ecoparl_initiatives` across all URLs and display text in `SocialMediaBar.tsx`. Give each social icon its brand color (X/Twitter: black/white, Instagram: gradient pink, Facebook: #1877F2, LinkedIn: #0A66C2, YouTube: #FF0000) instead of the current monochrome `text-muted-foreground`.
 
-**New file: `src/components/shared/ProgrammeSponsorMarquee.tsx`**
+**Files:** `src/components/shared/SocialMediaBar.tsx`
 
-A generic top-of-page marquee slider (continuous, uninterrupted scroll) showing Parliament @25 placeholder logos with sponsor names. Accepts a sponsor list as props so each programme page can pass its own sponsors.
+## 5. Create Sponsors Page with Individual Sponsor Sub-Pages
+Create a dedicated `/sponsors` page (replace or enhance existing `SponsorPortal.tsx`) that lists all programme sponsors with cards. Each sponsor gets an individual page at `/sponsors/:slug` showing: ECOWAS Parliament logo + sponsor logo only in the header, detailed sponsorship info, programme(s) they support, and a link to the sponsor's external site. Add route in `App.tsx`.
 
-**New file: `src/components/shared/ProgrammeSponsorsFooter.tsx`**
+**Sponsors:** NASENI, SMEDAN, Providus Bank, Alliance Economic Research and Ethics (from memory).
 
-A generic bottom-of-page sponsor section with placeholder logos and names, similar to `TradeSponsorsFooter` but using the new placeholder logo. Replaces `TradeSponsorsFooter` and `SponsorPlaceholderSection` with a single shared component.
+**Files:** New `src/pages/sponsors/SponsorPage.tsx`, update `SponsorPortal.tsx`, update `App.tsx` route
 
----
+## 6. Redesign Events Page — 3-Column Grid + Individual Event Pages
+Change the events layout from stacked cards to a 3-column grid (`grid-cols-1 md:grid-cols-2 lg:grid-cols-3`). "View More" links to `/events/:id` — a new individual event page with full details, a registration form, "Add to Calendar" (.ics download), and social share buttons (Twitter, Facebook, WhatsApp, copy link). Add route in `App.tsx`.
 
-## 3. Add Marquee + Footer to All Programme Pages
+**Files:** Update `src/pages/Events.tsx`, new `src/pages/events/EventDetail.tsx`, update `App.tsx`
 
-Update these pages to include the marquee at top and sponsor footer at bottom:
-- `Women.tsx` - add marquee + footer
-- `Civic.tsx` - add marquee + footer
-- `Culture.tsx` - add marquee + footer
-- `Awards.tsx` - add marquee + footer
-- `Parliament.tsx` - add marquee + footer
-- `InnovatorsChallenge.tsx` - add marquee + footer, replace `SponsorLogo` with placeholder logo
-- `SmartChallenge.tsx` - add marquee + footer, replace `SponsorLogo` with placeholder logo
+## 7. Redesign Documents Page — In-Browser Viewing + Multi-Language Upload
+Redesign `/documents` to show document cards with an inline PDF/document viewer (using `<iframe>` or `<object>` for PDFs) instead of download-only. Each document entry supports multiple language versions (EN/FR/PT tabs). Remove the download-only pattern; add a viewer modal or inline expand. Include language tabs per document so admins can upload one file per language.
 
-Update `Trade.tsx` to use the new shared components instead of `SponsorLogoMarquee` and `TradeSponsorsFooter`.
-
----
-
-## 4. Update Home Page Sponsors Section
-
-In `SponsorsSection.tsx`, replace the initials-circle sponsor cards with the Parliament @25 placeholder logo while keeping sponsor names and descriptions visible.
-
-In `SponsorPlaceholderSection.tsx`, replace `SponsorLogo` SVG with the Parliament @25 placeholder logo.
+**Files:** Update `src/pages/Documents.tsx`
 
 ---
 
-## 5. Events Page: Instagram-Sized Fliers
-
-**Update `src/pages/Events.tsx`:**
-- Generate 6 Instagram-sized (1080x1080 ratio) flier images for each static event using AI image generation, saved to `src/assets/events/`
-- Each event card redesigned: left side shows the square flier image, right side shows event details
-- Replace the "Register" button with a "View More" link that opens the registration dialog
-- Card layout: image takes ~40% width on desktop, full width on mobile above text
-
----
-
-## 6. Youth Page: Placeholder Logos + Column Backgrounds
-
-**Update `src/pages/programmes/Youth.tsx`:**
-- Replace `SponsorLogo` SVG components with Parliament @25 placeholder logos with sponsor names visible underneath
-- Generate two background images (one for each column: Innovators green-themed, Smart Challenge gold-themed) using AI image generation
-- Apply generated backgrounds behind each split-screen column with overlay for text readability
-
----
-
-## 7. Team Page: Restructure Groups
-
-**Update `src/pages/Team.tsx`:**
-- Change the three department groups from:
-  - Executive Leadership, Programme Delivery, Communications & Media
-- To:
-  - **Executive Leadership** (keep existing members)
-  - **Implementation Team** (rename from Programme Delivery, keep members)
-  - **Consultants** (rename from Communications & Media, keep members)
-- Update translation keys accordingly (`team.implementationTeam`, `team.consultants`)
-
----
-
-## Technical Details
-
-- Parliament @25 logo already exists at `src/assets/parliament-25-logo.png`
-- AI image generation will produce: 6 event fliers + 2 youth column backgrounds = 8 images
-- The marquee uses CSS `animate-marquee` animation already defined in tailwind config (used by `SponsorLogoMarquee`)
-- Translation keys will be added/updated in `en.ts` for new team group names
+## Technical Notes
+- The uploaded image will be copied to `src/assets/` and imported as an ES module
+- Individual sponsor/event pages use React Router dynamic segments (`:slug`, `:id`)
+- Calendar export generates `.ics` files client-side
+- Document viewer uses native browser PDF rendering via iframe
+- Social icon brand colors use inline style or Tailwind arbitrary values
+- All button fixes ensure minimum contrast in both `dark` and `light` class themes
 
