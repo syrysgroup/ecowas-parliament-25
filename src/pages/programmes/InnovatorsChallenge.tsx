@@ -17,9 +17,9 @@ import { useTranslation } from "@/lib/i18n";
 import heroBg from "@/assets/innovators-hero-bg.jpg";
 
 const sponsors = [
-  { name: "NASENI", color: "hsl(152 100% 26%)" },
-  { name: "SMEDAN", color: "hsl(340 66% 34%)" },
-  { name: "Canada", color: "hsl(0 84% 40%)" },
+  { name: "NASENI" },
+  { name: "SMEDAN" },
+  { name: "Canada" },
 ];
 
 const InnovatorsChallenge = () => {
