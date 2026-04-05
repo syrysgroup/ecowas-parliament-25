@@ -91,7 +91,11 @@ const Trade = () => {
   return (
     <Layout>
       {/* Sponsor Marquee */}
-      <SponsorLogoMarquee />
+      <ProgrammeSponsorMarquee sponsors={[
+        { name: "Providus Bank" }, { name: "Global African Business Assoc." },
+        { name: "VALCERTRA" }, { name: "SMEDAN" }, { name: "Awalco" },
+        { name: "African Development Bank" }, { name: "ECOWAS Commission" },
+      ]} />
 
       {/* Hero */}
       <section className="relative py-24 bg-gradient-hero text-primary-foreground overflow-hidden">
