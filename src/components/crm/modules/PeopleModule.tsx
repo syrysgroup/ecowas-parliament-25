@@ -186,14 +186,42 @@ function EditUserDialog({
   onSaved: () => void;
 }) {
   const { toast } = useToast();
+  const fileRef = useRef<HTMLInputElement>(null);
   const [fullName,   setFullName]   = useState(target.full_name);
   const [country,    setCountry]    = useState(target.country);
+  const [title,      setTitle]      = useState("");
+  const [organisation, setOrganisation] = useState("");
+  const [bio,        setBio]        = useState("");
+  const [avatarUrl,  setAvatarUrl]  = useState("");
+  const [showOnWebsite, setShowOnWebsite] = useState(false);
   const [saving,     setSaving]     = useState(false);
   const [showPass,   setShowPass]   = useState(false);
+  const [uploading,  setUploading]  = useState(false);
+  const [loadingProfile, setLoadingProfile] = useState(true);
 
   // Email settings state
   const [emailCfg,     setEmailCfg]     = useState<UserEmailSettings>(EMPTY_EMAIL_SETTINGS);
   const [loadingEmail, setLoadingEmail] = useState(isSuperAdmin);
+
+  // Load full profile data
+  useEffect(() => {
+    setLoadingProfile(true);
+    (supabase as any)
+      .from("profiles")
+      .select("title, organisation, bio, avatar_url, show_on_website")
+      .eq("id", target.id)
+      .maybeSingle()
+      .then(({ data }: any) => {
+        if (data) {
+          setTitle(data.title ?? "");
+          setOrganisation(data.organisation ?? "");
+          setBio(data.bio ?? "");
+          setAvatarUrl(data.avatar_url ?? "");
+          setShowOnWebsite(data.show_on_website ?? false);
+        }
+        setLoadingProfile(false);
+      });
+  }, [target.id]);
 
   useEffect(() => {
     if (!isSuperAdmin) return;
@@ -217,13 +245,39 @@ function EditUserDialog({
       });
   }, [target.id, isSuperAdmin]);
 
+  const handleAvatarUpload = async (file: File) => {
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop();
+      const path = `${target.id}.${ext}`;
+      // Remove old avatar if exists
+      await supabase.storage.from("team-avatars").remove([path]);
+      const { error } = await supabase.storage.from("team-avatars").upload(path, file, { upsert: true });
+      if (error) throw error;
+      const { data: { publicUrl } } = supabase.storage.from("team-avatars").getPublicUrl(path);
+      setAvatarUrl(publicUrl);
+    } catch (err: any) {
+      toast({ title: "Upload failed", description: err.message, variant: "destructive" });
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleSave = async () => {
     setSaving(true);
     try {
-      // 1. Update profile
+      // 1. Update profile (including new fields)
       const { error: profileErr } = await (supabase as any)
         .from("profiles")
-        .update({ full_name: fullName.trim(), country: country.trim() })
+        .update({
+          full_name: fullName.trim(),
+          country: country.trim(),
+          title: title.trim() || null,
+          organisation: organisation.trim() || null,
+          bio: bio.trim() || null,
+          avatar_url: avatarUrl || null,
+          show_on_website: showOnWebsite,
+        })
         .eq("id", target.id);
       if (profileErr) throw profileErr;
 
@@ -264,29 +318,106 @@ function EditUserDialog({
         </DialogHeader>
 
         <div className="space-y-5 py-1">
+          {/* Avatar upload section */}
+          <div>
+            <p className="text-[11px] font-semibold text-emerald-500 uppercase tracking-wider mb-3">Profile Photo</p>
+            <div className="flex items-center gap-4">
+              <div className="relative w-20 h-20 rounded-full bg-crm-border flex items-center justify-center overflow-hidden flex-shrink-0">
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-2xl font-bold text-emerald-400 uppercase">
+                    {fullName.split(" ").map((n: string) => n[0]).slice(0, 2).join("") || "?"}
+                  </span>
+                )}
+                <button
+                  type="button"
+                  onClick={() => fileRef.current?.click()}
+                  disabled={uploading}
+                  className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity"
+                >
+                  <Camera size={18} className="text-white" />
+                </button>
+              </div>
+              <input ref={fileRef} type="file" accept="image/*" className="hidden"
+                onChange={e => e.target.files?.[0] && handleAvatarUpload(e.target.files[0])} />
+              <div className="text-[10px] text-crm-text-dim space-y-1">
+                <p>Click the avatar to upload a photo</p>
+                {uploading && <p className="text-amber-400">Uploading…</p>}
+                {avatarUrl && (
+                  <button type="button" onClick={() => setAvatarUrl("")}
+                    className="text-red-400 hover:text-red-300">Remove photo</button>
+                )}
+              </div>
+            </div>
+          </div>
+
           {/* Profile section */}
           <div>
-            <p className="text-[11px] font-semibold text-emerald-500 uppercase tracking-wider mb-3">Profile</p>
+            <p className="text-[11px] font-semibold text-emerald-500 uppercase tracking-wider mb-3">Profile Details</p>
             <div className="space-y-3">
-              <div className="space-y-1">
-                <Label className="text-[11px] text-crm-text-dim">Full Name</Label>
-                <Input
-                  value={fullName}
-                  onChange={e => setFullName(e.target.value)}
-                  placeholder="Full name"
-                  className="bg-crm-surface border-crm-border text-crm-text text-xs h-8"
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-[11px] text-crm-text-dim">Full Name</Label>
+                  <Input
+                    value={fullName}
+                    onChange={e => setFullName(e.target.value)}
+                    placeholder="Full name"
+                    className="bg-crm-surface border-crm-border text-crm-text text-xs h-8"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-[11px] text-crm-text-dim">Country</Label>
+                  <Input
+                    value={country}
+                    onChange={e => setCountry(e.target.value)}
+                    placeholder="Country"
+                    className="bg-crm-surface border-crm-border text-crm-text text-xs h-8"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-[11px] text-crm-text-dim">Title / Position</Label>
+                  <Input
+                    value={title}
+                    onChange={e => setTitle(e.target.value)}
+                    placeholder="e.g. Project Director"
+                    className="bg-crm-surface border-crm-border text-crm-text text-xs h-8"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-[11px] text-crm-text-dim">Organisation</Label>
+                  <Input
+                    value={organisation}
+                    onChange={e => setOrganisation(e.target.value)}
+                    placeholder="e.g. ECOWAS"
+                    className="bg-crm-surface border-crm-border text-crm-text text-xs h-8"
+                  />
+                </div>
               </div>
               <div className="space-y-1">
-                <Label className="text-[11px] text-crm-text-dim">Country</Label>
-                <Input
-                  value={country}
-                  onChange={e => setCountry(e.target.value)}
-                  placeholder="Country"
-                  className="bg-crm-surface border-crm-border text-crm-text text-xs h-8"
+                <Label className="text-[11px] text-crm-text-dim">Bio</Label>
+                <Textarea
+                  value={bio}
+                  onChange={e => setBio(e.target.value)}
+                  placeholder="Short biography…"
+                  className="bg-crm-surface border-crm-border text-crm-text text-xs resize-none"
+                  rows={3}
                 />
               </div>
             </div>
+          </div>
+
+          {/* Show on website toggle */}
+          <div className="flex items-center justify-between bg-crm-surface border border-crm-border rounded-lg px-3 py-2.5">
+            <div>
+              <p className="text-[12px] text-crm-text">Show on Team page</p>
+              <p className="text-[10px] text-crm-text-dim mt-0.5">
+                Display this user on the public Team page with their photo, title, and organisation.
+              </p>
+            </div>
+            <Switch checked={showOnWebsite} onCheckedChange={setShowOnWebsite} />
           </div>
 
           {/* Email credentials — super_admin only */}
