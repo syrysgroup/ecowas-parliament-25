@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import Layout from "@/components/layout/Layout";
 import AnimatedSection from "@/components/shared/AnimatedSection";
 import SocialMediaBar from "@/components/shared/SocialMediaBar";
@@ -39,7 +40,19 @@ export default function Contact() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setForm(f => ({ ...f, [e.target.name]: e.target.value }));
 
-  const handleSubmit = (e: React.FormEvent) => { e.preventDefault(); setSubmitted(true); };
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await (supabase as any).from("contact_submissions").insert({
+        name: form.name,
+        email: form.email,
+        phone: form.phone || null,
+        message: `[${enquiryType}] ${form.subject}\n\n${form.message}`,
+        source_page: "/contact",
+      });
+    } catch (_) { /* fire and forget */ }
+    setSubmitted(true);
+  };
 
   return (
     <Layout>

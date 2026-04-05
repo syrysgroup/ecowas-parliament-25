@@ -18,6 +18,7 @@ import {
   UserPlus,
   Crown,
   Settings,
+  Globe2,
 } from "lucide-react";
 
 export type ModuleId =
@@ -37,6 +38,7 @@ export type ModuleId =
   | "marketing"
   | "cms"
   | "super-admin"
+  | "geo-analytics"
   | "settings";
 
 export interface CRMModule {
@@ -198,6 +200,14 @@ export const CRM_MODULES: CRMModule[] = [
     icon: Crown,
     section: "super-admin",
     allowedRoles: ["super_admin"],
+    isStub: false,
+  },
+  {
+    id: "geo-analytics",
+    label: "Geo Analytics",
+    icon: Globe2,
+    section: "geo-analytics",
+    allowedRoles: ["super_admin", "admin"],
     isStub: false,
   },
   {

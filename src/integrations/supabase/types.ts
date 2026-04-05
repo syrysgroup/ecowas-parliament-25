@@ -136,6 +136,47 @@ export type Database = {
           },
         ]
       }
+      contact_submissions: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          message: string | null
+          name: string | null
+          phone: string | null
+          source_page: string | null
+          visitor_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          message?: string | null
+          name?: string | null
+          phone?: string | null
+          source_page?: string | null
+          visitor_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          message?: string | null
+          name?: string | null
+          phone?: string | null
+          source_page?: string | null
+          visitor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_submissions_visitor_id_fkey"
+            columns: ["visitor_id"]
+            isOneToOne: false
+            referencedRelation: "site_visitors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       countries: {
         Row: {
           code: string
@@ -441,7 +482,9 @@ export type Database = {
           full_name: string
           id: string
           is_public: boolean
+          notification_email: string | null
           organisation: string | null
+          show_on_website: boolean
           title: string | null
         }
         Insert: {
@@ -454,7 +497,9 @@ export type Database = {
           full_name: string
           id: string
           is_public?: boolean
+          notification_email?: string | null
           organisation?: string | null
+          show_on_website?: boolean
           title?: string | null
         }
         Update: {
@@ -467,7 +512,9 @@ export type Database = {
           full_name?: string
           id?: string
           is_public?: boolean
+          notification_email?: string | null
           organisation?: string | null
+          show_on_website?: boolean
           title?: string | null
         }
         Relationships: []
@@ -538,6 +585,45 @@ export type Database = {
             referencedColumns: ["profile_id"]
           },
         ]
+      }
+      site_visitors: {
+        Row: {
+          browser: string | null
+          city: string | null
+          country: string | null
+          created_at: string
+          current_page: string | null
+          device: string | null
+          id: string
+          ip_address: string | null
+          referrer: string | null
+          session_id: string | null
+        }
+        Insert: {
+          browser?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          current_page?: string | null
+          device?: string | null
+          id?: string
+          ip_address?: string | null
+          referrer?: string | null
+          session_id?: string | null
+        }
+        Update: {
+          browser?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          current_page?: string | null
+          device?: string | null
+          id?: string
+          ip_address?: string | null
+          referrer?: string | null
+          session_id?: string | null
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {

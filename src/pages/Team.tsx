@@ -2,47 +2,33 @@ import Layout from "@/components/layout/Layout";
 import AnimatedSection from "@/components/shared/AnimatedSection";
 import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "@/lib/i18n";
-import teamPortrait1 from "@/assets/team-portrait-1.jpg";
-import teamPortrait2 from "@/assets/team-portrait-2.jpg";
-import teamPortrait3 from "@/assets/team-portrait-3.jpg";
-import teamPortrait4 from "@/assets/team-portrait-4.jpg";
-import representative1 from "@/assets/representative-1.jpg";
-import representative2 from "@/assets/representative-2.jpg";
-import representative3 from "@/assets/representative-3.jpg";
-import representative4 from "@/assets/representative-4.jpg";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Skeleton } from "@/components/ui/skeleton";
 
-const departments = [
-  {
-    nameKey: "team.executiveLeadership",
-    members: [
-      { name: "Dr. Victoria Akai IIPM", role: "Programme Director", org: "Duchess NL", image: teamPortrait1 },
-      { name: "Dr. Olori Boye-Ajayi", role: "Regional Strategy Lead", org: "Borderless Trade & Investment", image: teamPortrait2 },
-      { name: "Madam Cecile Mambo Doumbe", role: "Operations Lead", org: "CMD Tourism & Trade Enterprises", image: teamPortrait3 },
-      { name: "Amina Toure", role: "Stakeholder Relations Director", org: "Regional Partnerships Desk", image: teamPortrait4 },
-    ],
-  },
-  {
-    nameKey: "team.implementationTeam",
-    members: [
-      { name: "Temile Emmanuel", role: "Parliament Programme Manager", org: "Youth Parliament Secretariat", image: representative2 },
-      { name: "Nene Coker", role: "Community Mobilisation Lead", org: "National Outreach Unit", image: representative3 },
-      { name: "Joseph Toe", role: "Monitoring & Learning Manager", org: "Programme Quality Unit", image: representative4 },
-      { name: "Aissatou Mensah", role: "Volunteer Network Coordinator", org: "Regional Volunteer Corps", image: representative1 },
-    ],
-  },
-  {
-    nameKey: "team.consultants",
-    members: [
-      { name: "Fatou Sarr", role: "Creative Content Lead", org: "Communications Studio", image: teamPortrait4 },
-      { name: "Moussa Diallo", role: "Press & Editorial Coordinator", org: "Media Relations", image: teamPortrait2 },
-      { name: "Elena Doe", role: "Digital Campaign Manager", org: "Audience Growth Desk", image: teamPortrait1 },
-      { name: "Kossi Amouzou", role: "Visual Storytelling Producer", org: "Parliament Media Lab", image: teamPortrait3 },
-    ],
-  },
-];
+interface TeamMember {
+  id: string;
+  full_name: string;
+  title: string | null;
+  organisation: string | null;
+  avatar_url: string | null;
+}
 
 const Team = () => {
   const { t } = useTranslation();
+
+  const { data: members = [], isLoading } = useQuery({
+    queryKey: ["team-members"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("profiles")
+        .select("id, full_name, title, organisation, avatar_url")
+        .eq("show_on_website", true)
+        .order("full_name");
+      if (error) throw error;
+      return data as TeamMember[];
+    },
+  });
 
   return (
     <Layout>
@@ -57,28 +43,46 @@ const Team = () => {
       </section>
 
       <section className="py-16">
-        <div className="container space-y-14">
-          {departments.map((department, departmentIndex) => (
-            <div key={department.nameKey}>
-              <AnimatedSection>
-                <h2 className="text-2xl font-black text-foreground">{t(department.nameKey)}</h2>
-              </AnimatedSection>
-              <div className="mt-6 grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
-                {department.members.map((member, index) => (
-                  <AnimatedSection key={member.name} delay={(departmentIndex * 4 + index) * 50}>
-                    <article className="overflow-hidden rounded-3xl border border-border bg-card shadow-sm transition-transform duration-300 hover:-translate-y-1">
-                      <img src={member.image} alt={member.name} className="aspect-[4/4.4] w-full object-cover" loading="lazy" />
-                      <div className="p-5">
-                        <h3 className="text-lg font-black text-card-foreground">{member.name}</h3>
-                        <p className="text-sm text-primary">{member.role}</p>
-                        <p className="mt-2 text-sm text-muted-foreground">{member.org}</p>
-                      </div>
-                    </article>
-                  </AnimatedSection>
-                ))}
-              </div>
+        <div className="container">
+          {isLoading ? (
+            <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="rounded-3xl border border-border bg-card overflow-hidden">
+                  <Skeleton className="aspect-[4/4.4] w-full" />
+                  <div className="p-5 space-y-2">
+                    <Skeleton className="h-5 w-3/4" />
+                    <Skeleton className="h-4 w-1/2" />
+                    <Skeleton className="h-3 w-2/3" />
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
+          ) : members.length === 0 ? (
+            <p className="text-center text-muted-foreground py-12">Team members will be announced soon.</p>
+          ) : (
+            <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+              {members.map((member, index) => (
+                <AnimatedSection key={member.id} delay={index * 50}>
+                  <article className="overflow-hidden rounded-3xl border border-border bg-card shadow-sm transition-transform duration-300 hover:-translate-y-1">
+                    <div className="aspect-[4/4.4] w-full bg-muted flex items-center justify-center">
+                      {member.avatar_url ? (
+                        <img src={member.avatar_url} alt={member.full_name} className="w-full h-full object-cover" loading="lazy" />
+                      ) : (
+                        <span className="text-4xl font-black text-muted-foreground/30">
+                          {member.full_name.charAt(0)}
+                        </span>
+                      )}
+                    </div>
+                    <div className="p-5">
+                      <h3 className="text-lg font-black text-card-foreground">{member.full_name}</h3>
+                      {member.title && <p className="text-sm text-primary">{member.title}</p>}
+                      {member.organisation && <p className="mt-2 text-sm text-muted-foreground">{member.organisation}</p>}
+                    </div>
+                  </article>
+                </AnimatedSection>
+              ))}
+            </div>
+          )}
         </div>
       </section>
     </Layout>

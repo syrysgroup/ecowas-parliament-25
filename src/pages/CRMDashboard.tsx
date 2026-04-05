@@ -16,6 +16,7 @@ import SponsorMetricsModule from "@/components/crm/modules/SponsorMetricsModule"
 import DocumentsModule    from "@/components/crm/modules/DocumentsModule";
 import SuperAdminModule   from "@/components/crm/modules/SuperAdminModule";
 import SettingsModule     from "@/components/crm/modules/SettingsModule";
+import GeoAnalyticsModule from "@/components/crm/modules/GeoAnalyticsModule";
 import EmailInboxModule   from "@/components/crm/modules/EmailInboxModule";
 
 // Lazy — stub modules
@@ -79,6 +80,7 @@ export default function CRMDashboard() {
       case "email-inbox":     return <EmailInboxModule />;
       case "super-admin":     return <SuperAdminModule />;
       case "settings":        return <SettingsModule />;
+      case "geo-analytics":   return <GeoAnalyticsModule />;
       default:                return <DashboardModule onNavigate={navigateSection} />;
     }
   };

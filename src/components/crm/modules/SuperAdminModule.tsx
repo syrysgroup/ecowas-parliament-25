@@ -6,6 +6,7 @@ import type { AppRole } from "@/contexts/AuthContext";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -19,6 +20,7 @@ import {
 interface UserWithRoles {
   id: string; email: string; full_name: string;
   country: string; created_at: string; roles: AppRole[];
+  show_on_website: boolean; title: string | null; organisation: string | null;
 }
 interface Invitation {
   id: string; email: string; role: AppRole;
@@ -140,7 +142,7 @@ export default function SuperAdminModule() {
     setLoading(true);
     try {
       const [profilesRes, rolesRes, invRes, actRes] = await Promise.all([
-        (supabase as any).from("profiles").select("id, email, full_name, country, created_at").order("created_at", { ascending: false }),
+        (supabase as any).from("profiles").select("id, email, full_name, country, created_at, show_on_website, title, organisation").order("created_at", { ascending: false }),
         (supabase as any).from("user_roles").select("user_id, role"),
         (supabase as any).from("invitations").select("id, email, role, invited_by, created_at, accepted_at").order("created_at", { ascending: false }),
         (supabase as any).from("admin_activity_logs").select("id, action, entity_type, details, created_at, profiles!actor_user_id(full_name, email)").order("created_at", { ascending: false }).limit(50),
@@ -157,6 +159,8 @@ export default function SuperAdminModule() {
         id: p.id, email: p.email ?? "", full_name: p.full_name ?? "",
         country: p.country ?? "", created_at: p.created_at,
         roles: rolesMap.get(p.id) ?? [],
+        show_on_website: p.show_on_website ?? false,
+        title: p.title ?? null, organisation: p.organisation ?? null,
       })));
 
       setInvitations(invRes.data ?? []);
@@ -209,6 +213,27 @@ export default function SuperAdminModule() {
       toast({ title: `Role ${action === "add" ? "granted" : "revoked"}` });
       loadData();
       if (targetUserId === user?.id) refreshRoles();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  };
+
+  // ── Toggle show on website ─────────────────────────────────────────────────
+  const toggleShowOnWebsite = async (targetUserId: string, newVal: boolean) => {
+    try {
+      await (supabase as any).from("profiles").update({ show_on_website: newVal }).eq("id", targetUserId);
+      toast({ title: newVal ? "Added to Team page" : "Removed from Team page" });
+      setUsers(prev => prev.map(u => u.id === targetUserId ? { ...u, show_on_website: newVal } : u));
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  };
+
+  // ── Update profile field inline ──────────────────────────────────────────
+  const updateProfileField = async (targetUserId: string, field: string, value: string) => {
+    try {
+      await (supabase as any).from("profiles").update({ [field]: value }).eq("id", targetUserId);
+      setUsers(prev => prev.map(u => u.id === targetUserId ? { ...u, [field]: value } : u));
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     }
@@ -414,6 +439,32 @@ export default function SuperAdminModule() {
                       <p className="text-[10px] text-crm-text-dim">{u.country || "—"}</p>
                     </div>
                     <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                      {/* Show on Team toggle */}
+                      <div className="flex items-center gap-2">
+                        <span className="text-[9px] text-crm-text-dim">Team page</span>
+                        <Switch
+                          checked={u.show_on_website}
+                          onCheckedChange={v => toggleShowOnWebsite(u.id, v)}
+                          className="scale-75"
+                        />
+                      </div>
+                      {/* Inline title / org edit when toggled on */}
+                      {u.show_on_website && (
+                        <div className="flex gap-1.5">
+                          <input
+                            className="bg-crm-surface border border-crm-border rounded text-[10px] text-crm-text px-1.5 py-0.5 w-24"
+                            placeholder="Title"
+                            defaultValue={u.title ?? ""}
+                            onBlur={e => e.target.value !== (u.title ?? "") && updateProfileField(u.id, "title", e.target.value)}
+                          />
+                          <input
+                            className="bg-crm-surface border border-crm-border rounded text-[10px] text-crm-text px-1.5 py-0.5 w-28"
+                            placeholder="Organisation"
+                            defaultValue={u.organisation ?? ""}
+                            onBlur={e => e.target.value !== (u.organisation ?? "") && updateProfileField(u.id, "organisation", e.target.value)}
+                          />
+                        </div>
+                      )}
                       {/* Role badges */}
                       <div className="flex flex-wrap gap-1 justify-end">
                         {u.roles.length === 0 && (
