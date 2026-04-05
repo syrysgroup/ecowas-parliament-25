@@ -24,6 +24,8 @@ import SponsorPortal from "./pages/SponsorPortal";
 import Events from "./pages/Events";
 import Volunteer from "./pages/Volunteer";
 import PartnerPage from "./pages/partners/PartnerPage";
+import SponsorPage from "./pages/sponsors/SponsorPage";
+import EventDetail from "./pages/events/EventDetail";
 
 // Programme pages
 import Youth from "./pages/programmes/Youth";
