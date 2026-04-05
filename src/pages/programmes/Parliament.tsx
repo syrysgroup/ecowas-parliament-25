@@ -302,7 +302,7 @@ const Parliament = () => {
         </div>
       </section>
 
-      <ProgrammeSponsorsFooter tiers={[
+      <ProgrammeSponsorsFooter programme="parliament" tiers={[
         { label: "Programme Partners", sponsors: [{ name: "EU Delegation ECOWAS" }] },
         { label: "Institutional Partners", sponsors: [{ name: "ECOWAS Commission" }, { name: "AWALCO" }] },
       ]} />

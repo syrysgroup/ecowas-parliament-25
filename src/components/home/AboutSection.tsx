@@ -1,19 +1,25 @@
 import AnimatedSection from "@/components/shared/AnimatedSection";
 import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "@/lib/i18n";
+import { useSiteContent } from "@/hooks/useSiteContent";
 import ecowasLogo from "@/assets/ecowas-parliament-logo.png";
 
 const AboutSection = () => {
   const { t } = useTranslation();
+  const { data: db } = useSiteContent("about");
+  const { data: statsDb } = useSiteContent("stats");
 
   const stats = [
-    { value: "25", label: t("anniversary.stat1"), color: "text-accent" },
-    { value: "12", label: t("anniversary.stat2"), color: "text-primary" },
-    { value: "7", label: t("anniversary.stat3"), color: "text-ecowas-blue" },
-    { value: "1,200+", label: t("anniversary.stat4"), color: "text-ecowas-lime" },
+    { value: statsDb?.stat1_value || "25", label: statsDb?.stat1_label || t("anniversary.stat1"), color: "text-accent" },
+    { value: statsDb?.stat2_value || "12", label: statsDb?.stat2_label || t("anniversary.stat2"), color: "text-primary" },
+    { value: statsDb?.stat3_value || "7", label: statsDb?.stat3_label || t("anniversary.stat3"), color: "text-ecowas-blue" },
+    { value: statsDb?.stat4_value || "1,200+", label: statsDb?.stat4_label || t("anniversary.stat4"), color: "text-ecowas-lime" },
   ];
 
   const tags = [t("anniversary.tag1"), t("anniversary.tag2"), t("anniversary.tag3"), t("anniversary.tag4"), t("anniversary.tag5")];
+
+  const title = db?.title || `${t("anniversary.title")} ${t("anniversary.titleAccent")}`;
+  const desc1 = db?.description || t("anniversary.p1");
 
   return (
     <section className="py-20 bg-muted/20 border-t border-b border-border">
@@ -22,10 +28,10 @@ const AboutSection = () => {
           <AnimatedSection>
             <Badge className="bg-primary/10 text-primary border-primary/20 mb-3">{t("about.heroTitle")}</Badge>
             <h2 className="text-3xl md:text-4xl font-black text-foreground leading-tight mb-6">
-              {t("anniversary.title")} {t("anniversary.titleAccent")}
+              {title}
             </h2>
             <div className="space-y-4 text-[15px] text-muted-foreground leading-relaxed">
-              <p>{t("anniversary.p1")}</p>
+              <p>{desc1}</p>
               <p>{t("about.livingDesc")}</p>
             </div>
             <div className="flex flex-wrap gap-2 mt-6">

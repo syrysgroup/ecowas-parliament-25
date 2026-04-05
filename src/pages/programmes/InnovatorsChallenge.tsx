@@ -281,7 +281,7 @@ const InnovatorsChallenge = () => {
         </div>
       </section>
 
-      <ProgrammeSponsorsFooter tiers={[
+      <ProgrammeSponsorsFooter programme="innovators" tiers={[
         { label: "Programme Partners", sponsors },
         { label: "Institutional Partners", sponsors: [{ name: "ECOWAS Commission" }, { name: "AWALCO" }] },
       ]} />

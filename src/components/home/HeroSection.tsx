@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useEffect, useState, useRef } from "react";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { useTranslation } from "@/lib/i18n";
+import { useSiteContent } from "@/hooks/useSiteContent";
 import ecowasLogo from "@/assets/ecowas-parliament-logo.png";
 import parliamentBg from "@/assets/parliament-chamber.png";
 
@@ -41,12 +42,19 @@ const Particle = ({ size, x, y, delay, color }: { size: number; x: string; y: st
 
 const HeroSection = () => {
   const { t } = useTranslation();
+  const { data: db } = useSiteContent("hero");
+
+  const eyebrow = db?.badge || t("hero.eyebrow");
+  const title1 = db?.title?.split("|")[0] || t("hero.title1");
+  const title2 = db?.title?.split("|")[1] || t("hero.title2");
+  const title3 = db?.subtitle || t("hero.title3");
+  const description = db?.description || t("hero.description");
 
   const stats = [
-    { label: t("hero.memberStates"), target: 12 },
-    { label: t("hero.programmes"), target: 7 },
-    { label: t("hero.years"), target: 25 },
-    { label: t("hero.delegates"), target: 1200, suffix: "+" },
+    { label: db?.stat1_label || t("hero.memberStates"), target: parseInt(db?.stat1_value || "12") || 12 },
+    { label: db?.stat2_label || t("hero.programmes"), target: parseInt(db?.stat2_value || "7") || 7 },
+    { label: db?.stat3_label || t("hero.years"), target: parseInt(db?.stat3_value || "25") || 25 },
+    { label: db?.stat4_label || t("hero.delegates"), target: parseInt(db?.stat4_value || "1200") || 1200, suffix: "+" },
   ];
 
   return (
@@ -73,24 +81,22 @@ const HeroSection = () => {
       </div>
 
       <div className="relative z-10 w-full max-w-6xl px-6 md:px-10 py-20 md:py-28">
-        {/* Two-column layout */}
         <div className="grid lg:grid-cols-[1.2fr_0.8fr] gap-12 lg:gap-16 items-center">
-          {/* Left column — text content */}
           <div className="text-center lg:text-left">
             <div className="inline-flex items-center gap-2 rounded-full border border-white/50 px-5 py-1.5 text-[11.5px] font-semibold uppercase tracking-widest text-white bg-white/10 backdrop-blur-sm mb-6 animate-slide-up" style={{ animationDelay: "0.3s" }}>
               <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse-dot" />
-              {t("hero.eyebrow")}
+              {eyebrow}
             </div>
 
             <h1 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-black leading-[1.06] text-primary-foreground mb-5 animate-slide-up" style={{ animationDelay: "0.5s" }}>
-              {t("hero.title1")} <span className="text-accent">{t("hero.title2")}</span>
+              {title1} <span className="text-accent">{title2}</span>
               <span className="block text-lg md:text-2xl lg:text-3xl font-bold text-primary-foreground/70 mt-3">
-                {t("hero.title3")}
+                {title3}
               </span>
             </h1>
 
             <p className="text-base text-primary-foreground/60 max-w-xl mx-auto lg:mx-0 leading-relaxed mb-9 animate-slide-up" style={{ animationDelay: "0.7s" }}>
-              {t("hero.description")}
+              {description}
             </p>
 
             <div className="flex items-center justify-center lg:justify-start flex-wrap gap-3 animate-slide-up" style={{ animationDelay: "0.9s" }}>
@@ -106,13 +112,10 @@ const HeroSection = () => {
             </div>
           </div>
 
-          {/* Right column — large ECOWAS Parliament logo */}
           <div className="flex justify-center animate-slide-up" style={{ animationDelay: "0.6s" }}>
             <div className="relative">
-              {/* Glow rings */}
               <div className="absolute inset-0 w-[280px] h-[280px] md:w-[340px] md:h-[340px] rounded-full border-2 border-white/10 scale-[1.15] mx-auto" />
               <div className="absolute inset-0 w-[280px] h-[280px] md:w-[340px] md:h-[340px] rounded-full border border-white/5 scale-[1.3] mx-auto" />
-              {/* Logo container */}
               <div className="w-[280px] h-[280px] md:w-[340px] md:h-[340px] rounded-full bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center shadow-[0_0_80px_hsl(152_100%_26%/0.2)]">
                 <img
                   src={ecowasLogo}
@@ -120,7 +123,6 @@ const HeroSection = () => {
                   className="h-55 w-55 md:h-60 md:w-60 object-contain animate-float drop-shadow-[0_0_40px_hsl(152_100%_26%/0.3)]"
                 />
               </div>
-              {/* Label beneath */}
               <div className="text-center mt-4">
                 <p className="text-sm font-bold text-white">{t("hero.ecowasParliament")}</p>
                 <p className="text-[10px] uppercase tracking-widest text-white/50">{t("hero.ecowasParliamentFr")}</p>
@@ -129,7 +131,6 @@ const HeroSection = () => {
           </div>
         </div>
 
-        {/* Stats bar — full width below */}
         <div className="flex justify-center flex-wrap gap-0 bg-primary-foreground/[0.03] border border-primary-foreground/10 rounded-2xl px-7 py-5 mt-14 animate-slide-up" style={{ animationDelay: "1.1s" }}>
           {stats.map((stat, i) => (
             <div key={stat.label} className="text-center px-7 relative">

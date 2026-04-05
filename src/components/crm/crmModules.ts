@@ -2,6 +2,7 @@ import type { AppRole } from "@/contexts/AuthContext";
 import type { LucideIcon } from "lucide-react";
 import {
   LayoutDashboard,
+  Image,
   CheckSquare,
   Mail,
   Inbox,
@@ -51,6 +52,7 @@ export type ModuleId =
   | "site-content"
   | "contact-submissions"
   | "newsletter"
+  | "media-library"
   | "settings";
 
 export interface CRMModule {
@@ -268,6 +270,14 @@ export const CRM_MODULES: CRMModule[] = [
     icon: MailCheck,
     section: "newsletter",
     allowedRoles: ["super_admin", "admin", "marketing_manager"],
+    isStub: false,
+  },
+  {
+    id: "media-library",
+    label: "Media Library",
+    icon: Image,
+    section: "media-library",
+    allowedRoles: ["super_admin", "admin"],
     isStub: false,
   },
   {
