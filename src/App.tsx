@@ -37,6 +37,7 @@ import Awards from "./pages/programmes/Awards";
 import Parliament from "./pages/programmes/Parliament";
 import InnovatorsChallenge from "./pages/programmes/InnovatorsChallenge";
 import SmartChallenge from "./pages/programmes/SmartChallenge";
+import ParliamentCountry from "./pages/programmes/ParliamentCountry";
 
 // Auth
 import Auth from "./pages/Auth";
