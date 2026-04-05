@@ -49,6 +49,7 @@ const objectives = [
 
 const Awards = () => (
   <Layout>
+    <ProgrammeSponsorMarquee sponsors={[{ name: "AfDB" }, { name: "ECOWAS Commission" }, { name: "AWALCO" }]} />
     {/* Hero */}
     <section className="relative py-24 bg-gradient-hero text-primary-foreground overflow-hidden">
       <div className="absolute inset-0 overflow-hidden opacity-10 pointer-events-none">
