@@ -284,7 +284,7 @@ export const en: Record<string, string> = {
   "contact.successDesc": "Thank you for reaching out. A member of the team will respond within 2 working days.",
   "contact.sendAnother": "Send another message",
   "contact.offices": "ECOWAS Parliament Headquarters",
-  "contact.followUs": "Follow @ecoparl_hub",
+  "contact.followUs": "Follow @ecoparl_initiatives",
   "contact.web": "Web",
   "contact.sponsorCardTitle": "For sponsorship enquiries",
   "contact.sponsorCardDesc": "Contact Mariama Camara, Sponsor Relations Manager, directly for tailored partnership packages.",

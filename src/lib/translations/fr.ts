@@ -272,7 +272,7 @@ export const fr: Record<string, string> = {
   "contact.successDesc": "Merci de nous avoir contactés. Un membre de l'équipe vous répondra dans les 2 jours ouvrables.",
   "contact.sendAnother": "Envoyer un autre message",
   "contact.offices": "Nos bureaux",
-  "contact.followUs": "Suivez @ecoparl_hub",
+  "contact.followUs": "Suivez @ecoparl_initiatives",
   "contact.web": "Web",
   "contact.sponsorCardTitle": "Pour les demandes de parrainage",
   "contact.sponsorCardDesc": "Contactez Mariama Camara, Responsable des relations partenaires, directement pour des offres de partenariat personnalisées.",

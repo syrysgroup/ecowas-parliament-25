@@ -76,7 +76,7 @@ const Civic = () => (
       <HeroIllustration theme="civic" />
       <div className="container relative">
         <AnimatedSection>
-          <Button asChild variant="ghost" className="text-primary-foreground/60 hover:text-primary-foreground mb-6 -ml-3">
+          <Button asChild variant="secondary" className="bg-primary-foreground/15 text-primary-foreground hover:bg-primary-foreground/25 mb-6 -ml-3">
             <Link to="/"><ArrowLeft className="mr-2 h-4 w-4" />Back to Home</Link>
           </Button>
           <div className="flex items-center gap-4 mb-4">

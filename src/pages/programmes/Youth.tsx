@@ -29,7 +29,7 @@ const Youth = () => {
       <section className="relative flex-1 flex flex-col overflow-hidden">
         {/* Back button */}
         <div className="absolute top-6 left-6 z-20">
-          <Button asChild variant="ghost" className="text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10">
+          <Button asChild variant="secondary" className="bg-primary-foreground/15 text-primary-foreground hover:bg-primary-foreground/25">
             <Link to="/"><span className="mr-2">←</span>{t("common.backToHome")}</Link>
           </Button>
         </div>
