@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar, MapPin, Users, ArrowLeft, Share2, Copy, CheckCircle2 } from "lucide-react";
+import { Calendar, MapPin, Users, ArrowLeft, Share2, Copy, CheckCircle2, ExternalLink, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -86,6 +86,8 @@ export default function EventDetail() {
 
   const flier = eventFliers[event.id];
   const eventDate = new Date(event.date);
+  const endDate = event.end_date ? new Date(event.end_date) : eventDate;
+  const isPast = endDate < new Date();
   const shareUrl = window.location.href;
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -120,7 +122,10 @@ export default function EventDetail() {
             <Button asChild variant="secondary" className="bg-primary-foreground/15 text-primary-foreground hover:bg-primary-foreground/25 mb-6">
               <Link to="/events"><ArrowLeft className="mr-2 h-4 w-4" />All Events</Link>
             </Button>
-            <Badge className="bg-primary-foreground/10 text-primary-foreground border-primary-foreground/20 mb-3">{event.programme}</Badge>
+            <div className="flex items-center gap-2 mb-3">
+              <Badge className="bg-primary-foreground/10 text-primary-foreground border-primary-foreground/20">{event.programme}</Badge>
+              {isPast && <Badge className="bg-destructive/80 text-destructive-foreground border-0">Concluded</Badge>}
+            </div>
             <h1 className="text-3xl md:text-5xl font-black">{event.title}</h1>
             <div className="flex flex-wrap gap-4 mt-4 text-sm text-primary-foreground/70">
               <span className="flex items-center gap-1"><Calendar className="h-4 w-4" />{formatDate(eventDate, locale)}</span>
@@ -161,45 +166,74 @@ export default function EventDetail() {
                   </Button>
                 </div>
               </AnimatedSection>
+
+              {/* Press & briefings for past events */}
+              {isPast && (
+                <AnimatedSection>
+                  <h3 className="text-lg font-bold text-foreground mb-3 flex items-center gap-2"><ExternalLink className="h-4 w-4" />Press & Related Briefings</h3>
+                  <div className="space-y-3">
+                    <p className="text-sm text-muted-foreground">Coverage and related articles for this event will appear here as they are published.</p>
+                    <div className="rounded-2xl border border-border bg-muted/30 p-4 space-y-2">
+                      <p className="text-xs text-muted-foreground italic">No press articles linked yet. Check back soon.</p>
+                    </div>
+                  </div>
+                </AnimatedSection>
+              )}
             </div>
 
-            {/* Right column — Register + Calendar */}
+            {/* Right column — Register / Concluded + Calendar */}
             <div className="space-y-6">
               <AnimatedSection>
                 <div className="bg-card border border-border rounded-2xl p-6 shadow-sm sticky top-24">
-                  <h3 className="text-xl font-bold text-card-foreground mb-2">
-                    {registered ? "You're Registered! ✅" : "Register for this Event"}
-                  </h3>
-                  {registered ? (
+                  {isPast ? (
                     <div className="space-y-4">
-                      <p className="text-sm text-muted-foreground">We'll send you details closer to the date.</p>
-                      <Button className="w-full gap-2" variant="outline" onClick={() => generateICS(event)}>
-                        <Calendar className="h-4 w-4" />Add to Calendar (.ics)
-                      </Button>
+                      <div className="flex items-center gap-3">
+                        <AlertCircle className="h-5 w-5 text-muted-foreground" />
+                        <h3 className="text-xl font-bold text-card-foreground">This event has concluded</h3>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Registration is no longer available. Browse the event details and any related press coverage below.
+                      </p>
                     </div>
                   ) : (
-                    <form onSubmit={handleRegister} className="space-y-4 mt-4">
-                      <div><Label>Full Name</Label><Input required value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Your full name" /></div>
-                      <div><Label>Email</Label><Input required type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder="email@example.com" /></div>
-                      <div>
-                        <Label>Country</Label>
-                        <Select value={form.country} onValueChange={v => setForm(f => ({ ...f, country: v }))}>
-                          <SelectTrigger><SelectValue placeholder="Select country" /></SelectTrigger>
-                          <SelectContent>{COUNTRIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
-                        </Select>
-                      </div>
-                      <div><Label>Organisation (optional)</Label><Input value={form.organisation} onChange={e => setForm(f => ({ ...f, organisation: e.target.value }))} placeholder="Your organisation" /></div>
-                      <Button type="submit" className="w-full" disabled={submitting}>
-                        {submitting ? "Registering…" : "Register Now"}
-                      </Button>
-                    </form>
+                    <>
+                      <h3 className="text-xl font-bold text-card-foreground mb-2">
+                        {registered ? "You're Registered! ✅" : "Register for this Event"}
+                      </h3>
+                      {registered ? (
+                        <div className="space-y-4">
+                          <p className="text-sm text-muted-foreground">We'll send you details closer to the date.</p>
+                          <Button className="w-full gap-2" variant="outline" onClick={() => generateICS(event)}>
+                            <Calendar className="h-4 w-4" />Add to Calendar (.ics)
+                          </Button>
+                        </div>
+                      ) : (
+                        <form onSubmit={handleRegister} className="space-y-4 mt-4">
+                          <div><Label>Full Name</Label><Input required value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Your full name" /></div>
+                          <div><Label>Email</Label><Input required type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder="email@example.com" /></div>
+                          <div>
+                            <Label>Country</Label>
+                            <Select value={form.country} onValueChange={v => setForm(f => ({ ...f, country: v }))}>
+                              <SelectTrigger><SelectValue placeholder="Select country" /></SelectTrigger>
+                              <SelectContent>{COUNTRIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+                            </Select>
+                          </div>
+                          <div><Label>Organisation (optional)</Label><Input value={form.organisation} onChange={e => setForm(f => ({ ...f, organisation: e.target.value }))} placeholder="Your organisation" /></div>
+                          <Button type="submit" className="w-full" disabled={submitting}>
+                            {submitting ? "Registering…" : "Register Now"}
+                          </Button>
+                        </form>
+                      )}
+                    </>
                   )}
 
-                  <div className="mt-4 pt-4 border-t border-border">
-                    <Button className="w-full gap-2" variant="outline" onClick={() => generateICS(event)}>
-                      <Calendar className="h-4 w-4" />Add to Calendar
-                    </Button>
-                  </div>
+                  {!isPast && (
+                    <div className="mt-4 pt-4 border-t border-border">
+                      <Button className="w-full gap-2" variant="outline" onClick={() => generateICS(event)}>
+                        <Calendar className="h-4 w-4" />Add to Calendar
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </AnimatedSection>
             </div>

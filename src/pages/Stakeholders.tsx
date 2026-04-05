@@ -18,7 +18,7 @@ import teamPortrait3 from "@/assets/team-portrait-3.jpg";
 const ecowasStakeholders = [
   { name: "Rt. Hon. Hadja Mémounatou Ibrahima", title: "Speaker of the ECOWAS Parliament", image: speakerImg },
   { name: "Hon. Alhaji Bah", title: "Secretary General, ECOWAS Parliament", image: secgenImg },
-
+  { name: "", title: "Director", image: directorImage },
   { name: "Mrs. Uche Duru", title: "Chief Communication Officer", image: commsImage },
 
 ];

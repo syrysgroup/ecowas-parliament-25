@@ -18,27 +18,33 @@ const PeopleMandateSection = () => {
   return (
     <section className="py-20 bg-gradient-to-b from-background to-muted/30">
       <div className="container">
-        {/* Hero image with overlay */}
+        {/* Two-column hero: text left, portrait image right */}
         <AnimatedSection className="mb-14">
-          <div className="relative rounded-3xl overflow-hidden shadow-2xl">
-            <img
-              src={parliamentChamber}
-              alt="ECOWAS Parliament during the 25th Anniversary ordinary session in Abuja"
-              className="w-full h-[320px] md:h-[480px] object-cover"
-              loading="lazy"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-            <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10">
-              <Badge className="bg-ecowas-yellow/90 text-accent-foreground border-0 mb-3 text-xs font-bold">
+          <div className="grid gap-8 lg:grid-cols-2 items-center">
+            {/* Text column */}
+            <div className="space-y-4">
+              <Badge className="bg-ecowas-yellow/90 text-accent-foreground border-0 text-xs font-bold">
                 Founded 16 November 2000 · 25th Anniversary
               </Badge>
-              <h2 className="text-2xl md:text-4xl font-black text-white leading-tight mb-2">
-                {t("mandate.title")} <span className="text-ecowas-yellow">{t("mandate.titleAccent")}</span>
+              <h2 className="text-3xl md:text-4xl font-black text-foreground leading-tight">
+                {t("mandate.title")} <span className="text-primary">{t("mandate.titleAccent")}</span>
               </h2>
-              <p className="text-white/70 text-sm md:text-base max-w-2xl leading-relaxed">
+              <p className="text-muted-foreground text-base md:text-lg leading-relaxed max-w-xl">
                 {t("mandate.desc")}
               </p>
-              <p className="text-white/50 text-xs mt-3 italic">
+            </div>
+
+            {/* Portrait image column */}
+            <div className="relative">
+              <div className="overflow-hidden rounded-3xl shadow-2xl border border-border">
+                <img
+                  src={parliamentChamber}
+                  alt="ECOWAS Parliament during the 25th Anniversary ordinary session in Abuja"
+                  className="w-full aspect-[3/4] object-cover object-top"
+                  loading="lazy"
+                />
+              </div>
+              <p className="text-muted-foreground text-xs mt-3 italic text-center">
                 ECOWAS Parliament during the 25th Anniversary ordinary session in Abuja
               </p>
             </div>
