@@ -11,6 +11,8 @@ import {
   Calendar, Star, Play,
 } from "lucide-react";
 import FlagImg from "@/components/shared/FlagImg";
+import ProgrammeSponsorMarquee from "@/components/shared/ProgrammeSponsorMarquee";
+import ProgrammeSponsorsFooter from "@/components/shared/ProgrammeSponsorsFooter";
 
 const caravanStops = [
   { type: "Airports", desc: "Branded installations at major West African airports reaching thousands of travellers daily.", icon: <Plane className="h-6 w-6" /> },
