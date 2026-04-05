@@ -22,7 +22,7 @@ const departments = [
     ],
   },
   {
-    nameKey: "team.programmeDelivery",
+    nameKey: "team.implementationTeam",
     members: [
       { name: "Temile Emmanuel", role: "Parliament Programme Manager", org: "Youth Parliament Secretariat", image: representative2 },
       { name: "Nene Coker", role: "Community Mobilisation Lead", org: "National Outreach Unit", image: representative3 },
@@ -31,7 +31,7 @@ const departments = [
     ],
   },
   {
-    nameKey: "team.commsMedia",
+    nameKey: "team.consultants",
     members: [
       { name: "Fatou Sarr", role: "Creative Content Lead", org: "Communications Studio", image: teamPortrait4 },
       { name: "Moussa Diallo", role: "Press & Editorial Coordinator", org: "Media Relations", image: teamPortrait2 },

@@ -1,7 +1,9 @@
 import { Link } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import AnimatedSection from "@/components/shared/AnimatedSection";
-import SponsorLogo from "@/components/shared/SponsorLogo";
+import SponsorPlaceholderLogo from "@/components/shared/SponsorPlaceholderLogo";
+import ProgrammeSponsorMarquee from "@/components/shared/ProgrammeSponsorMarquee";
+import ProgrammeSponsorsFooter from "@/components/shared/ProgrammeSponsorsFooter";
 import FlagImg from "@/components/shared/FlagImg";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,9 +17,9 @@ import { useTranslation } from "@/lib/i18n";
 import heroBg from "@/assets/innovators-hero-bg.jpg";
 
 const sponsors = [
-  { name: "NASENI", color: "hsl(152 100% 26%)" },
-  { name: "SMEDAN", color: "hsl(340 66% 34%)" },
-  { name: "Canada", color: "hsl(0 84% 40%)" },
+  { name: "NASENI" },
+  { name: "SMEDAN" },
+  { name: "Canada" },
 ];
 
 const InnovatorsChallenge = () => {
@@ -55,6 +57,7 @@ const InnovatorsChallenge = () => {
 
   return (
     <Layout>
+      <ProgrammeSponsorMarquee sponsors={sponsors} />
       {/* Hero */}
       <section className="relative min-h-[80vh] flex items-center overflow-hidden">
         <img src={heroBg} alt="" className="absolute inset-0 w-full h-full object-cover" width={1920} height={1080} />
@@ -278,17 +281,10 @@ const InnovatorsChallenge = () => {
         </div>
       </section>
 
-      {/* Sponsor Strip */}
-      <section className="py-12 bg-background border-t border-border">
-        <div className="container mx-auto px-6 text-center">
-          <p className="text-sm text-muted-foreground mb-4 font-medium uppercase tracking-wider">Supported by</p>
-          <div className="flex items-center justify-center gap-6">
-            {sponsors.map((s) => (
-              <SponsorLogo key={s.name} name={s.name} color={s.color} size={56} />
-            ))}
-          </div>
-        </div>
-      </section>
+      <ProgrammeSponsorsFooter tiers={[
+        { label: "Programme Partners", sponsors },
+        { label: "Institutional Partners", sponsors: [{ name: "ECOWAS Commission" }, { name: "AWALCO" }] },
+      ]} />
     </Layout>
   );
 };

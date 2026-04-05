@@ -8,16 +8,32 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Calendar, MapPin, Users, CheckCircle2 } from "lucide-react";
+import { Calendar, MapPin, Users, CheckCircle2, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation, formatDate } from "@/lib/i18n";
 
+import eventLaunch from "@/assets/events/event-launch.jpg";
+import eventSmart from "@/assets/events/event-smart.jpg";
+import eventParliament from "@/assets/events/event-parliament.jpg";
+import eventTrade from "@/assets/events/event-trade.jpg";
+import eventCulture from "@/assets/events/event-culture.jpg";
+import eventFinale from "@/assets/events/event-finale.jpg";
+
 const COUNTRIES = [
   "Nigeria", "Ghana", "Côte d'Ivoire", "Guinea", "Guinea-Bissau",
   "Senegal", "Benin", "Cabo Verde", "Gambia", "Liberia", "Sierra Leone", "Togo",
 ];
+
+const eventFliers: Record<string, string> = {
+  ev1: eventLaunch,
+  ev2: eventSmart,
+  ev3: eventParliament,
+  ev4: eventTrade,
+  ev5: eventCulture,
+  ev6: eventFinale,
+};
 
 const staticEvents = [
   { id: "ev1", title: "Official Launch & Awards Nominations Open", description: "The 25th Anniversary programme is officially launched at a press conference in Abuja.", date: "2026-03-05T09:00:00Z", location: "Onomo Allure Abuja AATC Hotel", country: "Nigeria", programme: "Awards", capacity: 300, is_published: true },
@@ -80,31 +96,52 @@ export default function Events() {
 
       <section className="py-16">
         <div className="container">
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="space-y-8">
             {events.map((event, i) => {
               const eventDate = new Date(event.date);
               const isRegistered = registered.has(event.id);
+              const flier = eventFliers[event.id];
               return (
                 <AnimatedSection key={event.id} delay={i * 80}>
-                  <Card className="h-full hover:shadow-lg transition-shadow">
-                    <CardContent className="pt-5">
-                      <div className="flex items-center gap-2 mb-3">
-                        <Badge variant="outline" className="text-[10px]">{event.programme}</Badge>
-                        <span className="text-xs text-muted-foreground">{formatDate(eventDate, locale)}</span>
+                  <Card className="overflow-hidden hover:shadow-lg transition-shadow">
+                    <div className="flex flex-col md:flex-row">
+                      {/* Flier Image */}
+                      <div className="md:w-[280px] lg:w-[320px] flex-shrink-0">
+                        <img
+                          src={flier}
+                          alt={event.title}
+                          className="w-full aspect-square md:h-full object-cover"
+                          loading="lazy"
+                          width={1080}
+                          height={1080}
+                        />
                       </div>
-                      <h3 className="font-bold text-lg mb-2">{event.title}</h3>
-                      <p className="text-sm text-muted-foreground mb-4 line-clamp-2">{event.description}</p>
-                      <div className="flex flex-wrap gap-3 text-xs text-muted-foreground mb-4">
-                        <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{event.location}</span>
-                        <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{event.country}</span>
-                        {event.capacity && <span className="flex items-center gap-1"><Users className="h-3 w-3" />{t("events.capacity", { count: event.capacity })}</span>}
-                      </div>
-                      {isRegistered ? (
-                        <Button disabled variant="outline" className="gap-2"><CheckCircle2 className="h-4 w-4 text-primary" />{t("events.registered")}</Button>
-                      ) : (
-                        <Button onClick={() => setRsvpEvent(event)} className="gap-2">{t("events.register")}</Button>
-                      )}
-                    </CardContent>
+                      {/* Event Details */}
+                      <CardContent className="flex-1 p-6 flex flex-col justify-between">
+                        <div>
+                          <div className="flex items-center gap-2 mb-3">
+                            <Badge variant="outline" className="text-[10px]">{event.programme}</Badge>
+                            <span className="text-xs text-muted-foreground">{formatDate(eventDate, locale)}</span>
+                          </div>
+                          <h3 className="font-bold text-xl mb-2 text-foreground">{event.title}</h3>
+                          <p className="text-sm text-muted-foreground mb-4">{event.description}</p>
+                          <div className="flex flex-wrap gap-3 text-xs text-muted-foreground mb-4">
+                            <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{event.location}</span>
+                            <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{event.country}</span>
+                            {event.capacity && <span className="flex items-center gap-1"><Users className="h-3 w-3" />{t("events.capacity", { count: event.capacity })}</span>}
+                          </div>
+                        </div>
+                        <div>
+                          {isRegistered ? (
+                            <Button disabled variant="outline" className="gap-2"><CheckCircle2 className="h-4 w-4 text-primary" />{t("events.registered")}</Button>
+                          ) : (
+                            <Button onClick={() => setRsvpEvent(event)} className="gap-2">
+                              <Eye className="h-4 w-4" /> View More
+                            </Button>
+                          )}
+                        </div>
+                      </CardContent>
+                    </div>
                   </Card>
                 </AnimatedSection>
               );

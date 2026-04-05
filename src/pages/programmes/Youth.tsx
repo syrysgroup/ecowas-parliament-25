@@ -1,21 +1,23 @@
 import { Link } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Lightbulb, BrainCircuit, ArrowRight } from "lucide-react";
+import { ArrowRight, Lightbulb, BrainCircuit } from "lucide-react";
 import { useTranslation } from "@/lib/i18n";
-import SponsorLogo from "@/components/shared/SponsorLogo";
+import SponsorPlaceholderLogo from "@/components/shared/SponsorPlaceholderLogo";
 import parliament25Logo from "@/assets/parliament-25-logo.png";
+import innovatorsBg from "@/assets/youth-innovators-bg.jpg";
+import smartBg from "@/assets/youth-smart-bg.jpg";
 
 const innovatorsSponsors = [
-  { name: "NASENI", color: "hsl(152 100% 26%)" },
-  { name: "SMEDAN", color: "hsl(340 66% 34%)" },
-  { name: "Canada", color: "hsl(0 84% 40%)" },
+  { name: "NASENI" },
+  { name: "SMEDAN" },
+  { name: "Canada" },
 ];
 
 const smartSponsors = [
-  { name: "African Development Bank", color: "hsl(210 60% 40%)" },
-  { name: "SYRYS Technologies", color: "hsl(260 50% 45%)" },
-  { name: "Resident Technology", color: "hsl(152 100% 26%)" },
+  { name: "African Development Bank" },
+  { name: "SYRYS Technologies" },
+  { name: "Resident Technology" },
 ];
 
 const Youth = () => {
@@ -24,21 +26,19 @@ const Youth = () => {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
-      {/* Bold Split-Screen Landing */}
       <section className="relative flex-1 flex flex-col overflow-hidden">
         {/* Back button */}
         <div className="absolute top-6 left-6 z-20">
           <Button asChild variant="ghost" className="text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10">
-            <Link to="/"><ArrowLeft className="mr-2 h-4 w-4" />{t("common.backToHome")}</Link>
+            <Link to="/"><span className="mr-2">←</span>{t("common.backToHome")}</Link>
           </Button>
         </div>
 
         <div className="flex-1 grid md:grid-cols-2 relative min-h-[100vh]">
           {/* Left: Innovators Challenge */}
-          <div className="relative flex flex-col items-center justify-center p-8 md:p-12 bg-gradient-to-br from-primary via-primary/95 to-primary/80 text-primary-foreground min-h-[50vh] md:min-h-0">
-            <div className="absolute inset-0 opacity-10" style={{
-              backgroundImage: "repeating-linear-gradient(45deg, transparent, transparent 20px, hsl(152 100% 40% / 0.3) 20px, hsl(152 100% 40% / 0.3) 21px)"
-            }} />
+          <div className="relative flex flex-col items-center justify-center p-8 md:p-12 text-primary-foreground min-h-[50vh] md:min-h-0 overflow-hidden">
+            <img src={innovatorsBg} alt="" className="absolute inset-0 w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-primary/70" />
             <div className="relative z-10 text-center max-w-sm">
               <div className="w-16 h-16 rounded-2xl bg-primary-foreground/15 backdrop-blur-sm flex items-center justify-center mx-auto mb-6">
                 <Lightbulb className="h-8 w-8 text-accent" />
@@ -53,19 +53,18 @@ const Youth = () => {
                 </Link>
               </Button>
               {/* Sponsors */}
-              <div className="flex items-center justify-center gap-3 opacity-80">
+              <div className="flex items-center justify-center gap-4">
                 {innovatorsSponsors.map((s) => (
-                  <SponsorLogo key={s.name} name={s.name} color={s.color} size={40} />
+                  <SponsorPlaceholderLogo key={s.name} name={s.name} size={36} />
                 ))}
               </div>
             </div>
           </div>
 
           {/* Right: Smart Challenge */}
-          <div className="relative flex flex-col items-center justify-center p-8 md:p-12 bg-gradient-to-bl from-accent via-accent/95 to-accent/80 text-accent-foreground min-h-[50vh] md:min-h-0">
-            <div className="absolute inset-0 opacity-10" style={{
-              backgroundImage: "repeating-linear-gradient(-45deg, transparent, transparent 20px, hsl(50 87% 55% / 0.3) 20px, hsl(50 87% 55% / 0.3) 21px)"
-            }} />
+          <div className="relative flex flex-col items-center justify-center p-8 md:p-12 text-accent-foreground min-h-[50vh] md:min-h-0 overflow-hidden">
+            <img src={smartBg} alt="" className="absolute inset-0 w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-accent/60" />
             <div className="relative z-10 text-center max-w-sm">
               <div className="w-16 h-16 rounded-2xl bg-foreground/10 backdrop-blur-sm flex items-center justify-center mx-auto mb-6">
                 <BrainCircuit className="h-8 w-8 text-primary" />
@@ -80,9 +79,9 @@ const Youth = () => {
                 </Link>
               </Button>
               {/* Sponsors */}
-              <div className="flex items-center justify-center gap-3 opacity-80">
+              <div className="flex items-center justify-center gap-4">
                 {smartSponsors.map((s) => (
-                  <SponsorLogo key={s.name} name={s.name} color={s.color} size={40} />
+                  <SponsorPlaceholderLogo key={s.name} name={s.name} size={36} />
                 ))}
               </div>
             </div>

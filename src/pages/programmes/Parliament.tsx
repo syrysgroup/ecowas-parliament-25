@@ -13,6 +13,8 @@ import { ArrowLeft, Calendar, MapPin, Trophy, Users, Vote } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { fallbackNominees, fallbackRepresentatives } from "@/lib/parliament";
 import parliamentHero from "@/assets/parliament-hero-clean.jpg";
+import ProgrammeSponsorMarquee from "@/components/shared/ProgrammeSponsorMarquee";
+import ProgrammeSponsorsFooter from "@/components/shared/ProgrammeSponsorsFooter";
 
 type CountryRow = {
   name: string;
@@ -120,6 +122,7 @@ const Parliament = () => {
 
   return (
     <Layout>
+      <ProgrammeSponsorMarquee sponsors={[{ name: "EU Delegation ECOWAS" }, { name: "ECOWAS Commission" }, { name: "AWALCO" }]} />
       <section className="relative overflow-hidden bg-gradient-hero py-20 text-primary-foreground">
         <div className="container grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
           <AnimatedSection>
@@ -276,6 +279,10 @@ const Parliament = () => {
         </div>
       </section>
 
+      <ProgrammeSponsorsFooter tiers={[
+        { label: "Programme Partners", sponsors: [{ name: "EU Delegation ECOWAS" }] },
+        { label: "Institutional Partners", sponsors: [{ name: "ECOWAS Commission" }, { name: "AWALCO" }] },
+      ]} />
       <ApplicationModal open={modalOpen} onOpenChange={setModalOpen} />
     </Layout>
   );

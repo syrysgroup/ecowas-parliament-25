@@ -2,8 +2,8 @@ import { Link } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import AnimatedSection from "@/components/shared/AnimatedSection";
 import HeroIllustration from "@/components/shared/HeroIllustration";
-import SponsorLogoMarquee from "@/components/trade/SponsorLogoMarquee";
-import TradeSponsorsFooter from "@/components/trade/TradeSponsorsFooter";
+import ProgrammeSponsorMarquee from "@/components/shared/ProgrammeSponsorMarquee";
+import ProgrammeSponsorsFooter from "@/components/shared/ProgrammeSponsorsFooter";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -91,7 +91,11 @@ const Trade = () => {
   return (
     <Layout>
       {/* Sponsor Marquee */}
-      <SponsorLogoMarquee />
+      <ProgrammeSponsorMarquee sponsors={[
+        { name: "Providus Bank" }, { name: "Global African Business Assoc." },
+        { name: "VALCERTRA" }, { name: "SMEDAN" }, { name: "Awalco" },
+        { name: "African Development Bank" }, { name: "ECOWAS Commission" },
+      ]} />
 
       {/* Hero */}
       <section className="relative py-24 bg-gradient-hero text-primary-foreground overflow-hidden">
@@ -493,7 +497,10 @@ const Trade = () => {
       </section>
 
       {/* Sponsor Footer */}
-      <TradeSponsorsFooter />
+      <ProgrammeSponsorsFooter tiers={[
+        { label: "Programme Partners", sponsors: [{ name: "Providus Bank" }, { name: "Global African Business Assoc." }, { name: "VALCERTRA" }, { name: "SMEDAN" }] },
+        { label: "Institutional Partners", sponsors: [{ name: "Awalco" }, { name: "African Development Bank" }, { name: "ECOWAS Commission" }] },
+      ]} />
     </Layout>
   );
 };

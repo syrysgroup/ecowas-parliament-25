@@ -11,6 +11,8 @@ import {
   Calendar, Star, Play,
 } from "lucide-react";
 import FlagImg from "@/components/shared/FlagImg";
+import ProgrammeSponsorMarquee from "@/components/shared/ProgrammeSponsorMarquee";
+import ProgrammeSponsorsFooter from "@/components/shared/ProgrammeSponsorsFooter";
 
 const caravanStops = [
   { type: "Airports", desc: "Branded installations at major West African airports reaching thousands of travellers daily.", icon: <Plane className="h-6 w-6" /> },
@@ -68,6 +70,7 @@ const objectives = [
 
 const Civic = () => (
   <Layout>
+    <ProgrammeSponsorMarquee sponsors={[{ name: "EU Delegation ECOWAS" }, { name: "ECOWAS Commission" }, { name: "AWALCO" }]} />
     {/* Hero */}
     <section className="relative py-24 bg-gradient-hero text-primary-foreground overflow-hidden">
       <HeroIllustration theme="civic" />
@@ -261,6 +264,10 @@ const Civic = () => (
         </AnimatedSection>
       </div>
     </section>
+    <ProgrammeSponsorsFooter tiers={[
+      { label: "Programme Partners", sponsors: [{ name: "EU Delegation ECOWAS" }] },
+      { label: "Institutional Partners", sponsors: [{ name: "ECOWAS Commission" }, { name: "AWALCO" }] },
+    ]} />
   </Layout>
 );
 

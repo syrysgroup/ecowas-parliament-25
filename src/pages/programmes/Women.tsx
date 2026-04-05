@@ -11,6 +11,8 @@ import {
 } from "lucide-react";
 import { useTranslation } from "@/lib/i18n";
 import FlagImg from "@/components/shared/FlagImg";
+import ProgrammeSponsorMarquee from "@/components/shared/ProgrammeSponsorMarquee";
+import ProgrammeSponsorsFooter from "@/components/shared/ProgrammeSponsorsFooter";
 
 const Women = () => {
   const { t } = useTranslation();
@@ -52,6 +54,7 @@ const Women = () => {
 
   return (
     <Layout>
+      <ProgrammeSponsorMarquee sponsors={[{ name: "UNDP West Africa" }, { name: "Duchess International" }, { name: "ECOWAS Commission" }]} />
       <section className="relative py-24 bg-gradient-hero text-primary-foreground overflow-hidden">
         <HeroIllustration theme="women" />
         <div className="container relative">
@@ -177,6 +180,10 @@ const Women = () => {
         <p className="text-muted-foreground mb-8 max-w-lg mx-auto">{t("women.ctaDesc")}</p>
         <Button size="lg" className="bg-secondary text-secondary-foreground hover:bg-secondary/90">{t("women.ctaBtn")}</Button>
       </AnimatedSection></div></section>
+      <ProgrammeSponsorsFooter tiers={[
+        { label: "Programme Partners", sponsors: [{ name: "UNDP West Africa" }, { name: "Duchess International" }] },
+        { label: "Institutional Partners", sponsors: [{ name: "ECOWAS Commission" }] },
+      ]} />
     </Layout>
   );
 };

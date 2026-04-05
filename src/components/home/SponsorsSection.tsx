@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import AnimatedSection from "@/components/shared/AnimatedSection";
+import parliament25Logo from "@/assets/parliament-25-logo.png";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -224,13 +225,13 @@ const SponsorsSection = () => {
                             animation: "fade-in 0.5s ease-out both",
                           }}
                         >
-                          {/* Sponsor initials circle */}
-                          <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-black text-sm mb-3 transition-transform duration-300 group-hover:scale-110 ${
-                            tierGroup.tier === "presenting" ? "bg-primary/15 text-primary" :
-                            tierGroup.tier === "gold" ? "bg-accent/15 text-accent" :
-                            "bg-muted text-muted-foreground"
+                          {/* Sponsor placeholder logo */}
+                          <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-3 transition-transform duration-300 group-hover:scale-110 overflow-hidden ${
+                            tierGroup.tier === "presenting" ? "bg-primary/15" :
+                            tierGroup.tier === "gold" ? "bg-accent/15" :
+                            "bg-muted"
                           }`}>
-                            {sponsor.name.slice(0, 2).toUpperCase()}
+                            <img src={parliament25Logo} alt={sponsor.name} className="w-10 h-10 object-contain" />
                           </div>
 
                           <h4 className={`font-bold text-card-foreground ${

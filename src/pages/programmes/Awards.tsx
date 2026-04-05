@@ -9,6 +9,8 @@ import {
   Scale, Shield, Heart, Megaphone, Star, Crown, ArrowRight,
 } from "lucide-react";
 import FlagImg from "@/components/shared/FlagImg";
+import ProgrammeSponsorMarquee from "@/components/shared/ProgrammeSponsorMarquee";
+import ProgrammeSponsorsFooter from "@/components/shared/ProgrammeSponsorsFooter";
 
 const categories = [
   { title: "Legislative Excellence Award", desc: "For outstanding contributions to lawmaking and regional policy development that have advanced the ECOWAS integration agenda.", icon: <Scale className="h-6 w-6" />, color: "bg-primary/10 text-primary" },
@@ -47,6 +49,7 @@ const objectives = [
 
 const Awards = () => (
   <Layout>
+    <ProgrammeSponsorMarquee sponsors={[{ name: "AfDB" }, { name: "ECOWAS Commission" }, { name: "AWALCO" }]} />
     {/* Hero */}
     <section className="relative py-24 bg-gradient-hero text-primary-foreground overflow-hidden">
       <div className="absolute inset-0 overflow-hidden opacity-10 pointer-events-none">
@@ -272,6 +275,10 @@ const Awards = () => (
         </AnimatedSection>
       </div>
     </section>
+    <ProgrammeSponsorsFooter tiers={[
+      { label: "Programme Partners", sponsors: [{ name: "AfDB" }] },
+      { label: "Institutional Partners", sponsors: [{ name: "ECOWAS Commission" }, { name: "AWALCO" }] },
+    ]} />
   </Layout>
 );
 
