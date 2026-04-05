@@ -17,9 +17,9 @@ import { useTranslation } from "@/lib/i18n";
 import heroBg from "@/assets/smart-challenge-hero-bg.jpg";
 
 const sponsors = [
-  { name: "African Development Bank", color: "hsl(210 60% 40%)" },
-  { name: "SYRYS Technologies", color: "hsl(260 50% 45%)" },
-  { name: "Resident Technology", color: "hsl(152 100% 26%)" },
+  { name: "African Development Bank" },
+  { name: "SYRYS Technologies" },
+  { name: "Resident Technology" },
 ];
 
 const SmartChallenge = () => {
