@@ -56,6 +56,7 @@ const SmartChallenge = () => {
 
   return (
     <Layout>
+      <ProgrammeSponsorMarquee sponsors={sponsors} />
       {/* Hero */}
       <section className="relative min-h-[80vh] flex items-center overflow-hidden">
         <img src={heroBg} alt="" className="absolute inset-0 w-full h-full object-cover" width={1920} height={1080} />
