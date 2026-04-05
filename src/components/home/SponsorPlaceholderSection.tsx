@@ -1,7 +1,8 @@
 import AnimatedSection from "@/components/shared/AnimatedSection";
 import { Link } from "react-router-dom";
 import { Handshake } from "lucide-react";
-import SponsorLogo from "@/components/shared/SponsorLogo";
+import SponsorPlaceholderLogo from "@/components/shared/SponsorPlaceholderLogo";
+import { useTranslation } from "@/lib/i18n";
 import { useTranslation } from "@/lib/i18n";
 
 const mockSponsors = [
