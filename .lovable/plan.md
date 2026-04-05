@@ -1,70 +1,92 @@
 
 
-## CRM Gap Analysis — Updated Assessment
+## CRM Gap Analysis for Super Admin
 
-Your analysis was thorough, but many items have already been implemented at both the database and CRM module level. Here is the revised status and remaining work.
+### What's Already Working Well
 
-### Already Implemented (No Action Needed)
+The CRM has solid foundations. These are fully functional:
 
-| Gap | Status |
-|-----|--------|
-| Team member profile editing (photo, title, bio, org) | Done — PeopleModule has avatar upload to `team-avatars`, title, org, bio, show_on_website fields |
-| Events Manager module | Done — Full CRUD with cover image upload, registration_type (none/external/form), tag/tag_color, publish toggle |
-| Sponsors & Partners Manager | Done — Tabbed UI for sponsors + partners, logo upload, tier, programmes, publish toggle |
-| News Editor module | Done — CRUD with cover image upload, slug, status (draft/published), publish workflow |
-| Site Content Manager | Done — Editable sections for hero, stats, quote, about via `site_content` table |
-| Contact Submissions viewer | Done — Read-only list of submissions |
-| Newsletter Subscribers viewer | Done — Shows active/unsubscribed counts and list |
-| Storage buckets | Done — team-avatars, event-images, sponsor-logos, news-images, cms-media, partner-assets all exist |
-| Database tables | Done — sponsors, partners, news_articles, site_content, newsletter_subscribers, events (with cover_image_url, registration_type, etc.) all exist |
+- **People & Access** -- Add/edit team members with photo upload, title, bio, organisation, "show on website" toggle
+- **Events Manager** -- Full CRUD with cover image upload, registration type (none/external/form), tags, publish toggle
+- **Sponsors & Partners Manager** -- Tabbed UI, logo upload, tier selection, programme assignment, publish toggle
+- **News Editor** -- CRUD with cover image, slug, excerpt, content, draft/published workflow
+- **Site Content Manager** -- Editable hero, stats, quote, about sections via database
+- **Contact Submissions** -- Read-only viewer
+- **Newsletter Subscribers** -- Subscriber list with counts
+- **Public pages wired to DB** -- LatestNews, News page, EventsSection, SponsorsSection, Stakeholders (partners + sponsors), PartnersStrip, StatsSection, and NewsletterSection all query the database
 
-### Remaining Gaps (Actual Work Needed)
+### Remaining Gaps
 
-#### 1. Public pages still hardcoded — not reading from database
+#### Gap 1: HeroSection still hardcoded
+The homepage hero (`HeroSection.tsx`) uses translation keys for all text (title, description, stats). It does NOT read from the `site_content` table. The Site Content Manager can edit a "hero" section, but the actual component ignores it.
 
-These pages have CRM modules to manage the data, but the public-facing components still use hardcoded arrays:
+#### Gap 2: QuoteStrip still hardcoded
+`QuoteStrip.tsx` uses only translation keys. It does not read from the `site_content` table's "quote" section, even though the CRM module supports editing it.
 
-- **Homepage LatestNews** (`LatestNews.tsx`) — hardcoded `placeholderNews` array with imported images, does NOT query `news_articles` table
-- **News page** (`News.tsx`) — hardcoded `allNews` array, does NOT query `news_articles`
-- **Homepage EventsSection** (`EventsSection.tsx`) — has DB query but falls back to hardcoded events; already partially wired
-- **Homepage SponsorsSection** (`SponsorsSection.tsx`) — entirely hardcoded programme/sponsor arrays
-- **Stakeholders page** (`Stakeholders.tsx`) — hardcoded stakeholders, partners, and sponsors arrays
-- **Homepage StatsSection** (`StatsSection.tsx`) — hardcoded stat values (not reading from `site_content`)
-- **Homepage HeroSection** (`HeroSection.tsx`) — hardcoded text (not reading from `site_content`)
-- **PartnersStrip** (`PartnersStrip.tsx`) — hardcoded AWALCO text
+#### Gap 3: AboutSection still hardcoded
+`AboutSection.tsx` uses only translation keys. Does not read from the "about" section in `site_content`.
 
-#### 2. Programme pages sponsor sections
-Programme pages (Trade, Youth, Women, etc.) have hardcoded sponsor data in their footers/marquees.
+#### Gap 4: Programme page sponsor footers use hardcoded placeholder data
+`ProgrammeSponsorsFooter.tsx` accepts hardcoded tier/sponsor arrays and renders `SponsorPlaceholderLogo` (grey boxes). Each programme page (Trade, Youth, Women, etc.) passes in hardcoded sponsor names. These should query the `sponsors` table filtered by programme.
+
+#### Gap 5: Stakeholders page -- ECOWAS Leadership section is hardcoded
+The leadership section at the top of `Stakeholders.tsx` has 4 hardcoded people with imported images. There's no CRM module to manage these VIP stakeholders. This could be handled by adding a "stakeholder" or "leadership" category to the profiles/people system.
+
+#### Gap 6: No event registration form on the public site
+Events with `registration_type = "form"` show "Register" on the public events page, but there's no actual form wired to the `event_registrations` table. The "built-in form" option in the CRM is non-functional on the frontend.
+
+#### Gap 7: No event detail page
+There's no `/events/:id` route for individual event pages. The events page only shows a list with no way to view full details, cover images, or register.
+
+#### Gap 8: Site Content Manager is too limited
+Only 4 section templates (hero, stats, quote, about). Missing templates for:
+- Countdown timer section
+- Pillars/Programmes grid
+- "Did You Know" section
+- Anniversary section
+- Speaker section
+- Implementing Partners section
+- Any other homepage section the super admin may want to control
+
+#### Gap 9: No media/image gallery management
+No CRM module to manage general media assets (photos, design files) beyond the specific buckets tied to events/news/sponsors. The `cms-media` bucket exists but has no management UI.
+
+#### Gap 10: No page/content preview from CRM
+The super admin cannot preview how their changes will look on the website without navigating to the public site manually. No "preview" button or iframe in the CRM.
 
 ---
 
 ### Implementation Plan
 
-**Phase 1 — Wire public pages to existing database tables**
+**Phase 1 -- Wire remaining hardcoded homepage sections to `site_content` DB** (3 components)
 
-1. **News pages → `news_articles` table**
-   - Replace hardcoded arrays in `LatestNews.tsx` and `News.tsx` with `useQuery` calls to `news_articles` where `status = 'published'`
-   - Use `cover_image_url` from DB, fall back to placeholder if null
+1. Update `HeroSection.tsx` to query `site_content` for key "hero" and use DB values with translation keys as fallback
+2. Update `QuoteStrip.tsx` to query `site_content` for key "quote" and use DB values with fallback
+3. Update `AboutSection.tsx` to query `site_content` for key "about" and use DB values with fallback
 
-2. **Sponsors/Partners on public pages → `sponsors` + `partners` tables**
-   - Replace hardcoded data in `SponsorsSection.tsx`, `Stakeholders.tsx`, and programme page footers with DB queries where `is_published = true`
+**Phase 2 -- Programme sponsor footers from DB** (2 files)
 
-3. **Homepage sections → `site_content` table**
-   - Wire `HeroSection.tsx` and `StatsSection.tsx` to read from `site_content` (keys: `hero`, `stats`) with current hardcoded values as fallbacks
+4. Rewrite `ProgrammeSponsorsFooter.tsx` to accept a `programme` prop and query `sponsors` table where `programmes` array contains that programme and `is_published = true`, grouped by tier
+5. Update each programme page to pass programme ID instead of hardcoded arrays
 
-4. **EventsSection cleanup**
-   - Remove hardcoded fallback events (DB query already exists)
+**Phase 3 -- Event detail page + registration form** (2 new files)
 
-**Phase 2 — Enhance existing modules**
+6. Create `/events/:id` route with full event detail page showing cover image, description, location, date
+7. Add registration form component for events with `registration_type = "form"` that inserts into `event_registrations`
 
-5. **News page detail view** — Add `/news/:slug` route to display individual articles from DB
-6. **Event registration** — Wire the `event_registrations` table to a registration form on event detail pages
-7. **Newsletter signup** — Wire the homepage `NewsletterSection` form to insert into `newsletter_subscribers`
+**Phase 4 -- Expand Site Content Manager** (1 file)
 
-### Technical Approach
-- Each public component gets a `useQuery` hook querying the relevant Supabase table
-- Hardcoded data becomes the fallback (shown only when DB returns empty)
-- No database migrations needed — all tables and columns already exist
-- No new CRM modules needed — all management UIs already exist
-- Estimated: ~8 files modified, 0 new files
+8. Add more section templates to `SiteContentModule.tsx`: countdown, pillars, did_you_know, anniversary, speaker, implementing_partners
+
+**Phase 5 -- CRM enhancements** (2 files)
+
+9. Add a Media Library module to manage `cms-media` bucket (upload, browse, delete images)
+10. Add a "Leadership / VIPs" section to the People module or create a new `leadership` table for managing the Stakeholders page VIP section from the CRM
+
+### Technical Notes
+
+- No new database migrations needed for Phases 1-3 (all tables exist)
+- Phase 5 (leadership) may need a new DB table or a `category` column on `profiles`
+- All public components will use `useQuery` with current hardcoded/translation values as fallbacks
+- Estimated: ~12 files modified, ~3 new files created
 
