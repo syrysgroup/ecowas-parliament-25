@@ -122,6 +122,7 @@ const Parliament = () => {
 
   return (
     <Layout>
+      <ProgrammeSponsorMarquee sponsors={[{ name: "EU Delegation ECOWAS" }, { name: "ECOWAS Commission" }, { name: "AWALCO" }]} />
       <section className="relative overflow-hidden bg-gradient-hero py-20 text-primary-foreground">
         <div className="container grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
           <AnimatedSection>
