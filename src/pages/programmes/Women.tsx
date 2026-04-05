@@ -11,6 +11,8 @@ import {
 } from "lucide-react";
 import { useTranslation } from "@/lib/i18n";
 import FlagImg from "@/components/shared/FlagImg";
+import ProgrammeSponsorMarquee from "@/components/shared/ProgrammeSponsorMarquee";
+import ProgrammeSponsorsFooter from "@/components/shared/ProgrammeSponsorsFooter";
 
 const Women = () => {
   const { t } = useTranslation();
