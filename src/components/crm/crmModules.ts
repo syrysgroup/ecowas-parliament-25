@@ -273,6 +273,14 @@ export const CRM_MODULES: CRMModule[] = [
     isStub: false,
   },
   {
+    id: "media-library",
+    label: "Media Library",
+    icon: Image,
+    section: "media-library",
+    allowedRoles: ["super_admin", "admin"],
+    isStub: false,
+  },
+  {
     id: "settings",
     label: "Settings",
     icon: Settings,
