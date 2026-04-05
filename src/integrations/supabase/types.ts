@@ -258,6 +258,7 @@ export type Database = {
         Row: {
           capacity: number | null
           country: string | null
+          cover_image_url: string | null
           created_at: string
           date: string
           description: string | null
@@ -266,12 +267,17 @@ export type Database = {
           is_published: boolean
           location: string | null
           programme: string | null
+          registration_type: string
+          registration_url: string | null
+          tag: string | null
+          tag_color: string | null
           title: string
           updated_at: string
         }
         Insert: {
           capacity?: number | null
           country?: string | null
+          cover_image_url?: string | null
           created_at?: string
           date: string
           description?: string | null
@@ -280,12 +286,17 @@ export type Database = {
           is_published?: boolean
           location?: string | null
           programme?: string | null
+          registration_type?: string
+          registration_url?: string | null
+          tag?: string | null
+          tag_color?: string | null
           title: string
           updated_at?: string
         }
         Update: {
           capacity?: number | null
           country?: string | null
+          cover_image_url?: string | null
           created_at?: string
           date?: string
           description?: string | null
@@ -294,6 +305,10 @@ export type Database = {
           is_published?: boolean
           location?: string | null
           programme?: string | null
+          registration_type?: string
+          registration_url?: string | null
+          tag?: string | null
+          tag_color?: string | null
           title?: string
           updated_at?: string
         }
@@ -326,6 +341,91 @@ export type Database = {
           invited_by?: string
           role?: Database["public"]["Enums"]["app_role"]
           token?: string
+        }
+        Relationships: []
+      }
+      news_articles: {
+        Row: {
+          author_id: string | null
+          content: string | null
+          cover_image_url: string | null
+          created_at: string
+          excerpt: string | null
+          id: string
+          published_at: string | null
+          slug: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author_id?: string | null
+          content?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          excerpt?: string | null
+          id?: string
+          published_at?: string | null
+          slug: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string | null
+          content?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          excerpt?: string | null
+          id?: string
+          published_at?: string | null
+          slug?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "news_articles_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "news_articles_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "public_nominee_leaderboard"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "news_articles_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "public_representatives"
+            referencedColumns: ["profile_id"]
+          },
+        ]
+      }
+      newsletter_subscribers: {
+        Row: {
+          email: string
+          id: string
+          subscribed_at: string
+          unsubscribed_at: string | null
+        }
+        Insert: {
+          email: string
+          id?: string
+          subscribed_at?: string
+          unsubscribed_at?: string | null
+        }
+        Update: {
+          email?: string
+          id?: string
+          subscribed_at?: string
+          unsubscribed_at?: string | null
         }
         Relationships: []
       }
@@ -471,6 +571,57 @@ export type Database = {
           },
         ]
       }
+      partners: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_published: boolean
+          lead_image_url: string | null
+          lead_name: string | null
+          lead_role: string | null
+          logo_url: string | null
+          name: string
+          partner_type: string
+          slug: string
+          sort_order: number
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_published?: boolean
+          lead_image_url?: string | null
+          lead_name?: string | null
+          lead_role?: string | null
+          logo_url?: string | null
+          name: string
+          partner_type?: string
+          slug: string
+          sort_order?: number
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_published?: boolean
+          lead_image_url?: string | null
+          lead_name?: string | null
+          lead_role?: string | null
+          logo_url?: string | null
+          name?: string
+          partner_type?: string
+          slug?: string
+          sort_order?: number
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -586,6 +737,52 @@ export type Database = {
           },
         ]
       }
+      site_content: {
+        Row: {
+          content: Json
+          id: string
+          section_key: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          content?: Json
+          id?: string
+          section_key: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          content?: Json
+          id?: string
+          section_key?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_content_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "site_content_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "public_nominee_leaderboard"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "site_content_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "public_representatives"
+            referencedColumns: ["profile_id"]
+          },
+        ]
+      }
       site_visitors: {
         Row: {
           browser: string | null
@@ -622,6 +819,54 @@ export type Database = {
           ip_address?: string | null
           referrer?: string | null
           session_id?: string | null
+        }
+        Relationships: []
+      }
+      sponsors: {
+        Row: {
+          created_at: string
+          description: string | null
+          email: string | null
+          id: string
+          is_published: boolean
+          logo_url: string | null
+          name: string
+          programmes: string[] | null
+          slug: string
+          sort_order: number
+          tier: string
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          email?: string | null
+          id?: string
+          is_published?: boolean
+          logo_url?: string | null
+          name: string
+          programmes?: string[] | null
+          slug: string
+          sort_order?: number
+          tier?: string
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          email?: string | null
+          id?: string
+          is_published?: boolean
+          logo_url?: string | null
+          name?: string
+          programmes?: string[] | null
+          slug?: string
+          sort_order?: number
+          tier?: string
+          updated_at?: string
+          website?: string | null
         }
         Relationships: []
       }

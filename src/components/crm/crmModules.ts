@@ -19,6 +19,12 @@ import {
   Crown,
   Settings,
   Globe2,
+  CalendarDays,
+  Handshake,
+  Newspaper,
+  PanelTop,
+  Contact,
+  MailCheck,
 } from "lucide-react";
 
 export type ModuleId =
@@ -39,6 +45,12 @@ export type ModuleId =
   | "cms"
   | "super-admin"
   | "geo-analytics"
+  | "events-manager"
+  | "sponsors-partners"
+  | "news-editor"
+  | "site-content"
+  | "contact-submissions"
+  | "newsletter"
   | "settings";
 
 export interface CRMModule {
@@ -208,6 +220,54 @@ export const CRM_MODULES: CRMModule[] = [
     icon: Globe2,
     section: "geo-analytics",
     allowedRoles: ["super_admin", "admin"],
+    isStub: false,
+  },
+  {
+    id: "events-manager",
+    label: "Events Manager",
+    icon: CalendarDays,
+    section: "events-manager",
+    allowedRoles: ["super_admin", "admin"],
+    isStub: false,
+  },
+  {
+    id: "sponsors-partners",
+    label: "Sponsors & Partners",
+    icon: Handshake,
+    section: "sponsors-partners",
+    allowedRoles: ["super_admin", "admin", "sponsor_manager"],
+    isStub: false,
+  },
+  {
+    id: "news-editor",
+    label: "News Editor",
+    icon: Newspaper,
+    section: "news-editor",
+    allowedRoles: ["super_admin", "admin", "moderator", "communications_officer"],
+    isStub: false,
+  },
+  {
+    id: "site-content",
+    label: "Site Content",
+    icon: PanelTop,
+    section: "site-content",
+    allowedRoles: ["super_admin", "admin"],
+    isStub: false,
+  },
+  {
+    id: "contact-submissions",
+    label: "Contact Forms",
+    icon: Contact,
+    section: "contact-submissions",
+    allowedRoles: ["super_admin", "admin"],
+    isStub: false,
+  },
+  {
+    id: "newsletter",
+    label: "Newsletter",
+    icon: MailCheck,
+    section: "newsletter",
+    allowedRoles: ["super_admin", "admin", "marketing_manager"],
     isStub: false,
   },
   {
