@@ -31,6 +31,7 @@ const NewsEditorModule = lazy(() => import("@/components/crm/modules/NewsEditorM
 const SiteContentModule = lazy(() => import("@/components/crm/modules/SiteContentModule"));
 const ContactSubmissionsModule = lazy(() => import("@/components/crm/modules/ContactSubmissionsModule"));
 const NewsletterModule = lazy(() => import("@/components/crm/modules/NewsletterModule"));
+const MediaLibraryModule = lazy(() => import("@/components/crm/modules/MediaLibraryModule"));
 
 function ModuleLoader() {
   return (
@@ -93,6 +94,7 @@ export default function CRMDashboard() {
       case "site-content":    return <Suspense fallback={<ModuleLoader />}><SiteContentModule /></Suspense>;
       case "contact-submissions": return <Suspense fallback={<ModuleLoader />}><ContactSubmissionsModule /></Suspense>;
       case "newsletter":      return <Suspense fallback={<ModuleLoader />}><NewsletterModule /></Suspense>;
+      case "media-library":   return <Suspense fallback={<ModuleLoader />}><MediaLibraryModule /></Suspense>;
       default:                return <DashboardModule onNavigate={navigateSection} />;
     }
   };
