@@ -19,6 +19,12 @@ import {
   Crown,
   Settings,
   Globe2,
+  CalendarDays,
+  Handshake,
+  Newspaper,
+  PanelTop,
+  Contact,
+  MailCheck,
 } from "lucide-react";
 
 export type ModuleId =
@@ -39,6 +45,12 @@ export type ModuleId =
   | "cms"
   | "super-admin"
   | "geo-analytics"
+  | "events-manager"
+  | "sponsors-partners"
+  | "news-editor"
+  | "site-content"
+  | "contact-submissions"
+  | "newsletter"
   | "settings";
 
 export interface CRMModule {
