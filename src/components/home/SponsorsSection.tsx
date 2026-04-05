@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import AnimatedSection from "@/components/shared/AnimatedSection";
+import parliament25Logo from "@/assets/parliament-25-logo.png";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
