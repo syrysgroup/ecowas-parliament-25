@@ -13,11 +13,11 @@ interface SocialMediaBarProps {
 }
 
 const socials = [
-  { name: "X (Twitter)", icon: XIcon, href: "https://x.com/ecoparl_hub" },
-  { name: "Instagram", icon: Instagram, href: "https://instagram.com/ecoparl_hub" },
-  { name: "Facebook", icon: Facebook, href: "https://facebook.com/ecoparl_hub" },
-  { name: "LinkedIn", icon: Linkedin, href: "https://linkedin.com/company/ecoparl_hub" },
-  { name: "YouTube", icon: Youtube, href: "https://youtube.com/@ecoparl_hub" },
+  { name: "X (Twitter)", icon: XIcon, href: "https://x.com/ecoparl_initiatives", color: "text-foreground dark:text-white" },
+  { name: "Instagram", icon: Instagram, href: "https://instagram.com/ecoparl_initiatives", color: "text-[#E4405F]" },
+  { name: "Facebook", icon: Facebook, href: "https://facebook.com/ecoparl_initiatives", color: "text-[#1877F2]" },
+  { name: "LinkedIn", icon: Linkedin, href: "https://linkedin.com/company/ecoparl_initiatives", color: "text-[#0A66C2]" },
+  { name: "YouTube", icon: Youtube, href: "https://youtube.com/@ecoparl_initiatives", color: "text-[#FF0000]" },
 ];
 
 const SocialMediaBar = ({ variant = "full", showParliamentLink = true, className = "" }: SocialMediaBarProps) => {
@@ -25,7 +25,7 @@ const SocialMediaBar = ({ variant = "full", showParliamentLink = true, className
     <div className={className}>
       <div className="flex items-center gap-3">
         {variant === "full" && (
-          <span className="text-sm font-semibold text-muted-foreground mr-1">@ecoparl_hub</span>
+          <span className="text-sm font-semibold text-muted-foreground mr-1">@ecoparl_initiatives</span>
         )}
         {socials.map((s) => {
           const Icon = s.icon;
@@ -35,8 +35,8 @@ const SocialMediaBar = ({ variant = "full", showParliamentLink = true, className
               href={s.href}
               target="_blank"
               rel="noreferrer"
-              title={`${s.name} — @ecoparl_hub`}
-              className="w-8 h-8 rounded-lg bg-muted hover:bg-primary/10 flex items-center justify-center text-muted-foreground hover:text-primary transition-colors"
+              title={`${s.name} — @ecoparl_initiatives`}
+              className={`w-8 h-8 rounded-lg bg-muted hover:bg-primary/10 flex items-center justify-center ${s.color} transition-colors`}
             >
               <Icon className="h-4 w-4" />
             </a>

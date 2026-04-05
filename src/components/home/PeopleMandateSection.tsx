@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Scale, Users, Shield, Globe } from "lucide-react";
 import { useTranslation } from "@/lib/i18n";
+import parliamentChamber from "@/assets/parliament-chamber.png";
 
 const PeopleMandateSection = () => {
   const { t } = useTranslation();
@@ -17,11 +18,35 @@ const PeopleMandateSection = () => {
   return (
     <section className="py-20 bg-gradient-to-b from-background to-muted/30">
       <div className="container">
+        {/* Hero image with overlay */}
+        <AnimatedSection className="mb-14">
+          <div className="relative rounded-3xl overflow-hidden shadow-2xl">
+            <img
+              src={parliamentChamber}
+              alt="ECOWAS Parliament during the 25th Anniversary ordinary session in Abuja"
+              className="w-full h-[320px] md:h-[480px] object-cover"
+              loading="lazy"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10">
+              <Badge className="bg-ecowas-yellow/90 text-accent-foreground border-0 mb-3 text-xs font-bold">
+                Founded 16 November 2000 · 25th Anniversary
+              </Badge>
+              <h2 className="text-2xl md:text-4xl font-black text-white leading-tight mb-2">
+                {t("mandate.title")} <span className="text-ecowas-yellow">{t("mandate.titleAccent")}</span>
+              </h2>
+              <p className="text-white/70 text-sm md:text-base max-w-2xl leading-relaxed">
+                {t("mandate.desc")}
+              </p>
+              <p className="text-white/50 text-xs mt-3 italic">
+                ECOWAS Parliament during the 25th Anniversary ordinary session in Abuja
+              </p>
+            </div>
+          </div>
+        </AnimatedSection>
+
         <AnimatedSection className="text-center max-w-3xl mx-auto mb-14">
           <Badge className="bg-primary/10 text-primary border-primary/20 mb-4">{t("mandate.badge")}</Badge>
-          <h2 className="text-3xl md:text-4xl font-black text-foreground leading-tight mb-4">
-            {t("mandate.title")} <span className="text-primary">{t("mandate.titleAccent")}</span>
-          </h2>
           <p className="text-muted-foreground leading-relaxed">{t("mandate.desc")}</p>
         </AnimatedSection>
 

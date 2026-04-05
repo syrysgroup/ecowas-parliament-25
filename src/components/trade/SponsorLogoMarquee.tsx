@@ -18,7 +18,7 @@ const SponsorLogoMarquee = () => {
       <div className="inline-flex animate-marquee items-center" style={{ animationDuration: "40s" }}>
         {doubled.map((s, i) => (
           <div key={i} className="inline-flex items-center gap-2.5 px-6">
-            <SponsorLogo name={s.name} color={s.color} size={32} />
+            <SponsorLogo name={s.name} color={s.color} size={64} />
             <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider whitespace-nowrap">
               {s.name}
             </span>

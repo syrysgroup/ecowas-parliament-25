@@ -23,7 +23,7 @@ const ProgrammeSponsorMarquee = ({ sponsors, speed = 40 }: ProgrammeSponsorMarqu
             <img
               src={parliament25Logo}
               alt={s.name}
-              className="h-8 w-8 object-contain"
+              className="h-16 w-16 object-contain"
               loading="lazy"
             />
             <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider whitespace-nowrap">
