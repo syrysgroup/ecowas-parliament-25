@@ -54,6 +54,7 @@ const Women = () => {
 
   return (
     <Layout>
+      <ProgrammeSponsorMarquee sponsors={[{ name: "UNDP West Africa" }, { name: "Duchess International" }, { name: "ECOWAS Commission" }]} />
       <section className="relative py-24 bg-gradient-hero text-primary-foreground overflow-hidden">
         <HeroIllustration theme="women" />
         <div className="container relative">
