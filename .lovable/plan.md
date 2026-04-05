@@ -1,125 +1,70 @@
 
 
-# CRM Gap Analysis and Enhancement Plan
+## CRM Gap Analysis — Updated Assessment
 
-## Current State Summary
+Your analysis was thorough, but many items have already been implemented at both the database and CRM module level. Here is the revised status and remaining work.
 
-The CRM has 18 modules: Dashboard, Tasks, Inbox, Email, Calendar, Messaging, Documents, Team Directory, People & Access, Parliament Ops, Sponsor Metrics, Analytics, Finance, Marketing, CMS Editor, Super Admin Hub, Geo Analytics, and Settings.
+### Already Implemented (No Action Needed)
 
----
+| Gap | Status |
+|-----|--------|
+| Team member profile editing (photo, title, bio, org) | Done — PeopleModule has avatar upload to `team-avatars`, title, org, bio, show_on_website fields |
+| Events Manager module | Done — Full CRUD with cover image upload, registration_type (none/external/form), tag/tag_color, publish toggle |
+| Sponsors & Partners Manager | Done — Tabbed UI for sponsors + partners, logo upload, tier, programmes, publish toggle |
+| News Editor module | Done — CRUD with cover image upload, slug, status (draft/published), publish workflow |
+| Site Content Manager | Done — Editable sections for hero, stats, quote, about via `site_content` table |
+| Contact Submissions viewer | Done — Read-only list of submissions |
+| Newsletter Subscribers viewer | Done — Shows active/unsubscribed counts and list |
+| Storage buckets | Done — team-avatars, event-images, sponsor-logos, news-images, cms-media, partner-assets all exist |
+| Database tables | Done — sponsors, partners, news_articles, site_content, newsletter_subscribers, events (with cover_image_url, registration_type, etc.) all exist |
 
-## Identified Gaps
+### Remaining Gaps (Actual Work Needed)
 
-### 1. Team Member Management (Photos, Bios, Website Visibility)
+#### 1. Public pages still hardcoded — not reading from database
 
-**Current state:** The Super Admin can toggle `show_on_website` and edit name/country, but there is NO way to upload profile photos (avatar_url), edit title, bio, or organisation from the CRM. The Team page on the website reads `avatar_url`, `title`, `organisation` from profiles but these fields can only be set... nowhere in the CRM UI.
+These pages have CRM modules to manage the data, but the public-facing components still use hardcoded arrays:
 
-**Fix:** Enhance the People Module or Super Admin user edit dialog to include:
-- Photo upload (to Supabase Storage)
-- Title, organisation, bio fields
-- Preview of how the member appears on the public Team page
+- **Homepage LatestNews** (`LatestNews.tsx`) — hardcoded `placeholderNews` array with imported images, does NOT query `news_articles` table
+- **News page** (`News.tsx`) — hardcoded `allNews` array, does NOT query `news_articles`
+- **Homepage EventsSection** (`EventsSection.tsx`) — has DB query but falls back to hardcoded events; already partially wired
+- **Homepage SponsorsSection** (`SponsorsSection.tsx`) — entirely hardcoded programme/sponsor arrays
+- **Stakeholders page** (`Stakeholders.tsx`) — hardcoded stakeholders, partners, and sponsors arrays
+- **Homepage StatsSection** (`StatsSection.tsx`) — hardcoded stat values (not reading from `site_content`)
+- **Homepage HeroSection** (`HeroSection.tsx`) — hardcoded text (not reading from `site_content`)
+- **PartnersStrip** (`PartnersStrip.tsx`) — hardcoded AWALCO text
 
-### 2. Sponsors / Partners / Consultants Management
-
-**Current state:** Sponsor data on the public website (`Stakeholders.tsx`, `SponsorPage.tsx`) is **hardcoded** — not driven from the database. The CRM Sponsor Metrics module only tracks users with the `sponsor` role but has no fields for logo, description, website URL, tier (persisted), or programme association. There is no Partners or Consultants management module at all.
-
-**Fix:** Create a `sponsors` database table (name, logo_url, description, tier, website, programmes, is_published) and a CRM module to manage them. Similarly for `partners` and `consultants` tables. Public pages should read from the database instead of hardcoded arrays.
-
-### 3. Events Management (Design Images, Registration URLs/Forms)
-
-**Current state:** The Calendar module creates internal CRM events. The public `events` table exists with basic fields (title, date, location, description, capacity, is_published) but is missing: **cover image/design image**, **registration URL** (external link), and **registration form toggle** (collect info via built-in form vs external link). The `EventsSection.tsx` on the homepage is also fully hardcoded.
-
-**Fix:**
-- Add columns to `events` table: `cover_image_url`, `registration_url`, `registration_type` (none/external/internal_form), `registration_fields` (JSON for custom form fields)
-- Create a dedicated **Events Manager** CRM module (separate from Calendar) for managing public-facing events with image upload, registration config, and publish workflow
-- Make homepage EventsSection pull from the database
-
-### 4. CMS Editor Limitations
-
-**Current state:** The CMS module manages a `cms_pages` table with slug/title/content/status. However, it only supports plain text/markdown content with no image uploads, no layout builder, and no way to manage the actual homepage sections (hero text, stats, quotes, news) which are all hardcoded.
-
-**Fix:**
-- Add image upload support to CMS pages
-- Create a **Site Content Manager** for editing homepage sections (hero copy, stats numbers, quote text, news items) stored in a `site_content` key-value table
-- Add a media library for uploading and managing images used across the site
-
-### 5. News Management
-
-**Current state:** The News/LatestNews section on the homepage is hardcoded. There is no `news` or `articles` table and no CRM module for publishing news.
-
-**Fix:** Create a `news_articles` table and a News Editor within CMS or as a sub-module. Homepage LatestNews should query the database.
-
-### 6. Newsletter / Contact Submissions Management
-
-**Current state:** `contact_submissions` table exists but there's no CRM module to view/manage submissions. Newsletter signups have no table or management.
-
-**Fix:** Add a Contact Submissions viewer in the CRM and a `newsletter_subscribers` table with management UI.
-
-### 7. Media / Asset Library
-
-**Current state:** Only one storage bucket (`partner-assets`). No centralized media library in the CRM for uploading event banners, sponsor logos, team photos, news images, etc.
-
-**Fix:** Create storage buckets (`team-avatars`, `event-images`, `sponsor-logos`, `news-images`, `cms-media`) and a Media Library module or integrated upload component.
-
-### 8. Public Website Content Still Hardcoded
-
-**Current state:** Multiple public pages have hardcoded data that should be admin-editable:
-- Homepage hero text, stats, pillars
-- EventsSection (5 hardcoded events)
-- SponsorsSection, PartnersStrip
-- Stakeholders page (hardcoded people and sponsors)
-- SponsorPage (hardcoded sponsor details)
-- Programme pages sponsor sections
-
-**Fix:** Migrate all hardcoded content to database tables with CRM editing interfaces.
+#### 2. Programme pages sponsor sections
+Programme pages (Trade, Youth, Women, etc.) have hardcoded sponsor data in their footers/marquees.
 
 ---
 
-## Recommended Implementation Priority
+### Implementation Plan
 
-### Phase 1 — Core Content Management (highest impact)
-1. **Team Member full profile editing** — add photo upload, title, bio, organisation to CRM user management
-2. **Events Manager module** — cover images, registration URL/form config, publish to website
-3. **Sponsors/Partners DB + CRM module** — replace hardcoded sponsor/partner data
+**Phase 1 — Wire public pages to existing database tables**
 
-### Phase 2 — Website Content Control
-4. **News/Articles module** — create, edit, publish news from CRM
-5. **Site Content Manager** — editable homepage sections (hero, stats, quotes)
-6. **Media Library** — centralized image/asset management with storage buckets
+1. **News pages → `news_articles` table**
+   - Replace hardcoded arrays in `LatestNews.tsx` and `News.tsx` with `useQuery` calls to `news_articles` where `status = 'published'`
+   - Use `cover_image_url` from DB, fall back to placeholder if null
 
-### Phase 3 — Operational Completeness
-7. **Contact Submissions viewer** — view and manage form submissions in CRM
-8. **Newsletter Subscribers management**
-9. **Public pages migration** — replace all hardcoded content with DB-driven content
+2. **Sponsors/Partners on public pages → `sponsors` + `partners` tables**
+   - Replace hardcoded data in `SponsorsSection.tsx`, `Stakeholders.tsx`, and programme page footers with DB queries where `is_published = true`
 
----
+3. **Homepage sections → `site_content` table**
+   - Wire `HeroSection.tsx` and `StatsSection.tsx` to read from `site_content` (keys: `hero`, `stats`) with current hardcoded values as fallbacks
 
-## Technical Details
+4. **EventsSection cleanup**
+   - Remove hardcoded fallback events (DB query already exists)
 
-### New Database Tables Needed
-- `sponsors` — id, name, slug, logo_url, description, tier, website, email, programmes (text[]), is_published, sort_order, created_at
-- `partners` — id, name, slug, logo_url, description, type (implementing/institutional), website, is_published, sort_order
-- `news_articles` — id, title, slug, excerpt, content, cover_image_url, author_id, status (draft/published), published_at, created_at
-- `site_content` — id, section_key, content (jsonb), updated_at, updated_by
-- `newsletter_subscribers` — id, email, subscribed_at, unsubscribed_at
+**Phase 2 — Enhance existing modules**
 
-### Events Table Additions
-- `cover_image_url` (text)
-- `registration_url` (text) 
-- `registration_type` (text: none/external/form)
+5. **News page detail view** — Add `/news/:slug` route to display individual articles from DB
+6. **Event registration** — Wire the `event_registrations` table to a registration form on event detail pages
+7. **Newsletter signup** — Wire the homepage `NewsletterSection` form to insert into `newsletter_subscribers`
 
-### Storage Buckets Needed
-- `team-avatars` (public)
-- `event-images` (public)
-- `sponsor-logos` (public)
-- `news-images` (public)
-
-### New/Enhanced CRM Modules
-- Enhanced People Module (photo + full profile editing)
-- Events Manager (new, separate from Calendar)
-- Sponsors & Partners Manager (new)
-- News Editor (new or CMS sub-tab)
-- Site Content Manager (new or CMS sub-tab)
-- Contact Submissions Viewer (new)
-- Media Library (new)
+### Technical Approach
+- Each public component gets a `useQuery` hook querying the relevant Supabase table
+- Hardcoded data becomes the fallback (shown only when DB returns empty)
+- No database migrations needed — all tables and columns already exist
+- No new CRM modules needed — all management UIs already exist
+- Estimated: ~8 files modified, 0 new files
 
