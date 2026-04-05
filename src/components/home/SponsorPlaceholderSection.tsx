@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import { Handshake } from "lucide-react";
 import SponsorPlaceholderLogo from "@/components/shared/SponsorPlaceholderLogo";
 import { useTranslation } from "@/lib/i18n";
-import { useTranslation } from "@/lib/i18n";
 
 const mockSponsors = [
   { name: "West African Development Bank" },
