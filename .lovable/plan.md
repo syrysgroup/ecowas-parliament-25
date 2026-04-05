@@ -1,51 +1,83 @@
 
 
-# Implementation Plan — 7 Changes
+# Implementation Plan
 
-## 1. Redesign People-Oriented Mandate Section (Homepage)
-Copy the uploaded parliament chamber photo (`IMG_9724.png`) to `src/assets/parliament-chamber.jpg`. Redesign `PeopleMandateSection.tsx` to feature this image prominently — large hero-style photo with overlay text about the people's mandate, caption "ECOWAS Parliament during the 25th Anniversary ordinary session in Abuja". Keep the four pillar cards below but add the founding date: "Founded 16 November 2000". Add a visual note about the 25th anniversary milestone.
-
-**Files:** `src/components/home/PeopleMandateSection.tsx`, asset copy
-
-## 2. Increase Sponsor Logo Sizes (2x)
-Double the logo/icon sizes in `SponsorPlaceholderSection.tsx` (size 40→80), `SponsorsSection.tsx` (w-12 h-12 → w-24 h-24, img w-10 h-10 → w-20 h-20), and `SponsorPlaceholderLogo.tsx` default size. Also increase logos in programme sponsor marquees and footer sponsor strips.
-
-**Files:** `SponsorPlaceholderSection.tsx`, `SponsorsSection.tsx`, `ProgrammeSponsorMarquee.tsx`, `SponsorLogoMarquee.tsx`
-
-## 3. Fix Transparent Buttons/Text Across the Project
-Audit all `variant="ghost"` and `variant="outline"` buttons, especially those on hero gradients. Replace ghost back-buttons with solid/semi-opaque backgrounds (`bg-white/10` or `bg-primary-foreground/15`). Fix the MediaKit outline button that uses `bg-transparent`. Ensure all buttons have visible backgrounds in both light and dark themes.
-
-**Files:** `ProgrammePageTemplate.tsx`, `Parliament.tsx`, `MediaKit.tsx`, `SponsorCTA.tsx`, `Youth.tsx`, `Trade.tsx`, `Women.tsx`, `Civic.tsx`, `Culture.tsx`, `Awards.tsx`, `InnovatorsChallenge.tsx`, `SmartChallenge.tsx`
-
-## 4. Update Social Media Handle & Add Natural Colors
-Change `@ecoparl_hub` to `@ecoparl_initiatives` across all URLs and display text in `SocialMediaBar.tsx`. Give each social icon its brand color (X/Twitter: black/white, Instagram: gradient pink, Facebook: #1877F2, LinkedIn: #0A66C2, YouTube: #FF0000) instead of the current monochrome `text-muted-foreground`.
-
-**Files:** `src/components/shared/SocialMediaBar.tsx`
-
-## 5. Create Sponsors Page with Individual Sponsor Sub-Pages
-Create a dedicated `/sponsors` page (replace or enhance existing `SponsorPortal.tsx`) that lists all programme sponsors with cards. Each sponsor gets an individual page at `/sponsors/:slug` showing: ECOWAS Parliament logo + sponsor logo only in the header, detailed sponsorship info, programme(s) they support, and a link to the sponsor's external site. Add route in `App.tsx`.
-
-**Sponsors:** NASENI, SMEDAN, Providus Bank, Alliance Economic Research and Ethics (from memory).
-
-**Files:** New `src/pages/sponsors/SponsorPage.tsx`, update `SponsorPortal.tsx`, update `App.tsx` route
-
-## 6. Redesign Events Page — 3-Column Grid + Individual Event Pages
-Change the events layout from stacked cards to a 3-column grid (`grid-cols-1 md:grid-cols-2 lg:grid-cols-3`). "View More" links to `/events/:id` — a new individual event page with full details, a registration form, "Add to Calendar" (.ics download), and social share buttons (Twitter, Facebook, WhatsApp, copy link). Add route in `App.tsx`.
-
-**Files:** Update `src/pages/Events.tsx`, new `src/pages/events/EventDetail.tsx`, update `App.tsx`
-
-## 7. Redesign Documents Page — In-Browser Viewing + Multi-Language Upload
-Redesign `/documents` to show document cards with an inline PDF/document viewer (using `<iframe>` or `<object>` for PDFs) instead of download-only. Each document entry supports multiple language versions (EN/FR/PT tabs). Remove the download-only pattern; add a viewer modal or inline expand. Include language tabs per document so admins can upload one file per language.
-
-**Files:** Update `src/pages/Documents.tsx`
+This plan covers 5 distinct changes across the application.
 
 ---
 
-## Technical Notes
-- The uploaded image will be copied to `src/assets/` and imported as an ES module
-- Individual sponsor/event pages use React Router dynamic segments (`:slug`, `:id`)
-- Calendar export generates `.ics` files client-side
-- Document viewer uses native browser PDF rendering via iframe
-- Social icon brand colors use inline style or Tailwind arbitrary values
-- All button fixes ensure minimum contrast in both `dark` and `light` class themes
+## 1. Redesign People-Oriented Mandate Section for Portrait Image
 
+**File**: `src/components/home/PeopleMandateSection.tsx`
+
+The current hero image uses `object-cover` on a landscape-ratio container, which crops a portrait image badly. Redesign to a two-column layout: text/overlay on the left, portrait image on the right (or stack on mobile). The image container will use a portrait aspect ratio (`aspect-[3/4]`) so the portrait photo displays properly. On mobile, the image stacks above the text at a reduced height.
+
+---
+
+## 2. Add Sponsors Page to Navigation Menu
+
+**File**: `src/components/layout/Navbar.tsx`
+
+Add a "Sponsors" link to the navbar. The `/sponsors` route already exists (mapped to `SponsorPortal`). Add it as a top-level nav item or nest it under an existing dropdown (e.g., alongside Stakeholders). Will add as a sibling to the Stakeholders link or as a child in the same dropdown grouping.
+
+---
+
+## 3. Past Events: Disable Registration, Show Press/Briefings
+
+**File**: `src/pages/events/EventDetail.tsx`
+
+- Compare event date to current date (`new Date()`)
+- If the event has passed, hide the registration form entirely
+- Replace it with a "This event has concluded" notice
+- Add a section for related press/briefings with placeholder external article links (title + URL format) that can be populated later
+
+---
+
+## 4. Add New Stakeholder Card Between Secretary General and Chief Communications Officer
+
+**File**: `src/pages/Stakeholders.tsx`
+
+Insert a new entry in the `ecowasStakeholders` array at index 2 (between "Hon. Alhaji Bah" and "Mrs. Uche Duru"). Will need a name, title, and image asset. Since no details were provided, will add a placeholder card with a generic title like "Director" using the existing `directorImage` asset that's already imported but unused in the current array.
+
+---
+
+## 5. Parliament Page: Restructure with Delegates Tab, Principal Officers, and Country Sub-Pages
+
+**Files**: `src/pages/programmes/Parliament.tsx`, new file `src/pages/programmes/ParliamentCountry.tsx`, `src/App.tsx`
+
+### 5a. Add explanatory section before Country Delegations
+Add a brief section explaining that the youth parliament emulates the actual ECOWAS Parliament in representation structure.
+
+### 5b. Principal Officers Section
+Add a prominent section listing the 5 principal officers:
+- Speaker — Togo
+- 1st Deputy Speaker — Nigeria
+- 2nd Deputy Speaker — Cote d'Ivoire
+- 3rd Deputy Speaker — Ghana
+- 4th Deputy Speaker — Gambia
+
+Each displayed with placeholder ECOWAS Parliament logo image, blank name, and "6th Legislature" tagline.
+
+### 5c. Delegates Tab/Section
+Add a prominent "Delegates" tab or section on the Parliament page that shows:
+1. Principal officers at the top
+2. Below that, all country delegation slots with placeholder images (ECOWAS Parliament logo) and blank names, tagged "6th Legislature"
+
+### 5d. Country Sub-Pages
+- Add route `/programmes/parliament/:country` in `App.tsx`
+- Create `ParliamentCountry.tsx` that displays:
+  - Country name, flag, seat count
+  - Nominations and voting specific to that country
+  - Verified delegates for that country
+- Make `CountryDelegationCard` link to this sub-page
+
+### 5e. Move nominations/voting to country pages
+The main Parliament page will no longer show the global nominee leaderboard and representatives grid. Instead, each country card links to its own page where nominations and voting are displayed.
+
+---
+
+## Technical Details
+
+- Portrait image fix: Switch from full-width overlay layout to a `grid lg:grid-cols-2` with the image in a `aspect-[3/4]` container
+- Event past check: `const isPast = new Date(event.date) < new Date()`
+- Parliament tabs: Use existing `Tabs`/`TabsList`
