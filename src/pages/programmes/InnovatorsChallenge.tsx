@@ -1,7 +1,9 @@
 import { Link } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import AnimatedSection from "@/components/shared/AnimatedSection";
-import SponsorLogo from "@/components/shared/SponsorLogo";
+import SponsorPlaceholderLogo from "@/components/shared/SponsorPlaceholderLogo";
+import ProgrammeSponsorMarquee from "@/components/shared/ProgrammeSponsorMarquee";
+import ProgrammeSponsorsFooter from "@/components/shared/ProgrammeSponsorsFooter";
 import FlagImg from "@/components/shared/FlagImg";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
