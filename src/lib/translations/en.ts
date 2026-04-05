@@ -1213,4 +1213,8 @@ export const en: Record<string, string> = {
   "trade.ctaBanner": "Ready to join the T2T Programme?",
   "trade.applyNow": "Apply Now",
   "trade.partnerWithUs": "Partner With Us",
+
+  // ─── Team Page ────────────────────────────────────────────────────
+  "team.implementationTeam": "Implementation Team",
+  "team.consultants": "Consultants",
 };
