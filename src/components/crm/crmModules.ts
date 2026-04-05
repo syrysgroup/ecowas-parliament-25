@@ -2,6 +2,7 @@ import type { AppRole } from "@/contexts/AuthContext";
 import type { LucideIcon } from "lucide-react";
 import {
   LayoutDashboard,
+  Image,
   CheckSquare,
   Mail,
   Inbox,
