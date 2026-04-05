@@ -6,12 +6,12 @@ import { useTranslation } from "@/lib/i18n";
 import { useTranslation } from "@/lib/i18n";
 
 const mockSponsors = [
-  { name: "West African Development Bank", color: "hsl(var(--ecowas-blue))" },
-  { name: "ECOWAS Commission", color: "hsl(var(--ecowas-green))" },
-  { name: "African Union", color: "hsl(var(--accent))" },
-  { name: "United Nations Development Programme", color: "hsl(var(--primary))" },
-  { name: "GIZ West Africa", color: "hsl(var(--secondary))" },
-  { name: "Access Bank Group", color: "hsl(var(--ecowas-yellow))" },
+  { name: "West African Development Bank" },
+  { name: "ECOWAS Commission" },
+  { name: "African Union" },
+  { name: "United Nations Development Programme" },
+  { name: "GIZ West Africa" },
+  { name: "Access Bank Group" },
 ];
 
 const SponsorPlaceholderSection = () => {
