@@ -70,6 +70,7 @@ const objectives = [
 
 const Civic = () => (
   <Layout>
+    <ProgrammeSponsorMarquee sponsors={[{ name: "EU Delegation ECOWAS" }, { name: "ECOWAS Commission" }, { name: "AWALCO" }]} />
     {/* Hero */}
     <section className="relative py-24 bg-gradient-hero text-primary-foreground overflow-hidden">
       <HeroIllustration theme="civic" />
