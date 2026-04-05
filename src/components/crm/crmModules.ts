@@ -52,6 +52,7 @@ export type ModuleId =
   | "site-content"
   | "contact-submissions"
   | "newsletter"
+  | "media-library"
   | "settings";
 
 export interface CRMModule {
