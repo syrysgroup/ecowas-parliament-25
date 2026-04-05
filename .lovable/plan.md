@@ -1,53 +1,91 @@
 
 
-# Plan: Youth Sub-Pages for Innovators Challenge and Smart Challenge
+# Plan: Sponsor Logos, Event Fliers, and Team Restructure
 
 ## Summary
+Five interconnected changes: (1) Replace all SVG-generated sponsor placeholders with the Parliament @25 logo across the site, (2) add sponsor marquee + footer to all programme pages, (3) redesign Events page with Instagram-sized fliers, (4) restructure Team page groups, (5) update Youth page with logo placeholders and generated column backgrounds.
 
-Create two new sub-pages (`/programmes/youth/innovators` and `/programmes/youth/smart`), update the Youth landing page to remove the footer and link buttons to the new pages, generate hero background images for each, and build rich animated pages with mock sponsor logos.
+---
 
-## Changes
+## 1. Create a Shared Sponsor Placeholder Component
 
-### 1. Update Youth Landing Page (`src/pages/programmes/Youth.tsx`)
-- Replace `<Layout>` with just `<Navbar />` (no Footer)
-- Change both buttons from `scrollToDetails` to `<Link>` navigating to `/programmes/youth/innovators` and `/programmes/youth/smart`
-- Add mock sponsor logos below each half using `SponsorLogo` component:
-  - Innovators: NASENI, SMEDAN, Canada
-  - Smart Challenge: AfDB, SYRYS, Resident Technology
+**New file: `src/components/shared/SponsorPlaceholderLogo.tsx`**
 
-### 2. Create Innovators Challenge Page (`src/pages/programmes/InnovatorsChallenge.tsx`)
-- Full-featured modern page with Layout (navbar + footer)
-- AI-generated hero background image (gradient fallback + abstract tech/innovation pattern)
-- Animated sections using `AnimatedSection` and CSS keyframe animations
-- Content sections: Hero, About/Mission, Innovation Tracks (AgriTech, HealthTech, FinTech, Clean Energy, EdTech), Phases/Timeline, Prizes, Countries, CTA
-- Sponsor strip at bottom showing NASENI, SMEDAN, Canada using `SponsorLogo`
-- Modern design: parallax-like scroll effects, staggered card animations, glassmorphism cards, gradient accents
+A reusable component that renders the Parliament @25 logo (`parliament-25-logo.png`) at a given size with the sponsor name underneath. This replaces all uses of the SVG `SponsorLogo` component for placeholder purposes.
 
-### 3. Create Smart Challenge Page (`src/pages/programmes/SmartChallenge.tsx`)
-- Full-featured modern page with Layout
-- AI-generated hero background image (academic/quiz competition theme)
-- Content driven by concept note: 7-round competition structure, 4 subjects, dual-track scoring, 12 ECOWAS nations, live broadcast finale
-- Sections: Hero, Executive Summary, How It Works (7 rounds visualized), Subjects & Major Declaration, Scoring System, Live Show format, Technology/Platform, CTA
-- Animated interactive elements: round progression timeline, score track visualization, animated stat counters
-- Sponsor strip: AfDB, SYRYS, Resident Technology using `SponsorLogo`
+---
 
-### 4. Generate Hero Background Images
-- Use AI image generation (Nano banana) to create two unique hero backgrounds:
-  - Innovators: abstract tech/startup themed with green/gold tones
-  - Smart Challenge: academic competition themed with gold/blue tones
-- Save to `src/assets/` and import in respective pages
+## 2. Create a Reusable Sponsor Marquee + Footer
 
-### 5. Add Routes (`src/App.tsx`)
-- Add imports for `InnovatorsChallenge` and `SmartChallenge`
-- Add routes: `/programmes/youth/innovators` and `/programmes/youth/smart`
+**New file: `src/components/shared/ProgrammeSponsorMarquee.tsx`**
 
-### 6. Add Translation Keys (`src/lib/translations/en.ts`, `fr.ts`, `pt.ts`)
-- Add keys for both new pages (headings, descriptions, section content)
+A generic top-of-page marquee slider (continuous, uninterrupted scroll) showing Parliament @25 placeholder logos with sponsor names. Accepts a sponsor list as props so each programme page can pass its own sponsors.
+
+**New file: `src/components/shared/ProgrammeSponsorsFooter.tsx`**
+
+A generic bottom-of-page sponsor section with placeholder logos and names, similar to `TradeSponsorsFooter` but using the new placeholder logo. Replaces `TradeSponsorsFooter` and `SponsorPlaceholderSection` with a single shared component.
+
+---
+
+## 3. Add Marquee + Footer to All Programme Pages
+
+Update these pages to include the marquee at top and sponsor footer at bottom:
+- `Women.tsx` - add marquee + footer
+- `Civic.tsx` - add marquee + footer
+- `Culture.tsx` - add marquee + footer
+- `Awards.tsx` - add marquee + footer
+- `Parliament.tsx` - add marquee + footer
+- `InnovatorsChallenge.tsx` - add marquee + footer, replace `SponsorLogo` with placeholder logo
+- `SmartChallenge.tsx` - add marquee + footer, replace `SponsorLogo` with placeholder logo
+
+Update `Trade.tsx` to use the new shared components instead of `SponsorLogoMarquee` and `TradeSponsorsFooter`.
+
+---
+
+## 4. Update Home Page Sponsors Section
+
+In `SponsorsSection.tsx`, replace the initials-circle sponsor cards with the Parliament @25 placeholder logo while keeping sponsor names and descriptions visible.
+
+In `SponsorPlaceholderSection.tsx`, replace `SponsorLogo` SVG with the Parliament @25 placeholder logo.
+
+---
+
+## 5. Events Page: Instagram-Sized Fliers
+
+**Update `src/pages/Events.tsx`:**
+- Generate 6 Instagram-sized (1080x1080 ratio) flier images for each static event using AI image generation, saved to `src/assets/events/`
+- Each event card redesigned: left side shows the square flier image, right side shows event details
+- Replace the "Register" button with a "View More" link that opens the registration dialog
+- Card layout: image takes ~40% width on desktop, full width on mobile above text
+
+---
+
+## 6. Youth Page: Placeholder Logos + Column Backgrounds
+
+**Update `src/pages/programmes/Youth.tsx`:**
+- Replace `SponsorLogo` SVG components with Parliament @25 placeholder logos with sponsor names visible underneath
+- Generate two background images (one for each column: Innovators green-themed, Smart Challenge gold-themed) using AI image generation
+- Apply generated backgrounds behind each split-screen column with overlay for text readability
+
+---
+
+## 7. Team Page: Restructure Groups
+
+**Update `src/pages/Team.tsx`:**
+- Change the three department groups from:
+  - Executive Leadership, Programme Delivery, Communications & Media
+- To:
+  - **Executive Leadership** (keep existing members)
+  - **Implementation Team** (rename from Programme Delivery, keep members)
+  - **Consultants** (rename from Communications & Media, keep members)
+- Update translation keys accordingly (`team.implementationTeam`, `team.consultants`)
+
+---
 
 ## Technical Details
 
-- Both pages use existing `AnimatedSection`, `SponsorLogo`, `Layout`, `FlagImg` components
-- CSS animations: staggered fade-ins, scale-on-scroll, floating elements, gradient shifts
-- Responsive design with mobile-first approach
-- The Smart Challenge page content is derived from the uploaded concept note (7 rounds, 4 subjects, 12 nations, dual scoring, live broadcast)
+- Parliament @25 logo already exists at `src/assets/parliament-25-logo.png`
+- AI image generation will produce: 6 event fliers + 2 youth column backgrounds = 8 images
+- The marquee uses CSS `animate-marquee` animation already defined in tailwind config (used by `SponsorLogoMarquee`)
+- Translation keys will be added/updated in `en.ts` for new team group names
 
