@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Settings, Mail, Bell, Shield, Save, Eye, EyeOff,
-  CheckCircle2, AlertTriangle, Loader2,
+  CheckCircle2, AlertTriangle, Loader2, User,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthContext";
@@ -41,177 +41,102 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
 }
 
 const inputCls = "bg-crm-surface border-crm-border text-crm-text text-xs h-8 placeholder:text-crm-text-faint";
+const readOnlyCls = `${inputCls} opacity-60 cursor-not-allowed`;
 
-// ─── Email settings ───────────────────────────────────────────────────────────
+// ─── Email settings (simplified with presets) ─────────────────────────────────
 function EmailSettings() {
   const { user } = useAuthContext();
-  const qc = useQueryClient();
   const { toast } = useToast();
   const [showPass, setShowPass] = useState(false);
-  const [form, setForm] = useState({
-    smtp_host:     "",
-    smtp_port:     "587",
-    smtp_user:     "",
-    smtp_password: "",
-    smtp_from:     "",
-    smtp_from_name: "ECOWAS Parliament 25",
-    imap_host:     "",
-    imap_port:     "993",
-    auto_connect:  true,
-  });
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  // Load existing settings
-  const { isLoading } = useQuery({
-    queryKey: ["crm-email-settings"],
-    queryFn: async () => {
-      const res = await (supabase as any)
-        .from("system_settings")
-        .select("key, value")
-        .in("key", [
-          "smtp_host", "smtp_port", "smtp_user", "smtp_password",
-          "smtp_from", "smtp_from_name", "imap_host", "imap_port", "auto_connect",
-        ]);
-      const map: Record<string, string> = {};
-      (res.data ?? []).forEach((r: any) => { map[r.key] = r.value; });
-      if (Object.keys(map).length > 0) {
-        setForm(prev => ({
-          smtp_host:      map.smtp_host     ?? prev.smtp_host,
-          smtp_port:      map.smtp_port     ?? prev.smtp_port,
-          smtp_user:      map.smtp_user     ?? prev.smtp_user,
-          smtp_password:  map.smtp_password ?? prev.smtp_password,
-          smtp_from:      map.smtp_from     ?? prev.smtp_from,
-          smtp_from_name: map.smtp_from_name?? prev.smtp_from_name,
-          imap_host:      map.imap_host     ?? prev.imap_host,
-          imap_port:      map.imap_port     ?? prev.imap_port,
-          auto_connect:   map.auto_connect === "true",
-        }));
-      }
-      return map;
-    },
-  });
+  // Preset values for Zoho ecowasparliamentinitiatives.org
+  const PRESETS = {
+    smtp_host: "smtp.zoho.eu",
+    smtp_port: "587",
+    imap_host: "imap.zoho.eu",
+    imap_port: "993",
+    from_name: "ECOWAS Parliament 25",
+    domain: "@ecowasparliamentinitiatives.org",
+  };
 
-  const save = useMutation({
-    mutationFn: async () => {
-      const upsertRows = Object.entries(form).map(([key, value]) => ({
-        key,
-        value: String(value),
-        updated_by: user!.id,
-        updated_at: new Date().toISOString(),
-      }));
-      await (supabase as any)
-        .from("system_settings")
-        .upsert(upsertRows, { onConflict: "key" });
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["crm-email-settings"] });
-      toast({ title: "Email settings saved" });
+  // Load existing email account
+  useEffect(() => {
+    if (!user?.id) return;
+    (supabase as any)
+      .from("email_accounts")
+      .select("email_address")
+      .eq("user_id", user.id)
+      .eq("is_active", true)
+      .single()
+      .then(({ data }: any) => {
+        if (data?.email_address) setEmail(data.email_address);
+      });
+  }, [user?.id]);
+
+  const handleSave = async () => {
+    if (!email.trim()) return;
+    setSaving(true);
+    try {
+      const { data: existing } = await (supabase as any)
+        .from("email_accounts")
+        .select("id")
+        .eq("user_id", user!.id)
+        .eq("is_active", true)
+        .single();
+
+      if (existing) {
+        await (supabase as any).from("email_accounts").update({
+          email_address: email.trim(),
+        }).eq("id", existing.id);
+      }
+      toast({ title: "Email account saved" });
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
-    },
-    onError: (err: any) => {
+    } catch (err: any) {
       toast({ title: "Failed to save", description: err.message, variant: "destructive" });
-    },
-  });
-
-  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
-    setForm(prev => ({ ...prev, [k]: e.target.value }));
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-32">
-        <div className="w-5 h-5 border-2 border-emerald-700 border-t-emerald-400 rounded-full animate-spin" />
-      </div>
-    );
-  }
+    } finally { setSaving(false); }
+  };
 
   return (
     <div className="space-y-4">
-      {/* Table-not-found note */}
-      <div className="flex items-start gap-2 p-3 bg-amber-950/40 border border-amber-800 rounded-lg">
-        <AlertTriangle size={12} className="text-amber-400 flex-shrink-0 mt-0.5" />
-        <p className="text-[10px] text-amber-300 leading-relaxed">
-          Settings are stored in a <span className="font-mono">system_settings</span> table{" "}
-          (<code className="font-mono">key TEXT PRIMARY KEY, value TEXT, updated_by UUID, updated_at TIMESTAMPTZ</code>).
-          Create this table in Supabase if it doesn't exist yet.
+      <div className="flex items-start gap-2 p-3 bg-emerald-950/40 border border-emerald-800 rounded-lg">
+        <CheckCircle2 size={12} className="text-emerald-400 flex-shrink-0 mt-0.5" />
+        <p className="text-[10px] text-emerald-300 leading-relaxed">
+          SMTP/IMAP settings are pre-configured for <span className="font-mono">ecowasparliamentinitiatives.org</span> (Zoho Mail EU). You only need to enter your email address.
         </p>
       </div>
 
       <div className="grid sm:grid-cols-2 gap-4">
-        {/* SMTP outbound */}
-        <Section title="SMTP — Outbound mail" icon={Mail}>
-          <Field label="SMTP host" hint="e.g. smtp.gmail.com or smtp.sendgrid.net">
-            <Input value={form.smtp_host} onChange={set("smtp_host")} className={inputCls} placeholder="smtp.example.com" />
+        <Section title="Your Email Account" icon={Mail}>
+          <Field label="Email address" hint="Your @ecowasparliamentinitiatives.org address">
+            <Input value={email} onChange={e => setEmail(e.target.value)} className={inputCls} placeholder="yourname@ecowasparliamentinitiatives.org" />
           </Field>
-          <Field label="SMTP port" hint="587 (TLS) or 465 (SSL)">
-            <Input value={form.smtp_port} onChange={set("smtp_port")} className={inputCls} placeholder="587" type="number" />
-          </Field>
-          <Field label="SMTP username">
-            <Input value={form.smtp_user} onChange={set("smtp_user")} className={inputCls} placeholder="noreply@ecowas-parliament.org" />
-          </Field>
-          <Field label="SMTP password">
-            <div className="relative">
-              <Input
-                type={showPass ? "text" : "password"}
-                value={form.smtp_password} onChange={set("smtp_password")}
-                className={`${inputCls} pr-8`} placeholder="••••••••"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPass(v => !v)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-crm-text-dim hover:text-crm-text-secondary"
-              >
-                {showPass ? <EyeOff size={12} /> : <Eye size={12} />}
-              </button>
-            </div>
-          </Field>
-          <Field label="From address">
-            <Input value={form.smtp_from} onChange={set("smtp_from")} className={inputCls} placeholder="noreply@ecowas-parliament.org" />
-          </Field>
-          <Field label="From name">
-            <Input value={form.smtp_from_name} onChange={set("smtp_from_name")} className={inputCls} placeholder="ECOWAS Parliament 25" />
-          </Field>
-        </Section>
-
-        {/* IMAP inbound */}
-        <Section title="IMAP — Inbound mail" icon={Mail}>
-          <Field label="IMAP host" hint="Used to pull emails into the CRM Inbox">
-            <Input value={form.imap_host} onChange={set("imap_host")} className={inputCls} placeholder="imap.example.com" />
-          </Field>
-          <Field label="IMAP port" hint="993 (SSL) or 143 (STARTTLS)">
-            <Input value={form.imap_port} onChange={set("imap_port")} className={inputCls} placeholder="993" type="number" />
-          </Field>
-          <div className="space-y-3 mt-2">
-            <div className="flex items-center gap-3">
-              <Switch
-                checked={form.auto_connect}
-                onCheckedChange={v => setForm(prev => ({ ...prev, auto_connect: v }))}
-              />
-              <div>
-                <Label className="text-[11px] text-crm-text">Auto-connect on login</Label>
-                <p className="text-[10px] text-crm-text-dim">Super admin is automatically connected to the inbox when they log in</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Save button */}
           <div className="pt-2 border-t border-crm-border">
-            <Button
-              size="sm"
-              onClick={() => save.mutate()}
-              disabled={save.isPending}
-              className="bg-emerald-700 hover:bg-emerald-600 text-white text-xs gap-1.5"
-            >
-              {save.isPending ? (
-                <Loader2 size={12} className="animate-spin" />
-              ) : saved ? (
-                <CheckCircle2 size={12} />
-              ) : (
-                <Save size={12} />
-              )}
+            <Button size="sm" onClick={handleSave} disabled={saving}
+              className="bg-emerald-700 hover:bg-emerald-600 text-white text-xs gap-1.5">
+              {saving ? <Loader2 size={12} className="animate-spin" /> : saved ? <CheckCircle2 size={12} /> : <Save size={12} />}
               {saved ? "Saved!" : "Save email settings"}
             </Button>
           </div>
+        </Section>
+
+        <Section title="Server Configuration (Preset)" icon={Settings}>
+          <Field label="SMTP Host">
+            <Input value={PRESETS.smtp_host} readOnly className={readOnlyCls} />
+          </Field>
+          <Field label="SMTP Port">
+            <Input value={PRESETS.smtp_port} readOnly className={readOnlyCls} />
+          </Field>
+          <Field label="IMAP Host">
+            <Input value={PRESETS.imap_host} readOnly className={readOnlyCls} />
+          </Field>
+          <Field label="IMAP Port">
+            <Input value={PRESETS.imap_port} readOnly className={readOnlyCls} />
+          </Field>
         </Section>
       </div>
     </div>
@@ -221,8 +146,9 @@ function EmailSettings() {
 // ─── Notification settings ────────────────────────────────────────────────────
 function NotificationSettings() {
   const { user } = useAuthContext();
-  const qc = useQueryClient();
   const { toast } = useToast();
+  const [notificationEmail, setNotificationEmail] = useState("");
+  const [savingEmail, setSavingEmail] = useState(false);
   const [prefs, setPrefs] = useState({
     notify_new_message:  true,
     notify_task_assign:  true,
@@ -230,6 +156,19 @@ function NotificationSettings() {
     notify_app_pending:  true,
     notify_invite_accept:true,
   });
+
+  // Load notification email from profile
+  useEffect(() => {
+    if (!user?.id) return;
+    (supabase as any)
+      .from("profiles")
+      .select("notification_email")
+      .eq("id", user.id)
+      .single()
+      .then(({ data }: any) => {
+        if (data?.notification_email) setNotificationEmail(data.notification_email);
+      });
+  }, [user?.id]);
 
   const { isLoading } = useQuery({
     queryKey: ["crm-notif-settings", user?.id],
@@ -253,6 +192,7 @@ function NotificationSettings() {
     enabled: !!user?.id,
   });
 
+  const qc = useQueryClient();
   const save = useMutation({
     mutationFn: async () => {
       await (supabase as any)
@@ -268,6 +208,16 @@ function NotificationSettings() {
     },
   });
 
+  const saveNotificationEmail = async () => {
+    setSavingEmail(true);
+    try {
+      await (supabase as any).from("profiles").update({ notification_email: notificationEmail.trim() || null }).eq("id", user!.id);
+      toast({ title: "Notification email saved" });
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally { setSavingEmail(false); }
+  };
+
   const toggle = (k: keyof typeof prefs) => setPrefs(prev => ({ ...prev, [k]: !prev[k] }));
 
   const items = [
@@ -279,32 +229,49 @@ function NotificationSettings() {
   ];
 
   return (
-    <Section title="Notification preferences" icon={Bell}>
-      {isLoading ? (
-        <div className="flex items-center justify-center h-20">
-          <div className="w-5 h-5 border-2 border-emerald-700 border-t-emerald-400 rounded-full animate-spin" />
-        </div>
-      ) : (
-        <>
-          {items.map(item => (
-            <div key={item.key} className="flex items-start gap-3">
-              <Switch checked={prefs[item.key]} onCheckedChange={() => toggle(item.key)} />
-              <div>
-                <p className="text-[12px] font-medium text-crm-text">{item.label}</p>
-                <p className="text-[10px] text-crm-text-dim">{item.desc}</p>
-              </div>
-            </div>
-          ))}
-          <div className="pt-2 border-t border-crm-border">
-            <Button size="sm" onClick={() => save.mutate()} disabled={save.isPending}
-              className="bg-emerald-700 hover:bg-emerald-600 text-white text-xs gap-1.5">
-              {save.isPending ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
-              Save preferences
+    <div className="space-y-4">
+      {/* Personal notification email */}
+      <Section title="Personal notification email" icon={User}>
+        <Field label="External email for notifications" hint="Receive a copy of CRM notifications to this personal email address">
+          <div className="flex gap-2">
+            <Input value={notificationEmail} onChange={e => setNotificationEmail(e.target.value)}
+              className={`${inputCls} flex-1`} placeholder="your.personal@gmail.com" type="email" />
+            <Button size="sm" onClick={saveNotificationEmail} disabled={savingEmail}
+              className="bg-emerald-700 hover:bg-emerald-600 text-white text-xs gap-1.5 h-8">
+              {savingEmail ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
+              Save
             </Button>
           </div>
-        </>
-      )}
-    </Section>
+        </Field>
+      </Section>
+
+      <Section title="Notification preferences" icon={Bell}>
+        {isLoading ? (
+          <div className="flex items-center justify-center h-20">
+            <div className="w-5 h-5 border-2 border-emerald-700 border-t-emerald-400 rounded-full animate-spin" />
+          </div>
+        ) : (
+          <>
+            {items.map(item => (
+              <div key={item.key} className="flex items-start gap-3">
+                <Switch checked={prefs[item.key]} onCheckedChange={() => toggle(item.key)} />
+                <div>
+                  <p className="text-[12px] font-medium text-crm-text">{item.label}</p>
+                  <p className="text-[10px] text-crm-text-dim">{item.desc}</p>
+                </div>
+              </div>
+            ))}
+            <div className="pt-2 border-t border-crm-border">
+              <Button size="sm" onClick={() => save.mutate()} disabled={save.isPending}
+                className="bg-emerald-700 hover:bg-emerald-600 text-white text-xs gap-1.5">
+                {save.isPending ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
+                Save preferences
+              </Button>
+            </div>
+          </>
+        )}
+      </Section>
+    </div>
   );
 }
 
@@ -317,7 +284,6 @@ function SecuritySettings() {
   const [confirmPw, setConfirmPw] = useState("");
   const [hasEmailAcct, setHasEmailAcct] = useState(false);
 
-  // Check if user has an email account (Zoho)
   useEffect(() => {
     if (!user?.id) return;
     (supabase as any)
@@ -329,7 +295,6 @@ function SecuritySettings() {
       .then(({ data }: any) => setHasEmailAcct(!!data));
   }, [user?.id]);
 
-  // For users with Zoho email: inline change form calling sync-password
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newPw.length < 8) {
@@ -342,32 +307,27 @@ function SecuritySettings() {
     }
     setSending(true);
     try {
-      const { data: session } = await supabase.auth.getSession();
-      const token = session?.session?.access_token;
-      const res = await supabase.functions.invoke("sync-password", {
-        body: { newPassword: newPw },
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.error) throw new Error(res.error.message);
-      const data = res.data as { success?: boolean; error?: string };
-      if (data?.error) throw new Error(data.error);
-      toast({ title: "Password updated", description: hasEmailAcct ? "Password synced to your email account." : undefined });
+      if (hasEmailAcct) {
+        // Sync to Zoho + Supabase via edge function
+        const { data: session } = await supabase.auth.getSession();
+        const token = session?.session?.access_token;
+        const res = await supabase.functions.invoke("sync-password", {
+          body: { newPassword: newPw },
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.error) throw new Error(res.error.message);
+        const data = res.data as { success?: boolean; error?: string };
+        if (data?.error) throw new Error(data.error);
+        toast({ title: "Password updated", description: "Password synced to your email account." });
+      } else {
+        // Direct Supabase password change
+        const { error } = await supabase.auth.updateUser({ password: newPw });
+        if (error) throw error;
+        toast({ title: "Password updated" });
+      }
       setNewPw(""); setConfirmPw("");
     } catch (err: any) {
       toast({ title: "Failed", description: err.message || "Could not update password.", variant: "destructive" });
-    } finally { setSending(false); }
-  };
-
-  // For users without Zoho email: send reset link (existing behaviour)
-  const sendPasswordReset = async () => {
-    if (!user?.email) return;
-    setSending(true);
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(user.email);
-      if (error) throw error;
-      toast({ title: "Password reset email sent", description: `Check ${user.email}` });
-    } catch (err: any) {
-      toast({ title: "Failed", description: err.message, variant: "destructive" });
     } finally { setSending(false); }
   };
 
@@ -383,50 +343,37 @@ function SecuritySettings() {
 
         <div className="py-2">
           <p className="text-[12px] font-medium text-crm-text mb-1">Change password</p>
-          {hasEmailAcct ? (
-            // Inline form — syncs to Zoho
-            <form onSubmit={handleChangePassword} className="space-y-2 mt-2">
+          <form onSubmit={handleChangePassword} className="space-y-2 mt-2">
+            {hasEmailAcct && (
               <p className="text-[10px] text-crm-text-dim">
                 Password change will sync automatically to your <span className="font-mono text-emerald-500">@ecowasparliamentinitiatives.org</span> email account.
               </p>
-              <Input
-                type="password"
-                value={newPw}
-                onChange={e => setNewPw(e.target.value)}
-                placeholder="New password (min 8 chars)"
-                minLength={8}
-                className="bg-crm-surface border-crm-border text-crm-text text-xs h-8"
-              />
-              <Input
-                type="password"
-                value={confirmPw}
-                onChange={e => setConfirmPw(e.target.value)}
-                placeholder="Confirm new password"
-                className="bg-crm-surface border-crm-border text-crm-text text-xs h-8"
-              />
-              <Button
-                type="submit"
-                size="sm"
-                disabled={sending || newPw.length < 8 || newPw !== confirmPw}
-                className="bg-emerald-700 hover:bg-emerald-600 text-white text-xs gap-1.5 h-7"
-              >
-                {sending ? <Loader2 size={11} className="animate-spin" /> : <Shield size={11} />}
-                {sending ? "Updating…" : "Update Password"}
-              </Button>
-            </form>
-          ) : (
-            // No Zoho account — send reset link
-            <div className="flex items-center justify-between mt-1">
-              <p className="text-[10px] text-crm-text-dim">Send a password reset link to your email</p>
-              <Button
-                size="sm" variant="outline" onClick={sendPasswordReset} disabled={sending}
-                className="border-crm-border text-crm-text-muted hover:text-crm-text-secondary text-xs gap-1.5 h-7"
-              >
-                {sending ? <Loader2 size={11} className="animate-spin" /> : <Mail size={11} />}
-                Send reset link
-              </Button>
-            </div>
-          )}
+            )}
+            <Input
+              type="password"
+              value={newPw}
+              onChange={e => setNewPw(e.target.value)}
+              placeholder="New password (min 8 chars)"
+              minLength={8}
+              className="bg-crm-surface border-crm-border text-crm-text text-xs h-8"
+            />
+            <Input
+              type="password"
+              value={confirmPw}
+              onChange={e => setConfirmPw(e.target.value)}
+              placeholder="Confirm new password"
+              className="bg-crm-surface border-crm-border text-crm-text text-xs h-8"
+            />
+            <Button
+              type="submit"
+              size="sm"
+              disabled={sending || newPw.length < 8 || newPw !== confirmPw}
+              className="bg-emerald-700 hover:bg-emerald-600 text-white text-xs gap-1.5 h-7"
+            >
+              {sending ? <Loader2 size={11} className="animate-spin" /> : <Shield size={11} />}
+              {sending ? "Updating…" : "Update Password"}
+            </Button>
+          </form>
         </div>
       </div>
     </Section>
@@ -448,7 +395,6 @@ export default function SettingsModule() {
 
   return (
     <div className="space-y-5 max-w-3xl">
-      {/* Header */}
       <div>
         <h2 className="text-lg font-bold text-crm-text">Settings</h2>
         <p className="text-[12px] text-crm-text-muted mt-0.5">
@@ -456,7 +402,6 @@ export default function SettingsModule() {
         </p>
       </div>
 
-      {/* Tab bar */}
       <div className="flex items-center gap-1 flex-wrap">
         {visibleTabs.map(t => (
           <button
