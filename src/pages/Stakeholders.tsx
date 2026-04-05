@@ -4,43 +4,60 @@ import AnimatedSection from "@/components/shared/AnimatedSection";
 import SponsorLogo from "@/components/shared/SponsorLogo";
 import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "@/lib/i18n";
-import duchessLogo from "@/assets/duchess-logo.png";
-import cmdLogo from "@/assets/cmd-logo.png";
-import borderlessLogo from "@/assets/borderless-trade-logo.png";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import speakerImg from "@/assets/speaker-memounatou.jpeg";
 import secgenImg from "@/assets/stakeholder-secgen.jpg";
 import commsImage from "@/assets/stakeholder-comms.jpg";
 import directorImage from "@/assets/stakeholder-director.jpg";
-import teamPortrait1 from "@/assets/team-portrait-1.jpg";
-import teamPortrait2 from "@/assets/team-portrait-2.jpg";
-import teamPortrait3 from "@/assets/team-portrait-3.jpg";
 
 const ecowasStakeholders = [
   { name: "Rt. Hon. Hadja Mémounatou Ibrahima", title: "Speaker of the ECOWAS Parliament", image: speakerImg },
   { name: "Hon. Alhaji Bah", title: "Secretary General, ECOWAS Parliament", image: secgenImg },
   { name: "", title: "Director", image: directorImage },
   { name: "Mrs. Uche Duru", title: "Chief Communication Officer", image: commsImage },
-
-];
-
-const implementingPartners = [
-  { name: "Duchess NL", lead: "Dr. Victoria Akai IIPM", role: "CEO", logo: duchessLogo, image: teamPortrait1, descKey: "implPartners.duchess.desc" },
-  { name: "Borderless Trade & Investment", lead: "Dr. Olori Boye-Ajayi", role: "Managing Partner", logo: borderlessLogo, image: teamPortrait2, descKey: "implPartners.borderless.desc" },
-  { name: "CMD Tourism & Trade Enterprises", lead: "Madam Cecile Mambo Doumbe", role: "Lead", logo: cmdLogo, image: teamPortrait3, descKey: "implPartners.cmd.desc" },
-];
-
-const sponsors = [
-  { name: "West African Development Bank", color: "hsl(var(--ecowas-blue))" },
-  { name: "ECOWAS Commission", color: "hsl(var(--ecowas-green))" },
-  { name: "African Union", color: "hsl(var(--accent))" },
-  { name: "United Nations Development Programme", color: "hsl(var(--primary))" },
-  { name: "GIZ West Africa", color: "hsl(var(--secondary))" },
-  { name: "Access Bank Group", color: "hsl(var(--ecowas-yellow))" },
-  { name: "Dangote Foundation", color: "hsl(var(--ecowas-lime))" },
 ];
 
 const Stakeholders = () => {
   const { t } = useTranslation();
+
+  const { data: implPartners = [] } = useQuery({
+    queryKey: ["stakeholders-implementing-partners"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("partners")
+        .select("*")
+        .eq("is_published", true)
+        .eq("partner_type", "implementing")
+        .order("sort_order", { ascending: true });
+      return data ?? [];
+    },
+  });
+
+  const { data: instPartners = [] } = useQuery({
+    queryKey: ["stakeholders-institutional-partners"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("partners")
+        .select("*")
+        .eq("is_published", true)
+        .eq("partner_type", "institutional")
+        .order("sort_order", { ascending: true });
+      return data ?? [];
+    },
+  });
+
+  const { data: sponsors = [] } = useQuery({
+    queryKey: ["stakeholders-sponsors"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("sponsors")
+        .select("id, name, slug, logo_url, tier")
+        .eq("is_published", true)
+        .order("sort_order", { ascending: true });
+      return data ?? [];
+    },
+  });
 
   return (
     <Layout>
@@ -54,6 +71,7 @@ const Stakeholders = () => {
         </div>
       </section>
 
+      {/* ECOWAS Leadership (still hardcoded — these are fixed positions) */}
       <section className="py-16">
         <div className="container">
           <AnimatedSection className="mb-8">
@@ -71,7 +89,7 @@ const Stakeholders = () => {
           </AnimatedSection>
           <div className="grid gap-6 md:grid-cols-3">
             {ecowasStakeholders.slice(1).map((person, index) => (
-              <AnimatedSection key={person.name} delay={index * 60}>
+              <AnimatedSection key={person.name || index} delay={index * 60}>
                 <article className="overflow-hidden rounded-3xl border border-primary/20 bg-card shadow-sm w-full">
                   <img src={person.image} alt={person.name} className="w-full aspect-[4/3] object-cover object-top" loading="lazy" />
                   <div className="p-5">
@@ -85,73 +103,102 @@ const Stakeholders = () => {
         </div>
       </section>
 
+      {/* Implementing Partners — from DB */}
       <section className="bg-muted/30 py-16">
         <div className="container">
           <AnimatedSection>
             <Badge className="mb-3 bg-primary/10 text-primary">{t("stakeholders.implPartnersBadge")}</Badge>
             <h2 className="text-2xl font-black text-foreground">{t("stakeholders.implPartnersTitle")}</h2>
           </AnimatedSection>
-          <div className="mt-8 grid gap-6 lg:grid-cols-3">
-            {implementingPartners.map((partner, index) => (
-              <AnimatedSection key={partner.name} delay={index * 70}>
-                <article className="overflow-hidden rounded-3xl border border-primary/20 bg-card shadow-sm w-full">
-                  <img src={partner.image} alt={partner.lead} className="w-full aspect-[4/3] object-cover object-top" loading="lazy" />
-                  <div className="space-y-4 p-6">
-                    <img src={partner.logo} alt={partner.name} className="h-12 w-auto" loading="lazy" />
-                    <div>
-                      <h3 className="text-xl font-black text-card-foreground">{partner.name}</h3>
-                      <p className="text-sm text-primary">{partner.lead} — {partner.role}</p>
-                    </div>
-                    <p className="text-sm text-muted-foreground">{t(partner.descKey)}</p>
-                  </div>
-                </article>
-              </AnimatedSection>
-            ))}
-          </div>
+          {implPartners.length === 0 ? (
+            <p className="mt-8 text-sm text-muted-foreground">No implementing partners published yet.</p>
+          ) : (
+            <div className="mt-8 grid gap-6 lg:grid-cols-3">
+              {implPartners.map((partner: any, index: number) => (
+                <AnimatedSection key={partner.id} delay={index * 70}>
+                  <Link to={`/partners/${partner.slug}`} className="block h-full">
+                    <article className="overflow-hidden rounded-3xl border border-primary/20 bg-card shadow-sm w-full h-full flex flex-col">
+                      {partner.lead_image_url && (
+                        <img src={partner.lead_image_url} alt={partner.lead_name || partner.name} className="w-full aspect-[4/3] object-cover object-top" loading="lazy" />
+                      )}
+                      <div className="space-y-4 p-6 flex-1">
+                        {partner.logo_url && (
+                          <img src={partner.logo_url} alt={partner.name} className="h-12 w-auto" loading="lazy" />
+                        )}
+                        <div>
+                          <h3 className="text-xl font-black text-card-foreground">{partner.name}</h3>
+                          {partner.lead_name && (
+                            <p className="text-sm text-primary">{partner.lead_name}{partner.lead_role ? ` — ${partner.lead_role}` : ""}</p>
+                          )}
+                        </div>
+                        {partner.description && (
+                          <p className="text-sm text-muted-foreground">{partner.description}</p>
+                        )}
+                      </div>
+                    </article>
+                  </Link>
+                </AnimatedSection>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
+      {/* Institutional Partners — from DB */}
       <section className="py-16">
         <div className="container">
           <AnimatedSection className="mb-8">
             <Badge className="mb-3 bg-ecowas-blue/10 text-ecowas-blue">{t("stakeholders.instPartnersBadge")}</Badge>
             <h2 className="text-2xl font-black text-foreground">{t("stakeholders.instPartnersTitle")}</h2>
           </AnimatedSection>
-          <div className="grid gap-6 md:grid-cols-2 max-w-4xl">
-            {[
-              { name: "AWALCO", fullNameKey: "instPartners.awalco.fullName", descKey: "instPartners.awalco.desc", slug: "awalco" },
-              { name: "Alliance for Economic Research and Ethics LTD/GTE", fullNameKey: "instPartners.alliance.fullName", descKey: "instPartners.alliance.desc", slug: "alliance-economic-research" },
-            ].map((partner, index) => (
-              <AnimatedSection key={partner.name} delay={index * 70}>
-                <Link to={`/partners/${partner.slug}`} className="block h-full">
-                  <article className="overflow-hidden rounded-3xl border border-ecowas-blue/20 bg-card shadow-sm p-6 hover:border-ecowas-blue/40 transition-all hover:shadow-lg h-full flex flex-col">
-                    <h3 className="text-xl font-black text-card-foreground">{partner.name}</h3>
-                    <p className="text-xs text-muted-foreground mt-1 mb-3">{t(partner.fullNameKey)}</p>
-                    <p className="text-sm text-muted-foreground leading-relaxed flex-1">{t(partner.descKey)}</p>
-                    <span className="mt-4 inline-flex items-center text-xs font-semibold text-primary">{t("stakeholders.learnMore")}</span>
-                  </article>
-                </Link>
-              </AnimatedSection>
-            ))}
-          </div>
+          {instPartners.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No institutional partners published yet.</p>
+          ) : (
+            <div className="grid gap-6 md:grid-cols-2 max-w-4xl">
+              {instPartners.map((partner: any, index: number) => (
+                <AnimatedSection key={partner.id} delay={index * 70}>
+                  <Link to={`/partners/${partner.slug}`} className="block h-full">
+                    <article className="overflow-hidden rounded-3xl border border-ecowas-blue/20 bg-card shadow-sm p-6 hover:border-ecowas-blue/40 transition-all hover:shadow-lg h-full flex flex-col">
+                      <h3 className="text-xl font-black text-card-foreground">{partner.name}</h3>
+                      {partner.description && (
+                        <p className="text-sm text-muted-foreground leading-relaxed flex-1 mt-3">{partner.description}</p>
+                      )}
+                      <span className="mt-4 inline-flex items-center text-xs font-semibold text-primary">{t("stakeholders.learnMore")}</span>
+                    </article>
+                  </Link>
+                </AnimatedSection>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
+      {/* Sponsors — from DB */}
       <section className="bg-muted/30 py-16">
         <div className="container">
           <AnimatedSection className="mb-8">
             <h2 className="text-2xl font-black text-foreground">{t("stakeholders.sponsorsTitle")}</h2>
           </AnimatedSection>
-          <div className="flex flex-wrap gap-4">
-            {sponsors.map((sponsor, index) => (
-              <AnimatedSection key={sponsor.name} delay={index * 40}>
-                <div className="flex items-center gap-3 rounded-2xl border border-border bg-card px-5 py-4 shadow-sm">
-                  <SponsorLogo name={sponsor.name} color={sponsor.color} size={42} />
-                  <span className="text-sm font-semibold text-card-foreground">{sponsor.name}</span>
-                </div>
-              </AnimatedSection>
-            ))}
-          </div>
+          {sponsors.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No sponsors published yet.</p>
+          ) : (
+            <div className="flex flex-wrap gap-4">
+              {sponsors.map((sponsor: any, index: number) => (
+                <AnimatedSection key={sponsor.id} delay={index * 40}>
+                  <Link to={`/sponsors/${sponsor.slug}`}>
+                    <div className="flex items-center gap-3 rounded-2xl border border-border bg-card px-5 py-4 shadow-sm hover:border-primary/30 transition-all">
+                      {sponsor.logo_url ? (
+                        <img src={sponsor.logo_url} alt={sponsor.name} className="w-10 h-10 object-contain" />
+                      ) : (
+                        <SponsorLogo name={sponsor.name} color="hsl(var(--primary))" size={42} />
+                      )}
+                      <span className="text-sm font-semibold text-card-foreground">{sponsor.name}</span>
+                    </div>
+                  </Link>
+                </AnimatedSection>
+              ))}
+            </div>
+          )}
         </div>
       </section>
     </Layout>

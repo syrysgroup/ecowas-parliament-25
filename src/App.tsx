@@ -14,6 +14,7 @@ import Index from "./pages/Index";
 import About from "./pages/About";
 import Timeline from "./pages/Timeline";
 import News from "./pages/News";
+import NewsDetail from "./pages/news/NewsDetail";
 import Documents from "./pages/Documents";
 import Stakeholders from "./pages/Stakeholders";
 import Team from "./pages/Team";
@@ -77,6 +78,7 @@ const App = () => (
               <Route path="/about"              element={<About />}          />
               <Route path="/timeline"           element={<Timeline />}       />
               <Route path="/news"               element={<News />}           />
+              <Route path="/news/:slug"          element={<NewsDetail />}     />
               <Route path="/documents"          element={<Documents />}      />
               <Route path="/stakeholders"       element={<Stakeholders />}   />
               <Route path="/team"               element={<Team />}           />
