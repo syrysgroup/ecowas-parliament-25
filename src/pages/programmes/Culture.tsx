@@ -256,6 +256,10 @@ const Culture = () => (
         </AnimatedSection>
       </div>
     </section>
+    <ProgrammeSponsorsFooter tiers={[
+      { label: "Programme Partners", sponsors: [{ name: "Cabo Verde Tourism Board" }] },
+      { label: "Institutional Partners", sponsors: [{ name: "ECOWAS Commission" }, { name: "AWALCO" }] },
+    ]} />
   </Layout>
 );
 

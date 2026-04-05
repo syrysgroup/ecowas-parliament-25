@@ -382,17 +382,10 @@ const SmartChallenge = () => {
         </div>
       </section>
 
-      {/* Sponsor Strip */}
-      <section className="py-12 bg-background border-t border-border">
-        <div className="container mx-auto px-6 text-center">
-          <p className="text-sm text-muted-foreground mb-4 font-medium uppercase tracking-wider">Supported by</p>
-          <div className="flex items-center justify-center gap-6">
-            {sponsors.map((s) => (
-              <SponsorLogo key={s.name} name={s.name} color={s.color} size={56} />
-            ))}
-          </div>
-        </div>
-      </section>
+      <ProgrammeSponsorsFooter tiers={[
+        { label: "Programme Partners", sponsors },
+        { label: "Institutional Partners", sponsors: [{ name: "ECOWAS Commission" }, { name: "AWALCO" }] },
+      ]} />
     </Layout>
   );
 };

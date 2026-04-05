@@ -179,6 +179,10 @@ const Women = () => {
         <p className="text-muted-foreground mb-8 max-w-lg mx-auto">{t("women.ctaDesc")}</p>
         <Button size="lg" className="bg-secondary text-secondary-foreground hover:bg-secondary/90">{t("women.ctaBtn")}</Button>
       </AnimatedSection></div></section>
+      <ProgrammeSponsorsFooter tiers={[
+        { label: "Programme Partners", sponsors: [{ name: "UNDP West Africa" }, { name: "Duchess International" }] },
+        { label: "Institutional Partners", sponsors: [{ name: "ECOWAS Commission" }] },
+      ]} />
     </Layout>
   );
 };

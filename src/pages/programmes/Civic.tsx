@@ -264,6 +264,10 @@ const Civic = () => (
         </AnimatedSection>
       </div>
     </section>
+    <ProgrammeSponsorsFooter tiers={[
+      { label: "Programme Partners", sponsors: [{ name: "EU Delegation ECOWAS" }] },
+      { label: "Institutional Partners", sponsors: [{ name: "ECOWAS Commission" }, { name: "AWALCO" }] },
+    ]} />
   </Layout>
 );
 

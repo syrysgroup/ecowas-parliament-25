@@ -497,7 +497,10 @@ const Trade = () => {
       </section>
 
       {/* Sponsor Footer */}
-      <TradeSponsorsFooter />
+      <ProgrammeSponsorsFooter tiers={[
+        { label: "Programme Partners", sponsors: [{ name: "Providus Bank" }, { name: "Global African Business Assoc." }, { name: "VALCERTRA" }, { name: "SMEDAN" }] },
+        { label: "Institutional Partners", sponsors: [{ name: "Awalco" }, { name: "African Development Bank" }, { name: "ECOWAS Commission" }] },
+      ]} />
     </Layout>
   );
 };
