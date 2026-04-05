@@ -275,7 +275,7 @@ const Awards = () => (
         </AnimatedSection>
       </div>
     </section>
-    <ProgrammeSponsorsFooter tiers={[
+    <ProgrammeSponsorsFooter programme="awards" tiers={[
       { label: "Programme Partners", sponsors: [{ name: "AfDB" }] },
       { label: "Institutional Partners", sponsors: [{ name: "ECOWAS Commission" }, { name: "AWALCO" }] },
     ]} />
