@@ -33,7 +33,7 @@ const SponsorPlaceholderSection = () => {
           {mockSponsors.map((sponsor, i) => (
             <AnimatedSection key={sponsor.name} delay={i * 50}>
               <div className="flex items-center gap-3 rounded-2xl border border-border bg-card px-5 py-4 shadow-sm">
-                <SponsorPlaceholderLogo name={sponsor.name} size={40} showName={false} />
+                <SponsorPlaceholderLogo name={sponsor.name} size={80} showName={false} />
                 <span className="text-sm font-semibold text-card-foreground">{sponsor.name}</span>
               </div>
             </AnimatedSection>

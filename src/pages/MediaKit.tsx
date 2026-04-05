@@ -60,7 +60,7 @@ export default function MediaKit() {
         <p className="mt-4 text-lg text-primary-foreground/70 max-w-2xl">{t("mediaKit.heroDesc")}</p>
         <div className="flex flex-wrap gap-3 mt-6">
           <Button variant="secondary" className="gap-2"><Download className="h-4 w-4" /> {t("mediaKit.fullPack")}</Button>
-          <Button variant="outline" className="gap-2 bg-transparent text-primary-foreground border-primary-foreground/30 hover:bg-primary-foreground/10"><Mail className="h-4 w-4" /> media@ecowasparliamentinitiatives.org</Button>
+          <Button variant="secondary" className="gap-2 bg-primary-foreground/15 text-primary-foreground border-primary-foreground/30 hover:bg-primary-foreground/25"><Mail className="h-4 w-4" /> media@ecowasparliamentinitiatives.org</Button>
         </div>
       </AnimatedSection></div></section>
 
@@ -172,7 +172,7 @@ export default function MediaKit() {
               </div>
               <div className="flex flex-col gap-2">
                 <Button variant="secondary" className="gap-2 whitespace-nowrap"><Mail className="h-4 w-4" /> {t("mediaKit.emailMediaTeam")}</Button>
-                <Button variant="outline" className="gap-2 whitespace-nowrap border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10"><Download className="h-4 w-4" /> {t("mediaKit.fullMediaPack")}</Button>
+                <Button variant="secondary" className="gap-2 whitespace-nowrap bg-primary-foreground/15 text-primary-foreground border-primary-foreground/30 hover:bg-primary-foreground/25"><Download className="h-4 w-4" /> {t("mediaKit.fullMediaPack")}</Button>
               </div>
             </div>
           </CardContent></Card>

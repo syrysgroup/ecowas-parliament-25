@@ -226,12 +226,12 @@ const SponsorsSection = () => {
                           }}
                         >
                           {/* Sponsor placeholder logo */}
-                          <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-3 transition-transform duration-300 group-hover:scale-110 overflow-hidden ${
+                          <div className={`w-24 h-24 rounded-xl flex items-center justify-center mb-3 transition-transform duration-300 group-hover:scale-110 overflow-hidden ${
                             tierGroup.tier === "presenting" ? "bg-primary/15" :
                             tierGroup.tier === "gold" ? "bg-accent/15" :
                             "bg-muted"
                           }`}>
-                            <img src={parliament25Logo} alt={sponsor.name} className="w-10 h-10 object-contain" />
+                            <img src={parliament25Logo} alt={sponsor.name} className="w-20 h-20 object-contain" />
                           </div>
 
                           <h4 className={`font-bold text-card-foreground ${

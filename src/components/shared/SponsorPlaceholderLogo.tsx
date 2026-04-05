@@ -6,7 +6,7 @@ interface SponsorPlaceholderLogoProps {
   showName?: boolean;
 }
 
-const SponsorPlaceholderLogo = ({ name, size = 48, showName = true }: SponsorPlaceholderLogoProps) => (
+const SponsorPlaceholderLogo = ({ name, size = 96, showName = true }: SponsorPlaceholderLogoProps) => (
   <div className="flex flex-col items-center gap-1.5">
     <div
       className="rounded-xl bg-card border border-border p-1.5 flex items-center justify-center"

@@ -126,7 +126,7 @@ const Parliament = () => {
       <section className="relative overflow-hidden bg-gradient-hero py-20 text-primary-foreground">
         <div className="container grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
           <AnimatedSection>
-            <Button asChild variant="ghost" className="mb-6 -ml-3 text-primary-foreground/70 hover:text-primary-foreground">
+            <Button asChild variant="secondary" className="mb-6 -ml-3 bg-primary-foreground/15 text-primary-foreground hover:bg-primary-foreground/25">
               <Link to="/"><ArrowLeft className="mr-2 h-4 w-4" />Back to Home</Link>
             </Button>
             <Badge className="border-primary-foreground/20 bg-primary-foreground/10 text-primary-foreground">Programme Pillar</Badge>

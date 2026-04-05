@@ -27,7 +27,7 @@ const ProgrammeSponsorsFooter = ({ tiers, title = "Programme Sponsors & Partners
           <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground text-center mb-5">{tier.label}</p>
           <div className="flex flex-wrap justify-center gap-8">
             {tier.sponsors.map((s, si) => (
-              <SponsorPlaceholderLogo key={si} name={s.name} size={56} />
+              <SponsorPlaceholderLogo key={si} name={s.name} size={96} />
             ))}
           </div>
         </AnimatedSection>
