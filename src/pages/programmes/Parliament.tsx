@@ -13,6 +13,8 @@ import { ArrowLeft, Calendar, MapPin, Trophy, Users, Vote } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { fallbackNominees, fallbackRepresentatives } from "@/lib/parliament";
 import parliamentHero from "@/assets/parliament-hero-clean.jpg";
+import ProgrammeSponsorMarquee from "@/components/shared/ProgrammeSponsorMarquee";
+import ProgrammeSponsorsFooter from "@/components/shared/ProgrammeSponsorsFooter";
 
 type CountryRow = {
   name: string;
