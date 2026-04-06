@@ -1,16 +1,14 @@
 import { Link } from "react-router-dom";
-import { useTranslation, Locale } from "@/lib/i18n";
+import { useTranslation } from "@/lib/i18n";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import ecowasLogo from "@/assets/ecowas-parliament-logo.png";
 import anniversary25Logo from "@/assets/parliament-25-logo.png";
 import SocialMediaBar from "@/components/shared/SocialMediaBar";
 
-const localeLabels: Record<Locale, string> = { en: "EN", fr: "FR", pt: "PT" };
-const localeOrder: Locale[] = ["en", "fr", "pt"];
 
 const Footer = () => {
-  const { t, locale, setLocale } = useTranslation();
+  const { t } = useTranslation();
   const { user } = useAuthContext();
   const { get } = useSiteSettings();
 
@@ -74,20 +72,6 @@ const Footer = () => {
             </div>
             <SocialMediaBar variant="full" showParliamentLink={true} />
 
-            {/* Language switcher */}
-            <div className="flex gap-1 mt-4" aria-label={t("nav.languageLabel")}>
-              {localeOrder.map((l) => (
-                <button
-                  key={l}
-                  onClick={() => setLocale(l)}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                    l === locale ? "bg-primary text-primary-foreground" : "bg-muted text-foreground/70 hover:bg-muted/80"
-                  }`}
-                >
-                  {localeLabels[l]}
-                </button>
-              ))}
-            </div>
           </div>
 
           {footerLinks.map(col => (

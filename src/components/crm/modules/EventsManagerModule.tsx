@@ -70,6 +70,13 @@ function EventDialog({ open, onClose, event }: { open: boolean; onClose: () => v
   const [tag, setTag] = useState(event?.tag ?? "");
   const [tagColor, setTagColor] = useState(event?.tag_color ?? "primary");
   const [uploading, setUploading] = useState(false);
+  const [externalLinks, setExternalLinks] = useState<{ title: string; url: string }[]>(() => {
+    try {
+      const links = (event as any)?.external_links;
+      if (Array.isArray(links)) return links;
+      return [];
+    } catch { return []; }
+  });
 
   const handleUpload = async (file: File) => {
     setUploading(true);
@@ -93,6 +100,7 @@ function EventDialog({ open, onClose, event }: { open: boolean; onClose: () => v
         capacity: capacity ? parseInt(capacity) : null, is_published: isPublished,
         cover_image_url: coverUrl || null, registration_url: regUrl || null,
         registration_type: regType, tag: tag || null, tag_color: tagColor || null,
+        external_links: externalLinks.filter(l => l.url.trim()),
         updated_at: new Date().toISOString(),
       };
       if (isEdit) {
@@ -225,6 +233,31 @@ function EventDialog({ open, onClose, event }: { open: boolean; onClose: () => v
             {regType === "form" && (
               <p className="text-[10px] text-crm-text-dim">Users will register through the built-in event registration form on the website.</p>
             )}
+          </div>
+
+          {/* External Links / Media Coverage */}
+          <div className="space-y-2 bg-crm-surface border border-crm-border rounded-lg p-3">
+            <Label className="text-[11px] text-crm-text-dim font-semibold">External Links / Media Coverage</Label>
+            {externalLinks.map((link, i) => (
+              <div key={i} className="flex gap-2 items-center">
+                <Input value={link.title} onChange={e => {
+                  const next = [...externalLinks];
+                  next[i] = { ...next[i], title: e.target.value };
+                  setExternalLinks(next);
+                }} placeholder="Title" className="bg-crm-card border-crm-border text-crm-text text-xs h-7 flex-1" />
+                <Input value={link.url} onChange={e => {
+                  const next = [...externalLinks];
+                  next[i] = { ...next[i], url: e.target.value };
+                  setExternalLinks(next);
+                }} placeholder="https://..." className="bg-crm-card border-crm-border text-crm-text text-xs h-7 flex-1" />
+                <Button type="button" variant="outline" size="sm" className="border-crm-border text-red-400 text-[10px] h-7 px-2"
+                  onClick={() => setExternalLinks(externalLinks.filter((_, j) => j !== i))}>✕</Button>
+              </div>
+            ))}
+            <Button type="button" variant="outline" size="sm" onClick={() => setExternalLinks([...externalLinks, { title: "", url: "" }])}
+              className="border-crm-border text-crm-text-muted text-[10px] h-6 px-2 gap-1">
+              <Plus size={10} /> Add Link
+            </Button>
           </div>
 
           <div className="flex items-center justify-between">

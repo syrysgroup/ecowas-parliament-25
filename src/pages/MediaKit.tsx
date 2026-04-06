@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import Layout from "@/components/layout/Layout";
@@ -67,13 +68,18 @@ export default function MediaKit() {
         </div>
       </section>
 
-      <section className="py-5 bg-amber-50 border-y border-amber-200">
+      <section className="py-5 bg-amber-50 dark:bg-amber-950/20 border-y border-amber-200 dark:border-amber-800">
         <div className="container">
           <div className="flex items-start gap-3">
-            <Clock className="h-5 w-5 text-amber-700 flex-shrink-0 mt-0.5" />
-            <p className="text-sm text-amber-800">
-              <strong>{t("mediaKit.accreditation")}</strong> {t("mediaKit.accreditationDesc")}
-            </p>
+            <Clock className="h-5 w-5 text-amber-700 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-sm text-amber-800 dark:text-amber-300">
+                <strong>{t("mediaKit.accreditation")}</strong> {t("mediaKit.accreditationDesc")}
+              </p>
+              <Button asChild variant="link" size="sm" className="text-amber-700 dark:text-amber-400 p-0 h-auto mt-1 text-xs">
+                <Link to="/media-portal">Access Accredited Media Portal →</Link>
+              </Button>
+            </div>
           </div>
         </div>
       </section>

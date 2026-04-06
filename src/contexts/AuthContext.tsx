@@ -15,6 +15,7 @@ export type AppRole =
   | "admin"
   | "moderator"
   | "sponsor"
+  | "media"
   | "project_director"
   | "programme_lead"
   | "website_editor"

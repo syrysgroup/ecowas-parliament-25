@@ -75,6 +75,11 @@ export const CRM_ROLE_META: Record<AppRole, RoleMeta> = {
     colour: "text-teal-400", bgColour: "bg-teal-950", borderColour: "border-teal-700",
     tier: 3,
   },
+  media: {
+    label: "Media", shortLabel: "MD",
+    colour: "text-cyan-400", bgColour: "bg-cyan-950", borderColour: "border-cyan-700",
+    tier: 3,
+  },
 };
 
 // All roles that get full CRM staff access (not sponsor-only)

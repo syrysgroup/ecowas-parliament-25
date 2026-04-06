@@ -27,6 +27,7 @@ import Volunteer from "./pages/Volunteer";
 import PartnerPage from "./pages/partners/PartnerPage";
 import SponsorPage from "./pages/sponsors/SponsorPage";
 import EventDetail from "./pages/events/EventDetail";
+import MediaPortal from "./pages/MediaPortal";
 
 // Programme pages
 import Youth from "./pages/programmes/Youth";
@@ -107,6 +108,14 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/set-password" element={<SetPassword />} />
 
+              {/* Accredited Media Portal */}
+              <Route path="/media-portal" element={
+                <ProtectedRoute allowedRoles={["super_admin", "admin", "media"]}>
+                  <MediaPortal />
+                </ProtectedRoute>
+              }/>
+              <Route path="/set-password" element={<SetPassword />} />
+
               {/* Protected admin area */}
               <Route path="/admin/users" element={
                 <ProtectedRoute allowedRoles={["super_admin"]}>
@@ -124,8 +133,8 @@ const App = () => (
               {/* CRM — all staff + sponsor roles */}
               <Route path="/crm" element={
                 <ProtectedRoute allowedRoles={[
-                  "super_admin", "admin", "moderator", "sponsor",
-                  "project_director", "programme_lead", "website_editor",
+                  "super_admin", "admin", "moderator", "sponsor", "media",
+                   "project_director", "programme_lead", "website_editor",
                   "marketing_manager", "communications_officer",
                   "finance_coordinator", "logistics_coordinator",
                   "sponsor_manager", "consultant",

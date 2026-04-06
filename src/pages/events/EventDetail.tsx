@@ -162,9 +162,17 @@ export default function EventDetail() {
         <div className="container">
           <div className="grid lg:grid-cols-[1.2fr_0.8fr] gap-10">
             <div className="space-y-8">
-              {event.cover_image_url && (
+              {event.cover_image_url ? (
                 <AnimatedSection>
-                  <img src={event.cover_image_url} alt={event.title} className="w-full rounded-2xl shadow-lg" loading="lazy" />
+                  <div className="aspect-square overflow-hidden rounded-2xl shadow-lg">
+                    <img src={event.cover_image_url} alt={event.title} className="w-full h-full object-cover object-center" loading="lazy" />
+                  </div>
+                </AnimatedSection>
+              ) : (
+                <AnimatedSection>
+                  <div className="aspect-square rounded-2xl bg-gradient-to-br from-primary/20 via-primary/10 to-muted flex items-center justify-center shadow-lg">
+                    <Calendar className="h-24 w-24 text-primary/30" />
+                  </div>
                 </AnimatedSection>
               )}
               <AnimatedSection>
@@ -190,14 +198,40 @@ export default function EventDetail() {
                 </div>
               </AnimatedSection>
 
-              {isPast && (
-                <AnimatedSection>
-                  <h3 className="text-lg font-bold text-foreground mb-3 flex items-center gap-2"><ExternalLink className="h-4 w-4" />Press & Related Briefings</h3>
-                  <div className="rounded-2xl border border-border bg-muted/30 p-4">
-                    <p className="text-xs text-muted-foreground italic">No press articles linked yet. Check back soon.</p>
-                  </div>
-                </AnimatedSection>
-              )}
+              {/* Media Coverage / External Links */}
+              {(() => {
+                const externalLinks: { title: string; url: string }[] = (() => {
+                  try {
+                    const links = (event as any).external_links;
+                    if (Array.isArray(links)) return links;
+                    return [];
+                  } catch { return []; }
+                })();
+                if (externalLinks.length === 0) return null;
+                return (
+                  <AnimatedSection>
+                    <h3 className="text-lg font-bold text-foreground mb-3 flex items-center gap-2">
+                      <ExternalLink className="h-4 w-4" /> Media Coverage
+                    </h3>
+                    <div className="grid sm:grid-cols-2 gap-3">
+                      {externalLinks.map((link, i) => (
+                        <a
+                          key={i}
+                          href={link.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex items-center gap-3 p-4 rounded-xl border border-border bg-card hover:border-primary hover:shadow-md transition-all group"
+                        >
+                          <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary flex-shrink-0" />
+                          <span className="text-sm font-medium text-card-foreground group-hover:text-primary line-clamp-2">
+                            {link.title || link.url}
+                          </span>
+                        </a>
+                      ))}
+                    </div>
+                  </AnimatedSection>
+                );
+              })()}
             </div>
 
             <div className="space-y-6">
@@ -205,11 +239,46 @@ export default function EventDetail() {
                 <div className="bg-card border border-border rounded-2xl p-6 shadow-sm sticky top-24">
                   {isPast ? (
                     <div className="space-y-4">
-                      <div className="flex items-center gap-3">
-                        <AlertCircle className="h-5 w-5 text-muted-foreground" />
-                        <h3 className="text-xl font-bold text-card-foreground">This event has concluded</h3>
+                      <h3 className="text-xl font-bold text-card-foreground">Event Details</h3>
+                      <div className="space-y-3 text-sm">
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <Calendar className="h-4 w-4 flex-shrink-0" />
+                          <span>{formatDate(eventDate, locale)}</span>
+                        </div>
+                        {event.location && (
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <MapPin className="h-4 w-4 flex-shrink-0" />
+                            <span>{event.location}{event.country ? `, ${event.country}` : ""}</span>
+                          </div>
+                        )}
+                        {event.capacity && (
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <Users className="h-4 w-4 flex-shrink-0" />
+                            <span>Capacity: {event.capacity}</span>
+                          </div>
+                        )}
                       </div>
-                      <p className="text-sm text-muted-foreground">Registration is no longer available.</p>
+                      <Badge variant="secondary" className="text-xs">Concluded</Badge>
+                      <div className="pt-2 space-y-2">
+                        <h4 className="text-sm font-semibold text-card-foreground flex items-center gap-2"><Share2 className="h-3.5 w-3.5" /> Share</h4>
+                        <div className="flex flex-wrap gap-1.5">
+                          <Button asChild variant="outline" size="sm" className="h-7 text-xs">
+                            <a href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(event.title)}&url=${encodeURIComponent(shareUrl)}`} target="_blank" rel="noreferrer">𝕏</a>
+                          </Button>
+                          <Button asChild variant="outline" size="sm" className="h-7 text-xs">
+                            <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`} target="_blank" rel="noreferrer">Facebook</a>
+                          </Button>
+                          <Button asChild variant="outline" size="sm" className="h-7 text-xs">
+                            <a href={`https://wa.me/?text=${encodeURIComponent(`${event.title} ${shareUrl}`)}`} target="_blank" rel="noreferrer">WhatsApp</a>
+                          </Button>
+                          <Button variant="outline" size="sm" className="h-7 text-xs" onClick={handleCopyLink}>
+                            {copied ? "Copied!" : "Copy"}
+                          </Button>
+                        </div>
+                      </div>
+                      <Button asChild variant="outline" className="w-full gap-2 mt-2">
+                        <Link to="/contact">Contact Organizers</Link>
+                      </Button>
                     </div>
                   ) : showExternal ? (
                     <div className="space-y-4">
@@ -283,7 +352,7 @@ export default function EventDetail() {
                 <AnimatedSection key={ev.id} delay={i * 80}>
                   <Card className="overflow-hidden hover:shadow-lg transition-shadow h-full flex flex-col">
                     {ev.cover_image_url ? (
-                      <div className="aspect-[4/5] overflow-hidden">
+                      <div className="aspect-square overflow-hidden">
                         <img
                           src={ev.cover_image_url}
                           alt={ev.title}
@@ -292,7 +361,7 @@ export default function EventDetail() {
                         />
                       </div>
                     ) : (
-                      <div className="aspect-[4/5] bg-muted flex items-center justify-center">
+                      <div className="aspect-square bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
                         <Calendar className="h-16 w-16 text-muted-foreground/30" />
                       </div>
                     )}

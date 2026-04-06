@@ -263,6 +263,7 @@ export type Database = {
           date: string
           description: string | null
           end_date: string | null
+          external_links: Json | null
           id: string
           is_published: boolean
           location: string | null
@@ -283,6 +284,7 @@ export type Database = {
           date: string
           description?: string | null
           end_date?: string | null
+          external_links?: Json | null
           id?: string
           is_published?: boolean
           location?: string | null
@@ -303,6 +305,7 @@ export type Database = {
           date?: string
           description?: string | null
           end_date?: string | null
+          external_links?: Json | null
           id?: string
           is_published?: boolean
           location?: string | null
@@ -1003,7 +1006,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "moderator" | "super_admin" | "sponsor"
+      app_role: "admin" | "moderator" | "super_admin" | "sponsor" | "media"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1131,7 +1134,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "moderator", "super_admin", "sponsor"],
+      app_role: ["admin", "moderator", "super_admin", "sponsor", "media"],
     },
   },
 } as const
