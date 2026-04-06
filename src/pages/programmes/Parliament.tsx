@@ -9,7 +9,7 @@ import ApplicationModal from "@/components/parliament/ApplicationModal";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Calendar, MapPin, Trophy, Users, Vote, Crown, FileText, Lightbulb } from "lucide-react";
+import { ArrowLeft, Calendar, MapPin, Trophy, Users, Vote, Crown, FileText, Lightbulb, Heart, Megaphone, Globe, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import parliamentHero from "@/assets/parliament-hero-clean.jpg";
 import ecowasLogo from "@/assets/ecowas-parliament-logo.png";
