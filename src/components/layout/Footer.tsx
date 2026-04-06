@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useTranslation, Locale } from "@/lib/i18n";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 import ecowasLogo from "@/assets/ecowas-parliament-logo.png";
 import anniversary25Logo from "@/assets/parliament-25-logo.png";
 import SocialMediaBar from "@/components/shared/SocialMediaBar";
@@ -11,6 +12,9 @@ const localeOrder: Locale[] = ["en", "fr", "pt"];
 const Footer = () => {
   const { t, locale, setLocale } = useTranslation();
   const { user } = useAuthContext();
+  const { get } = useSiteSettings();
+
+  const contactEmail = get("contact_email", "info@ecowasparliamentinitiatives.org");
 
   const footerLinks = [
     {
@@ -64,7 +68,7 @@ const Footer = () => {
             <p className="text-sm text-muted-foreground leading-relaxed mb-4">{t("footer.tagline")}</p>
             <div className="space-y-1.5 text-xs text-muted-foreground mb-4">
               <p>📍 Herbert Macaulay Way, Garki, Abuja 900103, Federal Capital Territory</p>
-              <p>📧 info@ecowasparliamentinitiatives.org</p>
+              <p>📧 {contactEmail}</p>
               <p>📧 media@ecowasparliamentinitiatives.org</p>
               <p>📧 sponsors@ecowasparliamentinitiatives.org</p>
             </div>

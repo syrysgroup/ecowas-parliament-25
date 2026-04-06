@@ -52,16 +52,16 @@ export default function Events() {
                   <AnimatedSection key={event.id} delay={i * 80}>
                     <Card className="overflow-hidden hover:shadow-lg transition-shadow h-full flex flex-col">
                       {event.cover_image_url ? (
-                        <div className="aspect-square overflow-hidden">
+                      <div className="aspect-[4/5] overflow-hidden">
                           <img
                             src={event.cover_image_url}
                             alt={event.title}
-                            className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                            className="w-full h-full object-cover object-center hover:scale-105 transition-transform duration-500"
                             loading="lazy"
                           />
                         </div>
                       ) : (
-                        <div className="aspect-square bg-muted flex items-center justify-center">
+                        <div className="aspect-[4/5] bg-muted flex items-center justify-center">
                           <Calendar className="h-16 w-16 text-muted-foreground/30" />
                         </div>
                       )}

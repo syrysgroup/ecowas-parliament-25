@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthContext";
 import {
-  Plus, Pencil, Trash2, Eye, EyeOff, Image, Users,
+  Plus, Pencil, Trash2, Eye, EyeOff, Image, Users, Search,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -13,6 +13,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
+import { usePermissions } from "@/hooks/usePermissions";
+import { toast } from "@/components/ui/sonner";
 
 interface SponsorRow {
   id: string; name: string; slug: string; logo_url: string | null;
@@ -342,6 +345,7 @@ function PartnerDialog({ open, onClose, partner }: { open: boolean; onClose: () 
 
 export default function SponsorsManagerModule() {
   const { isAdmin } = useAuthContext();
+  const { canCreate, canEdit, canDelete } = usePermissions();
   const qc = useQueryClient();
   const [tab, setTab] = useState("sponsors");
   const [addSponsorOpen, setAddSponsorOpen] = useState(false);
@@ -349,6 +353,8 @@ export default function SponsorsManagerModule() {
   const [editSponsor, setEditSponsor] = useState<SponsorRow | null>(null);
   const [editPartner, setEditPartner] = useState<PartnerRow | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const { data: sponsors = [], isLoading: loadingS } = useQuery<SponsorRow[]>({
     queryKey: ["sponsors-manager"],
@@ -360,12 +366,16 @@ export default function SponsorsManagerModule() {
     queryFn: async () => { const { data } = await (supabase as any).from("partners").select("*").order("sort_order"); return data ?? []; },
   });
 
+  const filteredSponsors = sponsors.filter(s => !search || s.name.toLowerCase().includes(search.toLowerCase()));
+  const filteredPartners = partners.filter(p => !search || p.name.toLowerCase().includes(search.toLowerCase()));
+
   const deleteSponsor = useMutation({
     mutationFn: async (id: string) => { await (supabase as any).from("sponsors").delete().eq("id", id); },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["sponsors-manager"] });
       qc.invalidateQueries({ queryKey: ["sponsors-public"] });
       setConfirmDelete(null);
+      toast("Sponsor deleted");
     },
   });
 
@@ -375,33 +385,39 @@ export default function SponsorsManagerModule() {
       qc.invalidateQueries({ queryKey: ["partners-manager"] });
       qc.invalidateQueries({ queryKey: ["partners-public"] });
       setConfirmDelete(null);
+      toast("Partner deleted");
     },
   });
 
   const toggleSponsorPublish = useMutation({
     mutationFn: async ({ id, published }: { id: string; published: boolean }) => {
-      const { error } = await (supabase as any).from("sponsors").update({ is_published: published }).eq("id", id);
-      if (error) throw error;
+      await (supabase as any).from("sponsors").update({ is_published: published }).eq("id", id);
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["sponsors-manager"] });
-      qc.invalidateQueries({ queryKey: ["sponsors-public"] });
-    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["sponsors-manager"] }); qc.invalidateQueries({ queryKey: ["sponsors-public"] }); },
   });
 
   const togglePartnerPublish = useMutation({
     mutationFn: async ({ id, published }: { id: string; published: boolean }) => {
-      const { error } = await (supabase as any).from("partners").update({ is_published: published }).eq("id", id);
-      if (error) throw error;
+      await (supabase as any).from("partners").update({ is_published: published }).eq("id", id);
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["partners-manager"] }); qc.invalidateQueries({ queryKey: ["partners-public"] }); },
+  });
+
+  const bulkDelete = useMutation({
+    mutationFn: async () => {
+      const table = tab === "sponsors" ? "sponsors" : "partners";
+      await Promise.all([...selectedIds].map(id => (supabase as any).from(table).delete().eq("id", id)));
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["partners-manager"] });
-      qc.invalidateQueries({ queryKey: ["partners-public"] });
+      qc.invalidateQueries({ queryKey: [tab === "sponsors" ? "sponsors-manager" : "partners-manager"] });
+      setSelectedIds(new Set());
+      toast("Deleted selected items");
     },
   });
 
-  const loading = tab === "sponsors" ? loadingS : loadingP;
-  const items = tab === "sponsors" ? sponsors : partners;
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next; });
+  };
 
   return (
     <div className="space-y-5">
@@ -410,13 +426,31 @@ export default function SponsorsManagerModule() {
           <h2 className="text-lg font-bold text-crm-text">Sponsors & Partners</h2>
           <p className="text-[12px] text-crm-text-muted mt-0.5">Manage sponsors and partners displayed on the website</p>
         </div>
-        {isAdmin && (
+        {canCreate("sponsors") && (
           <Button size="sm" onClick={() => tab === "sponsors" ? setAddSponsorOpen(true) : setAddPartnerOpen(true)}
             className="bg-emerald-700 hover:bg-emerald-600 text-white text-xs gap-1.5">
             <Plus size={13} /> Add {tab === "sponsors" ? "Sponsor" : "Partner"}
           </Button>
         )}
       </div>
+
+      {/* Search */}
+      <div className="relative">
+        <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-crm-text-dim" />
+        <Input value={search} onChange={e => setSearch(e.target.value)}
+          className="bg-crm-surface border-crm-border text-crm-text text-xs h-8 pl-8" placeholder="Search sponsors & partners..." />
+      </div>
+
+      {/* Bulk actions */}
+      {selectedIds.size > 0 && (
+        <div className="flex items-center gap-2 bg-crm-surface border border-crm-border rounded-lg px-3 py-2">
+          <span className="text-[11px] text-crm-text-muted">{selectedIds.size} selected</span>
+          {canDelete("sponsors") && (
+            <Button size="sm" variant="outline" onClick={() => bulkDelete.mutate()}
+              className="border-red-800 text-red-400 text-[10px] h-6 px-2">Delete</Button>
+          )}
+        </div>
+      )}
 
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="bg-crm-surface border border-crm-border">
@@ -430,8 +464,9 @@ export default function SponsorsManagerModule() {
 
         <TabsContent value="sponsors" className="mt-4 space-y-2">
           {loadingS && <div className="flex justify-center py-12"><div className="w-6 h-6 border-2 border-emerald-700 border-t-emerald-400 rounded-full animate-spin" /></div>}
-          {!loadingS && sponsors.map(s => (
+          {!loadingS && filteredSponsors.map(s => (
             <div key={s.id} className="bg-crm-card border border-crm-border rounded-xl p-4 flex items-center gap-4 hover:border-crm-border-hover transition-colors">
+              <Checkbox checked={selectedIds.has(s.id)} onCheckedChange={() => toggleSelect(s.id)} />
               {s.logo_url ? <img src={s.logo_url} alt="" className="w-12 h-12 object-contain rounded" width={48} height={48} loading="lazy" decoding="async" /> : <div className="w-12 h-12 bg-crm-surface rounded flex items-center justify-center text-crm-text-dim"><Users size={16} /></div>}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
@@ -443,30 +478,35 @@ export default function SponsorsManagerModule() {
                 </div>
                 {s.programmes.length > 0 && <p className="text-[10px] text-crm-text-dim mt-0.5">{s.programmes.join(", ")}</p>}
               </div>
-              {isAdmin && (
-                <div className="flex gap-1">
+              <div className="flex gap-1">
+                {canEdit("sponsors") && (
                   <button onClick={() => toggleSponsorPublish.mutate({ id: s.id, published: !s.is_published })} className="w-7 h-7 rounded flex items-center justify-center bg-crm-surface border border-crm-border text-crm-text-dim hover:text-crm-text-secondary transition-colors">
                     {s.is_published ? <EyeOff size={12} /> : <Eye size={12} />}
                   </button>
+                )}
+                {canEdit("sponsors") && (
                   <button onClick={() => setEditSponsor(s)} className="w-7 h-7 rounded flex items-center justify-center bg-crm-surface border border-crm-border text-crm-text-dim hover:text-crm-text-secondary transition-colors"><Pencil size={12} /></button>
-                  {confirmDelete === s.id ? (
+                )}
+                {canDelete("sponsors") && (
+                  confirmDelete === s.id ? (
                     <div className="flex items-center gap-1">
                       <button onClick={() => deleteSponsor.mutate(s.id)} className="text-[10px] text-red-400 bg-red-950 border border-red-800 rounded px-2 py-1">Yes</button>
                       <button onClick={() => setConfirmDelete(null)} className="text-[10px] text-crm-text-dim bg-crm-surface border border-crm-border rounded px-2 py-1">No</button>
                     </div>
                   ) : (
                     <button onClick={() => setConfirmDelete(s.id)} className="w-7 h-7 rounded flex items-center justify-center bg-crm-surface border border-crm-border text-crm-text-dim hover:text-red-400 transition-colors"><Trash2 size={12} /></button>
-                  )}
-                </div>
-              )}
+                  )
+                )}
+              </div>
             </div>
           ))}
         </TabsContent>
 
         <TabsContent value="partners" className="mt-4 space-y-2">
           {loadingP && <div className="flex justify-center py-12"><div className="w-6 h-6 border-2 border-emerald-700 border-t-emerald-400 rounded-full animate-spin" /></div>}
-          {!loadingP && partners.map(p => (
+          {!loadingP && filteredPartners.map(p => (
             <div key={p.id} className="bg-crm-card border border-crm-border rounded-xl p-4 flex items-center gap-4 hover:border-crm-border-hover transition-colors">
+              <Checkbox checked={selectedIds.has(p.id)} onCheckedChange={() => toggleSelect(p.id)} />
               {p.logo_url ? <img src={p.logo_url} alt="" className="w-12 h-12 object-contain rounded" width={48} height={48} loading="lazy" decoding="async" /> : <div className="w-12 h-12 bg-crm-surface rounded flex items-center justify-center text-crm-text-dim"><Users size={16} /></div>}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
@@ -478,22 +518,26 @@ export default function SponsorsManagerModule() {
                 </div>
                 {p.lead_name && <p className="text-[10px] text-crm-text-dim mt-0.5">{p.lead_name} — {p.lead_role}</p>}
               </div>
-              {isAdmin && (
-                <div className="flex gap-1">
+              <div className="flex gap-1">
+                {canEdit("sponsors") && (
                   <button onClick={() => togglePartnerPublish.mutate({ id: p.id, published: !p.is_published })} className="w-7 h-7 rounded flex items-center justify-center bg-crm-surface border border-crm-border text-crm-text-dim hover:text-crm-text-secondary transition-colors">
                     {p.is_published ? <EyeOff size={12} /> : <Eye size={12} />}
                   </button>
+                )}
+                {canEdit("sponsors") && (
                   <button onClick={() => setEditPartner(p)} className="w-7 h-7 rounded flex items-center justify-center bg-crm-surface border border-crm-border text-crm-text-dim hover:text-crm-text-secondary transition-colors"><Pencil size={12} /></button>
-                  {confirmDelete === p.id ? (
+                )}
+                {canDelete("sponsors") && (
+                  confirmDelete === p.id ? (
                     <div className="flex items-center gap-1">
                       <button onClick={() => deletePartner.mutate(p.id)} className="text-[10px] text-red-400 bg-red-950 border border-red-800 rounded px-2 py-1">Yes</button>
                       <button onClick={() => setConfirmDelete(null)} className="text-[10px] text-crm-text-dim bg-crm-surface border border-crm-border rounded px-2 py-1">No</button>
                     </div>
                   ) : (
                     <button onClick={() => setConfirmDelete(p.id)} className="w-7 h-7 rounded flex items-center justify-center bg-crm-surface border border-crm-border text-crm-text-dim hover:text-red-400 transition-colors"><Trash2 size={12} /></button>
-                  )}
-                </div>
-              )}
+                  )
+                )}
+              </div>
             </div>
           ))}
         </TabsContent>

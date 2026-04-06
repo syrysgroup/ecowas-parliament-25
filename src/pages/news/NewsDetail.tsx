@@ -2,10 +2,9 @@ import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import Layout from "@/components/layout/Layout";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format, parseISO } from "date-fns";
-import newsImg1 from "@/assets/news-1.jpg";
 
 const NewsDetail = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -45,6 +44,15 @@ const NewsDetail = () => {
     );
   }
 
+  // Parse external_links from the article
+  const externalLinks: { title: string; url: string }[] = (() => {
+    try {
+      const links = (article as any).external_links;
+      if (Array.isArray(links)) return links;
+      return [];
+    } catch { return []; }
+  })();
+
   return (
     <Layout>
       <article className="py-12">
@@ -57,7 +65,7 @@ const NewsDetail = () => {
             <img
               src={article.cover_image_url}
               alt={article.title}
-              className="w-full aspect-video object-cover rounded-2xl mb-8"
+              className="w-full max-h-[600px] object-cover rounded-2xl mb-8"
             />
           )}
 
@@ -76,10 +84,35 @@ const NewsDetail = () => {
           )}
 
           <div className="prose prose-neutral dark:prose-invert max-w-none">
-            {article.content?.split("\n").map((paragraph, i) => (
+            {article.content?.split("\n").map((paragraph: string, i: number) => (
               <p key={i}>{paragraph}</p>
             ))}
           </div>
+
+          {/* External Media Links */}
+          {externalLinks.length > 0 && (
+            <div className="mt-12 pt-8 border-t border-border">
+              <h2 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
+                <ExternalLink className="h-5 w-5" /> Related Media Coverage
+              </h2>
+              <div className="grid sm:grid-cols-2 gap-3">
+                {externalLinks.map((link, i) => (
+                  <a
+                    key={i}
+                    href={link.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-3 p-4 rounded-xl border border-border bg-card hover:border-primary hover:shadow-md transition-all group"
+                  >
+                    <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary flex-shrink-0" />
+                    <span className="text-sm font-medium text-card-foreground group-hover:text-primary line-clamp-2">
+                      {link.title || link.url}
+                    </span>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </article>
     </Layout>
