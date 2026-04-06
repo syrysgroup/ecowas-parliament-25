@@ -7,8 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar, MapPin, Users, ArrowLeft, Share2, Copy, CheckCircle2, ExternalLink, AlertCircle } from "lucide-react";
+import { Calendar, MapPin, Users, ArrowLeft, Share2, Copy, CheckCircle2, ExternalLink, AlertCircle, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -57,6 +58,22 @@ export default function EventDetail() {
         .eq("id", id!)
         .maybeSingle();
       return data;
+    },
+    enabled: !!id,
+  });
+
+  // Fetch other published events for the "Other Events" section
+  const { data: otherEvents = [] } = useQuery({
+    queryKey: ["other-events", id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("events")
+        .select("id, title, cover_image_url, date, country, tag, programme")
+        .eq("is_published", true)
+        .neq("id", id!)
+        .order("date", { ascending: true })
+        .limit(6);
+      return data ?? [];
     },
     enabled: !!id,
   });
@@ -253,6 +270,51 @@ export default function EventDetail() {
           </div>
         </div>
       </section>
+
+      {/* Other Events Section */}
+      {otherEvents.length > 0 && (
+        <section className="py-16 bg-muted/30 border-t border-border">
+          <div className="container">
+            <AnimatedSection>
+              <h2 className="text-2xl font-bold text-foreground mb-8">Other Events</h2>
+            </AnimatedSection>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {otherEvents.map((ev: any, i: number) => (
+                <AnimatedSection key={ev.id} delay={i * 80}>
+                  <Card className="overflow-hidden hover:shadow-lg transition-shadow h-full flex flex-col">
+                    {ev.cover_image_url ? (
+                      <div className="aspect-[4/5] overflow-hidden">
+                        <img
+                          src={ev.cover_image_url}
+                          alt={ev.title}
+                          className="w-full h-full object-cover object-center hover:scale-105 transition-transform duration-500"
+                          loading="lazy"
+                        />
+                      </div>
+                    ) : (
+                      <div className="aspect-[4/5] bg-muted flex items-center justify-center">
+                        <Calendar className="h-16 w-16 text-muted-foreground/30" />
+                      </div>
+                    )}
+                    <CardContent className="flex-1 flex flex-col p-5">
+                      <div className="flex items-center gap-2 mb-2">
+                        {ev.tag && <Badge variant="secondary" className="text-[10px]">{ev.tag}</Badge>}
+                        <span className="text-xs text-muted-foreground">{formatDate(new Date(ev.date), locale)}</span>
+                      </div>
+                      <h3 className="font-bold text-base mb-2 text-foreground line-clamp-2">{ev.title}</h3>
+                      <div className="mt-auto pt-3">
+                        <Button asChild className="w-full gap-2" size="sm">
+                          <Link to={`/events/${ev.id}`}><Eye className="h-4 w-4" />View More</Link>
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </AnimatedSection>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
     </Layout>
   );
 }
