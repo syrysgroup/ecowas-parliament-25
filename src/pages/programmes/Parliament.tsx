@@ -28,10 +28,10 @@ const seatPalette = [
 ];
 
 const objectives = [
-  "Create a visible pathway from application to nomination, vote, and verified representation.",
-  "Introduce each accepted delegate with a portrait, short bio, and public mandate.",
-  "Give every ECOWAS member state a live view of seats, candidate momentum, and verified delegates.",
-  "Support admin and moderator review queues through a secure Supabase-backed workflow.",
+  { icon: Megaphone, text: "Empower youth from across West Africa to deliberate on the issues that affect them and produce actionable resolutions for regional policy." },
+  { icon: Heart, text: "Ensure women are duly represented in youth parliamentary governance — building a parliament that reflects the diversity of the region." },
+  { icon: Globe, text: "Create a direct pipeline from youth resolutions to the ECOWAS Youth Parliament, giving young voices a seat at the table of regional decision-making." },
+  { icon: Sparkles, text: "Pioneer the first simulated youth parliament in West Africa's history — proving that the future of governance starts with the people it serves." },
 ];
 
 const principalOfficers = [
