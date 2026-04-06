@@ -1,5 +1,5 @@
 import { ReactNode, useState, useRef, useEffect } from "react";
-import { Bell, Settings, X, Sun, Moon } from "lucide-react";
+import { Bell, Settings, X, Sun, Moon, User, Lock, Globe, LogOut } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, parseISO, isToday, addHours } from "date-fns";
@@ -7,6 +7,14 @@ import CRMSidebar from "./CRMSidebar";
 import { CRM_MODULES } from "./crmModules";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthContext";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface CRMLayoutProps {
   activeSection: string;
@@ -269,7 +277,7 @@ function CRMThemeToggle() {
 
 // ─── Main layout ──────────────────────────────────────────────────────────────
 export default function CRMLayout({ activeSection, onNavigate, children }: CRMLayoutProps) {
-  const { user, roles } = useAuthContext();
+  const { user, roles, signOut } = useAuthContext();
   const activeModule = CRM_MODULES.find(m => m.section === activeSection);
   const moduleLabel  = activeModule?.label ?? "Dashboard";
 
@@ -292,7 +300,7 @@ export default function CRMLayout({ activeSection, onNavigate, children }: CRMLa
             <span className="text-[13px] font-semibold text-crm-text truncate">{moduleLabel}</span>
           </div>
 
-          {/* Right: notification bell + theme toggle + settings + user avatar */}
+          {/* Right: notification bell + theme toggle + settings + user dropdown */}
           <div className="flex items-center gap-2 flex-shrink-0">
             <NotificationBell onNavigate={onNavigate} />
 
@@ -310,19 +318,79 @@ export default function CRMLayout({ activeSection, onNavigate, children }: CRMLa
               <Settings size={15} />
             </button>
 
-            {/* User avatar chip */}
-            <button
-              onClick={() => onNavigate("settings")}
-              className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-crm-surface transition-colors"
-              title="Go to settings"
-            >
-              <div className="w-6 h-6 rounded-full bg-crm-border flex items-center justify-center text-[10px] font-bold text-emerald-400 uppercase flex-shrink-0">
-                {initial}
-              </div>
-              <span className="text-[11px] text-crm-text-muted hidden md:block truncate max-w-[100px]">
-                {displayName}
-              </span>
-            </button>
+            {/* User avatar dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-crm-surface transition-colors outline-none">
+                  <div className="w-6 h-6 rounded-full bg-crm-border flex items-center justify-center text-[10px] font-bold text-emerald-400 uppercase flex-shrink-0">
+                    {initial}
+                  </div>
+                  <span className="text-[11px] text-crm-text-muted hidden md:block truncate max-w-[100px]">
+                    {displayName}
+                  </span>
+                </button>
+              </DropdownMenuTrigger>
+
+              <DropdownMenuContent
+                align="end"
+                className="w-52 bg-crm-card border-crm-border text-crm-text shadow-2xl shadow-black/60 z-50"
+              >
+                <DropdownMenuLabel className="pb-1">
+                  <p className="text-[12px] font-semibold text-crm-text truncate">{displayName}</p>
+                  <p className="text-[10px] text-crm-text-muted font-normal truncate">{user?.email}</p>
+                </DropdownMenuLabel>
+
+                <DropdownMenuSeparator className="bg-crm-border" />
+
+                <DropdownMenuItem
+                  onClick={() => onNavigate("profile")}
+                  className="flex items-center gap-2.5 text-[12px] text-crm-text-muted hover:text-crm-text-secondary hover:bg-crm-surface cursor-pointer"
+                >
+                  <User size={13} />
+                  Profile
+                </DropdownMenuItem>
+
+                <DropdownMenuItem
+                  onClick={() => onNavigate("settings")}
+                  className="flex items-center gap-2.5 text-[12px] text-crm-text-muted hover:text-crm-text-secondary hover:bg-crm-surface cursor-pointer"
+                >
+                  <Settings size={13} />
+                  Settings
+                </DropdownMenuItem>
+
+                <DropdownMenuItem
+                  onClick={() => onNavigate("settings")}
+                  className="flex items-center gap-2.5 text-[12px] text-crm-text-muted hover:text-crm-text-secondary hover:bg-crm-surface cursor-pointer"
+                >
+                  <Lock size={13} />
+                  Change Password
+                </DropdownMenuItem>
+
+                <DropdownMenuSeparator className="bg-crm-border" />
+
+                <DropdownMenuItem asChild>
+                  <a
+                    href="/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2.5 text-[12px] text-crm-text-muted hover:text-crm-text-secondary hover:bg-crm-surface cursor-pointer w-full px-2 py-1.5 rounded-sm"
+                  >
+                    <Globe size={13} />
+                    Visit Site
+                  </a>
+                </DropdownMenuItem>
+
+                <DropdownMenuSeparator className="bg-crm-border" />
+
+                <DropdownMenuItem
+                  onClick={() => signOut()}
+                  className="flex items-center gap-2.5 text-[12px] text-red-400 hover:text-red-300 hover:bg-[#2a1010] cursor-pointer"
+                >
+                  <LogOut size={13} />
+                  Sign Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </header>
 

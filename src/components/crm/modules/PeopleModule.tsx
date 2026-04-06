@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -7,7 +7,7 @@ import type { AppRole } from "@/contexts/AuthContext";
 import { CRM_ROLE_META } from "../crmRoles";
 import {
   Send, Trash2, CheckCircle2, Clock, UserPlus, RefreshCw, X,
-  Eye, Pencil, UserMinus, EyeOff, AlertTriangle, Camera,
+  Eye, Pencil, UserMinus, EyeOff, AlertTriangle, Camera, Globe, Plus,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -572,6 +572,284 @@ function EditUserDialog({
   );
 }
 
+// ─── Website Team Tab ────────────────────────────────────────────────────────
+interface TeamMemberRow {
+  id: string;
+  full_name: string;
+  title: string | null;
+  organisation: string | null;
+  avatar_url: string | null;
+  bio: string | null;
+  display_order: number;
+  is_active: boolean;
+  created_at: string;
+}
+
+function TeamMemberDialog({ open, onClose, member }: {
+  open: boolean;
+  onClose: () => void;
+  member?: TeamMemberRow;
+}) {
+  const { toast } = useToast();
+  const qc = useQueryClient();
+  const fileRef = useRef<HTMLInputElement>(null);
+  const isEdit = !!member;
+
+  const [fullName,     setFullName]     = useState(member?.full_name ?? "");
+  const [title,        setTitle]        = useState(member?.title ?? "");
+  const [organisation, setOrganisation] = useState(member?.organisation ?? "");
+  const [bio,          setBio]          = useState(member?.bio ?? "");
+  const [avatarUrl,    setAvatarUrl]    = useState(member?.avatar_url ?? "");
+  const [displayOrder, setDisplayOrder] = useState(member?.display_order?.toString() ?? "0");
+  const [isActive,     setIsActive]     = useState(member?.is_active ?? true);
+  const [uploading,    setUploading]    = useState(false);
+  const [saving,       setSaving]       = useState(false);
+
+  const handleUpload = async (file: File) => {
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop();
+      const path = `team-members/${crypto.randomUUID()}.${ext}`;
+      const { error } = await supabase.storage.from("team-avatars").upload(path, file, { upsert: true });
+      if (error) throw error;
+      const { data: { publicUrl } } = supabase.storage.from("team-avatars").getPublicUrl(path);
+      setAvatarUrl(publicUrl);
+    } catch (err: any) {
+      toast({ title: "Upload failed", description: err.message, variant: "destructive" });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!fullName.trim()) return;
+    setSaving(true);
+    try {
+      const payload = {
+        full_name:    fullName.trim(),
+        title:        title.trim() || null,
+        organisation: organisation.trim() || null,
+        bio:          bio.trim() || null,
+        avatar_url:   avatarUrl || null,
+        display_order: parseInt(displayOrder) || 0,
+        is_active:    isActive,
+      };
+      if (isEdit) {
+        const { error } = await (supabase as any).from("team_members").update(payload).eq("id", member.id);
+        if (error) throw error;
+      } else {
+        const { error } = await (supabase as any).from("team_members").insert(payload);
+        if (error) throw error;
+      }
+      qc.invalidateQueries({ queryKey: ["team-members-manual"] });
+      toast({ title: isEdit ? "Member updated" : "Member added" });
+      onClose();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const initials = fullName.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase() || "?";
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="bg-crm-card border-crm-border text-crm-text max-w-md max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-sm font-semibold text-crm-text">
+            {isEdit ? "Edit Team Member" : "Add Team Member"}
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 py-1">
+          {/* Avatar */}
+          <div className="flex items-center gap-4">
+            <div className="relative w-16 h-16 rounded-full bg-crm-border flex items-center justify-center overflow-hidden flex-shrink-0">
+              {avatarUrl ? (
+                <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-xl font-bold text-emerald-400 uppercase">{initials}</span>
+              )}
+              <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading}
+                className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                <Camera size={16} className="text-white" />
+              </button>
+            </div>
+            <input ref={fileRef} type="file" accept="image/*" className="hidden"
+              onChange={e => e.target.files?.[0] && handleUpload(e.target.files[0])} />
+            <p className="text-[10px] text-crm-text-dim">{uploading ? "Uploading…" : "Click avatar to upload photo"}</p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5 col-span-2">
+              <Label className="text-[11px] text-crm-text-muted">Full Name *</Label>
+              <Input value={fullName} onChange={e => setFullName(e.target.value)} placeholder="e.g. Dr. Amara Diallo"
+                className="bg-crm-surface border-crm-border text-crm-text-secondary text-sm focus:border-emerald-700" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-[11px] text-crm-text-muted">Title / Role</Label>
+              <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Programme Advisor"
+                className="bg-crm-surface border-crm-border text-crm-text-secondary text-sm focus:border-emerald-700" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-[11px] text-crm-text-muted">Organisation</Label>
+              <Input value={organisation} onChange={e => setOrganisation(e.target.value)} placeholder="e.g. UNDP"
+                className="bg-crm-surface border-crm-border text-crm-text-secondary text-sm focus:border-emerald-700" />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-[11px] text-crm-text-muted">Bio</Label>
+            <Textarea value={bio} onChange={e => setBio(e.target.value)} rows={3}
+              placeholder="Short description about this person…"
+              className="bg-crm-surface border-crm-border text-crm-text-secondary text-sm focus:border-emerald-700 resize-none" />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label className="text-[11px] text-crm-text-muted">Display Order</Label>
+              <Input type="number" value={displayOrder} onChange={e => setDisplayOrder(e.target.value)} min={0}
+                className="bg-crm-surface border-crm-border text-crm-text-secondary text-sm focus:border-emerald-700" />
+            </div>
+            <div className="flex items-center justify-between pt-5">
+              <Label className="text-[11px] text-crm-text-muted">Active</Label>
+              <Switch checked={isActive} onCheckedChange={setIsActive} className="data-[state=checked]:bg-emerald-600" />
+            </div>
+          </div>
+        </div>
+        <DialogFooter className="gap-2">
+          <Button variant="outline" size="sm" onClick={onClose}
+            className="border-crm-border text-crm-text-muted text-xs">Cancel</Button>
+          <Button size="sm" onClick={handleSave} disabled={saving || !fullName.trim()}
+            className="bg-emerald-700 hover:bg-emerald-600 text-white text-xs">
+            {saving ? "Saving…" : isEdit ? "Save changes" : "Add Member"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function WebsiteTeamTab({ qc, toast }: { qc: ReturnType<typeof useQueryClient>; toast: ReturnType<typeof useToast>["toast"] }) {
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState<TeamMemberRow | undefined>(undefined);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  const { data: teamMembers = [], isLoading } = useQuery<TeamMemberRow[]>({
+    queryKey: ["team-members-manual"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("team_members")
+        .select("*")
+        .order("display_order");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const toggleActive = async (id: string, current: boolean) => {
+    const { error } = await (supabase as any).from("team_members").update({ is_active: !current }).eq("id", id);
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    qc.invalidateQueries({ queryKey: ["team-members-manual"] });
+    toast({ title: !current ? "Now visible on Team page" : "Hidden from Team page" });
+  };
+
+  const deleteRow = async (id: string) => {
+    const { error } = await (supabase as any).from("team_members").delete().eq("id", id);
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    qc.invalidateQueries({ queryKey: ["team-members-manual"] });
+    setDeleteId(null);
+    toast({ title: "Member removed" });
+  };
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-[12px] font-semibold text-crm-text flex items-center gap-1.5">
+            <Globe size={13} className="text-emerald-400" />
+            Website Team Members
+          </p>
+          <p className="text-[10px] text-crm-text-muted mt-0.5">
+            Add anyone — no CRM login needed. These appear alongside registered users on the public Team page.
+          </p>
+        </div>
+        <Button size="sm" onClick={() => { setEditTarget(undefined); setDialogOpen(true); }}
+          className="bg-emerald-700 hover:bg-emerald-600 text-white text-xs gap-1.5">
+          <Plus size={12} /> Add Member
+        </Button>
+      </div>
+
+      {isLoading ? (
+        <div className="flex items-center justify-center h-24">
+          <div className="w-5 h-5 border-2 border-emerald-700 border-t-emerald-400 rounded-full animate-spin" />
+        </div>
+      ) : teamMembers.length === 0 ? (
+        <div className="bg-crm-card border border-crm-border rounded-xl p-8 text-center">
+          <Globe size={24} className="mx-auto text-crm-text-faint mb-2" />
+          <p className="text-xs text-crm-text-faint">No manual team members yet.</p>
+          <p className="text-[10px] text-crm-text-faint mt-0.5">Click "Add Member" to add someone who doesn't need a CRM account.</p>
+        </div>
+      ) : (
+        <div className="bg-crm-card border border-crm-border rounded-xl overflow-hidden">
+          <div className="divide-y divide-crm-border">
+            {teamMembers.map(m => {
+              const initials = m.full_name.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase() || "?";
+              return (
+                <div key={m.id} className="flex items-center gap-3 px-4 py-3 hover:bg-crm-surface transition-colors">
+                  <div className="w-9 h-9 rounded-full bg-crm-border flex items-center justify-center flex-shrink-0 overflow-hidden">
+                    {m.avatar_url ? (
+                      <img src={m.avatar_url} alt="" className="w-full h-full object-cover" loading="lazy" />
+                    ) : (
+                      <span className="text-xs font-bold text-emerald-400 uppercase">{initials}</span>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[12.5px] font-semibold text-crm-text truncate">{m.full_name}</p>
+                    <p className="text-[10px] text-crm-text-muted">{[m.title, m.organisation].filter(Boolean).join(" · ")}</p>
+                  </div>
+                  <span className={`text-[9px] font-mono border rounded px-1.5 py-0.5 flex-shrink-0 ${m.is_active ? "text-emerald-400 border-emerald-800 bg-emerald-950" : "text-crm-text-faint border-crm-border bg-crm-surface"}`}>
+                    {m.is_active ? "visible" : "hidden"}
+                  </span>
+                  <div className="flex items-center gap-0.5 flex-shrink-0">
+                    <button onClick={() => toggleActive(m.id, m.is_active)}
+                      title={m.is_active ? "Hide from Team page" : "Show on Team page"}
+                      className={`p-1.5 transition-colors rounded ${m.is_active ? "text-emerald-400 hover:text-emerald-300" : "text-crm-text-dim hover:text-crm-text-secondary"}`}>
+                      {m.is_active ? <Eye size={13} /> : <EyeOff size={13} />}
+                    </button>
+                    <button onClick={() => { setEditTarget(m); setDialogOpen(true); }}
+                      title="Edit" className="p-1.5 text-crm-text-dim hover:text-crm-text-secondary transition-colors rounded">
+                      <Pencil size={13} />
+                    </button>
+                    {deleteId === m.id ? (
+                      <span className="flex items-center gap-1 text-[9px] ml-1">
+                        <button onClick={() => deleteRow(m.id)} className="text-red-400 hover:text-red-300 font-semibold transition-colors">Yes</button>
+                        <span className="text-crm-text-faint">/</span>
+                        <button onClick={() => setDeleteId(null)} className="text-crm-text-dim hover:text-crm-text-secondary transition-colors">No</button>
+                      </span>
+                    ) : (
+                      <button onClick={() => setDeleteId(m.id)} title="Delete"
+                        className="p-1.5 text-crm-text-dim hover:text-red-400 transition-colors rounded">
+                        <Trash2 size={13} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      <TeamMemberDialog
+        open={dialogOpen}
+        onClose={() => { setDialogOpen(false); setEditTarget(undefined); }}
+        member={editTarget}
+      />
+    </div>
+  );
+}
+
 // ─── Main Component ──────────────────────────────────────────────────────────
 export default function PeopleModule() {
   const { user, isAdmin, isSuperAdmin, refreshRoles } = useAuthContext();
@@ -585,7 +863,7 @@ export default function PeopleModule() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole,  setInviteRole]  = useState<AppRole>("admin");
   const [search,      setSearch]      = useState("");
-  const [tab,         setTab]         = useState<"users" | "invitations">("users");
+  const [tab,         setTab]         = useState<"users" | "invitations" | "website-team">("users");
 
   // CRUD state
   const [viewTarget,      setViewTarget]      = useState<UserWithRoles | null>(null);
@@ -703,6 +981,21 @@ export default function PeopleModule() {
     }
   };
 
+  const handleToggleWebsite = async (userId: string, current: boolean) => {
+    try {
+      const { error } = await (supabase as any)
+        .from("profiles")
+        .update({ show_on_website: !current })
+        .eq("id", userId);
+      if (error) throw error;
+      toast({ title: !current ? "Now visible on Team page" : "Hidden from Team page" });
+      qc.invalidateQueries({ queryKey: ["team-members"] });
+      loadData();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  };
+
   const deleteUser = async (userId: string) => {
     try {
       await (supabase as any).from("user_roles").delete().eq("user_id", userId);
@@ -774,11 +1067,23 @@ export default function PeopleModule() {
         </form>
       </div>
 
+      {/* Warning banner: users hidden from Team page */}
+      {users.length > 0 && users.filter(u => !u.show_on_website).length > 0 && (
+        <div className="flex items-start gap-2.5 bg-amber-500/10 border border-amber-500/30 rounded-xl px-4 py-3 text-xs text-amber-400">
+          <AlertTriangle size={13} className="flex-shrink-0 mt-0.5" />
+          <span>
+            <strong>{users.filter(u => !u.show_on_website).length}</strong> user(s) are not visible on the public Team page.
+            Click the <EyeOff size={10} className="inline mx-0.5" /> icon in any user row to publish them instantly.
+          </span>
+        </div>
+      )}
+
       {/* Tab switcher */}
       <div className="flex gap-1 border-b border-crm-border">
         {[
-          { id: "users" as const,       label: `Users (${filteredUsers.length})` },
-          { id: "invitations" as const, label: `Invitations${pending > 0 ? ` · ${pending} pending` : ""}` },
+          { id: "users" as const,        label: `Users (${filteredUsers.length})` },
+          { id: "invitations" as const,  label: `Invitations${pending > 0 ? ` · ${pending} pending` : ""}` },
+          { id: "website-team" as const, label: "Website Team" },
         ].map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
             className={`px-4 py-2 text-xs font-medium border-b-2 transition-colors ${
@@ -887,6 +1192,19 @@ export default function PeopleModule() {
                             <Pencil size={13} />
                           </button>
 
+                          {/* Website visibility toggle */}
+                          <button
+                            onClick={() => handleToggleWebsite(u.id, u.show_on_website)}
+                            title={u.show_on_website ? "Hide from Team page" : "Show on Team page"}
+                            className={`p-1.5 transition-colors rounded ${
+                              u.show_on_website
+                                ? "text-emerald-400 hover:text-emerald-300"
+                                : "text-crm-text-dim hover:text-crm-text-secondary"
+                            }`}
+                          >
+                            {u.show_on_website ? <Eye size={13} /> : <EyeOff size={13} />}
+                          </button>
+
                           {/* Delete — super_admin only, cannot delete yourself */}
                           {isSuperAdmin && u.id !== user?.id && (
                             confirmDeleteId === u.id ? (
@@ -972,6 +1290,11 @@ export default function PeopleModule() {
             </div>
           )}
         </div>
+      )}
+
+      {/* Website Team tab */}
+      {tab === "website-team" && (
+        <WebsiteTeamTab qc={qc} toast={toast} />
       )}
 
       {/* Dialogs */}

@@ -2,10 +2,9 @@ import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight, LogOut } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuthContext } from "@/contexts/AuthContext";
-import { getModulesForRoles, CRM_MODULES } from "./crmModules";
+import { getModulesForRoles, MODULE_GROUPS, type ModuleGroup } from "./crmModules";
 import { CRM_ROLE_META } from "./crmRoles";
 import { supabase } from "@/integrations/supabase/client";
-import type { ModuleId } from "./crmModules";
 
 const STORAGE_KEY = "crm_sidebar_collapsed";
 
@@ -21,7 +20,7 @@ export default function CRMSidebar({ activeSection, onNavigate }: CRMSidebarProp
     catch { return false; }
   });
 
-  // Unread CRM inbox count (crm_messages)
+  // Unread CRM inbox count
   const { data: unreadCount = 0 } = useQuery<number>({
     queryKey: ["crm-inbox-unread", user?.id],
     queryFn: async () => {
@@ -37,7 +36,7 @@ export default function CRMSidebar({ activeSection, onNavigate }: CRMSidebarProp
     refetchInterval: 60_000,
   });
 
-  // Unread Email inbox count (Zoho emails)
+  // Unread Email inbox count
   const { data: emailUnreadCount = 0 } = useQuery<number>({
     queryKey: ["email-inbox-unread", user?.id],
     queryFn: async () => {
@@ -65,15 +64,19 @@ export default function CRMSidebar({ activeSection, onNavigate }: CRMSidebarProp
     catch { /* ignore */ }
   }, [collapsed]);
 
-  const visibleModules = getModulesForRoles(roles);
+  // Filter out hidden-from-sidebar modules
+  const visibleModules = getModulesForRoles(roles).filter(m => !m.hideFromSidebar);
 
   // Display name + role badge
   const displayName = (user?.user_metadata?.full_name as string) || user?.email?.split("@")[0] || "User";
   const primaryRole = roles[0];
   const roleMeta = primaryRole ? CRM_ROLE_META[primaryRole] : null;
 
-  // Active module id
-  const activeModule = CRM_MODULES.find(m => m.section === activeSection);
+  // Group modules
+  const grouped = MODULE_GROUPS.map(group => ({
+    group,
+    modules: visibleModules.filter(m => m.group === group),
+  })).filter(g => g.modules.length > 0);
 
   return (
     <aside
@@ -121,56 +124,77 @@ export default function CRMSidebar({ activeSection, onNavigate }: CRMSidebarProp
         </button>
       )}
 
-      {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto py-3 scrollbar-hide">
-        <ul className="space-y-0.5 px-2">
-          {visibleModules.map(mod => {
-            const isActive = mod.section === activeSection;
-            const Icon = mod.icon;
-            return (
-              <li key={mod.id}>
-                <button
-                  onClick={() => onNavigate(mod.section)}
-                  title={collapsed ? mod.label : undefined}
-                  className={`
-                    relative w-full flex items-center gap-3 px-2.5 py-2 rounded-lg text-left transition-all duration-100
-                    ${isActive
-                      ? "bg-emerald-950 text-emerald-400 border border-emerald-800"
-                      : "text-crm-text-muted hover:text-crm-text-secondary hover:bg-crm-surface border border-transparent"
-                    }
-                    ${collapsed ? "justify-center" : ""}
-                  `}
-                >
-                  <Icon size={15} className="flex-shrink-0" />
-                  {!collapsed && (
-                    <span className="text-[12.5px] font-medium truncate flex-1">{mod.label}</span>
-                  )}
-                  {!collapsed && mod.isStub && (
-                    <span className="ml-auto text-[9px] font-mono text-crm-text-faint bg-crm-surface border border-crm-border rounded px-1 flex-shrink-0">
-                      soon
-                    </span>
-                  )}
-                  {!collapsed && mod.section === "inbox" && unreadCount > 0 && (
-                    <span className="ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-red-950 border border-red-800 text-red-400 flex-shrink-0">
-                      {unreadCount > 99 ? "99+" : unreadCount}
-                    </span>
-                  )}
-                  {collapsed && mod.section === "inbox" && unreadCount > 0 && (
-                    <span className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-red-500 flex-shrink-0" />
-                  )}
-                  {!collapsed && mod.section === "email-inbox" && emailUnreadCount > 0 && (
-                    <span className="ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-blue-950 border border-blue-800 text-blue-400 flex-shrink-0">
-                      {emailUnreadCount > 99 ? "99+" : emailUnreadCount}
-                    </span>
-                  )}
-                  {collapsed && mod.section === "email-inbox" && emailUnreadCount > 0 && (
-                    <span className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-blue-500 flex-shrink-0" />
-                  )}
-                </button>
-              </li>
-            );
-          })}
-        </ul>
+      {/* Navigation — grouped */}
+      <nav className="flex-1 overflow-y-auto py-2 scrollbar-hide">
+        {grouped.map(({ group, modules }, gi) => (
+          <div key={group} className={gi > 0 ? "mt-1" : ""}>
+            {/* Group header — hidden when collapsed */}
+            {!collapsed && (
+              <div className={`px-3 pt-3 pb-1 ${gi > 0 ? "border-t border-crm-border/50 mt-1" : ""}`}>
+                <span className="text-[9px] font-bold tracking-[0.12em] text-crm-text-faint uppercase select-none">
+                  {group}
+                </span>
+              </div>
+            )}
+            {/* Collapsed divider */}
+            {collapsed && gi > 0 && (
+              <div className="mx-3 my-1.5 border-t border-crm-border/40" />
+            )}
+
+            <ul className="space-y-0.5 px-2">
+              {modules.map(mod => {
+                const isActive = mod.section === activeSection;
+                const Icon = mod.icon;
+                return (
+                  <li key={mod.id}>
+                    <button
+                      onClick={() => onNavigate(mod.section)}
+                      title={collapsed ? mod.label : undefined}
+                      className={`
+                        relative w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg text-left transition-all duration-100
+                        ${isActive
+                          ? "bg-emerald-950 text-emerald-400 border border-emerald-800"
+                          : "text-crm-text-muted hover:text-crm-text-secondary hover:bg-crm-surface border border-transparent"
+                        }
+                        ${collapsed ? "justify-center" : ""}
+                      `}
+                    >
+                      <Icon size={14} className="flex-shrink-0" />
+                      {!collapsed && (
+                        <span className="text-[12px] font-medium truncate flex-1">{mod.label}</span>
+                      )}
+                      {!collapsed && mod.isStub && (
+                        <span className="ml-auto text-[9px] font-mono text-crm-text-faint bg-crm-surface border border-crm-border rounded px-1 flex-shrink-0">
+                          soon
+                        </span>
+                      )}
+                      {/* Inbox unread badge */}
+                      {mod.section === "inbox" && unreadCount > 0 && (
+                        collapsed ? (
+                          <span className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-red-500" />
+                        ) : (
+                          <span className="ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-red-950 border border-red-800 text-red-400 flex-shrink-0">
+                            {unreadCount > 99 ? "99+" : unreadCount}
+                          </span>
+                        )
+                      )}
+                      {/* Email unread badge */}
+                      {mod.section === "email-inbox" && emailUnreadCount > 0 && (
+                        collapsed ? (
+                          <span className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-blue-500" />
+                        ) : (
+                          <span className="ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-blue-950 border border-blue-800 text-blue-400 flex-shrink-0">
+                            {emailUnreadCount > 99 ? "99+" : emailUnreadCount}
+                          </span>
+                        )
+                      )}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ))}
       </nav>
 
       {/* User profile + sign out */}

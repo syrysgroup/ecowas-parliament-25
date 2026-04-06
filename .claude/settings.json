@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(xargs grep:*)",
-      "Bash(ls full-version-extracted/*/)"
+      "Bash(ls full-version-extracted/*/)",
+      "Bash(grep -r \"avatar_url\\\\|title\\\\|organisation\\\\|bio\" c:/Users/emmat/Downloads/Projects/Implementation/supabase/migrations/*.sql)"
     ]
   }
 }

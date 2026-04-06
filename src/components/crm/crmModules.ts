@@ -29,7 +29,18 @@ import {
   Layers,
   UserSquare,
   BookOpen,
+  FileText,
+  User,
 } from "lucide-react";
+
+export type ModuleGroup =
+  | "WORKSPACE"
+  | "COMMUNICATION"
+  | "PEOPLE"
+  | "CONTENT"
+  | "ANALYTICS & FINANCE"
+  | "MARKETING"
+  | "ADMINISTRATION";
 
 export type ModuleId =
   | "dashboard"
@@ -59,15 +70,19 @@ export type ModuleId =
   | "settings"
   | "programme-pillars"
   | "stakeholders-mgmt"
-  | "media-kit-mgmt";
+  | "media-kit-mgmt"
+  | "invoices"
+  | "profile";
 
 export interface CRMModule {
-  id:           ModuleId;
-  label:        string;
-  icon:         LucideIcon;
-  section:      string;      // URL ?section= param value (empty = dashboard)
-  allowedRoles: AppRole[];
-  isStub:       boolean;
+  id:              ModuleId;
+  label:           string;
+  icon:            LucideIcon;
+  section:         string;        // URL ?section= param value (empty = dashboard)
+  allowedRoles:    AppRole[];
+  isStub:          boolean;
+  group:           ModuleGroup;
+  hideFromSidebar?: boolean;      // true = only reachable via dropdown (e.g. profile)
 }
 
 const ALL_STAFF: AppRole[] = [
@@ -78,7 +93,18 @@ const ALL_STAFF: AppRole[] = [
 
 const TIER_2_AND_SPONSOR: AppRole[] = [...ALL_STAFF, "sponsor"];
 
+export const MODULE_GROUPS: ModuleGroup[] = [
+  "WORKSPACE",
+  "COMMUNICATION",
+  "PEOPLE",
+  "CONTENT",
+  "ANALYTICS & FINANCE",
+  "MARKETING",
+  "ADMINISTRATION",
+];
+
 export const CRM_MODULES: CRMModule[] = [
+  // ── WORKSPACE ────────────────────────────────────────────────────────────────
   {
     id: "dashboard",
     label: "Dashboard",
@@ -86,6 +112,7 @@ export const CRM_MODULES: CRMModule[] = [
     section: "",
     allowedRoles: TIER_2_AND_SPONSOR,
     isStub: false,
+    group: "WORKSPACE",
   },
   {
     id: "tasks",
@@ -94,22 +121,7 @@ export const CRM_MODULES: CRMModule[] = [
     section: "tasks",
     allowedRoles: ALL_STAFF,
     isStub: false,
-  },
-  {
-    id: "inbox",
-    label: "Inbox",
-    icon: Mail,
-    section: "inbox",
-    allowedRoles: ALL_STAFF,
-    isStub: false,
-  },
-  {
-    id: "email-inbox",
-    label: "Email",
-    icon: Inbox,
-    section: "email-inbox",
-    allowedRoles: TIER_2_AND_SPONSOR,
-    isStub: false,
+    group: "WORKSPACE",
   },
   {
     id: "calendar",
@@ -122,14 +134,7 @@ export const CRM_MODULES: CRMModule[] = [
       "finance_coordinator", "logistics_coordinator", "sponsor_manager", "moderator",
     ],
     isStub: false,
-  },
-  {
-    id: "comms",
-    label: "Messaging",
-    icon: MessageSquare,
-    section: "comms",
-    allowedRoles: ALL_STAFF,
-    isStub: false,
+    group: "WORKSPACE",
   },
   {
     id: "documents",
@@ -142,7 +147,39 @@ export const CRM_MODULES: CRMModule[] = [
       "logistics_coordinator", "sponsor_manager", "moderator", "consultant",
     ],
     isStub: false,
+    group: "WORKSPACE",
   },
+
+  // ── COMMUNICATION ─────────────────────────────────────────────────────────
+  {
+    id: "inbox",
+    label: "Inbox",
+    icon: Mail,
+    section: "inbox",
+    allowedRoles: ALL_STAFF,
+    isStub: false,
+    group: "COMMUNICATION",
+  },
+  {
+    id: "email-inbox",
+    label: "Email",
+    icon: Inbox,
+    section: "email-inbox",
+    allowedRoles: TIER_2_AND_SPONSOR,
+    isStub: false,
+    group: "COMMUNICATION",
+  },
+  {
+    id: "comms",
+    label: "Channels & Chat",
+    icon: MessageSquare,
+    section: "comms",
+    allowedRoles: ALL_STAFF,
+    isStub: false,
+    group: "COMMUNICATION",
+  },
+
+  // ── PEOPLE ────────────────────────────────────────────────────────────────
   {
     id: "team",
     label: "Team Directory",
@@ -154,6 +191,7 @@ export const CRM_MODULES: CRMModule[] = [
       "finance_coordinator", "logistics_coordinator", "sponsor_manager", "moderator",
     ],
     isStub: false,
+    group: "PEOPLE",
   },
   {
     id: "people",
@@ -162,46 +200,72 @@ export const CRM_MODULES: CRMModule[] = [
     section: "people",
     allowedRoles: ["super_admin", "admin"],
     isStub: false,
+    group: "PEOPLE",
+  },
+
+  // ── CONTENT ───────────────────────────────────────────────────────────────
+  {
+    id: "news-editor",
+    label: "News Editor",
+    icon: Newspaper,
+    section: "news-editor",
+    allowedRoles: ["super_admin", "admin", "moderator", "communications_officer"],
+    isStub: false,
+    group: "CONTENT",
   },
   {
-    id: "parliament-ops",
-    label: "Parliament Ops",
-    icon: ShieldCheck,
-    section: "parliament-ops",
-    allowedRoles: ["super_admin", "admin", "moderator"],
+    id: "events-manager",
+    label: "Events Manager",
+    icon: CalendarDays,
+    section: "events-manager",
+    allowedRoles: ["super_admin", "admin"],
     isStub: false,
+    group: "CONTENT",
   },
   {
-    id: "sponsor-metrics",
-    label: "Sponsor Metrics",
-    icon: TrendingUp,
-    section: "sponsor-metrics",
-    allowedRoles: ["super_admin", "admin", "sponsor_manager", "sponsor"],
+    id: "programme-pillars",
+    label: "Programme Pillars",
+    icon: Layers,
+    section: "programme-pillars",
+    allowedRoles: ["super_admin", "admin", "website_editor", "programme_lead"],
     isStub: false,
+    group: "CONTENT",
   },
   {
-    id: "analytics",
-    label: "Analytics",
-    icon: BarChart2,
-    section: "analytics",
-    allowedRoles: ["super_admin", "admin", "project_director", "marketing_manager"],
+    id: "stakeholders-mgmt",
+    label: "Stakeholders",
+    icon: UserSquare,
+    section: "stakeholders-mgmt",
+    allowedRoles: ["super_admin", "admin", "website_editor", "communications_officer"],
     isStub: false,
+    group: "CONTENT",
   },
   {
-    id: "finance",
-    label: "Finance",
-    icon: DollarSign,
-    section: "finance",
-    allowedRoles: ["super_admin", "finance_coordinator"],
+    id: "media-kit-mgmt",
+    label: "Media Kit",
+    icon: BookOpen,
+    section: "media-kit-mgmt",
+    allowedRoles: ["super_admin", "admin", "communications_officer", "marketing_manager", "website_editor"],
     isStub: false,
+    group: "CONTENT",
   },
   {
-    id: "marketing",
-    label: "Marketing",
-    icon: Megaphone,
-    section: "marketing",
-    allowedRoles: ["super_admin", "marketing_manager"],
+    id: "sponsors-partners",
+    label: "Sponsors & Partners",
+    icon: Handshake,
+    section: "sponsors-partners",
+    allowedRoles: ["super_admin", "admin", "sponsor_manager"],
     isStub: false,
+    group: "CONTENT",
+  },
+  {
+    id: "site-content",
+    label: "Site Content",
+    icon: PanelTop,
+    section: "site-content",
+    allowedRoles: ["super_admin", "admin"],
+    isStub: false,
+    group: "CONTENT",
   },
   {
     id: "cms",
@@ -213,70 +277,7 @@ export const CRM_MODULES: CRMModule[] = [
       "website_editor", "marketing_manager", "communications_officer",
     ],
     isStub: false,
-  },
-  {
-    id: "super-admin",
-    label: "Super Admin Hub",
-    icon: Crown,
-    section: "super-admin",
-    allowedRoles: ["super_admin"],
-    isStub: false,
-  },
-  {
-    id: "geo-analytics",
-    label: "Geo Analytics",
-    icon: Globe2,
-    section: "geo-analytics",
-    allowedRoles: ["super_admin", "admin"],
-    isStub: false,
-  },
-  {
-    id: "events-manager",
-    label: "Events Manager",
-    icon: CalendarDays,
-    section: "events-manager",
-    allowedRoles: ["super_admin", "admin"],
-    isStub: false,
-  },
-  {
-    id: "sponsors-partners",
-    label: "Sponsors & Partners",
-    icon: Handshake,
-    section: "sponsors-partners",
-    allowedRoles: ["super_admin", "admin", "sponsor_manager"],
-    isStub: false,
-  },
-  {
-    id: "news-editor",
-    label: "News Editor",
-    icon: Newspaper,
-    section: "news-editor",
-    allowedRoles: ["super_admin", "admin", "moderator", "communications_officer"],
-    isStub: false,
-  },
-  {
-    id: "site-content",
-    label: "Site Content",
-    icon: PanelTop,
-    section: "site-content",
-    allowedRoles: ["super_admin", "admin"],
-    isStub: false,
-  },
-  {
-    id: "contact-submissions",
-    label: "Contact Forms",
-    icon: Contact,
-    section: "contact-submissions",
-    allowedRoles: ["super_admin", "admin"],
-    isStub: false,
-  },
-  {
-    id: "newsletter",
-    label: "Newsletter",
-    icon: MailCheck,
-    section: "newsletter",
-    allowedRoles: ["super_admin", "admin", "marketing_manager"],
-    isStub: false,
+    group: "CONTENT",
   },
   {
     id: "media-library",
@@ -285,6 +286,103 @@ export const CRM_MODULES: CRMModule[] = [
     section: "media-library",
     allowedRoles: ["super_admin", "admin"],
     isStub: false,
+    group: "CONTENT",
+  },
+
+  // ── ANALYTICS & FINANCE ───────────────────────────────────────────────────
+  {
+    id: "analytics",
+    label: "Analytics",
+    icon: BarChart2,
+    section: "analytics",
+    allowedRoles: ["super_admin", "admin", "project_director", "marketing_manager"],
+    isStub: false,
+    group: "ANALYTICS & FINANCE",
+  },
+  {
+    id: "geo-analytics",
+    label: "Geo Analytics",
+    icon: Globe2,
+    section: "geo-analytics",
+    allowedRoles: ["super_admin", "admin"],
+    isStub: false,
+    group: "ANALYTICS & FINANCE",
+  },
+  {
+    id: "sponsor-metrics",
+    label: "Sponsor Metrics",
+    icon: TrendingUp,
+    section: "sponsor-metrics",
+    allowedRoles: ["super_admin", "admin", "sponsor_manager", "sponsor"],
+    isStub: false,
+    group: "ANALYTICS & FINANCE",
+  },
+  {
+    id: "finance",
+    label: "Finance",
+    icon: DollarSign,
+    section: "finance",
+    allowedRoles: ["super_admin", "finance_coordinator"],
+    isStub: false,
+    group: "ANALYTICS & FINANCE",
+  },
+  {
+    id: "invoices",
+    label: "Invoices",
+    icon: FileText,
+    section: "invoices",
+    allowedRoles: ["super_admin", "admin", "finance_coordinator"],
+    isStub: false,
+    group: "ANALYTICS & FINANCE",
+  },
+
+  // ── MARKETING ─────────────────────────────────────────────────────────────
+  {
+    id: "marketing",
+    label: "Marketing",
+    icon: Megaphone,
+    section: "marketing",
+    allowedRoles: ["super_admin", "marketing_manager"],
+    isStub: false,
+    group: "MARKETING",
+  },
+  {
+    id: "newsletter",
+    label: "Newsletter",
+    icon: MailCheck,
+    section: "newsletter",
+    allowedRoles: ["super_admin", "admin", "marketing_manager"],
+    isStub: false,
+    group: "MARKETING",
+  },
+  {
+    id: "contact-submissions",
+    label: "Contact Forms",
+    icon: Contact,
+    section: "contact-submissions",
+    allowedRoles: ["super_admin", "admin"],
+    isStub: false,
+    group: "MARKETING",
+  },
+
+  // ── ADMINISTRATION ────────────────────────────────────────────────────────
+  {
+    id: "parliament-ops",
+    label: "Parliament Ops",
+    icon: ShieldCheck,
+    section: "parliament-ops",
+    allowedRoles: ["super_admin", "admin", "moderator"],
+    isStub: false,
+    group: "ADMINISTRATION",
+  },
+  {
+    id: "super-admin",
+    label: "Super Admin Hub",
+    icon: Crown,
+    section: "super-admin",
+    allowedRoles: ["super_admin"],
+    isStub: false,
+    group: "ADMINISTRATION",
   },
   {
     id: "settings",
@@ -297,30 +395,19 @@ export const CRM_MODULES: CRMModule[] = [
       "finance_coordinator", "logistics_coordinator", "sponsor_manager", "consultant", "sponsor",
     ],
     isStub: false,
+    group: "ADMINISTRATION",
   },
+
+  // ── HIDDEN (dropdown only) ────────────────────────────────────────────────
   {
-    id: "programme-pillars",
-    label: "Programme Pillars",
-    icon: Layers,
-    section: "programme-pillars",
-    allowedRoles: ["super_admin", "admin", "website_editor", "programme_lead"],
+    id: "profile",
+    label: "My Profile",
+    icon: User,
+    section: "profile",
+    allowedRoles: TIER_2_AND_SPONSOR,
     isStub: false,
-  },
-  {
-    id: "stakeholders-mgmt",
-    label: "Stakeholders",
-    icon: UserSquare,
-    section: "stakeholders-mgmt",
-    allowedRoles: ["super_admin", "admin", "website_editor", "communications_officer"],
-    isStub: false,
-  },
-  {
-    id: "media-kit-mgmt",
-    label: "Media Kit",
-    icon: BookOpen,
-    section: "media-kit-mgmt",
-    allowedRoles: ["super_admin", "admin", "communications_officer", "marketing_manager", "website_editor"],
-    isStub: false,
+    group: "ADMINISTRATION",
+    hideFromSidebar: true,
   },
 ];
 

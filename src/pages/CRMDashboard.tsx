@@ -23,6 +23,8 @@ import SponsorsManagerModule from "@/components/crm/modules/SponsorsManagerModul
 import ProgrammePillarsModule from "@/components/crm/modules/ProgrammePillarsModule";
 import StakeholdersModule from "@/components/crm/modules/StakeholdersModule";
 import MediaKitModule from "@/components/crm/modules/MediaKitModule";
+import InvoiceModule from "@/components/crm/modules/InvoiceModule";
+import ProfileModule from "@/components/crm/modules/ProfileModule";
 
 // Lazy — less frequently used modules
 const MessagingModule = lazy(() => import("@/components/crm/modules/MessagingModule"));
@@ -101,6 +103,8 @@ export default function CRMDashboard() {
       case "programme-pillars":   return <ProgrammePillarsModule />;
       case "stakeholders-mgmt":   return <StakeholdersModule />;
       case "media-kit-mgmt":      return <MediaKitModule />;
+      case "invoices":             return <InvoiceModule />;
+      case "profile":              return <ProfileModule />;
       default:                    return <DashboardModule onNavigate={navigateSection} />;
     }
   };

@@ -13,13 +13,16 @@ interface TeamMember {
   organisation: string | null;
   avatar_url: string | null;
   bio: string | null;
+  display_order?: number;
+  source: "profile" | "manual";
 }
 
 const Team = () => {
   const { t } = useTranslation();
 
-  const { data: members = [], isLoading } = useQuery({
-    queryKey: ["team-members"],
+  // Auth users who toggled show_on_website = true in their CRM profile
+  const { data: profileMembers = [], isLoading: loadingProfiles } = useQuery<TeamMember[]>({
+    queryKey: ["team-members-profiles"],
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("profiles")
@@ -27,9 +30,28 @@ const Team = () => {
         .eq("show_on_website", true)
         .order("full_name");
       if (error) throw error;
-      return data as TeamMember[];
+      return (data ?? []).map((m: any) => ({ ...m, source: "profile" as const }));
     },
   });
+
+  // Manually added team members (external people, no login required)
+  const { data: manualMembers = [], isLoading: loadingManual } = useQuery<TeamMember[]>({
+    queryKey: ["team-members-manual"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("team_members")
+        .select("id, full_name, title, organisation, avatar_url, bio, display_order")
+        .eq("is_active", true)
+        .order("display_order");
+      if (error) throw error;
+      return (data ?? []).map((m: any) => ({ ...m, source: "manual" as const }));
+    },
+  });
+
+  const isLoading = loadingProfiles || loadingManual;
+
+  // Manual members first (by display_order), then profile members (alphabetical)
+  const members: TeamMember[] = [...manualMembers, ...profileMembers];
 
   return (
     <Layout>
