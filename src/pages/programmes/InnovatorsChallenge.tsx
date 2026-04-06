@@ -60,7 +60,7 @@ const InnovatorsChallenge = () => {
       <ProgrammeSponsorMarquee sponsors={sponsors} />
       {/* Hero */}
       <section className="relative min-h-[80vh] flex items-center overflow-hidden">
-        <img src={heroBg} alt="" className="absolute inset-0 w-full h-full object-cover" width={1920} height={1080} />
+        <img src={heroBg} alt="" className="absolute inset-0 w-full h-full object-cover" width={1920} height={1080} decoding="async" fetchPriority="high" />
         <div className="absolute inset-0 bg-gradient-to-r from-foreground/90 via-foreground/70 to-foreground/40" />
 
         {/* Floating particles */}

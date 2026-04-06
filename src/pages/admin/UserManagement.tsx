@@ -586,7 +586,7 @@ export default function UserManagement() {
                             <div className="flex items-center gap-3">
                               <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
                                 {u.avatar_url
-                                  ? <img src={u.avatar_url} className="w-full h-full object-cover" alt="" />
+                                  ? <img src={u.avatar_url} className="w-full h-full object-cover" alt="" width={32} height={32} loading="lazy" decoding="async" />
                                   : <span className="text-[11px] font-bold text-primary">{initials(u.full_name)}</span>
                                 }
                               </div>

@@ -20,6 +20,9 @@ import GeoAnalyticsModule from "@/components/crm/modules/GeoAnalyticsModule";
 import EmailInboxModule   from "@/components/crm/modules/EmailInboxModule";
 import EventsManagerModule from "@/components/crm/modules/EventsManagerModule";
 import SponsorsManagerModule from "@/components/crm/modules/SponsorsManagerModule";
+import ProgrammePillarsModule from "@/components/crm/modules/ProgrammePillarsModule";
+import StakeholdersModule from "@/components/crm/modules/StakeholdersModule";
+import MediaKitModule from "@/components/crm/modules/MediaKitModule";
 
 // Lazy — less frequently used modules
 const MessagingModule = lazy(() => import("@/components/crm/modules/MessagingModule"));
@@ -94,8 +97,11 @@ export default function CRMDashboard() {
       case "site-content":    return <Suspense fallback={<ModuleLoader />}><SiteContentModule /></Suspense>;
       case "contact-submissions": return <Suspense fallback={<ModuleLoader />}><ContactSubmissionsModule /></Suspense>;
       case "newsletter":      return <Suspense fallback={<ModuleLoader />}><NewsletterModule /></Suspense>;
-      case "media-library":   return <Suspense fallback={<ModuleLoader />}><MediaLibraryModule /></Suspense>;
-      default:                return <DashboardModule onNavigate={navigateSection} />;
+      case "media-library":       return <Suspense fallback={<ModuleLoader />}><MediaLibraryModule /></Suspense>;
+      case "programme-pillars":   return <ProgrammePillarsModule />;
+      case "stakeholders-mgmt":   return <StakeholdersModule />;
+      case "media-kit-mgmt":      return <MediaKitModule />;
+      default:                    return <DashboardModule onNavigate={navigateSection} />;
     }
   };
 

@@ -55,10 +55,10 @@ const Footer = () => {
           <div className="md:col-span-1">
             <div className="flex items-center gap-3 mb-4">
               <div className="bg-white rounded-full p-1.5 shadow-sm">
-                <img src={ecowasLogo} alt="ECOWAS Parliament" className="h-8 w-8 object-contain" />
+                <img src={ecowasLogo} alt="ECOWAS Parliament" className="h-8 w-8 object-contain" width={32} height={32} loading="lazy" decoding="async" />
               </div>
               <div className="bg-white rounded-full p-1.5 shadow-sm">
-                <img src={anniversary25Logo} alt="25th Anniversary" className="h-8 w-auto object-contain" />
+                <img src={anniversary25Logo} alt="25th Anniversary" className="h-8 w-auto object-contain" width={32} height={32} loading="lazy" decoding="async" />
               </div>
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed mb-4">{t("footer.tagline")}</p>

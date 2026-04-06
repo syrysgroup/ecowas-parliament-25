@@ -78,17 +78,17 @@ export default function SponsorPage() {
 
             <div className="flex items-center gap-6 mb-8 flex-wrap">
               <div className="bg-white rounded-2xl p-3 shadow-lg">
-                <img src={ecowasLogo} alt="ECOWAS Parliament" className="h-16 w-16 object-contain" />
+                <img src={ecowasLogo} alt="ECOWAS Parliament" className="h-16 w-16 object-contain" width={64} height={64} loading="lazy" decoding="async" />
               </div>
               <span className="text-3xl text-primary-foreground/30 font-light">×</span>
               <div className="bg-white rounded-2xl p-3 shadow-lg">
-                <img src={parliament25Logo} alt="Parliament@25" className="h-16 w-16 object-contain" />
+                <img src={parliament25Logo} alt="Parliament@25" className="h-16 w-16 object-contain" width={64} height={64} loading="lazy" decoding="async" />
               </div>
               {sponsor.logo_url && (
                 <>
                   <span className="text-3xl text-primary-foreground/30 font-light">×</span>
                   <div className="bg-white rounded-2xl p-3 shadow-lg">
-                    <img src={sponsor.logo_url} alt={sponsor.name} className="h-16 w-auto max-w-[4rem] object-contain" />
+                    <img src={sponsor.logo_url} alt={sponsor.name} className="h-16 w-auto max-w-[4rem] object-contain" width={64} height={64} loading="lazy" decoding="async" />
                   </div>
                 </>
               )}

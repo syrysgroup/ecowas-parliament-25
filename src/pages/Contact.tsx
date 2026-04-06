@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import Layout from "@/components/layout/Layout";
 import AnimatedSection from "@/components/shared/AnimatedSection";
@@ -6,12 +7,30 @@ import SocialMediaBar from "@/components/shared/SocialMediaBar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { CheckCircle2, Mail, MapPin, Phone, Globe, Send } from "lucide-react";
 import { useTranslation } from "@/lib/i18n";
 import FlagImg from "@/components/shared/FlagImg";
+
+interface ContactCard {
+  type: "email" | "phone";
+  label: string;
+  value: string;
+  desc: string;
+}
+interface Office {
+  city: string;
+  country: string;
+  role: string;
+  address: string;
+}
+interface ContactContent {
+  cards?: ContactCard[];
+  offices?: Office[];
+}
 
 export default function Contact() {
   const { t } = useTranslation();
@@ -26,16 +45,21 @@ export default function Contact() {
   const [enquiryType, setEnquiryType] = useState(ENQUIRY_TYPES[0]);
   const [form, setForm] = useState({ name: "", organisation: "", email: "", phone: "", subject: "", message: "" });
 
-  const contactCards = [
-    { icon: Mail, label: t("contact.pressMedia"), value: "media@ecowasparliamentinitiatives.org", desc: t("contact.pressMediaDesc"), colour: "bg-blue-50 text-blue-700" },
-    { icon: Mail, label: t("contact.sponsorEnquiries"), value: "sponsors@ecowasparliamentinitiatives.org", desc: t("contact.sponsorEnquiriesDesc"), colour: "bg-amber-50 text-amber-700" },
-    { icon: Mail, label: t("contact.generalProgramme"), value: "info@ecowasparliamentinitiatives.org", desc: t("contact.generalProgrammeDesc"), colour: "bg-primary/5 text-primary" },
-    { icon: Phone, label: t("contact.directLine"), value: "+234 (0) 9 — 770 0000", desc: t("contact.directLineDesc"), colour: "bg-muted text-foreground" },
-  ];
+  const { data: contactInfo, isLoading } = useQuery<ContactContent | null>({
+    queryKey: ["site-content", "contact_info"],
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("site_content")
+        .select("content")
+        .eq("section_key", "contact_info")
+        .maybeSingle();
+      return (data?.content as ContactContent) ?? null;
+    },
+    staleTime: 10 * 60 * 1000,
+  });
 
-  const offices = [
-    { city: "Abuja", country: "Nigeria", role: t("contact.hqRole"), address: "ECOWAS Parliament Complex, Abuja, Nigeria" },
-  ];
+  const contactCards: ContactCard[] = contactInfo?.cards ?? [];
+  const offices: Office[] = contactInfo?.offices ?? [];
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setForm(f => ({ ...f, [e.target.name]: e.target.value }));
@@ -66,24 +90,37 @@ export default function Contact() {
         </div>
       </section>
 
+      {/* Contact Cards */}
       <section className="py-12 bg-muted/30 border-b border-border">
         <div className="container">
           <AnimatedSection>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {contactCards.map(c => {
-                const Icon = c.icon;
-                return (
-                  <Card key={c.label} className="hover:shadow-md transition-shadow">
-                    <CardContent className="pt-5">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${c.colour}`}><Icon className="h-5 w-5" /></div>
-                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">{c.label}</p>
-                      <p className="text-sm font-bold break-all">{c.value}</p>
-                      <p className="text-xs text-muted-foreground mt-1">{c.desc}</p>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
+            {isLoading ? (
+              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-28 rounded-xl" />)}
+              </div>
+            ) : (
+              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {contactCards.map(c => {
+                  const Icon = c.type === "phone" ? Phone : Mail;
+                  const colour = c.label.toLowerCase().includes("press") ? "bg-blue-50 text-blue-700"
+                    : c.label.toLowerCase().includes("sponsor") ? "bg-amber-50 text-amber-700"
+                    : c.label.toLowerCase().includes("phone") || c.type === "phone" ? "bg-muted text-foreground"
+                    : "bg-primary/5 text-primary";
+                  return (
+                    <Card key={c.label} className="hover:shadow-md transition-shadow">
+                      <CardContent className="pt-5">
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${colour}`}>
+                          <Icon className="h-5 w-5" />
+                        </div>
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">{c.label}</p>
+                        <p className="text-sm font-bold break-all">{c.value}</p>
+                        <p className="text-xs text-muted-foreground mt-1">{c.desc}</p>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
           </AnimatedSection>
         </div>
       </section>
@@ -91,6 +128,7 @@ export default function Contact() {
       <section className="py-16">
         <div className="container">
           <div className="grid lg:grid-cols-3 gap-10">
+            {/* Contact Form */}
             <div className="lg:col-span-2">
               <AnimatedSection>
                 <h2 className="text-2xl font-bold mb-2">{t("contact.sendMessage")}</h2>
@@ -98,7 +136,9 @@ export default function Contact() {
 
                 {submitted ? (
                   <div className="flex flex-col items-center justify-center py-16 text-center gap-4">
-                    <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center"><CheckCircle2 className="h-8 w-8 text-primary" /></div>
+                    <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                      <CheckCircle2 className="h-8 w-8 text-primary" />
+                    </div>
                     <h3 className="text-xl font-bold">{t("contact.successTitle")}</h3>
                     <p className="text-muted-foreground max-w-sm">{t("contact.successDesc")}</p>
                     <Button variant="outline" onClick={() => setSubmitted(false)}>{t("contact.sendAnother")}</Button>
@@ -145,32 +185,39 @@ export default function Contact() {
                       <Textarea id="message" name="message" required rows={5} placeholder={t("contact.messagePlaceholder")} value={form.message} onChange={handleChange} className="resize-none" />
                     </div>
                     <p className="text-xs text-muted-foreground">{t("contact.privacyNote")}</p>
-                    <Button type="submit" className="gap-2 w-full sm:w-auto"><Send className="h-4 w-4" />{t("contact.sendBtn")}</Button>
+                    <Button type="submit" className="gap-2 w-full sm:w-auto">
+                      <Send className="h-4 w-4" />{t("contact.sendBtn")}
+                    </Button>
                   </form>
                 )}
               </AnimatedSection>
             </div>
 
+            {/* Sidebar */}
             <div className="space-y-6">
               <AnimatedSection delay={120}>
                 <h3 className="text-lg font-bold mb-4">{t("contact.offices")}</h3>
-                {offices.map(o => (
-                  <Card key={o.city} className="mb-4">
-                    <CardContent className="pt-4">
-                      <div className="flex items-start gap-3">
-                        <FlagImg country={o.country} className="h-7 w-7" />
-                        <div>
-                          <p className="font-bold">{o.city}, {o.country}</p>
-                          <p className="text-xs text-primary font-medium mt-0.5">{o.role}</p>
-                          <div className="flex items-start gap-1.5 mt-2">
-                            <MapPin className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0 mt-0.5" />
-                            <p className="text-xs text-muted-foreground">{o.address}</p>
+                {isLoading ? (
+                  <Skeleton className="h-28 rounded-xl" />
+                ) : (
+                  offices.map(o => (
+                    <Card key={o.city} className="mb-4">
+                      <CardContent className="pt-4">
+                        <div className="flex items-start gap-3">
+                          <FlagImg country={o.country} className="h-7 w-7" />
+                          <div>
+                            <p className="font-bold">{o.city}, {o.country}</p>
+                            <p className="text-xs text-primary font-medium mt-0.5">{o.role}</p>
+                            <div className="flex items-start gap-1.5 mt-2">
+                              <MapPin className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0 mt-0.5" />
+                              <p className="text-xs text-muted-foreground">{o.address}</p>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
               </AnimatedSection>
 
               <AnimatedSection delay={200}>
@@ -187,8 +234,11 @@ export default function Contact() {
                   ].map(s => {
                     const Icon = s.icon;
                     return (
-                      <a key={s.label} href={s.href} target="_blank" rel="noreferrer" className="flex items-center gap-3 p-3 rounded-xl border border-border hover:bg-muted transition-colors">
-                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center"><Icon className="h-4 w-4 text-primary" /></div>
+                      <a key={s.label} href={s.href} target="_blank" rel="noreferrer"
+                        className="flex items-center gap-3 p-3 rounded-xl border border-border hover:bg-muted transition-colors">
+                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                          <Icon className="h-4 w-4 text-primary" />
+                        </div>
                         <div>
                           <p className="text-xs text-muted-foreground">{s.label}</p>
                           <p className="text-sm font-medium">{s.value}</p>
@@ -204,7 +254,9 @@ export default function Contact() {
                   <CardContent className="pt-5">
                     <h4 className="font-bold mb-2">{t("contact.sponsorCardTitle")}</h4>
                     <p className="text-sm text-primary-foreground/75 mb-4">{t("contact.sponsorCardDesc")}</p>
-                    <Button size="sm" variant="secondary" className="w-full gap-2"><Mail className="h-4 w-4" />sponsors@ecowasparliamentinitiatives.org</Button>
+                    <Button size="sm" variant="secondary" className="w-full gap-2">
+                      <Mail className="h-4 w-4" />sponsors@ecowasparliamentinitiatives.org
+                    </Button>
                   </CardContent>
                 </Card>
               </AnimatedSection>

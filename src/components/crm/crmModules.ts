@@ -26,6 +26,9 @@ import {
   PanelTop,
   Contact,
   MailCheck,
+  Layers,
+  UserSquare,
+  BookOpen,
 } from "lucide-react";
 
 export type ModuleId =
@@ -53,7 +56,10 @@ export type ModuleId =
   | "contact-submissions"
   | "newsletter"
   | "media-library"
-  | "settings";
+  | "settings"
+  | "programme-pillars"
+  | "stakeholders-mgmt"
+  | "media-kit-mgmt";
 
 export interface CRMModule {
   id:           ModuleId;
@@ -290,6 +296,30 @@ export const CRM_MODULES: CRMModule[] = [
       "website_editor", "marketing_manager", "communications_officer",
       "finance_coordinator", "logistics_coordinator", "sponsor_manager", "consultant", "sponsor",
     ],
+    isStub: false,
+  },
+  {
+    id: "programme-pillars",
+    label: "Programme Pillars",
+    icon: Layers,
+    section: "programme-pillars",
+    allowedRoles: ["super_admin", "admin", "website_editor", "programme_lead"],
+    isStub: false,
+  },
+  {
+    id: "stakeholders-mgmt",
+    label: "Stakeholders",
+    icon: UserSquare,
+    section: "stakeholders-mgmt",
+    allowedRoles: ["super_admin", "admin", "website_editor", "communications_officer"],
+    isStub: false,
+  },
+  {
+    id: "media-kit-mgmt",
+    label: "Media Kit",
+    icon: BookOpen,
+    section: "media-kit-mgmt",
+    allowedRoles: ["super_admin", "admin", "communications_officer", "marketing_manager", "website_editor"],
     isStub: false,
   },
 ];

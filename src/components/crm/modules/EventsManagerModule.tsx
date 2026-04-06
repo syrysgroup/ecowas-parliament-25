@@ -305,7 +305,7 @@ export default function EventsManagerModule() {
           <div key={ev.id} className="bg-crm-card border border-crm-border rounded-xl overflow-hidden hover:border-crm-border-hover transition-colors">
             <div className="flex">
               {ev.cover_image_url && (
-                <img src={ev.cover_image_url} alt="" className="w-24 h-24 object-cover flex-shrink-0" />
+                <img src={ev.cover_image_url} alt="" className="w-24 h-24 object-cover flex-shrink-0" width={96} height={96} loading="lazy" decoding="async" />
               )}
               <div className="flex-1 p-4 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap mb-1">

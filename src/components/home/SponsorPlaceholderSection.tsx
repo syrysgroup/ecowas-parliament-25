@@ -1,20 +1,35 @@
-import AnimatedSection from "@/components/shared/AnimatedSection";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
+import AnimatedSection from "@/components/shared/AnimatedSection";
+import SponsorLogo from "@/components/shared/SponsorLogo";
 import { Handshake } from "lucide-react";
-import SponsorPlaceholderLogo from "@/components/shared/SponsorPlaceholderLogo";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslation } from "@/lib/i18n";
 
-const mockSponsors = [
-  { name: "West African Development Bank" },
-  { name: "ECOWAS Commission" },
-  { name: "African Union" },
-  { name: "United Nations Development Programme" },
-  { name: "GIZ West Africa" },
-  { name: "Access Bank Group" },
-];
+interface SponsorRow {
+  id: string;
+  name: string;
+  slug: string;
+  logo_url: string | null;
+  tier: string;
+}
 
 const SponsorPlaceholderSection = () => {
   const { t } = useTranslation();
+
+  const { data: sponsors = [], isLoading } = useQuery<SponsorRow[]>({
+    queryKey: ["sponsors-homepage"],
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("sponsors")
+        .select("id, name, slug, logo_url, tier")
+        .eq("is_published", true)
+        .order("sort_order");
+      return data ?? [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
   return (
     <section className="py-20 bg-muted/20 border-t border-border">
@@ -30,18 +45,39 @@ const SponsorPlaceholderSection = () => {
         </AnimatedSection>
 
         <div className="flex flex-wrap justify-center gap-4 mb-10">
-          {mockSponsors.map((sponsor, i) => (
-            <AnimatedSection key={sponsor.name} delay={i * 50}>
-              <div className="flex items-center gap-3 rounded-2xl border border-border bg-card px-5 py-4 shadow-sm">
-                <SponsorPlaceholderLogo name={sponsor.name} size={80} showName={false} />
-                <span className="text-sm font-semibold text-card-foreground">{sponsor.name}</span>
-              </div>
-            </AnimatedSection>
-          ))}
+          {isLoading
+            ? Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} className="h-16 w-48 rounded-2xl" />
+              ))
+            : sponsors.map((sponsor, i) => (
+                <AnimatedSection key={sponsor.id} delay={i * 50}>
+                  <Link to={`/sponsors/${sponsor.slug}`}>
+                    <div className="flex items-center gap-3 rounded-2xl border border-border bg-card px-5 py-4 shadow-sm hover:border-primary/30 hover:-translate-y-0.5 transition-all">
+                      {sponsor.logo_url ? (
+                        <img
+                          src={sponsor.logo_url}
+                          alt={sponsor.name}
+                          className="h-10 w-10 object-contain"
+                          loading="lazy"
+                          width={40}
+                          height={40}
+                          decoding="async"
+                        />
+                      ) : (
+                        <SponsorLogo name={sponsor.name} color="hsl(var(--primary))" size={42} />
+                      )}
+                      <span className="text-sm font-semibold text-card-foreground">{sponsor.name}</span>
+                    </div>
+                  </Link>
+                </AnimatedSection>
+              ))}
         </div>
 
         <AnimatedSection className="text-center">
-          <Link to="/sponsors" className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors">
+          <Link
+            to="/sponsors"
+            className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
+          >
             {t("sponsorPlaceholder.becomeSponsor")}
           </Link>
         </AnimatedSection>

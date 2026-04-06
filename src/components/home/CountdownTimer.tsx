@@ -1,41 +1,68 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { CalendarClock } from "lucide-react";
 import { useTranslation } from "@/lib/i18n";
 
-const UPCOMING_EVENT = {
-  name: "ECOWAS Parliament 25th Anniversary Ceremony — Abuja, Nigeria",
-  date: new Date("2026-04-15T09:00:00+01:00"),
-};
+interface TimeLeft {
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+  past: boolean;
+}
+
+function computeTimeLeft(targetDate: Date): TimeLeft {
+  const diff = targetDate.getTime() - Date.now();
+  if (diff <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0, past: true };
+  return {
+    days:    Math.floor(diff / (1000 * 60 * 60 * 24)),
+    hours:   Math.floor((diff / (1000 * 60 * 60)) % 24),
+    minutes: Math.floor((diff / (1000 * 60)) % 60),
+    seconds: Math.floor((diff / 1000) % 60),
+    past:    false,
+  };
+}
+
+// Fallback values if site_content is not yet seeded
+const FALLBACK_DATE = new Date("2026-04-15T09:00:00+01:00");
+const FALLBACK_NAME = "ECOWAS Parliament 25th Anniversary Ceremony — Abuja, Nigeria";
 
 const CountdownTimer = () => {
   const { t } = useTranslation();
-  const [timeLeft, setTimeLeft] = useState(getTimeLeft());
 
-  function getTimeLeft() {
-    const now = new Date();
-    const diff = UPCOMING_EVENT.date.getTime() - now.getTime();
-    if (diff <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0, past: true };
-    return {
-      days: Math.floor(diff / (1000 * 60 * 60 * 24)),
-      hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
-      minutes: Math.floor((diff / (1000 * 60)) % 60),
-      seconds: Math.floor((diff / 1000) % 60),
-      past: false,
-    };
-  }
+  const { data: content } = useQuery({
+    queryKey: ["site-content", "countdown"],
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("site_content")
+        .select("content")
+        .eq("section_key", "countdown")
+        .maybeSingle();
+      return data?.content as { target_date?: string; label?: string } | null;
+    },
+    staleTime: 10 * 60 * 1000,
+  });
+
+  const eventDate = content?.target_date ? new Date(content.target_date) : FALLBACK_DATE;
+  const eventName = content?.label ?? FALLBACK_NAME;
+
+  const [timeLeft, setTimeLeft] = useState<TimeLeft>(() => computeTimeLeft(eventDate));
 
   useEffect(() => {
-    const timer = setInterval(() => setTimeLeft(getTimeLeft()), 1000);
+    const recalc = () => setTimeLeft(computeTimeLeft(eventDate));
+    recalc();
+    const timer = setInterval(recalc, 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [eventDate.getTime()]);
 
   const blocks = [
-    { label: t("countdown.days"), value: timeLeft.days },
-    { label: t("countdown.hours"), value: timeLeft.hours },
-    { label: t("countdown.mins"), value: timeLeft.minutes },
-    { label: t("countdown.secs"), value: timeLeft.seconds },
+    { label: t("countdown.days"),    value: timeLeft.days },
+    { label: t("countdown.hours"),   value: timeLeft.hours },
+    { label: t("countdown.mins"),    value: timeLeft.minutes },
+    { label: t("countdown.secs"),    value: timeLeft.seconds },
   ];
 
   return (
@@ -56,7 +83,7 @@ const CountdownTimer = () => {
               {timeLeft.past ? t("countdown.eventStarted") : t("countdown.eventCountdown")}
             </p>
             <p className="text-sm md:text-base font-bold text-white">
-              {UPCOMING_EVENT.name}
+              {eventName}
             </p>
           </div>
         </div>

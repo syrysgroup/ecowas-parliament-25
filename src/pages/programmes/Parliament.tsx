@@ -11,7 +11,6 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Calendar, MapPin, Trophy, Users, Vote, Crown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { fallbackNominees, fallbackRepresentatives } from "@/lib/parliament";
 import parliamentHero from "@/assets/parliament-hero-clean.jpg";
 import ecowasLogo from "@/assets/ecowas-parliament-logo.png";
 import ProgrammeSponsorMarquee from "@/components/shared/ProgrammeSponsorMarquee";
@@ -45,8 +44,8 @@ const principalOfficers = [
 const Parliament = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [countries, setCountries] = useState<CountryRow[]>([]);
-  const [nominees, setNominees] = useState<NomineeRow[]>(fallbackNominees);
-  const [representatives, setRepresentatives] = useState<RepresentativeRow[]>(fallbackRepresentatives);
+  const [nominees, setNominees] = useState<NomineeRow[]>([]);
+  const [representatives, setRepresentatives] = useState<RepresentativeRow[]>([]);
   const [applicationsByCountry, setApplicationsByCountry] = useState<Record<string, number>>({});
 
   useEffect(() => {
@@ -58,8 +57,8 @@ const Parliament = () => {
         (supabase as any).from("applications").select("country, status"),
       ]);
       if (countriesRes.data?.length) setCountries(countriesRes.data);
-      if (nomineesRes.data?.length) setNominees(nomineesRes.data);
-      if (representativesRes.data?.length) setRepresentatives(representativesRes.data);
+      setNominees(nomineesRes.data ?? []);
+      setRepresentatives(representativesRes.data ?? []);
       const counts = (applicationsRes.data ?? []).reduce((acc: Record<string, number>, item: { country: string }) => {
         acc[item.country] = (acc[item.country] ?? 0) + 1;
         return acc;
@@ -162,7 +161,7 @@ const Parliament = () => {
             {principalOfficers.map((officer, index) => (
               <AnimatedSection key={officer.role} delay={index * 60}>
                 <div className="rounded-3xl border border-border bg-card p-5 text-center shadow-sm hover:shadow-lg transition-shadow">
-                  <img src={ecowasLogo} alt="Placeholder" className="mx-auto h-24 w-24 object-contain opacity-40 mb-4" />
+                  <img src={ecowasLogo} alt="Placeholder" className="mx-auto h-24 w-24 object-contain opacity-40 mb-4" width={96} height={96} loading="lazy" decoding="async" />
                   <Badge className="bg-primary/10 text-primary mb-2 text-xs">{officer.role}</Badge>
                   <p className="font-bold text-card-foreground">—</p>
                   <div className="flex items-center justify-center gap-1 mt-1">
@@ -214,7 +213,7 @@ const Parliament = () => {
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
                   {principalOfficers.map((officer, index) => (
                     <div key={officer.role} className="rounded-3xl border border-border bg-card p-4 text-center shadow-sm">
-                      <img src={ecowasLogo} alt="Placeholder" className="mx-auto h-20 w-20 object-contain opacity-40 mb-3" />
+                      <img src={ecowasLogo} alt="Placeholder" className="mx-auto h-20 w-20 object-contain opacity-40 mb-3" width={80} height={80} loading="lazy" decoding="async" />
                       <Badge className="bg-primary/10 text-primary mb-1 text-xs">{officer.role}</Badge>
                       <p className="font-bold text-card-foreground text-sm">—</p>
                       <div className="flex items-center justify-center gap-1 mt-1">
@@ -241,14 +240,14 @@ const Parliament = () => {
                     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
                       {countryReps.map((rep) => (
                         <div key={rep.id} className="rounded-2xl border border-border bg-card p-4 text-center shadow-sm">
-                          <img src={rep.headshot_url || rep.avatar_url || ecowasLogo} alt={rep.full_name} className="mx-auto h-20 w-20 rounded-full object-cover mb-2" />
+                          <img src={rep.headshot_url || rep.avatar_url || ecowasLogo} alt={rep.full_name} className="mx-auto h-20 w-20 rounded-full object-cover mb-2" width={80} height={80} loading="lazy" decoding="async" />
                           <p className="font-semibold text-card-foreground text-sm">{rep.full_name}</p>
                           <p className="text-[10px] text-muted-foreground">6th Legislature</p>
                         </div>
                       ))}
                       {Array.from({ length: emptySlots }).map((_, i) => (
                         <div key={`empty-${i}`} className="rounded-2xl border border-dashed border-border bg-card/50 p-4 text-center">
-                          <img src={ecowasLogo} alt="Placeholder" className="mx-auto h-20 w-20 object-contain opacity-20 mb-2" />
+                          <img src={ecowasLogo} alt="Placeholder" className="mx-auto h-20 w-20 object-contain opacity-20 mb-2" width={80} height={80} loading="lazy" decoding="async" />
                           <p className="font-semibold text-muted-foreground text-sm">—</p>
                           <p className="text-[10px] text-muted-foreground">6th Legislature</p>
                         </div>

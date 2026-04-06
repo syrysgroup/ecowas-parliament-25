@@ -107,7 +107,7 @@ const ProgrammePageTemplate = ({
                   <div className="mt-8 pt-6 border-t border-border">
                     <div className="flex items-end gap-4">
                       <div className="w-12 h-16 rounded-lg overflow-hidden border border-border shrink-0">
-                        <img src={speakerImg} alt={t("common.speakerName")} className="w-full h-full object-cover object-top" />
+                        <img src={speakerImg} alt={t("common.speakerName")} className="w-full h-full object-cover object-top" width={48} height={64} loading="lazy" decoding="async" />
                       </div>
                       <div>
                         <div className="w-32 h-px bg-foreground/30 mb-2" />

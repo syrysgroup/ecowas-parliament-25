@@ -57,7 +57,7 @@ export default function SetPassword() {
     <div className="min-h-screen flex bg-gradient-to-br from-[hsl(152,100%,20%)] via-[hsl(150,80%,10%)] to-[hsl(150,60%,6%)]">
       <div className="hidden lg:flex lg:w-1/2 flex-col items-center justify-center p-12 gap-8">
         <div className="bg-white/10 backdrop-blur-sm rounded-3xl p-10 flex flex-col items-center gap-6 border border-white/20">
-          <div className="bg-white rounded-full p-4 shadow-2xl"><img src={ecowasLogo} alt={t("setPw.brandTitle")} className="h-20 w-20 object-contain" /></div>
+          <div className="bg-white rounded-full p-4 shadow-2xl"><img src={ecowasLogo} alt={t("setPw.brandTitle")} className="h-20 w-20 object-contain" width={80} height={80} decoding="async" fetchPriority="high" /></div>
           <div className="text-center">
             <h1 className="text-3xl font-black text-white tracking-tight">{t("setPw.brandTitle")}</h1>
             <p className="text-white/70 mt-2 text-sm font-medium">{t("setPw.brandSubtitle")}</p>
@@ -70,7 +70,7 @@ export default function SetPassword() {
       <div className="flex-1 flex items-center justify-center p-6">
         <div className="w-full max-w-sm">
           <div className="flex justify-center mb-8 lg:hidden">
-            <div className="bg-white rounded-full p-3 shadow-xl"><img src={ecowasLogo} alt={t("setPw.brandTitle")} className="h-12 w-12 object-contain" /></div>
+            <div className="bg-white rounded-full p-3 shadow-xl"><img src={ecowasLogo} alt={t("setPw.brandTitle")} className="h-12 w-12 object-contain" width={48} height={48} decoding="async" fetchPriority="high" /></div>
           </div>
 
           <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-8 shadow-2xl">

@@ -142,6 +142,38 @@ const SECTION_TEMPLATES: Record<string, { label: string; fields: { key: string; 
       { key: "stat4_label", label: "Stat 4 Label", type: "text" },
     ],
   },
+  anniversary_stats: {
+    label: "Anniversary Section — Stats Grid",
+    fields: [
+      { key: "stat1_value", label: "Stat 1 Value (e.g. 25)", type: "text" },
+      { key: "stat1_label", label: "Stat 1 Label (e.g. Years of ECOWAS Parliament)", type: "text" },
+      { key: "stat2_value", label: "Stat 2 Value (e.g. 12)", type: "text" },
+      { key: "stat2_label", label: "Stat 2 Label", type: "text" },
+      { key: "stat3_value", label: "Stat 3 Value (e.g. 7)", type: "text" },
+      { key: "stat3_label", label: "Stat 3 Label", type: "text" },
+      { key: "stat4_value", label: "Stat 4 Value (e.g. 1,200+)", type: "text" },
+      { key: "stat4_label", label: "Stat 4 Label", type: "text" },
+    ],
+  },
+  sponsor_portal_why: {
+    label: "Sponsor Portal — Why Sponsor (JSON array)",
+    fields: [
+      { key: "points", label: 'JSON array of {title, desc} objects', type: "textarea" },
+    ],
+  },
+  sponsor_portal_tiers: {
+    label: "Sponsor Portal — Tiers (JSON array)",
+    fields: [
+      { key: "tiers", label: 'JSON array of tier objects (name, tagline, benefits[], featured, class, badgeClass)', type: "textarea" },
+    ],
+  },
+  contact_info: {
+    label: "Contact Page — Cards & Offices",
+    fields: [
+      { key: "cards", label: 'Contact cards JSON (array of {type, label, value, desc})', type: "textarea" },
+      { key: "offices", label: 'Offices JSON (array of {city, country, role, address})', type: "textarea" },
+    ],
+  },
 };
 
 function SectionEditor({ section, onSaved }: { section: SiteContentRow; onSaved: () => void }) {

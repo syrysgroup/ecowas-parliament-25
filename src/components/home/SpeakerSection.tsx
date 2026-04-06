@@ -33,7 +33,7 @@ const SpeakerSection = () => {
           <AnimatedSection className="lg:col-span-2 flex justify-center">
             <div className="relative">
               <div className="w-64 h-80 md:w-72 md:h-[22rem] rounded-2xl overflow-hidden border-4 border-primary/20 shadow-xl">
-                <img src={speakerImage} alt={speakerName} className="w-full h-full object-cover object-top" />
+                <img src={speakerImage} alt={speakerName} className="w-full h-full object-cover object-top" width={288} height={352} loading="lazy" decoding="async" />
               </div>
               <div className="absolute -bottom-3 -right-3 w-20 h-20 rounded-xl bg-gradient-to-br from-primary to-accent opacity-20 -z-10" />
               <div className="absolute -top-3 -left-3 w-16 h-16 rounded-xl bg-gradient-to-br from-accent to-primary opacity-15 -z-10" />

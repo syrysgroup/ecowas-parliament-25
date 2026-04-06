@@ -1,21 +1,41 @@
 import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import AnimatedSection from "@/components/shared/AnimatedSection";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslation } from "@/lib/i18n";
 
-const pillars = [
-  { key: "youth", to: "/programmes/youth", emoji: "🚀", color: "hsl(190 35% 53%)", iconBg: "bg-ecowas-blue/10", progress: 52, lead: "K. Asante", sponsors: ["AfDB", "UNDP"] },
-  { key: "trade", to: "/programmes/trade", emoji: "🤝", color: "hsl(152 100% 26%)", iconBg: "bg-primary/10", progress: 41, lead: "C. Nwosu", sponsors: ["AfDB", "Duchess", "WATH"] },
-  { key: "women", to: "/programmes/women", emoji: "⚡", color: "hsl(340 66% 34%)", iconBg: "bg-secondary/10", progress: 35, lead: "F. Diallo", sponsors: ["UNDP"] },
-  { key: "civic", to: "/programmes/civic", emoji: "🏛️", color: "hsl(210 50% 30%)", iconBg: "bg-ecowas-blue/10", progress: 28, lead: "TBD", sponsors: ["EU Delegation"] },
-  { key: "culture", to: "/programmes/culture", emoji: "🎨", color: "hsl(25 85% 55%)", iconBg: "bg-accent/10", progress: 22, lead: "TBD", sponsors: [] },
-  { key: "awards", to: "/programmes/awards", emoji: "🏆", color: "hsl(50 87% 45%)", iconBg: "bg-accent/10", progress: 60, lead: "S. Adesanya", sponsors: ["AfDB"] },
-  { key: "parliament", to: "/programmes/parliament", emoji: "🌍", color: "hsl(73 53% 49%)", iconBg: "bg-ecowas-lime/10", progress: 45, lead: "K. Asante", sponsors: ["EU Delegation"] },
-];
+interface PillarRow {
+  id: string;
+  slug: string;
+  emoji: string | null;
+  color: string | null;
+  icon_bg: string | null;
+  route: string | null;
+  progress_percent: number;
+  lead_name: string | null;
+  sponsors: string[];
+  display_order: number;
+}
 
 const PillarsGrid = () => {
   const { t } = useTranslation();
+
+  const { data: pillars = [], isLoading } = useQuery<PillarRow[]>({
+    queryKey: ["programme_pillars"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("programme_pillars" as any)
+        .select("*")
+        .eq("is_active", true)
+        .order("display_order");
+      if (error) throw error;
+      return data ?? [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
   return (
     <section className="py-20 bg-background">
@@ -38,53 +58,57 @@ const PillarsGrid = () => {
         </div>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5">
-          {pillars.map((pillar, i) => (
-            <AnimatedSection key={pillar.to} delay={i * 80}>
-              <Link
-                to={pillar.to}
-                className="group relative block p-5 rounded-2xl border border-border bg-card hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 overflow-hidden"
-              >
-                <div
-                  className="absolute top-0 left-0 right-0 h-[3px] origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300"
-                  style={{ background: pillar.color }}
-                />
-                <div className={`w-11 h-11 rounded-lg ${pillar.iconBg} flex items-center justify-center text-xl mb-3.5 group-hover:scale-110 group-hover:-rotate-3 transition-transform duration-300`}>
-                  {pillar.emoji}
-                </div>
-                <h3 className="text-base font-bold text-card-foreground mb-2 leading-tight group-hover:text-primary transition-colors">
-                  {t(`pillars.${pillar.key}.title`)}
-                </h3>
-                <p className="text-xs text-muted-foreground leading-relaxed mb-3.5">
-                  {t(`pillars.${pillar.key}.desc`)}
-                </p>
-                <div className="flex items-center gap-3">
-                  <span className="text-[11px] font-semibold text-muted-foreground">{pillar.progress}%</span>
-                  <div className="flex-1">
-                    <Progress value={pillar.progress} className="h-[3px]" />
-                  </div>
-                  <span className="text-[10px] text-muted-foreground">{pillar.lead}</span>
-                </div>
-                <div className="max-h-0 overflow-hidden group-hover:max-h-16 group-hover:border-t group-hover:border-border group-hover:mt-3.5 group-hover:pt-3 transition-all duration-300">
-                  <p className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
-                    {t("pillars.sponsors")}
-                  </p>
-                  <div className="flex gap-1.5 flex-wrap">
-                    {pillar.sponsors.length > 0 ? (
-                      pillar.sponsors.map((s) => (
-                        <span key={s} className="text-[10px] px-2 py-0.5 rounded bg-primary/10 border border-primary/20 text-primary font-semibold">
-                          {s}
-                        </span>
-                      ))
-                    ) : (
-                      <span className="text-[10px] px-2 py-0.5 rounded bg-muted border border-border text-muted-foreground font-semibold italic opacity-50">
-                        {t("pillars.open")}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </Link>
-            </AnimatedSection>
-          ))}
+          {isLoading
+            ? Array.from({ length: 7 }).map((_, i) => (
+                <Skeleton key={i} className="h-44 rounded-2xl" />
+              ))
+            : pillars.map((pillar, i) => (
+                <AnimatedSection key={pillar.id} delay={i * 80}>
+                  <Link
+                    to={pillar.route ?? `/programmes/${pillar.slug}`}
+                    className="group relative block p-5 rounded-2xl border border-border bg-card hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 overflow-hidden"
+                  >
+                    <div
+                      className="absolute top-0 left-0 right-0 h-[3px] origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300"
+                      style={{ background: pillar.color ?? "hsl(152 100% 26%)" }}
+                    />
+                    <div className={`w-11 h-11 rounded-lg ${pillar.icon_bg ?? "bg-primary/10"} flex items-center justify-center text-xl mb-3.5 group-hover:scale-110 group-hover:-rotate-3 transition-transform duration-300`}>
+                      {pillar.emoji}
+                    </div>
+                    <h3 className="text-base font-bold text-card-foreground mb-2 leading-tight group-hover:text-primary transition-colors">
+                      {t(`pillars.${pillar.slug}.title`)}
+                    </h3>
+                    <p className="text-xs text-muted-foreground leading-relaxed mb-3.5">
+                      {t(`pillars.${pillar.slug}.desc`)}
+                    </p>
+                    <div className="flex items-center gap-3">
+                      <span className="text-[11px] font-semibold text-muted-foreground">{pillar.progress_percent}%</span>
+                      <div className="flex-1">
+                        <Progress value={pillar.progress_percent} className="h-[3px]" />
+                      </div>
+                      <span className="text-[10px] text-muted-foreground">{pillar.lead_name}</span>
+                    </div>
+                    <div className="max-h-0 overflow-hidden group-hover:max-h-16 group-hover:border-t group-hover:border-border group-hover:mt-3.5 group-hover:pt-3 transition-all duration-300">
+                      <p className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
+                        {t("pillars.sponsors")}
+                      </p>
+                      <div className="flex gap-1.5 flex-wrap">
+                        {(pillar.sponsors ?? []).length > 0 ? (
+                          pillar.sponsors.map((s) => (
+                            <span key={s} className="text-[10px] px-2 py-0.5 rounded bg-primary/10 border border-primary/20 text-primary font-semibold">
+                              {s}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-[10px] px-2 py-0.5 rounded bg-muted border border-border text-muted-foreground font-semibold italic opacity-50">
+                            {t("pillars.open")}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </Link>
+                </AnimatedSection>
+              ))}
         </div>
       </div>
     </section>

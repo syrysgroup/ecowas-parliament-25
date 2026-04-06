@@ -8,7 +8,7 @@ interface FlagImgProps {
 const FlagImg = ({ country, className = "h-6 w-6" }: FlagImgProps) => {
   const src = getFlagSrc(country);
   if (!src) return <span className={className}>🏳️</span>;
-  return <img src={src} alt={`${country} flag`} className={`${className} object-cover rounded-sm`} />;
+  return <img src={src} alt={`${country} flag`} className={`${className} object-cover rounded-sm`} width={24} height={24} loading="lazy" decoding="async" />;
 };
 
 export default FlagImg;

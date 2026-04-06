@@ -10,7 +10,7 @@ const Parliament25Section = () => {
       <div className="container">
         <div className="grid lg:grid-cols-2 gap-12 items-center max-w-5xl mx-auto">
           <AnimatedSection className="flex justify-center">
-            <img src={parliament25Logo} alt={t("anniversary.badge")} className="h-48 md:h-64 lg:h-72 w-auto object-contain drop-shadow-[0_0_30px_hsl(152_100%_26%/0.15)]" />
+            <img src={parliament25Logo} alt={t("anniversary.badge")} className="h-48 md:h-64 lg:h-72 w-auto object-contain drop-shadow-[0_0_30px_hsl(152_100%_26%/0.15)]" width={288} height={288} loading="lazy" decoding="async" />
           </AnimatedSection>
 
           <AnimatedSection delay={150}>

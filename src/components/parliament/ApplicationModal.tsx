@@ -12,7 +12,6 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Search, Send, Vote, UserPlus } from "lucide-react";
-import { fallbackNominees } from "@/lib/parliament";
 
 const COUNTRIES = [
   "Benin", "Cape Verde", "Gambia", "Ghana", "Guinea", "Guinea-Bissau",
@@ -49,7 +48,7 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
         .order("vote_count", { ascending: false })
         .limit(12);
 
-      setApprovedNominees((data ?? []).length > 0 ? data : fallbackNominees);
+      setApprovedNominees(data ?? []);
     };
 
     if (open) void loadNominees();

@@ -90,7 +90,7 @@ function SponsorDialog({ open, onClose, sponsor }: { open: boolean; onClose: () 
         <div className="space-y-3 py-1">
           <div className="space-y-2">
             <Label className="text-[11px] text-crm-text-dim">Logo</Label>
-            {logoUrl && <img src={logoUrl} alt="" className="h-16 w-auto rounded border border-crm-border" />}
+            {logoUrl && <img src={logoUrl} alt="" className="h-16 w-auto rounded border border-crm-border" loading="lazy" decoding="async" />}
             <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={e => e.target.files?.[0] && handleUpload(e.target.files[0])} />
             <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()} disabled={uploading}
               className="border-crm-border text-crm-text-muted text-xs gap-1"><Image size={12} /> {uploading ? "Uploading…" : "Upload Logo"}</Button>
@@ -252,7 +252,7 @@ function PartnerDialog({ open, onClose, partner }: { open: boolean; onClose: () 
         <div className="space-y-3 py-1">
           <div className="space-y-2">
             <Label className="text-[11px] text-crm-text-dim">Logo</Label>
-            {logoUrl && <img src={logoUrl} alt="" className="h-16 w-auto rounded border border-crm-border" />}
+            {logoUrl && <img src={logoUrl} alt="" className="h-16 w-auto rounded border border-crm-border" loading="lazy" decoding="async" />}
             <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={e => e.target.files?.[0] && handleUpload(e.target.files[0])} />
             <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()} disabled={uploading}
               className="border-crm-border text-crm-text-muted text-xs gap-1"><Image size={12} /> {uploading ? "Uploading…" : "Upload Logo"}</Button>
@@ -289,7 +289,7 @@ function PartnerDialog({ open, onClose, partner }: { open: boolean; onClose: () 
           </div>
           <div className="space-y-2">
             <Label className="text-[11px] text-crm-text-dim">Lead / Contact Photo</Label>
-            {leadImageUrl && <img src={leadImageUrl} alt="" className="h-16 w-16 object-cover rounded-full border border-crm-border" />}
+            {leadImageUrl && <img src={leadImageUrl} alt="" className="h-16 w-16 object-cover rounded-full border border-crm-border" loading="lazy" decoding="async" />}
             <input ref={leadImageRef} type="file" accept="image/*" className="hidden" onChange={e => e.target.files?.[0] && handleLeadUpload(e.target.files[0])} />
             <Button type="button" variant="outline" size="sm" onClick={() => leadImageRef.current?.click()} disabled={uploadingLead}
               className="border-crm-border text-crm-text-muted text-xs gap-1"><Image size={12} /> {uploadingLead ? "Uploading…" : "Upload Lead Photo"}</Button>
@@ -432,7 +432,7 @@ export default function SponsorsManagerModule() {
           {loadingS && <div className="flex justify-center py-12"><div className="w-6 h-6 border-2 border-emerald-700 border-t-emerald-400 rounded-full animate-spin" /></div>}
           {!loadingS && sponsors.map(s => (
             <div key={s.id} className="bg-crm-card border border-crm-border rounded-xl p-4 flex items-center gap-4 hover:border-crm-border-hover transition-colors">
-              {s.logo_url ? <img src={s.logo_url} alt="" className="w-12 h-12 object-contain rounded" /> : <div className="w-12 h-12 bg-crm-surface rounded flex items-center justify-center text-crm-text-dim"><Users size={16} /></div>}
+              {s.logo_url ? <img src={s.logo_url} alt="" className="w-12 h-12 object-contain rounded" width={48} height={48} loading="lazy" decoding="async" /> : <div className="w-12 h-12 bg-crm-surface rounded flex items-center justify-center text-crm-text-dim"><Users size={16} /></div>}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <p className="text-[13px] font-semibold text-crm-text">{s.name}</p>
@@ -467,7 +467,7 @@ export default function SponsorsManagerModule() {
           {loadingP && <div className="flex justify-center py-12"><div className="w-6 h-6 border-2 border-emerald-700 border-t-emerald-400 rounded-full animate-spin" /></div>}
           {!loadingP && partners.map(p => (
             <div key={p.id} className="bg-crm-card border border-crm-border rounded-xl p-4 flex items-center gap-4 hover:border-crm-border-hover transition-colors">
-              {p.logo_url ? <img src={p.logo_url} alt="" className="w-12 h-12 object-contain rounded" /> : <div className="w-12 h-12 bg-crm-surface rounded flex items-center justify-center text-crm-text-dim"><Users size={16} /></div>}
+              {p.logo_url ? <img src={p.logo_url} alt="" className="w-12 h-12 object-contain rounded" width={48} height={48} loading="lazy" decoding="async" /> : <div className="w-12 h-12 bg-crm-surface rounded flex items-center justify-center text-crm-text-dim"><Users size={16} /></div>}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <p className="text-[13px] font-semibold text-crm-text">{p.name}</p>

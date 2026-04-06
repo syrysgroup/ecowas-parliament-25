@@ -168,7 +168,7 @@ export default function NewsEditorModule() {
         {articles.map(a => (
           <div key={a.id} className="bg-crm-card border border-crm-border rounded-xl overflow-hidden hover:border-crm-border-hover transition-colors">
             <div className="flex">
-              {a.cover_image_url && <img src={a.cover_image_url} alt="" className="w-24 h-20 object-cover flex-shrink-0" />}
+              {a.cover_image_url && <img src={a.cover_image_url} alt="" className="w-24 h-20 object-cover flex-shrink-0" width={96} height={80} loading="lazy" decoding="async" />}
               <div className="flex-1 p-4 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap mb-1">
                   <p className="text-[13px] font-semibold text-crm-text">{a.title}</p>

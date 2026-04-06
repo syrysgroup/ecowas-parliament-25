@@ -123,7 +123,7 @@ const PartnerPage = () => {
 
             {partner.lead_image_url && partner.logo_url && (
               <div className="flex items-center gap-4 mb-8 p-4 bg-muted/30 rounded-2xl border border-border">
-                <img src={partner.lead_image_url} alt={partner.lead_name ?? ""} className="h-16 w-16 rounded-full object-cover border border-border" />
+                <img src={partner.lead_image_url} alt={partner.lead_name ?? ""} className="h-16 w-16 rounded-full object-cover border border-border" width={64} height={64} loading="lazy" decoding="async" />
                 <div>
                   {partner.lead_name && <p className="font-semibold text-foreground">{partner.lead_name}</p>}
                   {partner.lead_role && <p className="text-sm text-muted-foreground">{partner.lead_role}</p>}

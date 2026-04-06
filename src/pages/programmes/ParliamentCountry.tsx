@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Vote, Trophy } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { fallbackNominees, fallbackRepresentatives } from "@/lib/parliament";
 import FlagImg from "@/components/shared/FlagImg";
 import ecowasLogo from "@/assets/ecowas-parliament-logo.png";
 
@@ -61,8 +60,8 @@ export default function ParliamentCountry() {
         if (fb) setCountryInfo(fb);
       }
 
-      setNominees(nomineesRes.data?.length ? nomineesRes.data : fallbackNominees.filter(n => n.country === countryName));
-      setRepresentatives(repsRes.data?.length ? repsRes.data : fallbackRepresentatives.filter(r => r.country === countryName));
+      setNominees(nomineesRes.data ?? []);
+      setRepresentatives(repsRes.data ?? []);
     };
     void load();
   }, [countryName]);
@@ -173,7 +172,7 @@ export default function ParliamentCountry() {
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 {Array.from({ length: Math.max(seats - representatives.length, 0) }).map((_, i) => (
                   <div key={i} className="rounded-3xl border border-dashed border-border bg-card/50 p-5 text-center">
-                    <img src={ecowasLogo} alt="Placeholder" className="mx-auto h-20 w-20 object-contain opacity-30 mb-3" />
+                    <img src={ecowasLogo} alt="Placeholder" className="mx-auto h-20 w-20 object-contain opacity-30 mb-3" width={80} height={80} loading="lazy" decoding="async" />
                     <p className="text-sm font-semibold text-muted-foreground">—</p>
                     <p className="text-xs text-muted-foreground">6th Legislature</p>
                   </div>
