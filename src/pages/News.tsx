@@ -55,7 +55,6 @@ const News = () => {
                           className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
                           loading="lazy"
                         />
-                        />
                       </div>
                       <div className="p-5">
                         <div className="flex items-center gap-2 mb-3">
