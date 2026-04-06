@@ -258,22 +258,32 @@ const Parliament = () => {
               {/* Objectives */}
               <div>
                 <AnimatedSection className="mb-6 text-center">
-                  <h2 className="text-2xl font-black text-foreground">Objectives</h2>
-                  <p className="mt-1 text-muted-foreground">What this programme sets out to achieve.</p>
+                  <h2 className="text-2xl font-black text-foreground">Our Mission</h2>
+                  <p className="mt-1 text-muted-foreground">What this programme sets out to achieve for the youth of West Africa.</p>
                 </AnimatedSection>
                 <div className="grid gap-4 md:grid-cols-2">
                   {objectives.map((objective, index) => (
-                    <AnimatedSection key={objective} delay={index * 60}>
+                    <AnimatedSection key={objective.text} delay={index * 60}>
                       <div className="rounded-3xl border border-border bg-card p-5 shadow-sm">
                         <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                          <Lightbulb className="h-4 w-4" />
+                          <objective.icon className="h-4 w-4" />
                         </div>
-                        <p className="text-sm leading-relaxed text-muted-foreground">{objective}</p>
+                        <p className="text-sm leading-relaxed text-muted-foreground">{objective.text}</p>
                       </div>
                     </AnimatedSection>
                   ))}
                 </div>
               </div>
+
+              {/* Vision 2050 Quote Block */}
+              <AnimatedSection>
+                <div className="rounded-3xl bg-gradient-hero p-8 md:p-12 text-primary-foreground text-center">
+                  <blockquote className="text-lg md:text-xl font-semibold italic leading-relaxed max-w-3xl mx-auto">
+                    "In the transition from ECOWAS of States to the ECOWAS of the People, the youth are not waiting for the future — they are building it. This Parliament is their platform, their voice, and their mandate."
+                  </blockquote>
+                  <p className="mt-4 text-sm text-primary-foreground/60 font-medium">ECOWAS Vision 2050 · ECOWAS of the People</p>
+                </div>
+              </AnimatedSection>
             </TabsContent>
 
             {/* ── Tab 2: Delegates ── */}
