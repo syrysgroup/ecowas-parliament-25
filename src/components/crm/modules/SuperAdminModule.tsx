@@ -431,11 +431,17 @@ export default function SuperAdminModule() {
           <div className="bg-crm-card border border-crm-border rounded-xl overflow-hidden">
             <div className="px-4 py-3 border-b border-crm-border flex items-center justify-between gap-3 flex-wrap">
               <h3 className="text-[12px] font-semibold text-crm-text-secondary">All users ({filteredUsers.length})</h3>
-              <Input
-                placeholder="Search name, email, country…"
-                value={searchQ} onChange={e => setSearchQ(e.target.value)}
-                className="bg-crm-surface border-crm-border text-crm-text text-xs h-7 w-56"
-              />
+              <div className="flex items-center gap-2">
+                <Input
+                  placeholder="Search name, email, country…"
+                  value={searchQ} onChange={e => setSearchQ(e.target.value)}
+                  className="bg-crm-surface border-crm-border text-crm-text text-xs h-7 w-56"
+                />
+                <Button size="sm" variant="outline" onClick={exportUsersCSV}
+                  className="border-crm-border text-crm-text-muted hover:text-crm-text-secondary text-xs gap-1 h-7">
+                  <Download size={11} /> CSV
+                </Button>
+              </div>
             </div>
             {loading ? (
               <div className="flex items-center justify-center h-24">
