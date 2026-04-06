@@ -60,7 +60,7 @@ const SmartChallenge = () => {
       {/* Hero */}
       <section className="relative min-h-[80vh] flex items-center overflow-hidden">
         <img src={heroBg} alt="" className="absolute inset-0 w-full h-full object-cover" width={1920} height={1080} />
-        <div className="absolute inset-0 bg-gradient-to-r from-foreground/95 via-foreground/80 to-foreground/50" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[hsl(0,0%,8%)]/95 via-[hsl(0,0%,8%)]/80 to-[hsl(0,0%,8%)]/50" />
 
         {/* Animated glow */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -69,7 +69,7 @@ const SmartChallenge = () => {
         </div>
 
         <div className="relative z-10 container mx-auto px-6 py-20">
-          <Button asChild variant="secondary" className="bg-primary-foreground/15 text-primary-foreground hover:bg-primary-foreground/25 mb-8">
+          <Button asChild variant="secondary" className="bg-white/15 text-white hover:bg-white/25 mb-8">
             <Link to="/programmes/youth"><ArrowLeft className="mr-2 h-4 w-4" />Back to Youth</Link>
           </Button>
 
@@ -77,21 +77,21 @@ const SmartChallenge = () => {
             <Badge className="bg-accent/20 text-accent border-accent/30 mb-4 animate-fade-in">
               <BrainCircuit className="h-3 w-3 mr-1" /> Powered by SMARTq
             </Badge>
-            <h1 className="text-4xl md:text-6xl font-black text-primary-foreground mb-6 animate-slide-up">
+            <h1 className="text-4xl md:text-6xl font-black text-white mb-6 animate-slide-up">
               ECOWAS Parliament<br />
-              <span className="text-accent">Smart Challenge</span>
+              <span className="text-[hsl(50,87%,45%)]">Smart Challenge</span>
             </h1>
-            <p className="text-primary-foreground/70 text-lg leading-relaxed mb-4 animate-slide-up" style={{ animationDelay: "0.2s" }}>
+            <p className="text-white/70 text-lg leading-relaxed mb-4 animate-slide-up" style={{ animationDelay: "0.2s" }}>
               The premier continental academic competition for secondary school students across all 12 ECOWAS member states.
             </p>
-            <p className="text-primary-foreground/50 text-sm mb-8 animate-slide-up" style={{ animationDelay: "0.3s" }}>
+            <p className="text-white/50 text-sm mb-8 animate-slide-up" style={{ animationDelay: "0.3s" }}>
               7 rounds · 4 subjects · Dual-track scoring · Live broadcast finale
             </p>
             <div className="flex flex-wrap gap-4 animate-slide-up" style={{ animationDelay: "0.4s" }}>
-              <Button size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90 font-bold">
+              <Button size="lg" className="bg-[hsl(50,87%,45%)] text-[hsl(0,0%,8%)] hover:bg-[hsl(50,87%,50%)] font-bold">
                 Register Your School <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
-              <Button size="lg" variant="outline" className="border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10">
+              <Button size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10">
                 Watch Trailer
               </Button>
             </div>
@@ -102,12 +102,12 @@ const SmartChallenge = () => {
             {stats.map((s, i) => (
               <div
                 key={s.label}
-                className="text-center bg-primary-foreground/5 backdrop-blur-sm rounded-xl p-4 border border-primary-foreground/10 animate-slide-up"
+                className="text-center bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10 animate-slide-up"
                 style={{ animationDelay: `${0.5 + i * 0.1}s` }}
               >
-                <div className="text-accent mx-auto mb-2">{s.icon}</div>
-                <p className="text-2xl font-black text-primary-foreground">{s.value}</p>
-                <p className="text-xs text-primary-foreground/50 font-medium">{s.label}</p>
+                <div className="text-[hsl(50,87%,45%)] mx-auto mb-2">{s.icon}</div>
+                <p className="text-2xl font-black text-white">{s.value}</p>
+                <p className="text-xs text-white/50 font-medium">{s.label}</p>
               </div>
             ))}
           </div>
@@ -301,7 +301,7 @@ const SmartChallenge = () => {
       </section>
 
       {/* Live Show Section */}
-      <section className="py-20 bg-gradient-to-br from-foreground via-foreground/95 to-foreground/90 text-primary-foreground">
+      <section className="py-20 bg-gradient-to-br from-[hsl(0,0%,8%)] via-[hsl(0,0%,10%)] to-[hsl(0,0%,12%)] text-white">
         <div className="container mx-auto px-6">
           <AnimatedSection>
             <div className="text-center mb-16">
@@ -311,7 +311,7 @@ const SmartChallenge = () => {
               <h2 className="text-3xl md:text-4xl font-black">
                 The <span className="text-accent">Live Show</span> Championship
               </h2>
-              <p className="text-primary-foreground/60 mt-3 max-w-xl mx-auto">
+              <p className="text-white/60 mt-3 max-w-xl mx-auto">
                 Exams become television. 12 national teams compete in broadcast matches — Subject Duels, live debates, and audience engagement.
               </p>
             </div>
@@ -324,12 +324,12 @@ const SmartChallenge = () => {
               { icon: <Eye className="h-6 w-6" />, title: "Spectator Portal", desc: "BigScreen broadcast, live feeds, school fan zones, and real-time leaderboards." },
             ].map((item, i) => (
               <AnimatedSection key={item.title} delay={i * 100}>
-                <div className="text-center p-6 rounded-xl bg-primary-foreground/5 border border-primary-foreground/10 hover:bg-primary-foreground/8 transition-all duration-300">
+                <div className="text-center p-6 rounded-xl bg-white/5 border border-white/10 hover:bg-white/8 transition-all duration-300">
                   <div className="w-12 h-12 rounded-full bg-accent/20 flex items-center justify-center text-accent mx-auto mb-4">
                     {item.icon}
                   </div>
                   <h3 className="font-bold mb-2">{item.title}</h3>
-                  <p className="text-sm text-primary-foreground/60">{item.desc}</p>
+                  <p className="text-sm text-white/60">{item.desc}</p>
                 </div>
               </AnimatedSection>
             ))}

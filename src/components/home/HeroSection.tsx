@@ -59,7 +59,7 @@ const HeroSection = () => {
 
   return (
     <section className="relative min-h-[100vh] flex items-center justify-center overflow-hidden bg-gradient-hero text-primary-foreground">
-      <img src={parliamentBg} alt="" className="absolute inset-0 w-full h-full object-cover opacity-25 pointer-events-none" />
+      <img src={parliamentBg} alt="" className="absolute inset-0 w-full h-full object-cover opacity-25 pointer-events-none" width={1920} height={1080} fetchPriority="high" />
       <div className="absolute inset-0 animate-gradient-shift opacity-30" style={{
         background: "linear-gradient(135deg, hsl(152 100% 26% / 0.4), hsl(50 87% 45% / 0.15), hsl(340 66% 34% / 0.1), hsl(152 100% 20% / 0.3))",
         backgroundSize: "400% 400%",
@@ -121,6 +121,8 @@ const HeroSection = () => {
                   src={ecowasLogo}
                   alt={t("hero.ecowasParliament")}
                   className="h-55 w-55 md:h-60 md:w-60 object-contain animate-float drop-shadow-[0_0_40px_hsl(152_100%_26%/0.3)]"
+                  width={240}
+                  height={240}
                 />
               </div>
               <div className="text-center mt-4">

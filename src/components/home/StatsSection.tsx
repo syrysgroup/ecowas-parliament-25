@@ -43,7 +43,7 @@ const StatsSection = () => {
         .from("site_content")
         .select("content")
         .eq("section_key", "stats")
-        .single();
+        .maybeSingle();
       return data?.content as any;
     },
   });
