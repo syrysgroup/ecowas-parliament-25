@@ -52,7 +52,7 @@ export default function Events() {
                   <AnimatedSection key={event.id} delay={i * 80}>
                     <Card className="overflow-hidden hover:shadow-lg transition-shadow h-full flex flex-col">
                       {event.cover_image_url ? (
-                       <div className="aspect-[4/5] overflow-hidden">
+                       <div className="aspect-video overflow-hidden">
                           <img
                             src={event.cover_image_url}
                             alt={event.title}
@@ -61,7 +61,7 @@ export default function Events() {
                           />
                         </div>
                       ) : (
-                        <div className="aspect-[4/5] bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                        <div className="aspect-video bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
                           <Calendar className="h-16 w-16 text-muted-foreground/30" />
                         </div>
                       )}

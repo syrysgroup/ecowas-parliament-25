@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthContext";
-import { Save, Plus } from "lucide-react";
+import { Save, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -182,6 +182,8 @@ function SectionEditor({ section, onSaved }: { section: SiteContentRow; onSaved:
   const template = SECTION_TEMPLATES[section.section_key];
   const [values, setValues] = useState<Record<string, string>>(section.content as any ?? {});
   const [saving, setSaving] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const handleSave = async () => {
     setSaving(true);
@@ -200,6 +202,20 @@ function SectionEditor({ section, onSaved }: { section: SiteContentRow; onSaved:
     }
   };
 
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      await (supabase as any).from("site_content").delete().eq("id", section.id);
+      toast({ title: "Section deleted" });
+      onSaved();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setDeleting(false);
+      setConfirmDelete(false);
+    }
+  };
+
   const fields = template?.fields ?? Object.keys(values).map(key => ({
     key, label: key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase()), type: "text" as const,
   }));
@@ -211,10 +227,29 @@ function SectionEditor({ section, onSaved }: { section: SiteContentRow; onSaved:
           <p className="text-[13px] font-semibold text-crm-text">{template?.label ?? section.section_key}</p>
           <p className="text-[10px] font-mono text-emerald-500">{section.section_key}</p>
         </div>
-        <Button size="sm" onClick={handleSave} disabled={saving}
-          className="bg-emerald-700 hover:bg-emerald-600 text-white text-xs gap-1">
-          <Save size={11} /> {saving ? "Saving…" : "Save"}
-        </Button>
+        <div className="flex items-center gap-1">
+          {confirmDelete ? (
+            <>
+              <span className="text-[10px] text-red-400 mr-1">Sure?</span>
+              <Button size="sm" variant="ghost" onClick={() => setConfirmDelete(false)} className="text-xs text-crm-text-muted h-7">No</Button>
+              <Button size="sm" onClick={handleDelete} disabled={deleting}
+                className="bg-red-600 hover:bg-red-700 text-white text-xs h-7">
+                {deleting ? "…" : "Yes, Delete"}
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button size="sm" variant="ghost" onClick={() => setConfirmDelete(true)}
+                className="text-crm-text-muted hover:text-red-400 text-xs gap-1 h-7">
+                <Trash2 size={11} />
+              </Button>
+              <Button size="sm" onClick={handleSave} disabled={saving}
+                className="bg-emerald-700 hover:bg-emerald-600 text-white text-xs gap-1">
+                <Save size={11} /> {saving ? "Saving…" : "Save"}
+              </Button>
+            </>
+          )}
+        </div>
       </div>
       <div className="grid grid-cols-2 gap-3">
         {fields.map(f => (
