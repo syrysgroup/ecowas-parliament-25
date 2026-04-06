@@ -181,16 +181,35 @@ const Parliament = () => {
         </div>
       </section>
 
-      {/* Emulation notice */}
-      <section className="py-12">
-        <div className="container max-w-4xl">
-          <AnimatedSection className="text-center">
-            <Badge className="bg-ecowas-green/10 text-ecowas-green border-ecowas-green/20 mb-4">Representation Model</Badge>
-            <h2 className="text-2xl font-black text-foreground md:text-3xl">Emulating the ECOWAS Parliament</h2>
+      {/* Why This Matters */}
+      <section className="py-14">
+        <div className="container max-w-5xl">
+          <AnimatedSection className="text-center mb-10">
+            <Badge className="bg-ecowas-green/10 text-ecowas-green border-ecowas-green/20 mb-4">Why This Matters</Badge>
+            <h2 className="text-2xl font-black text-foreground md:text-3xl">More Than an Event — A Movement</h2>
             <p className="mx-auto mt-3 max-w-3xl text-muted-foreground">
-              The Simulated Youth Parliament mirrors the actual ECOWAS Parliament in its representation structure — each member state is allocated seats proportional to its population, and delegates follow the same institutional hierarchy including Principal Officers and country delegations.
+              This is not a simulation for the sake of ceremony. It is a historic, first-of-its-kind platform where the youth of West Africa take their rightful place in shaping the region's future. In the shift from "ECOWAS of States" to the "ECOWAS of the People," the Parliament — as the direct representative of the people — is uniquely positioned to ensure that young voices are not just heard, but acted upon.
             </p>
           </AnimatedSection>
+
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              { icon: Megaphone, title: "Youth Deliberation", desc: "Youth from 12 nations come together to debate and produce resolutions on issues that directly affect their lives and futures." },
+              { icon: Heart, title: "Women's Representation", desc: "A parliament where women are duly represented — ensuring gender parity is not an afterthought but a founding principle." },
+              { icon: Globe, title: "Resolution Pipeline", desc: "Resolutions adopted by youth delegates are forwarded to the ECOWAS Youth Parliament for formal consideration and action." },
+              { icon: Sparkles, title: "ECOWAS Vision 2050", desc: "Pioneering the shift from ECOWAS of States to ECOWAS of the People — proving governance begins with the people it serves." },
+            ].map((card, i) => (
+              <AnimatedSection key={card.title} delay={i * 70}>
+                <div className="rounded-3xl border border-border bg-card p-6 shadow-sm h-full">
+                  <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    <card.icon className="h-5 w-5" />
+                  </div>
+                  <h3 className="font-bold text-card-foreground mb-1.5">{card.title}</h3>
+                  <p className="text-sm leading-relaxed text-muted-foreground">{card.desc}</p>
+                </div>
+              </AnimatedSection>
+            ))}
+          </div>
         </div>
       </section>
 
