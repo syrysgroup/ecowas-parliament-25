@@ -1,14 +1,14 @@
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Link } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import AnimatedSection from "@/components/shared/AnimatedSection";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle2, Globe, Mail, TrendingUp, Users, Video } from "lucide-react";
-import duchessLogo from "@/assets/duchess-logo.png";
-import cmdLogo from "@/assets/cmd-logo.png";
-import borderlessLogo from "@/assets/borderless-trade-logo.png";
 
-// ─── Why sponsor? bullets ─────────────────────────────────────────────────────
+// ─── Why sponsor? bullets (static description — not CMS-managed) ──────────────
 const whyPoints = [
   {
     title: "Reach 12 nations",
@@ -20,7 +20,7 @@ const whyPoints = [
   },
   {
     title: "Real ROI, fully measured",
-    desc: "Every sponsor receives a dedicated impact dashboard with logo impressions, event placements, press mentions, and audience reach  updated monthly.",
+    desc: "Every sponsor receives a dedicated impact dashboard with logo impressions, event placements, press mentions, and audience reach updated monthly.",
   },
   {
     title: "Direct access to decision-makers",
@@ -36,7 +36,7 @@ const whyPoints = [
   },
 ];
 
-// ─── Tiers ────────────────────────────────────────────────────────────────────
+// ─── Tiers (static structure — not CMS-managed) ──────────────────────────────
 const tiers = [
   {
     name: "Gold",
@@ -88,65 +88,74 @@ const tiers = [
   },
 ];
 
-// ─── Stats ─────────────────────────────────────────────────────────────────────
-const stats = [
+const DEFAULT_STATS = [
   { value: "400M+", label: "People in the ECOWAS bloc" },
   { value: "12",    label: "Member states reached" },
   { value: "40+",   label: "Events across 2026" },
   { value: "2.4M",  label: "Combined programme audience (est.)" },
 ];
 
-// ─── Current sponsor logos ─────────────────────────────────────────────────────
-const currentSponsors = [
-  {
-    name: "African Development Bank",
-    tier: "Gold",
-    tierClass: "bg-amber-100 text-amber-800",
-  },
-  {
-    name: "European Union  ECOWAS Delegation",
-    tier: "Gold",
-    tierClass: "bg-amber-100 text-amber-800",
-  },
-  {
-    name: "UNDP West Africa",
-    tier: "Silver",
-    tierClass: "bg-slate-100 text-slate-700",
-  },
-  {
-    name: "UN Women  West Africa",
-    tier: "Silver",
-    tierClass: "bg-slate-100 text-slate-700",
-  },
-];
-
-// ─── Implementing partners (from SponsorsSection pattern) ─────────────────────
-const implementingPartners = [
-  {
-    name: "Duchess NL",
-    lead: "Dr. Victoria Akai IIPM",
-    role: "CEO",
-    logo: duchessLogo,
-    description: "Lead implementing partner coordinating the full year-long programme across all 12 ECOWAS Parliament member states.",
-  },
-  {
-    name: "Borderless Trade & Investment",
-    lead: "Dr. Olori Boye-Ajayi",
-    role: "Managing Partner",
-    logo: borderlessLogo,
-    description: "Expertise in trade facilitation and regional economic integration across West Africa.",
-  },
-  {
-    name: "CMD Tourism & Trade Enterprises",
-    lead: "Madam Cecile Mambo Doumbe",
-    role: "CEO",
-    logo: cmdLogo,
-    description: "Tourism and trade enterprise development, media production, and event management.",
-  },
-];
-
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function SponsorPortal() {
+  // Live sponsors from DB
+  const { data: currentSponsors = [] } = useQuery({
+    queryKey: ["sponsors-public"],
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("sponsors")
+        .select("id, name, slug, tier, logo_url")
+        .eq("is_published", true)
+        .order("sort_order");
+      return (data ?? []) as { id: string; name: string; slug: string; tier: string; logo_url: string | null }[];
+    },
+  });
+
+  // Live implementing partners from DB
+  const { data: implementingPartners = [] } = useQuery({
+    queryKey: ["partners-public", "implementing"],
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("partners")
+        .select("id, name, slug, logo_url, description, lead_name, lead_role")
+        .eq("partner_type", "implementing")
+        .eq("is_published", true)
+        .order("sort_order");
+      return (data ?? []) as {
+        id: string; name: string; slug: string; logo_url: string | null;
+        description: string | null; lead_name: string | null; lead_role: string | null;
+      }[];
+    },
+  });
+
+  // Stats from site_content with fallback to defaults
+  const { data: statsContent } = useQuery({
+    queryKey: ["site-content", "sponsor_portal_stats"],
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("site_content")
+        .select("content")
+        .eq("section_key", "sponsor_portal_stats")
+        .maybeSingle();
+      return data?.content as Record<string, string> | null;
+    },
+  });
+
+  const stats = statsContent
+    ? [
+        { value: statsContent.stat1_value ?? DEFAULT_STATS[0].value, label: statsContent.stat1_label ?? DEFAULT_STATS[0].label },
+        { value: statsContent.stat2_value ?? DEFAULT_STATS[1].value, label: statsContent.stat2_label ?? DEFAULT_STATS[1].label },
+        { value: statsContent.stat3_value ?? DEFAULT_STATS[2].value, label: statsContent.stat3_label ?? DEFAULT_STATS[2].label },
+        { value: statsContent.stat4_value ?? DEFAULT_STATS[3].value, label: statsContent.stat4_label ?? DEFAULT_STATS[3].label },
+      ]
+    : DEFAULT_STATS;
+
+  const tierBadgeClass = (tier: string) => {
+    const t = tier.toLowerCase();
+    if (t === "gold" || t === "platinum") return "bg-amber-100 text-amber-800";
+    if (t === "silver") return "bg-slate-100 text-slate-700";
+    return "bg-orange-100 text-orange-700";
+  };
+
   return (
     <Layout>
       {/* Hero */}
@@ -160,7 +169,7 @@ export default function SponsorPortal() {
               Partner with West Africa's Premier Parliamentary Anniversary
             </h1>
             <p className="mt-4 text-lg text-primary-foreground/70 max-w-2xl">
-              The ECOWAS Parliament 25th Anniversary Programme runs across all 12 member states throughout 2026  40+ events, 7 programme pillars, and a combined audience reach exceeding 2.4 million. Become part of history.
+              The ECOWAS Parliament 25th Anniversary Programme runs across all 12 member states throughout 2026 — 40+ events, 7 programme pillars, and a combined audience reach exceeding 2.4 million. Become part of history.
             </p>
             <div className="flex flex-wrap gap-3 mt-6">
               <Button variant="secondary" size="lg" className="gap-2">
@@ -232,7 +241,7 @@ export default function SponsorPortal() {
           <AnimatedSection className="text-center mb-10">
             <h2 className="text-2xl md:text-3xl font-bold">Sponsorship tiers</h2>
             <p className="mt-3 text-muted-foreground max-w-xl mx-auto">
-              Three tiers of partnership  each with full visibility tracking and a dedicated team contact.
+              Three tiers of partnership — each with full visibility tracking and a dedicated team contact.
             </p>
           </AnimatedSection>
 
@@ -263,8 +272,7 @@ export default function SponsorPortal() {
                         </li>
                       ))}
                     </ul>
-                    <Button className={`w-full gap-2 ${tier.featured ? "" : "variant-outline"}`}
-                      variant={tier.featured ? "default" : "outline"}>
+                    <Button className="w-full gap-2" variant={tier.featured ? "default" : "outline"}>
                       <Mail className="h-4 w-4" /> Enquire — {tier.name}
                     </Button>
                   </CardContent>
@@ -285,43 +293,62 @@ export default function SponsorPortal() {
             </p>
           </AnimatedSection>
 
-          <div className="flex flex-wrap gap-3 justify-center mb-8">
-            {currentSponsors.map(s => (
-              <AnimatedSection key={s.name}>
-                <div className="flex items-center gap-3 px-5 py-3 rounded-xl border border-border bg-card hover:shadow-md transition-all">
-                  <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${s.tierClass}`}>{s.tier}</span>
-                  <span className="text-sm font-medium text-card-foreground">{s.name}</span>
-                </div>
-              </AnimatedSection>
-            ))}
-          </div>
-
-          {/* Implementing partners */}
-          <AnimatedSection className="mt-10">
-            <div className="text-center mb-6">
-              <Badge className="bg-primary/10 text-primary border-primary/20 mb-2">Programme Co-Organisers</Badge>
-              <h3 className="text-xl font-bold">Implementing Partners</h3>
-            </div>
-            <div className="grid md:grid-cols-3 gap-6">
-              {implementingPartners.map((p, i) => (
-                <AnimatedSection key={p.name} delay={i * 100}>
-                  <div className="relative p-6 rounded-xl bg-card border-2 border-primary/20 shadow-sm hover:shadow-lg transition-all group">
-                    <Badge variant="outline" className="absolute top-3 right-3 text-[10px] border-primary/30 text-primary">
-                      Co-Organiser
-                    </Badge>
-                    <img
-                      src={p.logo}
-                      alt={p.name}
-                      className="h-12 w-auto mb-4 group-hover:scale-105 transition-transform"
-                    />
-                    <h4 className="font-bold text-card-foreground">{p.name}</h4>
-                    <p className="text-sm text-primary font-medium mt-0.5">{p.lead} — {p.role}</p>
-                    <p className="text-sm text-muted-foreground mt-2 leading-relaxed">{p.description}</p>
-                  </div>
+          {currentSponsors.length > 0 && (
+            <div className="flex flex-wrap gap-3 justify-center mb-8">
+              {currentSponsors.map(s => (
+                <AnimatedSection key={s.id}>
+                  <Link to={`/sponsors/${s.slug}`}>
+                    <div className="flex items-center gap-3 px-5 py-3 rounded-xl border border-border bg-card hover:shadow-md transition-all">
+                      {s.logo_url && <img src={s.logo_url} alt={s.name} className="h-6 w-auto object-contain" />}
+                      <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${tierBadgeClass(s.tier)}`}>
+                        {s.tier.charAt(0).toUpperCase() + s.tier.slice(1)}
+                      </span>
+                      <span className="text-sm font-medium text-card-foreground">{s.name}</span>
+                    </div>
+                  </Link>
                 </AnimatedSection>
               ))}
             </div>
-          </AnimatedSection>
+          )}
+
+          {/* Implementing partners */}
+          {implementingPartners.length > 0 && (
+            <AnimatedSection className="mt-10">
+              <div className="text-center mb-6">
+                <Badge className="bg-primary/10 text-primary border-primary/20 mb-2">Programme Co-Organisers</Badge>
+                <h3 className="text-xl font-bold">Implementing Partners</h3>
+              </div>
+              <div className="grid md:grid-cols-3 gap-6">
+                {implementingPartners.map((p, i) => (
+                  <AnimatedSection key={p.id} delay={i * 100}>
+                    <Link to={`/partners/${p.slug}`} className="block">
+                      <div className="relative p-6 rounded-xl bg-card border-2 border-primary/20 shadow-sm hover:shadow-lg transition-all group">
+                        <Badge variant="outline" className="absolute top-3 right-3 text-[10px] border-primary/30 text-primary">
+                          Co-Organiser
+                        </Badge>
+                        {p.logo_url && (
+                          <img
+                            src={p.logo_url}
+                            alt={p.name}
+                            className="h-12 w-auto mb-4 group-hover:scale-105 transition-transform object-contain"
+                          />
+                        )}
+                        <h4 className="font-bold text-card-foreground">{p.name}</h4>
+                        {p.lead_name && (
+                          <p className="text-sm text-primary font-medium mt-0.5">
+                            {p.lead_name}{p.lead_role && ` — ${p.lead_role}`}
+                          </p>
+                        )}
+                        {p.description && (
+                          <p className="text-sm text-muted-foreground mt-2 leading-relaxed">{p.description}</p>
+                        )}
+                      </div>
+                    </Link>
+                  </AnimatedSection>
+                ))}
+              </div>
+            </AnimatedSection>
+          )}
         </div>
       </section>
 
@@ -330,16 +357,16 @@ export default function SponsorPortal() {
         <div className="container">
           <div className="grid md:grid-cols-2 gap-10 items-center">
             <AnimatedSection>
-              <h2 className="text-2xl md:text-3xl font-bold mb-4">Full visibility  tracked and reported</h2>
+              <h2 className="text-2xl md:text-3xl font-bold mb-4">Full visibility — tracked and reported</h2>
               <p className="text-muted-foreground mb-4 leading-relaxed">
                 Every sponsor receives a real-time dashboard showing exactly what their investment is delivering. No ambiguity. No end-of-year PDF guesswork. You see your reach as it grows.
               </p>
               <ul className="space-y-3">
                 {[
-                  { icon: Globe,     text: "Website logo impression tracking — updated monthly" },
-                  { icon: Users,     text: "Event attendance data for every sponsored event"     },
-                  { icon: TrendingUp,text: "Press mention tracking across regional media"        },
-                  { icon: CheckCircle2,text:"Confirmation of all logo placements before publication"},
+                  { icon: Globe,      text: "Website logo impression tracking — updated monthly" },
+                  { icon: Users,      text: "Event attendance data for every sponsored event" },
+                  { icon: TrendingUp, text: "Press mention tracking across regional media" },
+                  { icon: CheckCircle2, text: "Confirmation of all logo placements before publication" },
                 ].map(item => {
                   const Icon = item.icon;
                   return (
@@ -366,10 +393,10 @@ export default function SponsorPortal() {
                 <CardContent>
                   <div className="grid grid-cols-2 gap-3 mb-4">
                     {[
-                      { label:"Logo impressions", value:"47,200" },
-                      { label:"Events featured",  value:"12"     },
-                      { label:"Press mentions",   value:"8"      },
-                      { label:"vs projection",    value:"+31%"   },
+                      { label: "Logo impressions", value: "47,200" },
+                      { label: "Events featured",  value: "12" },
+                      { label: "Press mentions",   value: "8" },
+                      { label: "vs projection",    value: "+31%" },
                     ].map(m => (
                       <div key={m.label} className="bg-muted/60 rounded-xl p-3 text-center">
                         <p className="text-xl font-black text-primary">{m.value}</p>

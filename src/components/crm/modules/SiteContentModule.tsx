@@ -129,6 +129,19 @@ const SECTION_TEMPLATES: Record<string, { label: string; fields: { key: string; 
       { key: "button_url", label: "Button Link URL", type: "text" },
     ],
   },
+  sponsor_portal_stats: {
+    label: "Sponsor Portal — Impact Stats",
+    fields: [
+      { key: "stat1_value", label: "Stat 1 Value (e.g. 400M+)", type: "text" },
+      { key: "stat1_label", label: "Stat 1 Label", type: "text" },
+      { key: "stat2_value", label: "Stat 2 Value (e.g. 12)", type: "text" },
+      { key: "stat2_label", label: "Stat 2 Label", type: "text" },
+      { key: "stat3_value", label: "Stat 3 Value (e.g. 40+)", type: "text" },
+      { key: "stat3_label", label: "Stat 3 Label", type: "text" },
+      { key: "stat4_value", label: "Stat 4 Value (e.g. 2.4M)", type: "text" },
+      { key: "stat4_label", label: "Stat 4 Label", type: "text" },
+    ],
+  },
 };
 
 function SectionEditor({ section, onSaved }: { section: SiteContentRow; onSaved: () => void }) {

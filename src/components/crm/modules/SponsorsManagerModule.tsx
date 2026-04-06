@@ -16,14 +16,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface SponsorRow {
   id: string; name: string; slug: string; logo_url: string | null;
-  description: string | null; tier: string; website: string | null;
+  description: string | null; acronym: string | null; about: string | null;
+  tier: string; website: string | null;
   email: string | null; programmes: string[]; is_published: boolean;
   sort_order: number;
 }
 
 interface PartnerRow {
   id: string; name: string; slug: string; logo_url: string | null;
-  description: string | null; partner_type: string; website: string | null;
+  description: string | null; long_description: string[] | null;
+  social_links: Record<string, string> | null;
+  partner_type: string; website: string | null;
   lead_name: string | null; lead_role: string | null; lead_image_url: string | null;
   is_published: boolean; sort_order: number;
 }
@@ -35,7 +38,9 @@ function SponsorDialog({ open, onClose, sponsor }: { open: boolean; onClose: () 
   const [name, setName] = useState(sponsor?.name ?? "");
   const [slug, setSlug] = useState(sponsor?.slug ?? "");
   const [logoUrl, setLogoUrl] = useState(sponsor?.logo_url ?? "");
+  const [acronym, setAcronym] = useState(sponsor?.acronym ?? "");
   const [description, setDescription] = useState(sponsor?.description ?? "");
+  const [about, setAbout] = useState(sponsor?.about ?? "");
   const [tier, setTier] = useState(sponsor?.tier ?? "standard");
   const [website, setWebsite] = useState(sponsor?.website ?? "");
   const [email, setEmail] = useState(sponsor?.email ?? "");
@@ -58,7 +63,8 @@ function SponsorDialog({ open, onClose, sponsor }: { open: boolean; onClose: () 
     mutationFn: async () => {
       const payload: any = {
         name, slug: slug || name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, ""),
-        logo_url: logoUrl || null, description: description || null, tier,
+        logo_url: logoUrl || null, description: description || null,
+        acronym: acronym || null, about: about || null, tier,
         website: website || null, email: email || null,
         programmes: programmes ? programmes.split(",").map(p => p.trim()).filter(Boolean) : [],
         is_published: isPublished, sort_order: parseInt(sortOrder) || 0,
@@ -67,7 +73,12 @@ function SponsorDialog({ open, onClose, sponsor }: { open: boolean; onClose: () 
       if (isEdit) await (supabase as any).from("sponsors").update(payload).eq("id", sponsor.id);
       else await (supabase as any).from("sponsors").insert(payload);
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["sponsors-manager"] }); onClose(); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["sponsors-manager"] });
+      qc.invalidateQueries({ queryKey: ["sponsors-public"] });
+      qc.invalidateQueries({ queryKey: ["sponsor"] });
+      onClose();
+    },
   });
 
   return (
@@ -95,6 +106,11 @@ function SponsorDialog({ open, onClose, sponsor }: { open: boolean; onClose: () 
               <Input value={slug} onChange={e => setSlug(e.target.value)}
                 className="bg-crm-surface border-crm-border text-crm-text text-xs h-8 font-mono" />
             </div>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-[11px] text-crm-text-dim">Acronym / Short Name</Label>
+            <Input value={acronym} onChange={e => setAcronym(e.target.value)}
+              className="bg-crm-surface border-crm-border text-crm-text text-xs h-8" placeholder="e.g. NASENI" />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
@@ -131,9 +147,15 @@ function SponsorDialog({ open, onClose, sponsor }: { open: boolean; onClose: () 
               className="bg-crm-surface border-crm-border text-crm-text text-xs h-8" placeholder="Trade, Youth, Women" />
           </div>
           <div className="space-y-1">
-            <Label className="text-[11px] text-crm-text-dim">Description</Label>
+            <Label className="text-[11px] text-crm-text-dim">Short Description</Label>
             <Textarea value={description} onChange={e => setDescription(e.target.value)}
-              className="bg-crm-surface border-crm-border text-crm-text text-xs resize-none" rows={3} />
+              className="bg-crm-surface border-crm-border text-crm-text text-xs resize-none" rows={2} />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-[11px] text-crm-text-dim">Full About (shown on sponsor detail page)</Label>
+            <Textarea value={about} onChange={e => setAbout(e.target.value)}
+              className="bg-crm-surface border-crm-border text-crm-text text-xs resize-none" rows={4}
+              placeholder="Detailed description of the sponsor shown on their dedicated page..." />
           </div>
           <div className="flex items-center justify-between">
             <Label className="text-[11px] text-crm-text-dim">Published</Label>
@@ -153,17 +175,24 @@ function SponsorDialog({ open, onClose, sponsor }: { open: boolean; onClose: () 
 function PartnerDialog({ open, onClose, partner }: { open: boolean; onClose: () => void; partner?: PartnerRow }) {
   const qc = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
+  const leadImageRef = useRef<HTMLInputElement>(null);
   const isEdit = !!partner;
   const [name, setName] = useState(partner?.name ?? "");
   const [slug, setSlug] = useState(partner?.slug ?? "");
   const [logoUrl, setLogoUrl] = useState(partner?.logo_url ?? "");
   const [description, setDescription] = useState(partner?.description ?? "");
+  const [longDescription, setLongDescription] = useState(partner?.long_description?.join("\n\n") ?? "");
   const [partnerType, setPartnerType] = useState(partner?.partner_type ?? "implementing");
   const [website, setWebsite] = useState(partner?.website ?? "");
   const [leadName, setLeadName] = useState(partner?.lead_name ?? "");
   const [leadRole, setLeadRole] = useState(partner?.lead_role ?? "");
+  const [leadImageUrl, setLeadImageUrl] = useState(partner?.lead_image_url ?? "");
+  const [twitterUrl, setTwitterUrl] = useState(partner?.social_links?.twitter ?? "");
+  const [linkedinUrl, setLinkedinUrl] = useState(partner?.social_links?.linkedin ?? "");
+  const [facebookUrl, setFacebookUrl] = useState(partner?.social_links?.facebook ?? "");
   const [isPublished, setIsPublished] = useState(partner?.is_published ?? false);
   const [uploading, setUploading] = useState(false);
+  const [uploadingLead, setUploadingLead] = useState(false);
 
   const handleUpload = async (file: File) => {
     setUploading(true);
@@ -175,18 +204,43 @@ function PartnerDialog({ open, onClose, partner }: { open: boolean; onClose: () 
     } finally { setUploading(false); }
   };
 
+  const handleLeadUpload = async (file: File) => {
+    setUploadingLead(true);
+    try {
+      const path = `partner-leads/${crypto.randomUUID()}.${file.name.split(".").pop()}`;
+      await supabase.storage.from("sponsor-logos").upload(path, file);
+      const { data: { publicUrl } } = supabase.storage.from("sponsor-logos").getPublicUrl(path);
+      setLeadImageUrl(publicUrl);
+    } finally { setUploadingLead(false); }
+  };
+
   const save = useMutation({
     mutationFn: async () => {
+      const socialLinks: Record<string, string> = {};
+      if (twitterUrl) socialLinks.twitter = twitterUrl;
+      if (linkedinUrl) socialLinks.linkedin = linkedinUrl;
+      if (facebookUrl) socialLinks.facebook = facebookUrl;
+
       const payload: any = {
         name, slug: slug || name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, ""),
         logo_url: logoUrl || null, description: description || null, partner_type: partnerType,
+        long_description: longDescription
+          ? longDescription.split(/\n\n+/).map(p => p.trim()).filter(Boolean)
+          : [],
         website: website || null, lead_name: leadName || null, lead_role: leadRole || null,
+        lead_image_url: leadImageUrl || null,
+        social_links: Object.keys(socialLinks).length > 0 ? socialLinks : {},
         is_published: isPublished, updated_at: new Date().toISOString(),
       };
       if (isEdit) await (supabase as any).from("partners").update(payload).eq("id", partner.id);
       else await (supabase as any).from("partners").insert(payload);
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["partners-manager"] }); onClose(); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["partners-manager"] });
+      qc.invalidateQueries({ queryKey: ["partners-public"] });
+      qc.invalidateQueries({ queryKey: ["partner"] });
+      onClose();
+    },
   });
 
   return (
@@ -216,31 +270,60 @@ function PartnerDialog({ open, onClose, partner }: { open: boolean; onClose: () 
                 <SelectContent className="bg-crm-card border-crm-border">
                   <SelectItem value="implementing" className="text-crm-text text-xs">Implementing</SelectItem>
                   <SelectItem value="institutional" className="text-crm-text text-xs">Institutional</SelectItem>
+                  <SelectItem value="consultant" className="text-crm-text text-xs">Consultant</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <Label className="text-[11px] text-crm-text-dim">Lead Name</Label>
+              <Label className="text-[11px] text-crm-text-dim">Lead / Contact Name</Label>
               <Input value={leadName} onChange={e => setLeadName(e.target.value)}
                 className="bg-crm-surface border-crm-border text-crm-text text-xs h-8" />
             </div>
             <div className="space-y-1">
-              <Label className="text-[11px] text-crm-text-dim">Lead Role</Label>
+              <Label className="text-[11px] text-crm-text-dim">Lead Role / Title</Label>
               <Input value={leadRole} onChange={e => setLeadRole(e.target.value)}
                 className="bg-crm-surface border-crm-border text-crm-text text-xs h-8" />
             </div>
           </div>
+          <div className="space-y-2">
+            <Label className="text-[11px] text-crm-text-dim">Lead / Contact Photo</Label>
+            {leadImageUrl && <img src={leadImageUrl} alt="" className="h-16 w-16 object-cover rounded-full border border-crm-border" />}
+            <input ref={leadImageRef} type="file" accept="image/*" className="hidden" onChange={e => e.target.files?.[0] && handleLeadUpload(e.target.files[0])} />
+            <Button type="button" variant="outline" size="sm" onClick={() => leadImageRef.current?.click()} disabled={uploadingLead}
+              className="border-crm-border text-crm-text-muted text-xs gap-1"><Image size={12} /> {uploadingLead ? "Uploading…" : "Upload Lead Photo"}</Button>
+          </div>
           <div className="space-y-1">
             <Label className="text-[11px] text-crm-text-dim">Website</Label>
             <Input value={website} onChange={e => setWebsite(e.target.value)}
-              className="bg-crm-surface border-crm-border text-crm-text text-xs h-8" />
+              className="bg-crm-surface border-crm-border text-crm-text text-xs h-8" placeholder="https://..." />
           </div>
           <div className="space-y-1">
-            <Label className="text-[11px] text-crm-text-dim">Description</Label>
+            <Label className="text-[11px] text-crm-text-dim">Short Description</Label>
             <Textarea value={description} onChange={e => setDescription(e.target.value)}
-              className="bg-crm-surface border-crm-border text-crm-text text-xs resize-none" rows={3} />
+              className="bg-crm-surface border-crm-border text-crm-text text-xs resize-none" rows={2} />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-[11px] text-crm-text-dim">Full Description (separate paragraphs with a blank line)</Label>
+            <Textarea value={longDescription} onChange={e => setLongDescription(e.target.value)}
+              className="bg-crm-surface border-crm-border text-crm-text text-xs resize-none" rows={6}
+              placeholder={"Paragraph one...\n\nParagraph two...\n\nParagraph three..."} />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-[11px] text-crm-text-dim">Twitter / X URL</Label>
+            <Input value={twitterUrl} onChange={e => setTwitterUrl(e.target.value)}
+              className="bg-crm-surface border-crm-border text-crm-text text-xs h-8" placeholder="https://x.com/..." />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-[11px] text-crm-text-dim">LinkedIn URL</Label>
+            <Input value={linkedinUrl} onChange={e => setLinkedinUrl(e.target.value)}
+              className="bg-crm-surface border-crm-border text-crm-text text-xs h-8" placeholder="https://linkedin.com/in/..." />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-[11px] text-crm-text-dim">Facebook URL</Label>
+            <Input value={facebookUrl} onChange={e => setFacebookUrl(e.target.value)}
+              className="bg-crm-surface border-crm-border text-crm-text text-xs h-8" placeholder="https://facebook.com/..." />
           </div>
           <div className="flex items-center justify-between">
             <Label className="text-[11px] text-crm-text-dim">Published</Label>
@@ -279,18 +362,43 @@ export default function SponsorsManagerModule() {
 
   const deleteSponsor = useMutation({
     mutationFn: async (id: string) => { await (supabase as any).from("sponsors").delete().eq("id", id); },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["sponsors-manager"] }); setConfirmDelete(null); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["sponsors-manager"] });
+      qc.invalidateQueries({ queryKey: ["sponsors-public"] });
+      setConfirmDelete(null);
+    },
   });
 
   const deletePartner = useMutation({
     mutationFn: async (id: string) => { await (supabase as any).from("partners").delete().eq("id", id); },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["partners-manager"] }); setConfirmDelete(null); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["partners-manager"] });
+      qc.invalidateQueries({ queryKey: ["partners-public"] });
+      setConfirmDelete(null);
+    },
   });
 
-  const togglePublish = async (table: string, id: string, published: boolean) => {
-    await (supabase as any).from(table).update({ is_published: published }).eq("id", id);
-    qc.invalidateQueries({ queryKey: [table === "sponsors" ? "sponsors-manager" : "partners-manager"] });
-  };
+  const toggleSponsorPublish = useMutation({
+    mutationFn: async ({ id, published }: { id: string; published: boolean }) => {
+      const { error } = await (supabase as any).from("sponsors").update({ is_published: published }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["sponsors-manager"] });
+      qc.invalidateQueries({ queryKey: ["sponsors-public"] });
+    },
+  });
+
+  const togglePartnerPublish = useMutation({
+    mutationFn: async ({ id, published }: { id: string; published: boolean }) => {
+      const { error } = await (supabase as any).from("partners").update({ is_published: published }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["partners-manager"] });
+      qc.invalidateQueries({ queryKey: ["partners-public"] });
+    },
+  });
 
   const loading = tab === "sponsors" ? loadingS : loadingP;
   const items = tab === "sponsors" ? sponsors : partners;
@@ -337,7 +445,7 @@ export default function SponsorsManagerModule() {
               </div>
               {isAdmin && (
                 <div className="flex gap-1">
-                  <button onClick={() => togglePublish("sponsors", s.id, !s.is_published)} className="w-7 h-7 rounded flex items-center justify-center bg-crm-surface border border-crm-border text-crm-text-dim hover:text-crm-text-secondary transition-colors">
+                  <button onClick={() => toggleSponsorPublish.mutate({ id: s.id, published: !s.is_published })} className="w-7 h-7 rounded flex items-center justify-center bg-crm-surface border border-crm-border text-crm-text-dim hover:text-crm-text-secondary transition-colors">
                     {s.is_published ? <EyeOff size={12} /> : <Eye size={12} />}
                   </button>
                   <button onClick={() => setEditSponsor(s)} className="w-7 h-7 rounded flex items-center justify-center bg-crm-surface border border-crm-border text-crm-text-dim hover:text-crm-text-secondary transition-colors"><Pencil size={12} /></button>
@@ -372,7 +480,7 @@ export default function SponsorsManagerModule() {
               </div>
               {isAdmin && (
                 <div className="flex gap-1">
-                  <button onClick={() => togglePublish("partners", p.id, !p.is_published)} className="w-7 h-7 rounded flex items-center justify-center bg-crm-surface border border-crm-border text-crm-text-dim hover:text-crm-text-secondary transition-colors">
+                  <button onClick={() => togglePartnerPublish.mutate({ id: p.id, published: !p.is_published })} className="w-7 h-7 rounded flex items-center justify-center bg-crm-surface border border-crm-border text-crm-text-dim hover:text-crm-text-secondary transition-colors">
                     {p.is_published ? <EyeOff size={12} /> : <Eye size={12} />}
                   </button>
                   <button onClick={() => setEditPartner(p)} className="w-7 h-7 rounded flex items-center justify-center bg-crm-surface border border-crm-border text-crm-text-dim hover:text-crm-text-secondary transition-colors"><Pencil size={12} /></button>

@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -186,6 +187,7 @@ function EditUserDialog({
   onSaved: () => void;
 }) {
   const { toast } = useToast();
+  const qc = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
   const [fullName,   setFullName]   = useState(target.full_name);
   const [country,    setCountry]    = useState(target.country);
@@ -299,6 +301,8 @@ function EditUserDialog({
         if (emailErr) throw emailErr;
       }
 
+      // Invalidate public-facing queries so changes reflect immediately on website
+      qc.invalidateQueries({ queryKey: ["team-members"] });
       toast({ title: "User updated" });
       onSaved();
     } catch (err: any) {

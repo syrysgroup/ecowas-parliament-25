@@ -12,6 +12,7 @@ interface TeamMember {
   title: string | null;
   organisation: string | null;
   avatar_url: string | null;
+  bio: string | null;
 }
 
 const Team = () => {
@@ -22,7 +23,7 @@ const Team = () => {
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("profiles")
-        .select("id, full_name, title, organisation, avatar_url")
+        .select("id, full_name, title, organisation, avatar_url, bio")
         .eq("show_on_website", true)
         .order("full_name");
       if (error) throw error;
@@ -76,7 +77,8 @@ const Team = () => {
                     <div className="p-5">
                       <h3 className="text-lg font-black text-card-foreground">{member.full_name}</h3>
                       {member.title && <p className="text-sm text-primary">{member.title}</p>}
-                      {member.organisation && <p className="mt-2 text-sm text-muted-foreground">{member.organisation}</p>}
+                      {member.organisation && <p className="mt-1 text-sm text-muted-foreground">{member.organisation}</p>}
+                      {member.bio && <p className="mt-2 text-xs text-muted-foreground/70 leading-relaxed line-clamp-3">{member.bio}</p>}
                     </div>
                   </article>
                 </AnimatedSection>

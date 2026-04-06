@@ -42,16 +42,24 @@ function ArticleDialog({ open, onClose, article }: { open: boolean; onClose: () 
 
   const save = useMutation({
     mutationFn: async () => {
+      const wasNotPublished = !article?.published_at || article?.status !== "published";
+      const isNowPublished  = status === "published";
       const payload: any = {
         title, slug: slug || title.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, ""),
         excerpt: excerpt || null, content: content || null, cover_image_url: coverUrl || null,
         status, updated_at: new Date().toISOString(),
-        ...(status === "published" && !article?.published_at ? { published_at: new Date().toISOString() } : {}),
+        // Set published_at when transitioning to published for the first time,
+        // or when re-publishing after being a draft
+        ...(isNowPublished && wasNotPublished ? { published_at: new Date().toISOString() } : {}),
       };
       if (isEdit) await (supabase as any).from("news_articles").update(payload).eq("id", article.id);
       else await (supabase as any).from("news_articles").insert({ ...payload, author_id: user!.id });
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["news-editor"] }); onClose(); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["news-editor"] });
+      qc.invalidateQueries({ queryKey: ["homepage-latest-news"] });
+      onClose();
+    },
   });
 
   return (
@@ -126,7 +134,11 @@ export default function NewsEditorModule() {
 
   const deleteArticle = useMutation({
     mutationFn: async (id: string) => { await (supabase as any).from("news_articles").delete().eq("id", id); },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["news-editor"] }); setConfirmDeleteId(null); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["news-editor"] });
+      qc.invalidateQueries({ queryKey: ["homepage-latest-news"] });
+      setConfirmDeleteId(null);
+    },
   });
 
   const publish = useMutation({
