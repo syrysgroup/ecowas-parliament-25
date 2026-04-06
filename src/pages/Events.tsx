@@ -61,7 +61,7 @@ export default function Events() {
                           />
                         </div>
                       ) : (
-                        <div className="aspect-[4/5] bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                        <div className="aspect-video bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
                           <Calendar className="h-16 w-16 text-muted-foreground/30" />
                         </div>
                       )}

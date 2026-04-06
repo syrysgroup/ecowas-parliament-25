@@ -43,9 +43,9 @@ function StakeholderDialog({ open, onClose, stakeholder }: { open: boolean; onCl
     try {
       const ext = file.name.split(".").pop();
       const path = `stakeholders/${crypto.randomUUID()}.${ext}`;
-      const { error } = await supabase.storage.from("avatars").upload(path, file, { upsert: true });
+      const { error } = await supabase.storage.from("team-avatars").upload(path, file, { upsert: true });
       if (error) throw error;
-      const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(path);
+      const { data: { publicUrl } } = supabase.storage.from("team-avatars").getPublicUrl(path);
       setImageUrl(publicUrl);
     } catch (err: any) {
       toast({ title: "Upload failed", description: err.message, variant: "destructive" });

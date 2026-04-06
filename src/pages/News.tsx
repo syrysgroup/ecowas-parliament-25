@@ -48,7 +48,7 @@ const News = () => {
                 <AnimatedSection key={article.id} delay={i * 80}>
                   <Link to={`/news/${article.slug}`} className="block">
                     <div className="group rounded-xl border border-border bg-card overflow-hidden shadow-sm hover:shadow-lg transition-all hover:-translate-y-1">
-                      <div className="aspect-[4/5] overflow-hidden">
+                      <div className="aspect-video overflow-hidden">
                         <img
                           src={article.cover_image_url || newsImg1}
                           alt={article.title}
