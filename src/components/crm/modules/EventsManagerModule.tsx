@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { format, parseISO } from "date-fns";
 import {
-  Plus, Pencil, Trash2, Eye, EyeOff, Image, ExternalLink, FormInput, Ban,
+  Plus, Pencil, Trash2, Eye, EyeOff, Image, ExternalLink, FormInput, Ban, Search,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -13,6 +13,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
+import { usePermissions } from "@/hooks/usePermissions";
+import { toast } from "@/components/ui/sonner";
 
 interface EventRow {
   id: string;
@@ -44,6 +47,8 @@ const TAG_COLORS = [
 function getTagClasses(color: string | null) {
   return TAG_COLORS.find(c => c.id === color)?.cls ?? TAG_COLORS[0].cls;
 }
+
+const PAGE_SIZE = 20;
 
 function EventDialog({ open, onClose, event }: { open: boolean; onClose: () => void; event?: EventRow }) {
   const qc = useQueryClient();
@@ -96,7 +101,8 @@ function EventDialog({ open, onClose, event }: { open: boolean; onClose: () => v
         await (supabase as any).from("events").insert(payload);
       }
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["events-manager"] }); onClose(); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["events-manager"] }); toast("Event saved"); onClose(); },
+    onError: (err: any) => toast(err.message || "Failed to save"),
   });
 
   return (
@@ -108,7 +114,6 @@ function EventDialog({ open, onClose, event }: { open: boolean; onClose: () => v
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-1">
-          {/* Cover image */}
           <div className="space-y-2">
             <Label className="text-[11px] text-crm-text-dim">Cover / Design Image</Label>
             {coverUrl && (
@@ -167,7 +172,6 @@ function EventDialog({ open, onClose, event }: { open: boolean; onClose: () => v
             </div>
           </div>
 
-          {/* Tag */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label className="text-[11px] text-crm-text-dim">Tag Label</Label>
@@ -193,7 +197,6 @@ function EventDialog({ open, onClose, event }: { open: boolean; onClose: () => v
               className="bg-crm-surface border-crm-border text-crm-text text-xs resize-none" rows={3} />
           </div>
 
-          {/* Registration */}
           <div className="space-y-3 bg-crm-surface border border-crm-border rounded-lg p-3">
             <Label className="text-[11px] text-crm-text-dim font-semibold">Registration Type</Label>
             <div className="flex gap-2">
@@ -224,7 +227,6 @@ function EventDialog({ open, onClose, event }: { open: boolean; onClose: () => v
             )}
           </div>
 
-          {/* Published toggle */}
           <div className="flex items-center justify-between">
             <Label className="text-[11px] text-crm-text-dim">Published on website</Label>
             <Switch checked={isPublished} onCheckedChange={setIsPublished} />
@@ -244,10 +246,15 @@ function EventDialog({ open, onClose, event }: { open: boolean; onClose: () => v
 
 export default function EventsManagerModule() {
   const { isAdmin } = useAuthContext();
+  const { canCreate, canEdit, canDelete } = usePermissions();
   const qc = useQueryClient();
   const [addOpen, setAddOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<EventRow | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "published" | "draft">("all");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [page, setPage] = useState(0);
 
   const { data: events = [], isLoading } = useQuery<EventRow[]>({
     queryKey: ["events-manager"],
@@ -257,17 +264,57 @@ export default function EventsManagerModule() {
     },
   });
 
+  const filtered = events.filter(ev => {
+    if (statusFilter === "published" && !ev.is_published) return false;
+    if (statusFilter === "draft" && ev.is_published) return false;
+    if (search && !ev.title.toLowerCase().includes(search.toLowerCase())) return false;
+    return true;
+  });
+
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const paged = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+
   const deleteEvent = useMutation({
     mutationFn: async (id: string) => { await (supabase as any).from("events").delete().eq("id", id); },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["events-manager"] }); setConfirmDeleteId(null); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["events-manager"] }); setConfirmDeleteId(null); toast("Event deleted"); },
   });
 
   const togglePublish = useMutation({
     mutationFn: async ({ id, published }: { id: string; published: boolean }) => {
       await (supabase as any).from("events").update({ is_published: published }).eq("id", id);
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["events-manager"] }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["events-manager"] }); toast("Updated"); },
   });
+
+  const bulkDelete = useMutation({
+    mutationFn: async () => {
+      await Promise.all([...selectedIds].map(id => (supabase as any).from("events").delete().eq("id", id)));
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["events-manager"] });
+      setSelectedIds(new Set());
+      toast("Deleted selected events");
+    },
+  });
+
+  const bulkPublish = useMutation({
+    mutationFn: async (publish: boolean) => {
+      await Promise.all([...selectedIds].map(id => (supabase as any).from("events").update({ is_published: publish }).eq("id", id)));
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["events-manager"] });
+      setSelectedIds(new Set());
+      toast("Updated selected events");
+    },
+  });
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next; });
+  };
+  const toggleAll = () => {
+    if (selectedIds.size === paged.length) setSelectedIds(new Set());
+    else setSelectedIds(new Set(paged.map(e => e.id)));
+  };
 
   return (
     <div className="space-y-5">
@@ -276,7 +323,7 @@ export default function EventsManagerModule() {
           <h2 className="text-lg font-bold text-crm-text">Events Manager</h2>
           <p className="text-[12px] text-crm-text-muted mt-0.5">Manage public-facing events with cover images and registration</p>
         </div>
-        {isAdmin && (
+        {canCreate("events") && (
           <Button size="sm" onClick={() => setAddOpen(true)}
             className="bg-emerald-700 hover:bg-emerald-600 text-white text-xs gap-1.5">
             <Plus size={13} /> New Event
@@ -284,15 +331,35 @@ export default function EventsManagerModule() {
         )}
       </div>
 
-      {/* Stats */}
-      <div className="flex gap-3">
-        <div className="text-[10px] font-mono px-2.5 py-1 rounded-lg border bg-emerald-950 text-emerald-400 border-emerald-800">
-          Published: {events.filter(e => e.is_published).length}
+      {/* Search & Filter */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <div className="relative flex-1 min-w-[200px]">
+          <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-crm-text-dim" />
+          <Input value={search} onChange={e => { setSearch(e.target.value); setPage(0); }}
+            className="bg-crm-surface border-crm-border text-crm-text text-xs h-8 pl-8" placeholder="Search events..." />
         </div>
-        <div className="text-[10px] font-mono px-2.5 py-1 rounded-lg border bg-crm-surface text-crm-text-muted border-crm-border">
-          Drafts: {events.filter(e => !e.is_published).length}
-        </div>
+        {["all", "published", "draft"].map(f => (
+          <button key={f} onClick={() => { setStatusFilter(f as any); setPage(0); }}
+            className={`text-[10px] font-mono px-2.5 py-1 rounded border transition-colors ${
+              statusFilter === f ? "bg-emerald-950 text-emerald-400 border-emerald-800" : "bg-crm-surface text-crm-text-muted border-crm-border"
+            }`}>{f.charAt(0).toUpperCase() + f.slice(1)} ({f === "all" ? events.length : events.filter(e => f === "published" ? e.is_published : !e.is_published).length})</button>
+        ))}
       </div>
+
+      {/* Bulk actions */}
+      {selectedIds.size > 0 && (
+        <div className="flex items-center gap-2 bg-crm-surface border border-crm-border rounded-lg px-3 py-2">
+          <span className="text-[11px] text-crm-text-muted">{selectedIds.size} selected</span>
+          {canDelete("events") && (
+            <Button size="sm" variant="outline" onClick={() => bulkDelete.mutate()}
+              className="border-red-800 text-red-400 text-[10px] h-6 px-2">Delete</Button>
+          )}
+          <Button size="sm" variant="outline" onClick={() => bulkPublish.mutate(true)}
+            className="border-emerald-800 text-emerald-400 text-[10px] h-6 px-2">Publish</Button>
+          <Button size="sm" variant="outline" onClick={() => bulkPublish.mutate(false)}
+            className="border-crm-border text-crm-text-muted text-[10px] h-6 px-2">Unpublish</Button>
+        </div>
+      )}
 
       {isLoading && (
         <div className="flex items-center justify-center h-40">
@@ -301,9 +368,18 @@ export default function EventsManagerModule() {
       )}
 
       <div className="space-y-2">
-        {events.map(ev => (
+        {paged.length > 0 && (
+          <div className="flex items-center gap-2 px-2">
+            <Checkbox checked={selectedIds.size === paged.length && paged.length > 0} onCheckedChange={toggleAll} />
+            <span className="text-[10px] text-crm-text-dim">Select all</span>
+          </div>
+        )}
+        {paged.map(ev => (
           <div key={ev.id} className="bg-crm-card border border-crm-border rounded-xl overflow-hidden hover:border-crm-border-hover transition-colors">
-            <div className="flex">
+            <div className="flex items-center">
+              <div className="px-3">
+                <Checkbox checked={selectedIds.has(ev.id)} onCheckedChange={() => toggleSelect(ev.id)} />
+              </div>
               {ev.cover_image_url && (
                 <img src={ev.cover_image_url} alt="" className="w-24 h-24 object-cover flex-shrink-0" width={96} height={96} loading="lazy" decoding="async" />
               )}
@@ -327,18 +403,22 @@ export default function EventsManagerModule() {
                   )}
                 </div>
               </div>
-              {isAdmin && (
-                <div className="flex items-center gap-1 p-3 flex-shrink-0">
+              <div className="flex items-center gap-1 p-3 flex-shrink-0">
+                {canEdit("events") && (
                   <button onClick={() => togglePublish.mutate({ id: ev.id, published: !ev.is_published })}
                     className="w-7 h-7 rounded flex items-center justify-center bg-crm-surface border border-crm-border text-crm-text-dim hover:text-crm-text-secondary transition-colors"
                     title={ev.is_published ? "Unpublish" : "Publish"}>
                     {ev.is_published ? <EyeOff size={12} /> : <Eye size={12} />}
                   </button>
+                )}
+                {canEdit("events") && (
                   <button onClick={() => setEditTarget(ev)}
                     className="w-7 h-7 rounded flex items-center justify-center bg-crm-surface border border-crm-border text-crm-text-dim hover:text-crm-text-secondary transition-colors">
                     <Pencil size={12} />
                   </button>
-                  {confirmDeleteId === ev.id ? (
+                )}
+                {canDelete("events") && (
+                  confirmDeleteId === ev.id ? (
                     <div className="flex items-center gap-1">
                       <button onClick={() => deleteEvent.mutate(ev.id)}
                         className="text-[10px] font-semibold text-red-400 bg-red-950 border border-red-800 rounded px-2 py-1">Delete</button>
@@ -350,15 +430,26 @@ export default function EventsManagerModule() {
                       className="w-7 h-7 rounded flex items-center justify-center bg-crm-surface border border-crm-border text-crm-text-dim hover:text-red-400 transition-colors">
                       <Trash2 size={12} />
                     </button>
-                  )}
-                </div>
-              )}
+                  )
+                )}
+              </div>
             </div>
           </div>
         ))}
       </div>
 
-      <EventDialog open={addOpen} onClose={() => setAddOpen(false)} />
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2 pt-2">
+          <button disabled={page === 0} onClick={() => setPage(p => p - 1)}
+            className="text-[10px] text-crm-text-muted px-2 py-1 rounded border border-crm-border disabled:opacity-30">Prev</button>
+          <span className="text-[10px] text-crm-text-dim">Page {page + 1} of {totalPages}</span>
+          <button disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}
+            className="text-[10px] text-crm-text-muted px-2 py-1 rounded border border-crm-border disabled:opacity-30">Next</button>
+        </div>
+      )}
+
+      {addOpen && <EventDialog open={addOpen} onClose={() => setAddOpen(false)} />}
       {editTarget && <EventDialog open={!!editTarget} onClose={() => setEditTarget(null)} event={editTarget} />}
     </div>
   );
