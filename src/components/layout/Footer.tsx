@@ -1,16 +1,14 @@
 import { Link } from "react-router-dom";
-import { useTranslation, Locale } from "@/lib/i18n";
+import { useTranslation } from "@/lib/i18n";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import ecowasLogo from "@/assets/ecowas-parliament-logo.png";
 import anniversary25Logo from "@/assets/parliament-25-logo.png";
 import SocialMediaBar from "@/components/shared/SocialMediaBar";
 
-const localeLabels: Record<Locale, string> = { en: "EN", fr: "FR", pt: "PT" };
-const localeOrder: Locale[] = ["en", "fr", "pt"];
 
 const Footer = () => {
-  const { t, locale, setLocale } = useTranslation();
+  const { t } = useTranslation();
   const { user } = useAuthContext();
   const { get } = useSiteSettings();
 
