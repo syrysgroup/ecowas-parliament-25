@@ -27,6 +27,7 @@ import Volunteer from "./pages/Volunteer";
 import PartnerPage from "./pages/partners/PartnerPage";
 import SponsorPage from "./pages/sponsors/SponsorPage";
 import EventDetail from "./pages/events/EventDetail";
+import MediaPortal from "./pages/MediaPortal";
 
 // Programme pages
 import Youth from "./pages/programmes/Youth";
@@ -105,6 +106,14 @@ const App = () => (
 
               {/* Auth */}
               <Route path="/auth" element={<Auth />} />
+              <Route path="/set-password" element={<SetPassword />} />
+
+              {/* Accredited Media Portal */}
+              <Route path="/media-portal" element={
+                <ProtectedRoute allowedRoles={["super_admin", "admin", "media"]}>
+                  <MediaPortal />
+                </ProtectedRoute>
+              }/>
               <Route path="/set-password" element={<SetPassword />} />
 
               {/* Protected admin area */}

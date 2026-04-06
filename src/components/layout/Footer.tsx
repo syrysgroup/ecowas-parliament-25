@@ -74,20 +74,6 @@ const Footer = () => {
             </div>
             <SocialMediaBar variant="full" showParliamentLink={true} />
 
-            {/* Language switcher */}
-            <div className="flex gap-1 mt-4" aria-label={t("nav.languageLabel")}>
-              {localeOrder.map((l) => (
-                <button
-                  key={l}
-                  onClick={() => setLocale(l)}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                    l === locale ? "bg-primary text-primary-foreground" : "bg-muted text-foreground/70 hover:bg-muted/80"
-                  }`}
-                >
-                  {localeLabels[l]}
-                </button>
-              ))}
-            </div>
           </div>
 
           {footerLinks.map(col => (
