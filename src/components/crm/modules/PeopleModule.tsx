@@ -24,6 +24,7 @@ interface UserWithRoles {
   country: string;
   created_at: string;
   roles: AppRole[];
+  show_on_website: boolean;
 }
 
 interface Invitation {
@@ -575,6 +576,7 @@ function EditUserDialog({
 export default function PeopleModule() {
   const { user, isAdmin, isSuperAdmin, refreshRoles } = useAuthContext();
   const { toast } = useToast();
+  const qc = useQueryClient();
 
   const [users,       setUsers]       = useState<UserWithRoles[]>([]);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
@@ -601,7 +603,7 @@ export default function PeopleModule() {
       const [profilesRes, rolesRes, invRes] = await Promise.all([
         (supabase as any)
           .from("profiles")
-          .select("id, email, full_name, country, created_at")
+          .select("id, email, full_name, country, created_at, show_on_website")
           .order("created_at", { ascending: false }),
         (supabase as any).from("user_roles").select("user_id, role"),
         (supabase as any)
@@ -618,12 +620,13 @@ export default function PeopleModule() {
       });
 
       let userList: UserWithRoles[] = (profilesRes.data ?? []).map((p: any) => ({
-        id:         p.id,
-        email:      p.email ?? "",
-        full_name:  p.full_name ?? "",
-        country:    p.country ?? "",
-        created_at: p.created_at,
-        roles:      rolesMap.get(p.id) ?? [],
+        id:              p.id,
+        email:           p.email ?? "",
+        full_name:       p.full_name ?? "",
+        country:         p.country ?? "",
+        created_at:      p.created_at,
+        roles:           rolesMap.get(p.id) ?? [],
+        show_on_website: p.show_on_website ?? false,
       }));
 
       // Non-super_admins cannot see super_admin users

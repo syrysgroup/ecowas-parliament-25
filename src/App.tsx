@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { I18nProvider } from "@/lib/i18n";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { GlobalSettingsProvider } from "@/contexts/GlobalSettingsContext";
 import ProtectedRoute from "@/components/admin/ProtectedRoute";
 
 // Existing pages
@@ -54,6 +55,13 @@ import SponsorDashboard from "./pages/SponsorDashboard";
 // CRM
 import CRMDashboard from "./pages/CRMDashboard";
 
+// New feature pages
+import DashboardCRM from "./pages/DashboardCRM";
+import EmailPage from "./pages/apps/Email";
+import CustomerListPage from "./pages/apps/CustomerList";
+import AdminSettings from "./pages/admin/Settings";
+import Forbidden from "./pages/Forbidden";
+
 const queryClient = new QueryClient();
 
 function ScrollToTop() {
@@ -67,6 +75,7 @@ const App = () => (
   <ThemeProvider attribute="class" defaultTheme="system" enableSystem storageKey="ecowas-theme">
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
+      <GlobalSettingsProvider>
       <I18nProvider>
         <TooltipProvider>
           <Toaster />
@@ -143,12 +152,54 @@ const App = () => (
                 </ProtectedRoute>
               }/>
 
+              {/* CRM Analytics Dashboard */}
+              <Route path="/dashboards/crm" element={
+                <ProtectedRoute allowedRoles={["super_admin", "admin", "project_director", "programme_lead"]}>
+                  <DashboardCRM />
+                </ProtectedRoute>
+              }/>
+
+              {/* Email App */}
+              <Route path="/apps/email" element={
+                <ProtectedRoute allowedRoles={["super_admin", "admin", "communications_officer", "marketing_manager", "project_director"]}>
+                  <EmailPage />
+                </ProtectedRoute>
+              }/>
+              <Route path="/apps/email/:folder" element={
+                <ProtectedRoute allowedRoles={["super_admin", "admin", "communications_officer", "marketing_manager", "project_director"]}>
+                  <EmailPage />
+                </ProtectedRoute>
+              }/>
+              <Route path="/apps/email/label/:label" element={
+                <ProtectedRoute allowedRoles={["super_admin", "admin", "communications_officer", "marketing_manager", "project_director"]}>
+                  <EmailPage />
+                </ProtectedRoute>
+              }/>
+
+              {/* Customer Management */}
+              <Route path="/apps/ecommerce/customers" element={
+                <ProtectedRoute allowedRoles={["super_admin", "admin", "sponsor_manager", "project_director"]}>
+                  <CustomerListPage />
+                </ProtectedRoute>
+              }/>
+
+              {/* Super Admin Settings */}
+              <Route path="/admin/settings" element={
+                <ProtectedRoute allowedRoles={["super_admin"]}>
+                  <AdminSettings />
+                </ProtectedRoute>
+              }/>
+
+              {/* 403 */}
+              <Route path="/403" element={<Forbidden />} />
+
               {/* 404 */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
         </TooltipProvider>
       </I18nProvider>
+      </GlobalSettingsProvider>
     </AuthProvider>
   </QueryClientProvider>
   </ThemeProvider>
