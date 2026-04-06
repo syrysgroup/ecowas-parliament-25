@@ -69,7 +69,7 @@ const SmartChallenge = () => {
         </div>
 
         <div className="relative z-10 container mx-auto px-6 py-20">
-          <Button asChild variant="secondary" className="bg-primary-foreground/15 text-primary-foreground hover:bg-primary-foreground/25 mb-8">
+          <Button asChild variant="secondary" className="bg-white/15 text-white hover:bg-white/25 mb-8">
             <Link to="/programmes/youth"><ArrowLeft className="mr-2 h-4 w-4" />Back to Youth</Link>
           </Button>
 
