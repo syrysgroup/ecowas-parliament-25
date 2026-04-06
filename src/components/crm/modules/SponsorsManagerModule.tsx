@@ -345,6 +345,7 @@ function PartnerDialog({ open, onClose, partner }: { open: boolean; onClose: () 
 
 export default function SponsorsManagerModule() {
   const { isAdmin } = useAuthContext();
+  const { canCreate, canEdit, canDelete } = usePermissions();
   const qc = useQueryClient();
   const [tab, setTab] = useState("sponsors");
   const [addSponsorOpen, setAddSponsorOpen] = useState(false);
@@ -352,6 +353,8 @@ export default function SponsorsManagerModule() {
   const [editSponsor, setEditSponsor] = useState<SponsorRow | null>(null);
   const [editPartner, setEditPartner] = useState<PartnerRow | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const { data: sponsors = [], isLoading: loadingS } = useQuery<SponsorRow[]>({
     queryKey: ["sponsors-manager"],
@@ -363,12 +366,16 @@ export default function SponsorsManagerModule() {
     queryFn: async () => { const { data } = await (supabase as any).from("partners").select("*").order("sort_order"); return data ?? []; },
   });
 
+  const filteredSponsors = sponsors.filter(s => !search || s.name.toLowerCase().includes(search.toLowerCase()));
+  const filteredPartners = partners.filter(p => !search || p.name.toLowerCase().includes(search.toLowerCase()));
+
   const deleteSponsor = useMutation({
     mutationFn: async (id: string) => { await (supabase as any).from("sponsors").delete().eq("id", id); },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["sponsors-manager"] });
       qc.invalidateQueries({ queryKey: ["sponsors-public"] });
       setConfirmDelete(null);
+      toast("Sponsor deleted");
     },
   });
 
@@ -378,33 +385,39 @@ export default function SponsorsManagerModule() {
       qc.invalidateQueries({ queryKey: ["partners-manager"] });
       qc.invalidateQueries({ queryKey: ["partners-public"] });
       setConfirmDelete(null);
+      toast("Partner deleted");
     },
   });
 
   const toggleSponsorPublish = useMutation({
     mutationFn: async ({ id, published }: { id: string; published: boolean }) => {
-      const { error } = await (supabase as any).from("sponsors").update({ is_published: published }).eq("id", id);
-      if (error) throw error;
+      await (supabase as any).from("sponsors").update({ is_published: published }).eq("id", id);
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["sponsors-manager"] });
-      qc.invalidateQueries({ queryKey: ["sponsors-public"] });
-    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["sponsors-manager"] }); qc.invalidateQueries({ queryKey: ["sponsors-public"] }); },
   });
 
   const togglePartnerPublish = useMutation({
     mutationFn: async ({ id, published }: { id: string; published: boolean }) => {
-      const { error } = await (supabase as any).from("partners").update({ is_published: published }).eq("id", id);
-      if (error) throw error;
+      await (supabase as any).from("partners").update({ is_published: published }).eq("id", id);
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["partners-manager"] }); qc.invalidateQueries({ queryKey: ["partners-public"] }); },
+  });
+
+  const bulkDelete = useMutation({
+    mutationFn: async () => {
+      const table = tab === "sponsors" ? "sponsors" : "partners";
+      await Promise.all([...selectedIds].map(id => (supabase as any).from(table).delete().eq("id", id)));
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["partners-manager"] });
-      qc.invalidateQueries({ queryKey: ["partners-public"] });
+      qc.invalidateQueries({ queryKey: [tab === "sponsors" ? "sponsors-manager" : "partners-manager"] });
+      setSelectedIds(new Set());
+      toast("Deleted selected items");
     },
   });
 
-  const loading = tab === "sponsors" ? loadingS : loadingP;
-  const items = tab === "sponsors" ? sponsors : partners;
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next; });
+  };
 
   return (
     <div className="space-y-5">
@@ -413,13 +426,31 @@ export default function SponsorsManagerModule() {
           <h2 className="text-lg font-bold text-crm-text">Sponsors & Partners</h2>
           <p className="text-[12px] text-crm-text-muted mt-0.5">Manage sponsors and partners displayed on the website</p>
         </div>
-        {isAdmin && (
+        {canCreate("sponsors") && (
           <Button size="sm" onClick={() => tab === "sponsors" ? setAddSponsorOpen(true) : setAddPartnerOpen(true)}
             className="bg-emerald-700 hover:bg-emerald-600 text-white text-xs gap-1.5">
             <Plus size={13} /> Add {tab === "sponsors" ? "Sponsor" : "Partner"}
           </Button>
         )}
       </div>
+
+      {/* Search */}
+      <div className="relative">
+        <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-crm-text-dim" />
+        <Input value={search} onChange={e => setSearch(e.target.value)}
+          className="bg-crm-surface border-crm-border text-crm-text text-xs h-8 pl-8" placeholder="Search sponsors & partners..." />
+      </div>
+
+      {/* Bulk actions */}
+      {selectedIds.size > 0 && (
+        <div className="flex items-center gap-2 bg-crm-surface border border-crm-border rounded-lg px-3 py-2">
+          <span className="text-[11px] text-crm-text-muted">{selectedIds.size} selected</span>
+          {canDelete("sponsors") && (
+            <Button size="sm" variant="outline" onClick={() => bulkDelete.mutate()}
+              className="border-red-800 text-red-400 text-[10px] h-6 px-2">Delete</Button>
+          )}
+        </div>
+      )}
 
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="bg-crm-surface border border-crm-border">
