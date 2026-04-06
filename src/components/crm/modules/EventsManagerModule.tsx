@@ -235,6 +235,31 @@ function EventDialog({ open, onClose, event }: { open: boolean; onClose: () => v
             )}
           </div>
 
+          {/* External Links / Media Coverage */}
+          <div className="space-y-2 bg-crm-surface border border-crm-border rounded-lg p-3">
+            <Label className="text-[11px] text-crm-text-dim font-semibold">External Links / Media Coverage</Label>
+            {externalLinks.map((link, i) => (
+              <div key={i} className="flex gap-2 items-center">
+                <Input value={link.title} onChange={e => {
+                  const next = [...externalLinks];
+                  next[i] = { ...next[i], title: e.target.value };
+                  setExternalLinks(next);
+                }} placeholder="Title" className="bg-crm-card border-crm-border text-crm-text text-xs h-7 flex-1" />
+                <Input value={link.url} onChange={e => {
+                  const next = [...externalLinks];
+                  next[i] = { ...next[i], url: e.target.value };
+                  setExternalLinks(next);
+                }} placeholder="https://..." className="bg-crm-card border-crm-border text-crm-text text-xs h-7 flex-1" />
+                <Button type="button" variant="outline" size="sm" className="border-crm-border text-red-400 text-[10px] h-7 px-2"
+                  onClick={() => setExternalLinks(externalLinks.filter((_, j) => j !== i))}>✕</Button>
+              </div>
+            ))}
+            <Button type="button" variant="outline" size="sm" onClick={() => setExternalLinks([...externalLinks, { title: "", url: "" }])}
+              className="border-crm-border text-crm-text-muted text-[10px] h-6 px-2 gap-1">
+              <Plus size={10} /> Add Link
+            </Button>
+          </div>
+
           <div className="flex items-center justify-between">
             <Label className="text-[11px] text-crm-text-dim">Published on website</Label>
             <Switch checked={isPublished} onCheckedChange={setIsPublished} />
