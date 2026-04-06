@@ -301,7 +301,7 @@ const SmartChallenge = () => {
       </section>
 
       {/* Live Show Section */}
-      <section className="py-20 bg-gradient-to-br from-foreground via-foreground/95 to-foreground/90 text-primary-foreground">
+      <section className="py-20 bg-gradient-to-br from-[hsl(0,0%,8%)] via-[hsl(0,0%,10%)] to-[hsl(0,0%,12%)] text-white">
         <div className="container mx-auto px-6">
           <AnimatedSection>
             <div className="text-center mb-16">
