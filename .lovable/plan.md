@@ -1,93 +1,104 @@
 
 
-## Plan: Redesign News/Events Pages, Media Kit Access, and Settings Relocation
+# Comprehensive Plan: Image Sizing, Parliament Layout, CRM Completeness
 
-This is a multi-part update covering image standards, page redesigns, media accreditation, and CRM settings cleanup.
-
----
-
-### 1. Standardize Instagram Post Aspect Ratio (1:1) for All Images
-
-- Change all image aspect ratios from `aspect-[4/5]` to `aspect-square` (1:1, 1080x1080) across:
-  - `News.tsx` listing cards
-  - `Events.tsx` listing cards
-  - `EventDetail.tsx` "Other Events" cards
-- Ensure `object-cover object-center` is used everywhere for consistent cropping.
+This plan addresses all five requests in your message.
 
 ---
 
-### 2. Add External Links (Media Coverage) to Events
+## 1. Change all placeholder/cover images to 4:5 (Instagram) aspect ratio
 
-**Database migration**: Add `external_links jsonb DEFAULT '[]'` column to the `events` table (news_articles already has this column).
+**What changes**: Every place that displays a news article image, event cover image, or parliament placeholder image will use `aspect-[4/5]` instead of `aspect-square` or other ratios.
 
-**EventDetail.tsx**: Render a "Media Coverage" section (similar to NewsDetail's existing Related Media Coverage block) showing linked articles from external media.
-
-**CRM EventsManagerModule**: Add UI to manage external links when editing events.
-
----
-
-### 3. Redesign Individual News Page (`NewsDetail.tsx`)
-
-Current layout is a narrow single-column. Redesign to a full-width two-column layout:
-
-- **Main content area (left, ~2/3 width)**: Full-width cover image (1:1 aspect), title, date, excerpt as lead paragraph, article body content, external media links section.
-- **Sidebar (right, ~1/3 width, sticky)**: Share buttons (Twitter, Facebook, WhatsApp, Copy Link), newsletter signup CTA, "More News" list showing 3-4 recent articles with thumbnails linking to them.
-- **Below main content**: "More News" grid section (3 cards) showing other published articles, excluding the current one.
+**Files to modify**:
+- `src/components/home/LatestNews.tsx` — change `aspect-square` to `aspect-[4/5]`
+- `src/pages/News.tsx` — change `aspect-square` to `aspect-[4/5]`
+- `src/pages/Events.tsx` — change `aspect-square` to `aspect-[4/5]`
+- `src/components/home/EventsSection.tsx` — no image aspect to change (list layout), skip
+- `src/pages/programmes/Parliament.tsx` — change placeholder images to use `aspect-[4/5]` containers for principal officers and delegate slots (both in the Principal Officers section and the Delegates tab)
+- `src/pages/events/EventDetail.tsx` — adjust cover image if using aspect ratio
+- `src/pages/news/NewsDetail.tsx` — adjust cover image if using aspect ratio
 
 ---
 
-### 4. Redesign Individual Event Page (`EventDetail.tsx`)
+## 2. Speaker elevated above other Principal Officers
 
-Enhance the existing two-column layout:
+**What changes**: In `src/pages/programmes/Parliament.tsx`, the Speaker card will be displayed prominently above the other 4 officers in both the Principal Officers section and the Delegates tab.
 
-- **Main area**: Instagram-ratio cover image (1:1), event description, media coverage/external links section.
-- **Sidebar**: When registration is available, show registration form/external link. When registration is NOT available (type "none" or past event), replace with: event details card (date, location, capacity info), "Add to Calendar" button, share buttons, and a "Contact Organizers" CTA linking to the contact page.
-- **Below main content**: "Other Events" section (already exists, keep with 1:1 images).
-- Add a default gradient/pattern placeholder when no cover image exists (instead of just a calendar icon).
-
----
-
-### 5. Media Kit: Public vs Accredited Media Portal
-
-**Public `/media-kit`** stays as-is with press releases, spokespeople, asset packs, event calendar.
-
-**Accredited Media Portal** (`/media-portal`):
-- New route accessible to users with a `media` role.
-- When media users log in, they are redirected to `/media-portal` instead of `/crm`.
-- The portal provides: early access to press releases, high-res photo galleries, exclusive briefing documents, interview scheduling, and press pass management.
-- Add `media` to the `app_role` enum via migration.
-- Update `ProtectedRoute` and auth redirect logic.
-
-**Database migration**: Add `'media'` value to `app_role` enum.
+**Layout**:
+- Speaker card rendered alone, full-width or centered, with a larger image (4:5 ratio) and distinct styling (gold/primary border, larger text)
+- Below: the 4 Deputy Speakers in a `grid-cols-4` row
+- This applies to both the standalone Principal Officers section (line ~160) and the Delegates tab (line ~213)
 
 ---
 
-### 6. Remove Language Switcher from Footer
+## 3. CRM fully functional — uploads, buckets, multilingual documents
 
-The language switcher in `Footer.tsx` will be removed. It's already accessible in the Navbar. This cleans up the footer.
+**Current gaps identified**:
 
-Wait -- re-reading the request: "site setting should be in the crm not in the footer." This means the user wants site settings management only in the CRM, not exposed in the footer. The Site Settings panel already exists in the CRM SettingsModule. The footer currently displays data from site_settings (like contact email) which is correct -- it just reads settings. No change needed here; the user likely means the language/config controls shouldn't be user-facing in the footer. I'll keep the footer as-is since it only reads settings.
+### Documents Module
+- Currently only records metadata (title, category, file_type) — **no actual file upload/download**
+- Needs: file upload to Supabase storage, download via public URL, language tagging
+
+### What to build:
+- **Create a `documents` storage bucket** (if not existing) via migration
+- **Add `file_url` and `language` columns** to the `documents` table
+- **Update DocumentsModule** to support actual file upload (to `documents` bucket), download (via public URL), and a language selector (EN/FR/PT) per document
+- **Allow multiple language versions** per document title (either separate rows per language or a `language` column filter)
+
+### Other CRM modules — functional check:
+- **News Editor**: functional (has image upload to `news-images` bucket, CRUD)
+- **Events Manager**: functional (has image upload to `event-images` bucket, CRUD)
+- **Media Library**: functional (uploads to `cms-media` bucket)
+- **Sponsors/Partners Manager**: functional (uploads to `sponsor-logos`/`partner-assets`)
+- **Finance Module**: queries `budget_items` table — may need migration if table doesn't exist
+- **Invoice Module**: queries `invoices`/`invoice_items` tables — may need migration if tables don't exist
+
+### Database migrations needed:
+1. Create `documents` storage bucket (public) if missing
+2. Alter `documents` table: add `file_url TEXT`, `language TEXT DEFAULT 'en'`
+3. Verify/create `budget_items` table for Finance module
+4. Verify/create `invoices` and `invoice_items` tables for Invoice module
 
 ---
 
-### 7. Summary of File Changes
+## 4. Super Admin — what's missing?
 
-| File | Change |
-|------|--------|
-| `src/pages/news/NewsDetail.tsx` | Full redesign: two-column layout with sidebar, more news section |
-| `src/pages/events/EventDetail.tsx` | Redesign sidebar for no-registration case, add external links, 1:1 images |
-| `src/pages/News.tsx` | Change image aspect to `aspect-square` |
-| `src/pages/Events.tsx` | Change image aspect to `aspect-square`, add default cover design |
-| `src/pages/MediaKit.tsx` | Minor: add link to accredited portal |
-| New: `src/pages/MediaPortal.tsx` | Accredited media dashboard |
-| `src/App.tsx` | Add `/media-portal` route with `media` role protection |
-| `src/components/layout/Footer.tsx` | Remove language switcher (settings managed in CRM only) |
-| DB migration | Add `external_links` to events table, add `media` to app_role enum |
+**Currently implemented** (6 tabs): Overview, Users, Invitations, Activity Log, Site Routes, Settings
 
-### Technical Notes
+**Missing for a fully functional super admin**:
+- **Bulk user delete/deactivate** — cannot remove users currently
+- **Storage bucket management** — no visibility into storage usage or bucket contents
+- **Database health/table overview** — no way to see table row counts
+- **Role permissions editor** — the `role_permissions` table exists but no UI to manage it from Super Admin (only from a separate module)
+- **Site settings management** — the Settings tab only shows system info, not editable site settings (those are in Site Content module)
+- **Export data** — no CSV/data export for users, activity logs
+- **Audit trail for role changes** — role add/remove doesn't log to `admin_activity_logs`
 
-- Instagram standard post is 1080x1080 (1:1). Using Tailwind `aspect-square` class.
-- The media portal will be a standalone page (not the CRM) with a clean layout for journalists.
-- External links on events will use the same `jsonb` format as news_articles: `[{title, url}]`.
-- "More News" / "More Events" queries will exclude the current item and limit to 3-6 results.
+### What to add:
+- Add activity logging when roles are changed (insert into `admin_activity_logs`)
+- Add a "Storage" tab showing bucket names and file counts
+- Add user delete capability (with confirmation)
+- Add CSV export button for users list
+
+---
+
+## 5. Translation awareness
+
+All new UI strings (document language labels, new button text) will use the existing `useTranslation` hook and add keys to `en.ts`, `fr.ts`, `pt.ts`.
+
+---
+
+## Technical Summary
+
+| Task | Files | Migration |
+|------|-------|-----------|
+| 4:5 image ratio | LatestNews, News, Events, Parliament, EventDetail, NewsDetail | None |
+| Speaker elevation | Parliament.tsx | None |
+| Documents upload | DocumentsModule.tsx | Add `file_url`, `language` columns; create bucket |
+| Finance/Invoice tables | — | Create tables if missing |
+| Super Admin enhancements | SuperAdminModule.tsx | None |
+| Translations | en.ts, fr.ts, pt.ts | None |
+
+**Estimated scope**: ~10 file changes, 2-3 database migrations.
 
