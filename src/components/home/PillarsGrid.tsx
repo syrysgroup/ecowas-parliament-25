@@ -23,16 +23,16 @@ interface PillarRow {
 const PillarsGrid = () => {
   const { t } = useTranslation();
 
-  const { data: pillars = [], isLoading } = useQuery<PillarRow[]>({
+  const { data: pillars = [], isLoading } = useQuery({
     queryKey: ["programme_pillars"],
-    queryFn: async () => {
+    queryFn: async (): Promise<PillarRow[]> => {
       const { data, error } = await supabase
         .from("programme_pillars" as any)
         .select("*")
         .eq("is_active", true)
         .order("display_order");
       if (error) throw error;
-      return data ?? [];
+      return (data as unknown as PillarRow[]) ?? [];
     },
     staleTime: 5 * 60 * 1000,
   });
