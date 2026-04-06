@@ -269,6 +269,7 @@ export type Database = {
           programme: string | null
           registration_type: string
           registration_url: string | null
+          related_event_ids: string[] | null
           tag: string | null
           tag_color: string | null
           title: string
@@ -288,6 +289,7 @@ export type Database = {
           programme?: string | null
           registration_type?: string
           registration_url?: string | null
+          related_event_ids?: string[] | null
           tag?: string | null
           tag_color?: string | null
           title: string
@@ -307,6 +309,7 @@ export type Database = {
           programme?: string | null
           registration_type?: string
           registration_url?: string | null
+          related_event_ids?: string[] | null
           tag?: string | null
           tag_color?: string | null
           title?: string
@@ -351,6 +354,7 @@ export type Database = {
           cover_image_url: string | null
           created_at: string
           excerpt: string | null
+          external_links: Json | null
           id: string
           published_at: string | null
           slug: string
@@ -364,6 +368,7 @@ export type Database = {
           cover_image_url?: string | null
           created_at?: string
           excerpt?: string | null
+          external_links?: Json | null
           id?: string
           published_at?: string | null
           slug: string
@@ -377,6 +382,7 @@ export type Database = {
           cover_image_url?: string | null
           created_at?: string
           excerpt?: string | null
+          external_links?: Json | null
           id?: string
           published_at?: string | null
           slug?: string
@@ -737,6 +743,36 @@ export type Database = {
           },
         ]
       }
+      role_permissions: {
+        Row: {
+          can_create: boolean
+          can_delete: boolean
+          can_edit: boolean
+          can_view: boolean
+          id: string
+          module: string
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Insert: {
+          can_create?: boolean
+          can_delete?: boolean
+          can_edit?: boolean
+          can_view?: boolean
+          id?: string
+          module: string
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Update: {
+          can_create?: boolean
+          can_delete?: boolean
+          can_edit?: boolean
+          can_view?: boolean
+          id?: string
+          module?: string
+          role?: Database["public"]["Enums"]["app_role"]
+        }
+        Relationships: []
+      }
       site_content: {
         Row: {
           content: Json
@@ -782,6 +818,30 @@ export type Database = {
             referencedColumns: ["profile_id"]
           },
         ]
+      }
+      site_settings: {
+        Row: {
+          id: string
+          key: string
+          updated_at: string
+          updated_by: string | null
+          value: Json
+        }
+        Insert: {
+          id?: string
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Update: {
+          id?: string
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Relationships: []
       }
       site_visitors: {
         Row: {
