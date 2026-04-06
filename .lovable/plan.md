@@ -1,101 +1,93 @@
 
 
-## CRM Full CRUD, Permissions & Public Page Enhancements
+## Plan: Redesign News/Events Pages, Media Kit Access, and Settings Relocation
 
-This is a large, multi-phase implementation. Here's the breakdown:
-
----
-
-### Database Migrations Required
-
-**1. `site_settings` table** -- new table for global site configuration
-- Columns: `id`, `key` (unique text), `value` (jsonb), `updated_at`, `updated_by`
-- RLS: public SELECT, admin/super_admin ALL
-
-**2. `news_articles` -- add `external_links` column**
-- `external_links jsonb DEFAULT '[]'::jsonb` -- array of `{title, url}` objects for related press/media links
-
-**3. `role_permissions` table** -- new table for granular permission system
-- Columns: `id`, `role` (app_role), `module` (text), `can_view` (bool), `can_create` (bool), `can_edit` (bool), `can_delete` (bool)
-- RLS: super_admin ALL, authenticated SELECT (to check own permissions)
-- Seed default permissions for all existing roles
-
-**4. `events` -- add `related_event_ids` column**
-- `related_event_ids uuid[] DEFAULT '{}'::uuid[]` -- for showing related events on detail page
+This is a multi-part update covering image standards, page redesigns, media accreditation, and CRM settings cleanup.
 
 ---
 
-### Phase 1: Permission System
+### 1. Standardize Instagram Post Aspect Ratio (1:1) for All Images
 
-**Files: 2 new, 3 modified**
-
-1. **Create `src/hooks/usePermissions.ts`** -- hook that queries `role_permissions` for the current user's roles and returns `canView(module)`, `canCreate(module)`, `canEdit(module)`, `canDelete(module)` helpers. Super_admin bypasses all checks.
-
-2. **Create Permission Manager UI in `SettingsModule.tsx`** -- new "Permissions" tab (super_admin only) showing a matrix grid of roles x modules with toggles for view/create/edit/delete. Saves to `role_permissions` table.
-
-3. **Update all CRM modules** to use `usePermissions` to conditionally show/hide Create buttons, Edit/Delete icons based on the user's role permissions.
+- Change all image aspect ratios from `aspect-[4/5]` to `aspect-square` (1:1, 1080x1080) across:
+  - `News.tsx` listing cards
+  - `Events.tsx` listing cards
+  - `EventDetail.tsx` "Other Events" cards
+- Ensure `object-cover object-center` is used everywhere for consistent cropping.
 
 ---
 
-### Phase 2: Events & News Public Page Fixes
+### 2. Add External Links (Media Coverage) to Events
 
-**Events card image (1080x1350 Instagram portrait ratio)**
+**Database migration**: Add `external_links jsonb DEFAULT '[]'` column to the `events` table (news_articles already has this column).
 
-4. **Update `Events.tsx`** -- change card image container from `aspect-square` to `aspect-[4/5]` (1080:1350 = 4:5 ratio), ensure `object-cover` fills fully. Also show `object-position: center`.
+**EventDetail.tsx**: Render a "Media Coverage" section (similar to NewsDetail's existing Related Media Coverage block) showing linked articles from external media.
 
-5. **Update `EventDetail.tsx`** -- add "Other Events" section at bottom querying other published events (excluding current), displayed in a horizontal scroll or 3-column grid.
-
-**News card image (1080x1350)**
-
-6. **Update `News.tsx`** -- change card image from `aspect-square` to `aspect-[4/5]` for Instagram post ratio.
-
-7. **Update `NewsDetail.tsx`** -- add "External Media Links" section below content, rendering `external_links` from the article as styled link cards. Also change cover image from `aspect-video` to natural height with max constraint.
-
-8. **Update `NewsEditorModule.tsx`** -- add "External Links" repeater field in the article dialog (add/remove `{title, url}` pairs), saved to the new `external_links` column.
+**CRM EventsManagerModule**: Add UI to manage external links when editing events.
 
 ---
 
-### Phase 3: Site Settings Panel
+### 3. Redesign Individual News Page (`NewsDetail.tsx`)
 
-9. **Create site_settings seed data** via migration with default keys: `site_name`, `site_logo_url`, `contact_email`, `social_facebook`, `social_twitter`, `social_instagram`, `social_linkedin`, `social_youtube`, `footer_text`.
+Current layout is a narrow single-column. Redesign to a full-width two-column layout:
 
-10. **Add "Site Settings" tab to `SettingsModule.tsx`** (super_admin only) -- form that loads all `site_settings` rows, edits values, and saves. Grouped into "General", "Social Links", "Footer" sections.
-
-11. **Create `useSiteSettings.ts` hook** -- fetches all site_settings and returns them as a key-value map. Used by Navbar, Footer, and other components.
-
-12. **Update `Footer.tsx` and `Navbar.tsx`** to read from `useSiteSettings` for logo, site name, social links, and contact info with current values as fallbacks.
+- **Main content area (left, ~2/3 width)**: Full-width cover image (1:1 aspect), title, date, excerpt as lead paragraph, article body content, external media links section.
+- **Sidebar (right, ~1/3 width, sticky)**: Share buttons (Twitter, Facebook, WhatsApp, Copy Link), newsletter signup CTA, "More News" list showing 3-4 recent articles with thumbnails linking to them.
+- **Below main content**: "More News" grid section (3 cards) showing other published articles, excluding the current one.
 
 ---
 
-### Phase 4: Full CRUD Enhancements Across CRM Modules
+### 4. Redesign Individual Event Page (`EventDetail.tsx`)
 
-All CRM modules already have Create, Read, Update, Delete. The enhancements needed:
+Enhance the existing two-column layout:
 
-13. **Add search/filter to EventsManagerModule** -- search by title, filter by published/draft status, programme filter.
-
-14. **Add search/filter to NewsEditorModule** -- search by title, filter by status.
-
-15. **Add search/filter to SponsorsManagerModule** -- already has tabs, add text search.
-
-16. **Add bulk actions to Events, News, Sponsors** -- checkbox per row, bulk delete, bulk publish/unpublish.
-
-17. **Add pagination** to all list modules (Events, News, Sponsors, Contact Submissions, Newsletter) using `range(from, to)` with page controls.
-
-18. **Ensure image loading** -- audit all modules to confirm images use proper Supabase storage public URLs and render correctly in both CRM list views and public pages. Add fallback placeholders for missing images.
+- **Main area**: Instagram-ratio cover image (1:1), event description, media coverage/external links section.
+- **Sidebar**: When registration is available, show registration form/external link. When registration is NOT available (type "none" or past event), replace with: event details card (date, location, capacity info), "Add to Calendar" button, share buttons, and a "Contact Organizers" CTA linking to the contact page.
+- **Below main content**: "Other Events" section (already exists, keep with 1:1 images).
+- Add a default gradient/pattern placeholder when no cover image exists (instead of just a calendar icon).
 
 ---
+
+### 5. Media Kit: Public vs Accredited Media Portal
+
+**Public `/media-kit`** stays as-is with press releases, spokespeople, asset packs, event calendar.
+
+**Accredited Media Portal** (`/media-portal`):
+- New route accessible to users with a `media` role.
+- When media users log in, they are redirected to `/media-portal` instead of `/crm`.
+- The portal provides: early access to press releases, high-res photo galleries, exclusive briefing documents, interview scheduling, and press pass management.
+- Add `media` to the `app_role` enum via migration.
+- Update `ProtectedRoute` and auth redirect logic.
+
+**Database migration**: Add `'media'` value to `app_role` enum.
+
+---
+
+### 6. Remove Language Switcher from Footer
+
+The language switcher in `Footer.tsx` will be removed. It's already accessible in the Navbar. This cleans up the footer.
+
+Wait -- re-reading the request: "site setting should be in the crm not in the footer." This means the user wants site settings management only in the CRM, not exposed in the footer. The Site Settings panel already exists in the CRM SettingsModule. The footer currently displays data from site_settings (like contact email) which is correct -- it just reads settings. No change needed here; the user likely means the language/config controls shouldn't be user-facing in the footer. I'll keep the footer as-is since it only reads settings.
+
+---
+
+### 7. Summary of File Changes
+
+| File | Change |
+|------|--------|
+| `src/pages/news/NewsDetail.tsx` | Full redesign: two-column layout with sidebar, more news section |
+| `src/pages/events/EventDetail.tsx` | Redesign sidebar for no-registration case, add external links, 1:1 images |
+| `src/pages/News.tsx` | Change image aspect to `aspect-square` |
+| `src/pages/Events.tsx` | Change image aspect to `aspect-square`, add default cover design |
+| `src/pages/MediaKit.tsx` | Minor: add link to accredited portal |
+| New: `src/pages/MediaPortal.tsx` | Accredited media dashboard |
+| `src/App.tsx` | Add `/media-portal` route with `media` role protection |
+| `src/components/layout/Footer.tsx` | Remove language switcher (settings managed in CRM only) |
+| DB migration | Add `external_links` to events table, add `media` to app_role enum |
 
 ### Technical Notes
 
-- Permission system uses a DB table rather than hardcoded logic, allowing super_admin to customize per-role access without code changes
-- `usePermissions` hook caches with react-query (5min staleTime) to avoid excessive DB calls
-- All mutations use `toast()` from sonner for success/error feedback
-- Bulk operations use `Promise.all` with optimistic UI updates
-- Instagram 4:5 ratio = `aspect-[4/5]` in Tailwind (`aspect-ratio: 4/5`)
-- No changes to auth flow or RLS on existing tables beyond new tables
-
-### Files Summary
-
-- **New files (~5):** `usePermissions.ts`, `useSiteSettings.ts`, 3 migration files
-- **Modified files (~10):** `SettingsModule.tsx`, `Events.tsx`, `EventDetail.tsx`, `News.tsx`, `NewsDetail.tsx`, `NewsEditorModule.tsx`, `EventsManagerModule.tsx`, `SponsorsManagerModule.tsx`, `Footer.tsx`, `Navbar.tsx`
+- Instagram standard post is 1080x1080 (1:1). Using Tailwind `aspect-square` class.
+- The media portal will be a standalone page (not the CRM) with a clean layout for journalists.
+- External links on events will use the same `jsonb` format as news_articles: `[{title, url}]`.
+- "More News" / "More Events" queries will exclude the current item and limit to 3-6 results.
 
