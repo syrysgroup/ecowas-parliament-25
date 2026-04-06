@@ -198,14 +198,40 @@ export default function EventDetail() {
                 </div>
               </AnimatedSection>
 
-              {isPast && (
-                <AnimatedSection>
-                  <h3 className="text-lg font-bold text-foreground mb-3 flex items-center gap-2"><ExternalLink className="h-4 w-4" />Press & Related Briefings</h3>
-                  <div className="rounded-2xl border border-border bg-muted/30 p-4">
-                    <p className="text-xs text-muted-foreground italic">No press articles linked yet. Check back soon.</p>
-                  </div>
-                </AnimatedSection>
-              )}
+              {/* Media Coverage / External Links */}
+              {(() => {
+                const externalLinks: { title: string; url: string }[] = (() => {
+                  try {
+                    const links = (event as any).external_links;
+                    if (Array.isArray(links)) return links;
+                    return [];
+                  } catch { return []; }
+                })();
+                if (externalLinks.length === 0) return null;
+                return (
+                  <AnimatedSection>
+                    <h3 className="text-lg font-bold text-foreground mb-3 flex items-center gap-2">
+                      <ExternalLink className="h-4 w-4" /> Media Coverage
+                    </h3>
+                    <div className="grid sm:grid-cols-2 gap-3">
+                      {externalLinks.map((link, i) => (
+                        <a
+                          key={i}
+                          href={link.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex items-center gap-3 p-4 rounded-xl border border-border bg-card hover:border-primary hover:shadow-md transition-all group"
+                        >
+                          <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary flex-shrink-0" />
+                          <span className="text-sm font-medium text-card-foreground group-hover:text-primary line-clamp-2">
+                            {link.title || link.url}
+                          </span>
+                        </a>
+                      ))}
+                    </div>
+                  </AnimatedSection>
+                );
+              })()}
             </div>
 
             <div className="space-y-6">
