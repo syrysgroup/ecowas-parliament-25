@@ -136,6 +136,67 @@ export type Database = {
           },
         ]
       }
+      budget_items: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          created_by: string | null
+          id: string
+          notes: string | null
+          status: string
+          title: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          status?: string
+          title: string
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          status?: string
+          title?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_items_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_items_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "public_nominee_leaderboard"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "budget_items_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "public_representatives"
+            referencedColumns: ["profile_id"]
+          },
+        ]
+      }
       contact_submissions: {
         Row: {
           created_at: string
@@ -209,6 +270,70 @@ export type Database = {
           sort_order?: number
         }
         Relationships: []
+      }
+      documents: {
+        Row: {
+          category: string
+          created_at: string
+          file_size_kb: number | null
+          file_type: string
+          file_url: string | null
+          id: string
+          language: string
+          restricted: boolean
+          title: string
+          updated_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          file_size_kb?: number | null
+          file_type?: string
+          file_url?: string | null
+          id?: string
+          language?: string
+          restricted?: boolean
+          title: string
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          file_size_kb?: number | null
+          file_type?: string
+          file_url?: string | null
+          id?: string
+          language?: string
+          restricted?: boolean
+          title?: string
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documents_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "public_nominee_leaderboard"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "documents_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "public_representatives"
+            referencedColumns: ["profile_id"]
+          },
+        ]
       }
       event_registrations: {
         Row: {
@@ -349,6 +474,138 @@ export type Database = {
           token?: string
         }
         Relationships: []
+      }
+      invoice_items: {
+        Row: {
+          amount: number | null
+          description: string
+          id: string
+          invoice_id: string
+          quantity: number
+          sort_order: number
+          unit_price: number
+        }
+        Insert: {
+          amount?: number | null
+          description: string
+          id?: string
+          invoice_id: string
+          quantity?: number
+          sort_order?: number
+          unit_price?: number
+        }
+        Update: {
+          amount?: number | null
+          description?: string
+          id?: string
+          invoice_id?: string
+          quantity?: number
+          sort_order?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          amount_paid: number | null
+          balance: number | null
+          client_address: string | null
+          client_company: string | null
+          client_country: string | null
+          client_email: string | null
+          client_name: string
+          created_at: string
+          created_by: string | null
+          currency: string | null
+          due_date: string | null
+          id: string
+          invoice_number: string
+          issue_date: string
+          notes: string | null
+          status: string
+          subtotal: number
+          tax_amount: number | null
+          tax_rate: number | null
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          amount_paid?: number | null
+          balance?: number | null
+          client_address?: string | null
+          client_company?: string | null
+          client_country?: string | null
+          client_email?: string | null
+          client_name: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string | null
+          due_date?: string | null
+          id?: string
+          invoice_number: string
+          issue_date?: string
+          notes?: string | null
+          status?: string
+          subtotal?: number
+          tax_amount?: number | null
+          tax_rate?: number | null
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          amount_paid?: number | null
+          balance?: number | null
+          client_address?: string | null
+          client_company?: string | null
+          client_country?: string | null
+          client_email?: string | null
+          client_name?: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string | null
+          due_date?: string | null
+          id?: string
+          invoice_number?: string
+          issue_date?: string
+          notes?: string | null
+          status?: string
+          subtotal?: number
+          tax_amount?: number | null
+          tax_rate?: number | null
+          total?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "public_nominee_leaderboard"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "invoices_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "public_representatives"
+            referencedColumns: ["profile_id"]
+          },
+        ]
       }
       news_articles: {
         Row: {
@@ -1004,6 +1261,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      next_invoice_number: { Args: never; Returns: string }
     }
     Enums: {
       app_role: "admin" | "moderator" | "super_admin" | "sponsor" | "media"

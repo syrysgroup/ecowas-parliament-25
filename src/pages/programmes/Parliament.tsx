@@ -157,11 +157,31 @@ const Parliament = () => {
             </div>
             <p className="text-muted-foreground">Leadership of the Simulated Youth Parliament · 6th Legislature</p>
           </AnimatedSection>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-            {principalOfficers.map((officer, index) => (
-              <AnimatedSection key={officer.role} delay={index * 60}>
+          {/* Speaker — elevated */}
+          <div className="flex justify-center mb-6">
+            <AnimatedSection>
+              <div className="rounded-3xl border-2 border-primary bg-card p-6 text-center shadow-lg w-64">
+                <div className="aspect-[4/5] overflow-hidden rounded-2xl mb-4">
+                  <img src={ecowasLogo} alt="Speaker placeholder" className="w-full h-full object-contain opacity-40" loading="lazy" decoding="async" />
+                </div>
+                <Badge className="bg-primary/10 text-primary mb-2 text-xs font-bold">{principalOfficers[0].role}</Badge>
+                <p className="font-bold text-card-foreground">—</p>
+                <div className="flex items-center justify-center gap-1 mt-1">
+                  <FlagImg country={principalOfficers[0].country} className="h-4 w-4" />
+                  <p className="text-xs text-muted-foreground">{principalOfficers[0].country}</p>
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-1">6th Legislature</p>
+              </div>
+            </AnimatedSection>
+          </div>
+          {/* Deputy Speakers */}
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {principalOfficers.slice(1).map((officer, index) => (
+              <AnimatedSection key={officer.role} delay={(index + 1) * 60}>
                 <div className="rounded-3xl border border-border bg-card p-5 text-center shadow-sm hover:shadow-lg transition-shadow">
-                  <img src={ecowasLogo} alt="Placeholder" className="mx-auto h-24 w-24 object-contain opacity-40 mb-4" width={96} height={96} loading="lazy" decoding="async" />
+                  <div className="aspect-[4/5] overflow-hidden rounded-2xl mb-4">
+                    <img src={ecowasLogo} alt="Placeholder" className="w-full h-full object-contain opacity-40" loading="lazy" decoding="async" />
+                  </div>
                   <Badge className="bg-primary/10 text-primary mb-2 text-xs">{officer.role}</Badge>
                   <p className="font-bold text-card-foreground">—</p>
                   <div className="flex items-center justify-center gap-1 mt-1">
@@ -210,10 +230,26 @@ const Parliament = () => {
                 <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
                   <Crown className="h-4 w-4 text-primary" /> Principal Officers
                 </h3>
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-                  {principalOfficers.map((officer, index) => (
+                <div className="flex justify-center mb-4">
+                  <div className="rounded-3xl border-2 border-primary bg-card p-4 text-center shadow-lg w-56">
+                    <div className="aspect-[4/5] overflow-hidden rounded-2xl mb-3">
+                      <img src={ecowasLogo} alt="Speaker placeholder" className="w-full h-full object-contain opacity-40" loading="lazy" decoding="async" />
+                    </div>
+                    <Badge className="bg-primary/10 text-primary mb-1 text-xs font-bold">{principalOfficers[0].role}</Badge>
+                    <p className="font-bold text-card-foreground text-sm">—</p>
+                    <div className="flex items-center justify-center gap-1 mt-1">
+                      <FlagImg country={principalOfficers[0].country} className="h-3 w-3" />
+                      <span className="text-xs text-muted-foreground">{principalOfficers[0].country}</span>
+                    </div>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">6th Legislature</p>
+                  </div>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                  {principalOfficers.slice(1).map((officer, index) => (
                     <div key={officer.role} className="rounded-3xl border border-border bg-card p-4 text-center shadow-sm">
-                      <img src={ecowasLogo} alt="Placeholder" className="mx-auto h-20 w-20 object-contain opacity-40 mb-3" width={80} height={80} loading="lazy" decoding="async" />
+                      <div className="aspect-[4/5] overflow-hidden rounded-2xl mb-3">
+                        <img src={ecowasLogo} alt="Placeholder" className="w-full h-full object-contain opacity-40" loading="lazy" decoding="async" />
+                      </div>
                       <Badge className="bg-primary/10 text-primary mb-1 text-xs">{officer.role}</Badge>
                       <p className="font-bold text-card-foreground text-sm">—</p>
                       <div className="flex items-center justify-center gap-1 mt-1">
@@ -240,14 +276,18 @@ const Parliament = () => {
                     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
                       {countryReps.map((rep) => (
                         <div key={rep.id} className="rounded-2xl border border-border bg-card p-4 text-center shadow-sm">
-                          <img src={rep.headshot_url || rep.avatar_url || ecowasLogo} alt={rep.full_name} className="mx-auto h-20 w-20 rounded-full object-cover mb-2" width={80} height={80} loading="lazy" decoding="async" />
+                          <div className="aspect-[4/5] overflow-hidden rounded-2xl mb-2">
+                            <img src={rep.headshot_url || rep.avatar_url || ecowasLogo} alt={rep.full_name} className="w-full h-full object-cover" loading="lazy" decoding="async" />
+                          </div>
                           <p className="font-semibold text-card-foreground text-sm">{rep.full_name}</p>
                           <p className="text-[10px] text-muted-foreground">6th Legislature</p>
                         </div>
                       ))}
                       {Array.from({ length: emptySlots }).map((_, i) => (
                         <div key={`empty-${i}`} className="rounded-2xl border border-dashed border-border bg-card/50 p-4 text-center">
-                          <img src={ecowasLogo} alt="Placeholder" className="mx-auto h-20 w-20 object-contain opacity-20 mb-2" width={80} height={80} loading="lazy" decoding="async" />
+                          <div className="aspect-[4/5] overflow-hidden rounded-2xl mb-2">
+                            <img src={ecowasLogo} alt="Placeholder" className="w-full h-full object-contain opacity-20" loading="lazy" decoding="async" />
+                          </div>
                           <p className="font-semibold text-muted-foreground text-sm">—</p>
                           <p className="text-[10px] text-muted-foreground">6th Legislature</p>
                         </div>

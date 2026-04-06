@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import {
   Crown, ShieldCheck, Eye, Handshake, Users, Mail, Send, Loader2,
-  RefreshCw, Settings, Activity, Globe, Lock, Clock, UserPlus,
+  RefreshCw, Settings, Activity, Globe, Lock, Clock, UserPlus, Download,
   Trash2, CheckCircle2, AlertTriangle, LayoutDashboard,
   FileText, Star, Calendar, Newspaper, ChevronRight,
 } from "lucide-react";
@@ -210,6 +210,14 @@ export default function SuperAdminModule() {
       } else {
         await (supabase as any).from("user_roles").delete().eq("user_id", targetUserId).eq("role", role);
       }
+      // Log activity
+      await (supabase as any).from("admin_activity_logs").insert({
+        actor_user_id: user!.id,
+        action: action === "add" ? "role_granted" : "role_revoked",
+        entity_type: "user_role",
+        entity_id: targetUserId,
+        details: { role, target_user_id: targetUserId },
+      });
       toast({ title: `Role ${action === "add" ? "granted" : "revoked"}` });
       loadData();
       if (targetUserId === user?.id) refreshRoles();
@@ -263,6 +271,18 @@ export default function SuperAdminModule() {
     u.email.toLowerCase().includes(searchQ.toLowerCase()) ||
     u.country.toLowerCase().includes(searchQ.toLowerCase())
   );
+
+  const exportUsersCSV = () => {
+    const header = "Name,Email,Country,Roles,Joined\n";
+    const rows = filteredUsers.map(u =>
+      `"${u.full_name}","${u.email}","${u.country}","${u.roles.join('; ')}","${u.created_at}"`
+    ).join("\n");
+    const blob = new Blob([header + rows], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = "users-export.csv"; a.click();
+    URL.revokeObjectURL(url);
+  };
 
   const NAV: { id: Tab; label: string; icon: React.ElementType; badge?: number }[] = [
     { id:"overview",    label:"Overview",     icon:LayoutDashboard },
@@ -411,11 +431,17 @@ export default function SuperAdminModule() {
           <div className="bg-crm-card border border-crm-border rounded-xl overflow-hidden">
             <div className="px-4 py-3 border-b border-crm-border flex items-center justify-between gap-3 flex-wrap">
               <h3 className="text-[12px] font-semibold text-crm-text-secondary">All users ({filteredUsers.length})</h3>
-              <Input
-                placeholder="Search name, email, country…"
-                value={searchQ} onChange={e => setSearchQ(e.target.value)}
-                className="bg-crm-surface border-crm-border text-crm-text text-xs h-7 w-56"
-              />
+              <div className="flex items-center gap-2">
+                <Input
+                  placeholder="Search name, email, country…"
+                  value={searchQ} onChange={e => setSearchQ(e.target.value)}
+                  className="bg-crm-surface border-crm-border text-crm-text text-xs h-7 w-56"
+                />
+                <Button size="sm" variant="outline" onClick={exportUsersCSV}
+                  className="border-crm-border text-crm-text-muted hover:text-crm-text-secondary text-xs gap-1 h-7">
+                  <Download size={11} /> CSV
+                </Button>
+              </div>
             </div>
             {loading ? (
               <div className="flex items-center justify-center h-24">

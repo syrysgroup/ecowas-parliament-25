@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { FolderOpen, Lock, Download, AlertCircle, Plus, Trash2, Pencil } from "lucide-react";
+import { FolderOpen, Lock, Download, AlertCircle, Plus, Trash2, Pencil, Upload, Globe } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { format, parseISO } from "date-fns";
@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { useToast } from "@/hooks/use-toast";
 
 interface Doc {
   id: string;
@@ -18,6 +19,8 @@ interface Doc {
   file_type: string;
   file_size_kb: number | null;
   restricted: boolean;
+  file_url: string | null;
+  language: string;
   created_at: string;
   uploader_name: string | null;
 }
@@ -31,35 +34,81 @@ const TYPE_STYLE: Record<string, string> = {
 };
 
 const FILE_TYPES = ["PDF", "DOC", "XLS", "PPT", "ZIP"];
+const LANGUAGES = [
+  { value: "en", label: "English" },
+  { value: "fr", label: "Français" },
+  { value: "pt", label: "Português" },
+];
+
+const LANG_BADGE: Record<string, string> = {
+  en: "bg-blue-950 text-blue-400 border-blue-800",
+  fr: "bg-violet-950 text-violet-400 border-violet-800",
+  pt: "bg-emerald-950 text-emerald-400 border-emerald-800",
+};
 
 // ─── Add Document Dialog ───────────────────────────────────────────────────────
 function AddDocumentDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { user } = useAuthContext();
+  const { toast } = useToast();
   const qc = useQueryClient();
+  const fileRef = useRef<HTMLInputElement>(null);
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("General");
   const [fileType, setFileType] = useState("PDF");
-  const [fileSizeKb, setFileSizeKb] = useState("");
   const [restricted, setRestricted] = useState(false);
+  const [language, setLanguage] = useState("en");
+  const [file, setFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
 
-  const create = useMutation({
-    mutationFn: async () => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (f) {
+      setFile(f);
+      if (!title.trim()) setTitle(f.name.replace(/\.[^.]+$/, ""));
+      const ext = f.name.split(".").pop()?.toUpperCase();
+      if (ext && FILE_TYPES.includes(ext)) setFileType(ext);
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!title.trim()) return;
+    setUploading(true);
+    try {
+      let fileUrl: string | null = null;
+      let fileSizeKb: number | null = null;
+
+      if (file) {
+        const ext = file.name.split(".").pop() || "bin";
+        const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+        const { error: uploadErr } = await supabase.storage.from("documents").upload(path, file);
+        if (uploadErr) throw uploadErr;
+        const { data: urlData } = supabase.storage.from("documents").getPublicUrl(path);
+        fileUrl = urlData.publicUrl;
+        fileSizeKb = Math.round(file.size / 1024);
+      }
+
       await (supabase as any).from("documents").insert({
         title,
         category: category || "General",
         file_type: fileType,
-        file_size_kb: fileSizeKb ? Number(fileSizeKb) : null,
+        file_size_kb: fileSizeKb,
         restricted,
+        file_url: fileUrl,
+        language,
         uploaded_by: user!.id,
       });
-    },
-    onSuccess: () => {
+
       qc.invalidateQueries({ queryKey: ["crm-documents"] });
       setTitle(""); setCategory("General"); setFileType("PDF");
-      setFileSizeKb(""); setRestricted(false);
+      setRestricted(false); setLanguage("en"); setFile(null);
       onClose();
-    },
-  });
+      toast({ title: "Document uploaded" });
+    } catch (err: any) {
+      toast({ title: "Upload failed", description: err.message, variant: "destructive" });
+    } finally {
+      setUploading(false);
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -68,13 +117,30 @@ function AddDocumentDialog({ open, onClose }: { open: boolean; onClose: () => vo
           <DialogTitle className="text-sm font-semibold text-crm-text">Add Document</DialogTitle>
         </DialogHeader>
         <div className="space-y-3 py-1">
+          {/* File upload */}
+          <div className="space-y-1">
+            <Label className="text-[11px] text-crm-text-dim">File</Label>
+            <div
+              onClick={() => fileRef.current?.click()}
+              className="border-2 border-dashed border-crm-border rounded-lg p-4 text-center cursor-pointer hover:border-emerald-700 transition-colors"
+            >
+              <Upload size={20} className="mx-auto text-crm-text-dim mb-1" />
+              <p className="text-[11px] text-crm-text-dim">
+                {file ? file.name : "Click to select a file"}
+              </p>
+              {file && <p className="text-[9px] text-crm-text-dim mt-0.5">{(file.size / 1024).toFixed(0)} KB</p>}
+            </div>
+            <input ref={fileRef} type="file" className="hidden" onChange={handleFileChange}
+              accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip" />
+          </div>
+
           <div className="space-y-1">
             <Label className="text-[11px] text-crm-text-dim">Title *</Label>
             <Input value={title} onChange={e => setTitle(e.target.value)}
               className="bg-crm-surface border-crm-border text-crm-text text-xs h-8"
               placeholder="Document title" />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <div className="space-y-1">
               <Label className="text-[11px] text-crm-text-dim">Category</Label>
               <Input value={category} onChange={e => setCategory(e.target.value)}
@@ -94,32 +160,33 @@ function AddDocumentDialog({ open, onClose }: { open: boolean; onClose: () => vo
                 </SelectContent>
               </Select>
             </div>
-          </div>
-          <div className="grid grid-cols-2 gap-3 items-end">
             <div className="space-y-1">
-              <Label className="text-[11px] text-crm-text-dim">Size (KB)</Label>
-              <Input
-                type="number"
-                value={fileSizeKb}
-                onChange={e => setFileSizeKb(e.target.value)}
-                className="bg-crm-surface border-crm-border text-crm-text text-xs h-8"
-                placeholder="Optional"
-              />
+              <Label className="text-[11px] text-crm-text-dim">Language</Label>
+              <Select value={language} onValueChange={setLanguage}>
+                <SelectTrigger className="bg-crm-surface border-crm-border text-crm-text text-xs h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-crm-card border-crm-border">
+                  {LANGUAGES.map(l => (
+                    <SelectItem key={l.value} value={l.value} className="text-crm-text text-xs">{l.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-            <div className="flex items-center gap-2 pb-1">
-              <Switch checked={restricted} onCheckedChange={setRestricted} />
-              <Label className="text-[11px] text-crm-text-dim">Restricted</Label>
-            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Switch checked={restricted} onCheckedChange={setRestricted} />
+            <Label className="text-[11px] text-crm-text-dim">Restricted (admin-only access)</Label>
           </div>
         </div>
         <DialogFooter>
           <Button variant="outline" size="sm" onClick={onClose} className="border-crm-border text-crm-text-muted text-xs">
             Cancel
           </Button>
-          <Button size="sm" disabled={!title.trim() || create.isPending}
-            onClick={() => create.mutate()}
+          <Button size="sm" disabled={!title.trim() || uploading}
+            onClick={handleSubmit}
             className="bg-emerald-700 hover:bg-emerald-600 text-white text-xs">
-            {create.isPending ? "Adding…" : "Add Document"}
+            {uploading ? "Uploading…" : "Add Document"}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -130,27 +197,57 @@ function AddDocumentDialog({ open, onClose }: { open: boolean; onClose: () => vo
 // ─── Edit Document Dialog ──────────────────────────────────────────────────────
 function EditDocumentDialog({ doc, open, onClose }: { doc: Doc; open: boolean; onClose: () => void }) {
   const qc = useQueryClient();
+  const { toast } = useToast();
+  const fileRef = useRef<HTMLInputElement>(null);
   const [title, setTitle] = useState(doc.title);
   const [category, setCategory] = useState(doc.category);
   const [fileType, setFileType] = useState(doc.file_type);
-  const [fileSizeKb, setFileSizeKb] = useState(doc.file_size_kb != null ? String(doc.file_size_kb) : "");
   const [restricted, setRestricted] = useState(doc.restricted);
+  const [language, setLanguage] = useState(doc.language || "en");
+  const [file, setFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
 
-  const update = useMutation({
-    mutationFn: async () => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (f) setFile(f);
+  };
+
+  const handleSubmit = async () => {
+    if (!title.trim()) return;
+    setUploading(true);
+    try {
+      let fileUrl = doc.file_url;
+      let fileSizeKb = doc.file_size_kb;
+
+      if (file) {
+        const ext = file.name.split(".").pop() || "bin";
+        const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+        const { error: uploadErr } = await supabase.storage.from("documents").upload(path, file);
+        if (uploadErr) throw uploadErr;
+        const { data: urlData } = supabase.storage.from("documents").getPublicUrl(path);
+        fileUrl = urlData.publicUrl;
+        fileSizeKb = Math.round(file.size / 1024);
+      }
+
       await (supabase as any).from("documents").update({
         title,
         category: category || "General",
         file_type: fileType,
-        file_size_kb: fileSizeKb ? Number(fileSizeKb) : null,
+        file_size_kb: fileSizeKb,
         restricted,
+        file_url: fileUrl,
+        language,
       }).eq("id", doc.id);
-    },
-    onSuccess: () => {
+
       qc.invalidateQueries({ queryKey: ["crm-documents"] });
       onClose();
-    },
-  });
+      toast({ title: "Document updated" });
+    } catch (err: any) {
+      toast({ title: "Update failed", description: err.message, variant: "destructive" });
+    } finally {
+      setUploading(false);
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -159,18 +256,31 @@ function EditDocumentDialog({ doc, open, onClose }: { doc: Doc; open: boolean; o
           <DialogTitle className="text-sm font-semibold text-crm-text">Edit Document</DialogTitle>
         </DialogHeader>
         <div className="space-y-3 py-1">
+          {/* Replace file */}
+          <div className="space-y-1">
+            <Label className="text-[11px] text-crm-text-dim">Replace file (optional)</Label>
+            <div
+              onClick={() => fileRef.current?.click()}
+              className="border border-dashed border-crm-border rounded-lg p-3 text-center cursor-pointer hover:border-emerald-700 transition-colors"
+            >
+              <p className="text-[11px] text-crm-text-dim">
+                {file ? file.name : "Click to upload new file"}
+              </p>
+            </div>
+            <input ref={fileRef} type="file" className="hidden" onChange={handleFileChange}
+              accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip" />
+          </div>
+
           <div className="space-y-1">
             <Label className="text-[11px] text-crm-text-dim">Title *</Label>
             <Input value={title} onChange={e => setTitle(e.target.value)}
-              className="bg-crm-surface border-crm-border text-crm-text text-xs h-8"
-              placeholder="Document title" />
+              className="bg-crm-surface border-crm-border text-crm-text text-xs h-8" />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <div className="space-y-1">
               <Label className="text-[11px] text-crm-text-dim">Category</Label>
               <Input value={category} onChange={e => setCategory(e.target.value)}
-                className="bg-crm-surface border-crm-border text-crm-text text-xs h-8"
-                placeholder="General" />
+                className="bg-crm-surface border-crm-border text-crm-text text-xs h-8" />
             </div>
             <div className="space-y-1">
               <Label className="text-[11px] text-crm-text-dim">File type</Label>
@@ -185,32 +295,33 @@ function EditDocumentDialog({ doc, open, onClose }: { doc: Doc; open: boolean; o
                 </SelectContent>
               </Select>
             </div>
-          </div>
-          <div className="grid grid-cols-2 gap-3 items-end">
             <div className="space-y-1">
-              <Label className="text-[11px] text-crm-text-dim">Size (KB)</Label>
-              <Input
-                type="number"
-                value={fileSizeKb}
-                onChange={e => setFileSizeKb(e.target.value)}
-                className="bg-crm-surface border-crm-border text-crm-text text-xs h-8"
-                placeholder="Optional"
-              />
+              <Label className="text-[11px] text-crm-text-dim">Language</Label>
+              <Select value={language} onValueChange={setLanguage}>
+                <SelectTrigger className="bg-crm-surface border-crm-border text-crm-text text-xs h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-crm-card border-crm-border">
+                  {LANGUAGES.map(l => (
+                    <SelectItem key={l.value} value={l.value} className="text-crm-text text-xs">{l.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-            <div className="flex items-center gap-2 pb-1">
-              <Switch checked={restricted} onCheckedChange={setRestricted} />
-              <Label className="text-[11px] text-crm-text-dim">Restricted</Label>
-            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Switch checked={restricted} onCheckedChange={setRestricted} />
+            <Label className="text-[11px] text-crm-text-dim">Restricted</Label>
           </div>
         </div>
         <DialogFooter>
           <Button variant="outline" size="sm" onClick={onClose} className="border-crm-border text-crm-text-muted text-xs">
             Cancel
           </Button>
-          <Button size="sm" disabled={!title.trim() || update.isPending}
-            onClick={() => update.mutate()}
+          <Button size="sm" disabled={!title.trim() || uploading}
+            onClick={handleSubmit}
             className="bg-emerald-700 hover:bg-emerald-600 text-white text-xs">
-            {update.isPending ? "Saving…" : "Save Changes"}
+            {uploading ? "Saving…" : "Save Changes"}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -221,19 +332,21 @@ function EditDocumentDialog({ doc, open, onClose }: { doc: Doc; open: boolean; o
 // ─── Main ──────────────────────────────────────────────────────────────────────
 export default function DocumentsModule() {
   const { isAdmin } = useAuthContext();
+  const { toast } = useToast();
   const qc = useQueryClient();
   const [addOpen, setAddOpen] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [editTarget, setEditTarget] = useState<Doc | null>(null);
+  const [filterLang, setFilterLang] = useState<string>("all");
 
   const { data, isLoading } = useQuery<Doc[] | null>({
     queryKey: ["crm-documents"],
     queryFn: async () => {
       const res = await (supabase as any)
         .from("documents")
-        .select("id, title, category, file_type, file_size_kb, restricted, created_at, uploader:profiles!documents_uploaded_by_fkey(full_name)")
+        .select("id, title, category, file_type, file_size_kb, restricted, file_url, language, created_at, uploader:profiles!documents_uploaded_by_fkey(full_name)")
         .order("created_at", { ascending: false })
-        .limit(50);
+        .limit(100);
 
       if (res.error?.code === "42P01") return null;
 
@@ -244,6 +357,8 @@ export default function DocumentsModule() {
         file_type: d.file_type ?? "PDF",
         file_size_kb: d.file_size_kb ?? null,
         restricted: d.restricted ?? false,
+        file_url: d.file_url ?? null,
+        language: d.language ?? "en",
         created_at: d.created_at,
         uploader_name: d.uploader?.full_name ?? null,
       }));
@@ -257,8 +372,11 @@ export default function DocumentsModule() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["crm-documents"] });
       setConfirmDeleteId(null);
+      toast({ title: "Document deleted" });
     },
   });
+
+  const filteredDocs = (data ?? []).filter(d => filterLang === "all" || d.language === filterLang);
 
   if (!isLoading && data === null) {
     return (
@@ -269,11 +387,7 @@ export default function DocumentsModule() {
         <div>
           <h2 className="text-xl font-bold text-crm-text">Documents table not set up</h2>
           <p className="text-sm text-crm-text-muted mt-2 max-w-sm">
-            Create a <span className="font-mono text-emerald-500">documents</span> table in Supabase with columns:
-            <br />
-            <span className="font-mono text-[11px] text-crm-text-dim">
-              id, title, category, file_type, file_size_kb, restricted, uploaded_by (FK → profiles), created_at
-            </span>
+            The documents table needs to be created in Supabase.
           </p>
         </div>
       </div>
@@ -287,15 +401,28 @@ export default function DocumentsModule() {
         <div>
           <h2 className="text-lg font-bold text-crm-text">Documents</h2>
           <p className="text-[12px] text-crm-text-muted mt-0.5">
-            Shared files, MoU templates, budget documents, and reports
+            Upload and manage shared files, MoU templates, budget documents, and reports
           </p>
         </div>
-        {isAdmin && (
-          <Button size="sm" onClick={() => setAddOpen(true)}
-            className="bg-emerald-700 hover:bg-emerald-600 text-white text-xs gap-1.5">
-            <Plus size={13} /> Add Document
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          <Select value={filterLang} onValueChange={setFilterLang}>
+            <SelectTrigger className="bg-crm-surface border-crm-border text-crm-text text-xs h-8 w-28">
+              <Globe size={11} className="mr-1" /><SelectValue />
+            </SelectTrigger>
+            <SelectContent className="bg-crm-card border-crm-border">
+              <SelectItem value="all" className="text-crm-text text-xs">All langs</SelectItem>
+              {LANGUAGES.map(l => (
+                <SelectItem key={l.value} value={l.value} className="text-crm-text text-xs">{l.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {isAdmin && (
+            <Button size="sm" onClick={() => setAddOpen(true)}
+              className="bg-emerald-700 hover:bg-emerald-600 text-white text-xs gap-1.5">
+              <Plus size={13} /> Upload Document
+            </Button>
+          )}
+        </div>
       </div>
 
       {isLoading && (
@@ -304,7 +431,7 @@ export default function DocumentsModule() {
         </div>
       )}
 
-      {!isLoading && Array.isArray(data) && data.length === 0 && (
+      {!isLoading && filteredDocs.length === 0 && (
         <div className="flex flex-col items-center justify-center min-h-[40vh] gap-3 text-center">
           <div className="h-14 w-14 rounded-2xl bg-crm-surface border border-crm-border flex items-center justify-center">
             <FolderOpen className="h-6 w-6 text-crm-text-dim" />
@@ -313,10 +440,12 @@ export default function DocumentsModule() {
         </div>
       )}
 
-      {!isLoading && Array.isArray(data) && data.length > 0 && (
+      {!isLoading && filteredDocs.length > 0 && (
         <div className="space-y-2">
-          {data.map(doc => {
+          {filteredDocs.map(doc => {
             const typeStyle = TYPE_STYLE[doc.file_type] ?? TYPE_STYLE["PDF"];
+            const langStyle = LANG_BADGE[doc.language] ?? LANG_BADGE["en"];
+            const langLabel = LANGUAGES.find(l => l.value === doc.language)?.label ?? doc.language;
             const sizeStr = doc.file_size_kb
               ? doc.file_size_kb >= 1024
                 ? `${(doc.file_size_kb / 1024).toFixed(1)} MB`
@@ -341,6 +470,9 @@ export default function DocumentsModule() {
                         <Lock size={8} /> Restricted
                       </span>
                     )}
+                    <span className={`text-[9px] font-mono border rounded px-1.5 py-0.5 ${langStyle}`}>
+                      {langLabel}
+                    </span>
                   </div>
                   <div className="flex items-center gap-3 mt-0.5 flex-wrap">
                     <span className="text-[10px] font-mono text-crm-text-dim bg-crm-surface border border-crm-border rounded px-1.5 py-0.5">
@@ -357,12 +489,19 @@ export default function DocumentsModule() {
                 </div>
 
                 <div className="flex items-center gap-1.5 flex-shrink-0">
-                  <button
-                    className="flex items-center gap-1.5 text-[11px] text-crm-text-dim hover:text-crm-text-secondary bg-crm-surface border border-crm-border rounded-lg px-2.5 py-1.5 transition-colors"
-                    title="Download"
-                  >
-                    <Download size={12} />
-                  </button>
+                  {doc.file_url ? (
+                    <a
+                      href={doc.file_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex items-center gap-1.5 text-[11px] text-emerald-400 hover:text-emerald-300 bg-crm-surface border border-crm-border rounded-lg px-2.5 py-1.5 transition-colors"
+                      title="Download"
+                    >
+                      <Download size={12} /> Download
+                    </a>
+                  ) : (
+                    <span className="text-[10px] text-crm-text-dim italic">No file</span>
+                  )}
 
                   {isAdmin && !isConfirming && (
                     <button
@@ -395,9 +534,9 @@ export default function DocumentsModule() {
                       </button>
                       <button
                         onClick={() => setConfirmDeleteId(null)}
-                        className="text-[10px] text-crm-text-dim hover:text-crm-text-secondary bg-crm-surface border border-crm-border rounded px-2 py-1 transition-colors"
+                        className="text-[10px] text-crm-text-dim bg-crm-surface border border-crm-border rounded px-2 py-1"
                       >
-                        No
+                        Cancel
                       </button>
                     </div>
                   )}
@@ -410,11 +549,7 @@ export default function DocumentsModule() {
 
       <AddDocumentDialog open={addOpen} onClose={() => setAddOpen(false)} />
       {editTarget && (
-        <EditDocumentDialog
-          doc={editTarget}
-          open={!!editTarget}
-          onClose={() => setEditTarget(null)}
-        />
+        <EditDocumentDialog doc={editTarget} open={!!editTarget} onClose={() => setEditTarget(null)} />
       )}
     </div>
   );

@@ -113,7 +113,7 @@ const NewsDetail = () => {
               {/* Cover image */}
               {article.cover_image_url && (
                 <AnimatedSection>
-                  <div className="aspect-square overflow-hidden rounded-2xl shadow-lg">
+                  <div className="aspect-[4/5] overflow-hidden rounded-2xl shadow-lg">
                     <img
                       src={article.cover_image_url}
                       alt={article.title}
@@ -282,7 +282,7 @@ const NewsDetail = () => {
                 <AnimatedSection key={item.id} delay={i * 80}>
                   <Link to={`/news/${item.slug}`} className="block">
                     <Card className="overflow-hidden hover:shadow-lg transition-all hover:-translate-y-1">
-                      <div className="aspect-square overflow-hidden">
+                      <div className="aspect-[4/5] overflow-hidden">
                         <img
                           src={item.cover_image_url || newsImg1}
                           alt={item.title}
