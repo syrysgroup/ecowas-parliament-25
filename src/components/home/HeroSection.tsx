@@ -121,6 +121,8 @@ const HeroSection = () => {
                   src={ecowasLogo}
                   alt={t("hero.ecowasParliament")}
                   className="h-55 w-55 md:h-60 md:w-60 object-contain animate-float drop-shadow-[0_0_40px_hsl(152_100%_26%/0.3)]"
+                  width={240}
+                  height={240}
                 />
               </div>
               <div className="text-center mt-4">
