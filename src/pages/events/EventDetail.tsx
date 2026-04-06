@@ -239,11 +239,46 @@ export default function EventDetail() {
                 <div className="bg-card border border-border rounded-2xl p-6 shadow-sm sticky top-24">
                   {isPast ? (
                     <div className="space-y-4">
-                      <div className="flex items-center gap-3">
-                        <AlertCircle className="h-5 w-5 text-muted-foreground" />
-                        <h3 className="text-xl font-bold text-card-foreground">This event has concluded</h3>
+                      <h3 className="text-xl font-bold text-card-foreground">Event Details</h3>
+                      <div className="space-y-3 text-sm">
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <Calendar className="h-4 w-4 flex-shrink-0" />
+                          <span>{formatDate(eventDate, locale)}</span>
+                        </div>
+                        {event.location && (
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <MapPin className="h-4 w-4 flex-shrink-0" />
+                            <span>{event.location}{event.country ? `, ${event.country}` : ""}</span>
+                          </div>
+                        )}
+                        {event.capacity && (
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <Users className="h-4 w-4 flex-shrink-0" />
+                            <span>Capacity: {event.capacity}</span>
+                          </div>
+                        )}
                       </div>
-                      <p className="text-sm text-muted-foreground">Registration is no longer available.</p>
+                      <Badge variant="secondary" className="text-xs">Concluded</Badge>
+                      <div className="pt-2 space-y-2">
+                        <h4 className="text-sm font-semibold text-card-foreground flex items-center gap-2"><Share2 className="h-3.5 w-3.5" /> Share</h4>
+                        <div className="flex flex-wrap gap-1.5">
+                          <Button asChild variant="outline" size="sm" className="h-7 text-xs">
+                            <a href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(event.title)}&url=${encodeURIComponent(shareUrl)}`} target="_blank" rel="noreferrer">𝕏</a>
+                          </Button>
+                          <Button asChild variant="outline" size="sm" className="h-7 text-xs">
+                            <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`} target="_blank" rel="noreferrer">Facebook</a>
+                          </Button>
+                          <Button asChild variant="outline" size="sm" className="h-7 text-xs">
+                            <a href={`https://wa.me/?text=${encodeURIComponent(`${event.title} ${shareUrl}`)}`} target="_blank" rel="noreferrer">WhatsApp</a>
+                          </Button>
+                          <Button variant="outline" size="sm" className="h-7 text-xs" onClick={handleCopyLink}>
+                            {copied ? "Copied!" : "Copy"}
+                          </Button>
+                        </div>
+                      </div>
+                      <Button asChild variant="outline" className="w-full gap-2 mt-2">
+                        <Link to="/contact">Contact Organizers</Link>
+                      </Button>
                     </div>
                   ) : showExternal ? (
                     <div className="space-y-4">
