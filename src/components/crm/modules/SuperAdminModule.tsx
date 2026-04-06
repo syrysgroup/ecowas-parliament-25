@@ -210,6 +210,14 @@ export default function SuperAdminModule() {
       } else {
         await (supabase as any).from("user_roles").delete().eq("user_id", targetUserId).eq("role", role);
       }
+      // Log activity
+      await (supabase as any).from("admin_activity_logs").insert({
+        actor_user_id: user!.id,
+        action: action === "add" ? "role_granted" : "role_revoked",
+        entity_type: "user_role",
+        entity_id: targetUserId,
+        details: { role, target_user_id: targetUserId },
+      });
       toast({ title: `Role ${action === "add" ? "granted" : "revoked"}` });
       loadData();
       if (targetUserId === user?.id) refreshRoles();
