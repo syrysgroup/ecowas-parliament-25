@@ -9,7 +9,7 @@ import ApplicationModal from "@/components/parliament/ApplicationModal";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Calendar, MapPin, Trophy, Users, Vote, Crown, FileText, Lightbulb } from "lucide-react";
+import { ArrowLeft, Calendar, MapPin, Trophy, Users, Vote, Crown, FileText, Lightbulb, Heart, Megaphone, Globe, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import parliamentHero from "@/assets/parliament-hero-clean.jpg";
 import ecowasLogo from "@/assets/ecowas-parliament-logo.png";
@@ -28,10 +28,10 @@ const seatPalette = [
 ];
 
 const objectives = [
-  "Create a visible pathway from application to nomination, vote, and verified representation.",
-  "Introduce each accepted delegate with a portrait, short bio, and public mandate.",
-  "Give every ECOWAS member state a live view of seats, candidate momentum, and verified delegates.",
-  "Support admin and moderator review queues through a secure Supabase-backed workflow.",
+  { icon: Megaphone, text: "Empower youth from across West Africa to deliberate on the issues that affect them and produce actionable resolutions for regional policy." },
+  { icon: Heart, text: "Ensure women are duly represented in youth parliamentary governance — building a parliament that reflects the diversity of the region." },
+  { icon: Globe, text: "Create a direct pipeline from youth resolutions to the ECOWAS Youth Parliament, giving young voices a seat at the table of regional decision-making." },
+  { icon: Sparkles, text: "Pioneer the first simulated youth parliament in West Africa's history — proving that the future of governance starts with the people it serves." },
 ];
 
 const principalOfficers = [
@@ -148,7 +148,10 @@ const Parliament = () => {
             <Badge className="border-primary-foreground/20 bg-primary-foreground/10 text-primary-foreground">Programme Pillar</Badge>
             <h1 className="mt-4 text-4xl font-black leading-tight md:text-6xl">Simulated Youth Parliament</h1>
             <p className="mt-4 max-w-2xl text-lg text-primary-foreground/75">
-              A public-facing selection platform where young people apply, nominate, vote, and meet the verified delegates representing each ECOWAS country.
+              The first-of-its-kind initiative bringing youth from across the ECOWAS region together to deliberate, debate, and deliver resolutions on the issues that shape their future — forwarded directly to the ECOWAS Youth Parliament.
+            </p>
+            <p className="mt-2 max-w-2xl text-sm text-primary-foreground/55 italic">
+              Aligned with ECOWAS Vision 2050 — from "ECOWAS of States" to "ECOWAS of the People."
             </p>
             <div className="mt-8 flex flex-wrap gap-6">
               {[
@@ -178,16 +181,35 @@ const Parliament = () => {
         </div>
       </section>
 
-      {/* Emulation notice */}
-      <section className="py-12">
-        <div className="container max-w-4xl">
-          <AnimatedSection className="text-center">
-            <Badge className="bg-ecowas-green/10 text-ecowas-green border-ecowas-green/20 mb-4">Representation Model</Badge>
-            <h2 className="text-2xl font-black text-foreground md:text-3xl">Emulating the ECOWAS Parliament</h2>
+      {/* Why This Matters */}
+      <section className="py-14">
+        <div className="container max-w-5xl">
+          <AnimatedSection className="text-center mb-10">
+            <Badge className="bg-ecowas-green/10 text-ecowas-green border-ecowas-green/20 mb-4">Why This Matters</Badge>
+            <h2 className="text-2xl font-black text-foreground md:text-3xl">More Than an Event — A Movement</h2>
             <p className="mx-auto mt-3 max-w-3xl text-muted-foreground">
-              The Simulated Youth Parliament mirrors the actual ECOWAS Parliament in its representation structure — each member state is allocated seats proportional to its population, and delegates follow the same institutional hierarchy including Principal Officers and country delegations.
+              This is not a simulation for the sake of ceremony. It is a historic, first-of-its-kind platform where the youth of West Africa take their rightful place in shaping the region's future. In the shift from "ECOWAS of States" to the "ECOWAS of the People," the Parliament — as the direct representative of the people — is uniquely positioned to ensure that young voices are not just heard, but acted upon.
             </p>
           </AnimatedSection>
+
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              { icon: Megaphone, title: "Youth Deliberation", desc: "Youth from 12 nations come together to debate and produce resolutions on issues that directly affect their lives and futures." },
+              { icon: Heart, title: "Women's Representation", desc: "A parliament where women are duly represented — ensuring gender parity is not an afterthought but a founding principle." },
+              { icon: Globe, title: "Resolution Pipeline", desc: "Resolutions adopted by youth delegates are forwarded to the ECOWAS Youth Parliament for formal consideration and action." },
+              { icon: Sparkles, title: "ECOWAS Vision 2050", desc: "Pioneering the shift from ECOWAS of States to ECOWAS of the People — proving governance begins with the people it serves." },
+            ].map((card, i) => (
+              <AnimatedSection key={card.title} delay={i * 70}>
+                <div className="rounded-3xl border border-border bg-card p-6 shadow-sm h-full">
+                  <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    <card.icon className="h-5 w-5" />
+                  </div>
+                  <h3 className="font-bold text-card-foreground mb-1.5">{card.title}</h3>
+                  <p className="text-sm leading-relaxed text-muted-foreground">{card.desc}</p>
+                </div>
+              </AnimatedSection>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -236,22 +258,32 @@ const Parliament = () => {
               {/* Objectives */}
               <div>
                 <AnimatedSection className="mb-6 text-center">
-                  <h2 className="text-2xl font-black text-foreground">Objectives</h2>
-                  <p className="mt-1 text-muted-foreground">What this programme sets out to achieve.</p>
+                  <h2 className="text-2xl font-black text-foreground">Our Mission</h2>
+                  <p className="mt-1 text-muted-foreground">What this programme sets out to achieve for the youth of West Africa.</p>
                 </AnimatedSection>
                 <div className="grid gap-4 md:grid-cols-2">
                   {objectives.map((objective, index) => (
-                    <AnimatedSection key={objective} delay={index * 60}>
+                    <AnimatedSection key={objective.text} delay={index * 60}>
                       <div className="rounded-3xl border border-border bg-card p-5 shadow-sm">
                         <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                          <Lightbulb className="h-4 w-4" />
+                          <objective.icon className="h-4 w-4" />
                         </div>
-                        <p className="text-sm leading-relaxed text-muted-foreground">{objective}</p>
+                        <p className="text-sm leading-relaxed text-muted-foreground">{objective.text}</p>
                       </div>
                     </AnimatedSection>
                   ))}
                 </div>
               </div>
+
+              {/* Vision 2050 Quote Block */}
+              <AnimatedSection>
+                <div className="rounded-3xl bg-gradient-hero p-8 md:p-12 text-primary-foreground text-center">
+                  <blockquote className="text-lg md:text-xl font-semibold italic leading-relaxed max-w-3xl mx-auto">
+                    "In the transition from ECOWAS of States to the ECOWAS of the People, the youth are not waiting for the future — they are building it. This Parliament is their platform, their voice, and their mandate."
+                  </blockquote>
+                  <p className="mt-4 text-sm text-primary-foreground/60 font-medium">ECOWAS Vision 2050 · ECOWAS of the People</p>
+                </div>
+              </AnimatedSection>
             </TabsContent>
 
             {/* ── Tab 2: Delegates ── */}
