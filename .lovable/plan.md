@@ -1,92 +1,89 @@
 
 
-## CRM Gap Analysis for Super Admin
+## Plan: Seed Demo Data to Database, Fix Smart Challenge UI, and Optimize Images
 
-### What's Already Working Well
-
-The CRM has solid foundations. These are fully functional:
-
-- **People & Access** -- Add/edit team members with photo upload, title, bio, organisation, "show on website" toggle
-- **Events Manager** -- Full CRUD with cover image upload, registration type (none/external/form), tags, publish toggle
-- **Sponsors & Partners Manager** -- Tabbed UI, logo upload, tier selection, programme assignment, publish toggle
-- **News Editor** -- CRUD with cover image, slug, excerpt, content, draft/published workflow
-- **Site Content Manager** -- Editable hero, stats, quote, about sections via database
-- **Contact Submissions** -- Read-only viewer
-- **Newsletter Subscribers** -- Subscriber list with counts
-- **Public pages wired to DB** -- LatestNews, News page, EventsSection, SponsorsSection, Stakeholders (partners + sponsors), PartnersStrip, StatsSection, and NewsletterSection all query the database
-
-### Remaining Gaps
-
-#### Gap 1: HeroSection still hardcoded
-The homepage hero (`HeroSection.tsx`) uses translation keys for all text (title, description, stats). It does NOT read from the `site_content` table. The Site Content Manager can edit a "hero" section, but the actual component ignores it.
-
-#### Gap 2: QuoteStrip still hardcoded
-`QuoteStrip.tsx` uses only translation keys. It does not read from the `site_content` table's "quote" section, even though the CRM module supports editing it.
-
-#### Gap 3: AboutSection still hardcoded
-`AboutSection.tsx` uses only translation keys. Does not read from the "about" section in `site_content`.
-
-#### Gap 4: Programme page sponsor footers use hardcoded placeholder data
-`ProgrammeSponsorsFooter.tsx` accepts hardcoded tier/sponsor arrays and renders `SponsorPlaceholderLogo` (grey boxes). Each programme page (Trade, Youth, Women, etc.) passes in hardcoded sponsor names. These should query the `sponsors` table filtered by programme.
-
-#### Gap 5: Stakeholders page -- ECOWAS Leadership section is hardcoded
-The leadership section at the top of `Stakeholders.tsx` has 4 hardcoded people with imported images. There's no CRM module to manage these VIP stakeholders. This could be handled by adding a "stakeholder" or "leadership" category to the profiles/people system.
-
-#### Gap 6: No event registration form on the public site
-Events with `registration_type = "form"` show "Register" on the public events page, but there's no actual form wired to the `event_registrations` table. The "built-in form" option in the CRM is non-functional on the frontend.
-
-#### Gap 7: No event detail page
-There's no `/events/:id` route for individual event pages. The events page only shows a list with no way to view full details, cover images, or register.
-
-#### Gap 8: Site Content Manager is too limited
-Only 4 section templates (hero, stats, quote, about). Missing templates for:
-- Countdown timer section
-- Pillars/Programmes grid
-- "Did You Know" section
-- Anniversary section
-- Speaker section
-- Implementing Partners section
-- Any other homepage section the super admin may want to control
-
-#### Gap 9: No media/image gallery management
-No CRM module to manage general media assets (photos, design files) beyond the specific buckets tied to events/news/sponsors. The `cms-media` bucket exists but has no management UI.
-
-#### Gap 10: No page/content preview from CRM
-The super admin cannot preview how their changes will look on the website without navigating to the public site manually. No "preview" button or iframe in the CRM.
+This plan addresses three requests: (1) populate the database with all hardcoded demo data so the CRM has full control, (2) fix the Smart Challenge button/text transparency issue, and (3) optimize large images.
 
 ---
 
-### Implementation Plan
+### Current State
 
-**Phase 1 -- Wire remaining hardcoded homepage sections to `site_content` DB** (3 components)
+**Data flow**: Many homepage sections already read from the database (site_content, events, news_articles, sponsors, partners) with hardcoded fallbacks. However, the database tables are mostly empty (all API responses return `[]`), so users only see fallback/translated content. The CRM already has editors for site content, news, events, sponsors, and partners.
 
-1. Update `HeroSection.tsx` to query `site_content` for key "hero" and use DB values with translation keys as fallback
-2. Update `QuoteStrip.tsx` to query `site_content` for key "quote" and use DB values with fallback
-3. Update `AboutSection.tsx` to query `site_content` for key "about" and use DB values with fallback
+**Smart Challenge button**: The "Register Your School" and "Watch Trailer" buttons on `/programmes/youth/smart` use `bg-accent text-accent-foreground` and `border-primary-foreground/30 text-primary-foreground` respectively over a dark overlay. The issue is that the hero overlay uses `from-foreground/95` which in light mode is near-white, making white text invisible.
 
-**Phase 2 -- Programme sponsor footers from DB** (2 files)
+**Images**: The `parliament-chamber.png` is 2MB. Several PNGs (logos) are 100-400KB. Most JPGs are already reasonably sized.
 
-4. Rewrite `ProgrammeSponsorsFooter.tsx` to accept a `programme` prop and query `sponsors` table where `programmes` array contains that programme and `is_published = true`, grouped by tier
-5. Update each programme page to pass programme ID instead of hardcoded arrays
+---
 
-**Phase 3 -- Event detail page + registration form** (2 new files)
+### Step 1: Seed Demo Data into Database
 
-6. Create `/events/:id` route with full event detail page showing cover image, description, location, date
-7. Add registration form component for events with `registration_type = "form"` that inserts into `event_registrations`
+Insert initial demo data into the following tables using SQL INSERT statements via the insert tool:
 
-**Phase 4 -- Expand Site Content Manager** (1 file)
+**a) `site_content`** -- seed all template sections (hero, stats, speaker, quote, countdown, pillars, did_you_know, anniversary, newsletter, sponsor_cta, implementing_partners, sponsor_portal_stats) with the current hardcoded English values so the CRM can edit them immediately.
 
-8. Add more section templates to `SiteContentModule.tsx`: countdown, pillars, did_you_know, anniversary, speaker, implementing_partners
+**b) `events`** -- insert 5 sample events (e.g., "25th Anniversary Ceremony", "Trade Summit", "Smart Challenge National Finals", "Innovators Pitch Day", "Women's Leadership Forum") with realistic dates, locations, tags, and `is_published = true`.
 
-**Phase 5 -- CRM enhancements** (2 files)
+**c) `news_articles`** -- insert 4 sample articles with titles, slugs, excerpts, content, and `status = 'published'` using the existing news image assets as cover URLs (relative paths won't work from DB, so we'll use placeholder descriptions and leave cover_image_url null or use a generic placeholder).
 
-9. Add a Media Library module to manage `cms-media` bucket (upload, browse, delete images)
-10. Add a "Leadership / VIPs" section to the People module or create a new `leadership` table for managing the Stakeholders page VIP section from the CRM
+**d) `sponsors`** -- insert the hardcoded sponsor names (AfDB, UNDP, NASENI, SMEDAN, Canada, SYRYS Technologies, Resident Technology, Duchess, WATH, EU Delegation) with appropriate tiers and programme associations, `is_published = true`.
 
-### Technical Notes
+**e) `partners`** -- insert institutional partners (ECOWAS Commission, AWALCO) and implementing partners with `is_published = true`.
 
-- No new database migrations needed for Phases 1-3 (all tables exist)
-- Phase 5 (leadership) may need a new DB table or a `category` column on `profiles`
-- All public components will use `useQuery` with current hardcoded/translation values as fallbacks
-- Estimated: ~12 files modified, ~3 new files created
+---
+
+### Step 2: Fix Smart Challenge Button and Text Visibility
+
+**Problem**: The hero section uses `bg-gradient-to-r from-foreground/95 via-foreground/80 to-foreground/50` as an overlay. In light theme, `foreground` is near-black so this works. But the buttons use classes that may render transparent in certain themes.
+
+**Fix in `SmartChallenge.tsx`**:
+- Change the "Back to Youth" button to use explicit dark colors instead of theme-dependent `primary-foreground`
+- Ensure the "Register Your School" button has explicit opaque background: `bg-[hsl(50,87%,45%)] text-black` instead of theme-variable `accent`
+- Ensure the "Watch Trailer" outline button has visible border/text: `border-white/30 text-white hover:bg-white/10`
+- Fix text colors in hero to use explicit `text-white` instead of `text-primary-foreground` which varies by theme
+
+---
+
+### Step 3: Fix StatsSection 406 Error
+
+The `StatsSection` uses `.single()` which fails with 406 when no row exists. Change to `.maybeSingle()` to match the pattern used elsewhere.
+
+---
+
+### Step 4: Optimize Large Images
+
+**a) Convert `parliament-chamber.png` (2MB)** to optimized WebP or compressed JPEG using a build script. We'll use sharp/imagemagick to compress it to ~200KB.
+
+**b) Compress `ecowas-parliament-logo.png` (403KB)** and other large PNGs.
+
+**c) Add `loading="lazy"` and explicit `width`/`height` attributes to all `<img>` tags that don't already have them to prevent layout shifts and enable lazy loading.
+
+**d) For the hero background image (`parliament-chamber.png`), add `fetchpriority="high"` since it's above the fold, while marking below-fold images as `loading="lazy"`.
+
+---
+
+### Step 5: Ensure CRM Full CRUD Control
+
+The CRM already has:
+- `SiteContentModule` -- edit all site_content sections
+- `NewsEditorModule` -- CRUD news articles
+- `EventsManagerModule` -- CRUD events
+- `SponsorsManagerModule` -- CRUD sponsors/partners
+
+Verify that delete operations work for events, news, and sponsors (they already have admin RLS policies with ALL command). No new CRM modules needed -- the existing ones provide full control once data is seeded.
+
+---
+
+### Technical Details
+
+**Files to modify**:
+- `src/components/home/StatsSection.tsx` -- change `.single()` to `.maybeSingle()`
+- `src/pages/programmes/SmartChallenge.tsx` -- fix hero button/text colors
+- Multiple component files -- add `loading="lazy"`, `width`, `height` to images
+- Image assets -- compress large files via build script
+
+**Database operations** (insert tool):
+- ~12 INSERT statements across site_content, events, news_articles, sponsors, partners tables
+
+**No schema changes needed** -- all tables already exist with proper columns and RLS policies.
 
