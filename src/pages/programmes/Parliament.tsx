@@ -230,10 +230,26 @@ const Parliament = () => {
                 <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
                   <Crown className="h-4 w-4 text-primary" /> Principal Officers
                 </h3>
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-                  {principalOfficers.map((officer, index) => (
+                <div className="flex justify-center mb-4">
+                  <div className="rounded-3xl border-2 border-primary bg-card p-4 text-center shadow-lg w-56">
+                    <div className="aspect-[4/5] overflow-hidden rounded-2xl mb-3">
+                      <img src={ecowasLogo} alt="Speaker placeholder" className="w-full h-full object-contain opacity-40" loading="lazy" decoding="async" />
+                    </div>
+                    <Badge className="bg-primary/10 text-primary mb-1 text-xs font-bold">{principalOfficers[0].role}</Badge>
+                    <p className="font-bold text-card-foreground text-sm">—</p>
+                    <div className="flex items-center justify-center gap-1 mt-1">
+                      <FlagImg country={principalOfficers[0].country} className="h-3 w-3" />
+                      <span className="text-xs text-muted-foreground">{principalOfficers[0].country}</span>
+                    </div>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">6th Legislature</p>
+                  </div>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                  {principalOfficers.slice(1).map((officer, index) => (
                     <div key={officer.role} className="rounded-3xl border border-border bg-card p-4 text-center shadow-sm">
-                      <img src={ecowasLogo} alt="Placeholder" className="mx-auto h-20 w-20 object-contain opacity-40 mb-3" width={80} height={80} loading="lazy" decoding="async" />
+                      <div className="aspect-[4/5] overflow-hidden rounded-2xl mb-3">
+                        <img src={ecowasLogo} alt="Placeholder" className="w-full h-full object-contain opacity-40" loading="lazy" decoding="async" />
+                      </div>
                       <Badge className="bg-primary/10 text-primary mb-1 text-xs">{officer.role}</Badge>
                       <p className="font-bold text-card-foreground text-sm">—</p>
                       <div className="flex items-center justify-center gap-1 mt-1">
