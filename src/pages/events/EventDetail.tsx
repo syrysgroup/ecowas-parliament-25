@@ -164,13 +164,13 @@ export default function EventDetail() {
             <div className="space-y-8">
               {event.cover_image_url ? (
                 <AnimatedSection>
-                  <div className="aspect-square overflow-hidden rounded-2xl shadow-lg">
+                   <div className="aspect-[4/5] overflow-hidden rounded-2xl shadow-lg">
                     <img src={event.cover_image_url} alt={event.title} className="w-full h-full object-cover object-center" loading="lazy" />
                   </div>
                 </AnimatedSection>
               ) : (
                 <AnimatedSection>
-                  <div className="aspect-square rounded-2xl bg-gradient-to-br from-primary/20 via-primary/10 to-muted flex items-center justify-center shadow-lg">
+                  <div className="aspect-[4/5] rounded-2xl bg-gradient-to-br from-primary/20 via-primary/10 to-muted flex items-center justify-center shadow-lg">
                     <Calendar className="h-24 w-24 text-primary/30" />
                   </div>
                 </AnimatedSection>
@@ -352,7 +352,7 @@ export default function EventDetail() {
                 <AnimatedSection key={ev.id} delay={i * 80}>
                   <Card className="overflow-hidden hover:shadow-lg transition-shadow h-full flex flex-col">
                     {ev.cover_image_url ? (
-                      <div className="aspect-square overflow-hidden">
+                      <div className="aspect-[4/5] overflow-hidden">
                         <img
                           src={ev.cover_image_url}
                           alt={ev.title}
@@ -361,7 +361,7 @@ export default function EventDetail() {
                         />
                       </div>
                     ) : (
-                      <div className="aspect-square bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                      <div className="aspect-[4/5] bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
                         <Calendar className="h-16 w-16 text-muted-foreground/30" />
                       </div>
                     )}
