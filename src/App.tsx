@@ -133,8 +133,8 @@ const App = () => (
               {/* CRM — all staff + sponsor roles */}
               <Route path="/crm" element={
                 <ProtectedRoute allowedRoles={[
-                  "super_admin", "admin", "moderator", "sponsor",
-                  "project_director", "programme_lead", "website_editor",
+                  "super_admin", "admin", "moderator", "sponsor", "media",
+                   "project_director", "programme_lead", "website_editor",
                   "marketing_manager", "communications_officer",
                   "finance_coordinator", "logistics_coordinator",
                   "sponsor_manager", "consultant",
