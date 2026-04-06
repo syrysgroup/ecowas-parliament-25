@@ -102,7 +102,7 @@ const SmartChallenge = () => {
             {stats.map((s, i) => (
               <div
                 key={s.label}
-                className="text-center bg-primary-foreground/5 backdrop-blur-sm rounded-xl p-4 border border-primary-foreground/10 animate-slide-up"
+                className="text-center bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10 animate-slide-up"
                 style={{ animationDelay: `${0.5 + i * 0.1}s` }}
               >
                 <div className="text-accent mx-auto mb-2">{s.icon}</div>
