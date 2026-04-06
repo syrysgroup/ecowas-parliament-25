@@ -60,7 +60,7 @@ const SmartChallenge = () => {
       {/* Hero */}
       <section className="relative min-h-[80vh] flex items-center overflow-hidden">
         <img src={heroBg} alt="" className="absolute inset-0 w-full h-full object-cover" width={1920} height={1080} />
-        <div className="absolute inset-0 bg-gradient-to-r from-foreground/95 via-foreground/80 to-foreground/50" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[hsl(0,0%,8%)]/95 via-[hsl(0,0%,8%)]/80 to-[hsl(0,0%,8%)]/50" />
 
         {/* Animated glow */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
