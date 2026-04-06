@@ -52,7 +52,7 @@ export default function Events() {
                   <AnimatedSection key={event.id} delay={i * 80}>
                     <Card className="overflow-hidden hover:shadow-lg transition-shadow h-full flex flex-col">
                       {event.cover_image_url ? (
-                       <div className="aspect-[4/5] overflow-hidden">
+                       <div className="aspect-video overflow-hidden">
                           <img
                             src={event.cover_image_url}
                             alt={event.title}
