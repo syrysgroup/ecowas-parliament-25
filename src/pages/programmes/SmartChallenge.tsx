@@ -329,7 +329,7 @@ const SmartChallenge = () => {
                     {item.icon}
                   </div>
                   <h3 className="font-bold mb-2">{item.title}</h3>
-                  <p className="text-sm text-primary-foreground/60">{item.desc}</p>
+                  <p className="text-sm text-white/60">{item.desc}</p>
                 </div>
               </AnimatedSection>
             ))}
