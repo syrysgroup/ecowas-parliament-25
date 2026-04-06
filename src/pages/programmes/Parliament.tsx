@@ -148,7 +148,10 @@ const Parliament = () => {
             <Badge className="border-primary-foreground/20 bg-primary-foreground/10 text-primary-foreground">Programme Pillar</Badge>
             <h1 className="mt-4 text-4xl font-black leading-tight md:text-6xl">Simulated Youth Parliament</h1>
             <p className="mt-4 max-w-2xl text-lg text-primary-foreground/75">
-              A public-facing selection platform where young people apply, nominate, vote, and meet the verified delegates representing each ECOWAS country.
+              The first-of-its-kind initiative bringing youth from across the ECOWAS region together to deliberate, debate, and deliver resolutions on the issues that shape their future — forwarded directly to the ECOWAS Youth Parliament.
+            </p>
+            <p className="mt-2 max-w-2xl text-sm text-primary-foreground/55 italic">
+              Aligned with ECOWAS Vision 2050 — from "ECOWAS of States" to "ECOWAS of the People."
             </p>
             <div className="mt-8 flex flex-wrap gap-6">
               {[
