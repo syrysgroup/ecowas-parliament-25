@@ -12,7 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 
 export default function MediaPortal() {
-  const { user, profile } = useAuthContext();
+  const { user } = useAuthContext();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
@@ -33,7 +33,7 @@ export default function MediaPortal() {
                 </Badge>
                 <h1 className="text-3xl md:text-4xl font-black">Media Portal</h1>
                 <p className="mt-2 text-primary-foreground/70">
-                  Welcome back, {profile?.full_name || user?.email}
+                  Welcome back, {user?.email}
                 </p>
               </div>
               <Button variant="secondary" size="sm" className="gap-2" onClick={handleSignOut}>
