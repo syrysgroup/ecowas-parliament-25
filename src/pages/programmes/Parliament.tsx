@@ -9,13 +9,14 @@ import ApplicationModal from "@/components/parliament/ApplicationModal";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Calendar, MapPin, Trophy, Users, Vote, Crown } from "lucide-react";
+import { ArrowLeft, Calendar, MapPin, Trophy, Users, Vote, Crown, FileText, Lightbulb } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import parliamentHero from "@/assets/parliament-hero-clean.jpg";
 import ecowasLogo from "@/assets/ecowas-parliament-logo.png";
 import ProgrammeSponsorMarquee from "@/components/shared/ProgrammeSponsorMarquee";
 import ProgrammeSponsorsFooter from "@/components/shared/ProgrammeSponsorsFooter";
 import FlagImg from "@/components/shared/FlagImg";
+import { useSiteContent } from "@/hooks/useSiteContent";
 
 type CountryRow = { name: string; flag: string; seats: number };
 type NomineeRow = { id: string; full_name: string; country: string; bio?: string; avatar_url?: string; title?: string; organisation?: string; vote_count?: number };
@@ -41,12 +42,55 @@ const principalOfficers = [
   { role: "4th Deputy Speaker", country: "Gambia" },
 ];
 
+/* ─── Principal Officers Block (reused in Overview & Delegates tabs) ─── */
+const PrincipalOfficersBlock = () => (
+  <>
+    {/* Speaker — elevated */}
+    <div className="flex justify-center mb-6">
+      <AnimatedSection>
+        <div className="rounded-3xl border-2 border-primary bg-card p-6 text-center shadow-lg w-64">
+          <div className="aspect-[4/5] overflow-hidden rounded-2xl mb-4">
+            <img src={ecowasLogo} alt="Speaker placeholder" className="w-full h-full object-contain opacity-40" loading="lazy" decoding="async" />
+          </div>
+          <Badge className="bg-primary/10 text-primary mb-2 text-xs font-bold">{principalOfficers[0].role}</Badge>
+          <p className="font-bold text-card-foreground">—</p>
+          <div className="flex items-center justify-center gap-1 mt-1">
+            <FlagImg country={principalOfficers[0].country} className="h-4 w-4" />
+            <p className="text-xs text-muted-foreground">{principalOfficers[0].country}</p>
+          </div>
+          <p className="text-[10px] text-muted-foreground mt-1">6th Legislature</p>
+        </div>
+      </AnimatedSection>
+    </div>
+    {/* Deputy Speakers */}
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {principalOfficers.slice(1).map((officer, index) => (
+        <AnimatedSection key={officer.role} delay={(index + 1) * 60}>
+          <div className="rounded-3xl border border-border bg-card p-5 text-center shadow-sm hover:shadow-lg transition-shadow">
+            <div className="aspect-[4/5] overflow-hidden rounded-2xl mb-4">
+              <img src={ecowasLogo} alt="Placeholder" className="w-full h-full object-contain opacity-40" loading="lazy" decoding="async" />
+            </div>
+            <Badge className="bg-primary/10 text-primary mb-2 text-xs">{officer.role}</Badge>
+            <p className="font-bold text-card-foreground">—</p>
+            <div className="flex items-center justify-center gap-1 mt-1">
+              <FlagImg country={officer.country} className="h-4 w-4" />
+              <p className="text-xs text-muted-foreground">{officer.country}</p>
+            </div>
+            <p className="text-[10px] text-muted-foreground mt-1">6th Legislature</p>
+          </div>
+        </AnimatedSection>
+      ))}
+    </div>
+  </>
+);
+
 const Parliament = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [countries, setCountries] = useState<CountryRow[]>([]);
   const [nominees, setNominees] = useState<NomineeRow[]>([]);
   const [representatives, setRepresentatives] = useState<RepresentativeRow[]>([]);
   const [applicationsByCountry, setApplicationsByCountry] = useState<Record<string, number>>({});
+  const { data: agendaContent } = useSiteContent("parliament_agenda");
 
   useEffect(() => {
     const loadData = async () => {
@@ -147,119 +191,82 @@ const Parliament = () => {
         </div>
       </section>
 
-      {/* Principal Officers */}
-      <section className="bg-muted/30 py-16">
+      {/* ═══════ Main Tabs ═══════ */}
+      <section className="py-8 pb-16">
         <div className="container">
-          <AnimatedSection className="mb-8 text-center">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <Crown className="h-5 w-5 text-primary" />
-              <h2 className="text-2xl font-black text-foreground">Principal Officers</h2>
-            </div>
-            <p className="text-muted-foreground">Leadership of the Simulated Youth Parliament · 6th Legislature</p>
-          </AnimatedSection>
-          {/* Speaker — elevated */}
-          <div className="flex justify-center mb-6">
-            <AnimatedSection>
-              <div className="rounded-3xl border-2 border-primary bg-card p-6 text-center shadow-lg w-64">
-                <div className="aspect-[4/5] overflow-hidden rounded-2xl mb-4">
-                  <img src={ecowasLogo} alt="Speaker placeholder" className="w-full h-full object-contain opacity-40" loading="lazy" decoding="async" />
-                </div>
-                <Badge className="bg-primary/10 text-primary mb-2 text-xs font-bold">{principalOfficers[0].role}</Badge>
-                <p className="font-bold text-card-foreground">—</p>
-                <div className="flex items-center justify-center gap-1 mt-1">
-                  <FlagImg country={principalOfficers[0].country} className="h-4 w-4" />
-                  <p className="text-xs text-muted-foreground">{principalOfficers[0].country}</p>
-                </div>
-                <p className="text-[10px] text-muted-foreground mt-1">6th Legislature</p>
-              </div>
-            </AnimatedSection>
-          </div>
-          {/* Deputy Speakers */}
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {principalOfficers.slice(1).map((officer, index) => (
-              <AnimatedSection key={officer.role} delay={(index + 1) * 60}>
-                <div className="rounded-3xl border border-border bg-card p-5 text-center shadow-sm hover:shadow-lg transition-shadow">
-                  <div className="aspect-[4/5] overflow-hidden rounded-2xl mb-4">
-                    <img src={ecowasLogo} alt="Placeholder" className="w-full h-full object-contain opacity-40" loading="lazy" decoding="async" />
-                  </div>
-                  <Badge className="bg-primary/10 text-primary mb-2 text-xs">{officer.role}</Badge>
-                  <p className="font-bold text-card-foreground">—</p>
-                  <div className="flex items-center justify-center gap-1 mt-1">
-                    <FlagImg country={officer.country} className="h-4 w-4" />
-                    <p className="text-xs text-muted-foreground">{officer.country}</p>
-                  </div>
-                  <p className="text-[10px] text-muted-foreground mt-1">6th Legislature</p>
-                </div>
-              </AnimatedSection>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Tabs: Delegations / Delegates */}
-      <section className="py-16">
-        <div className="container">
-          <Tabs defaultValue="delegations" className="w-full">
-            <TabsList className="mb-8">
-              <TabsTrigger value="delegations">Country Delegations</TabsTrigger>
-              <TabsTrigger value="delegates">Delegates</TabsTrigger>
+          <Tabs defaultValue="overview" className="w-full">
+            <TabsList className="mb-8 flex flex-wrap h-auto gap-1">
+              <TabsTrigger value="overview" className="gap-1.5">
+                <Crown className="h-3.5 w-3.5" /> Overview
+              </TabsTrigger>
+              <TabsTrigger value="delegates" className="gap-1.5">
+                <Users className="h-3.5 w-3.5" /> Delegates
+              </TabsTrigger>
+              <TabsTrigger value="nominations" className="gap-1.5">
+                <Vote className="h-3.5 w-3.5" /> Nominations & Voting
+              </TabsTrigger>
+              <TabsTrigger value="agenda" className="gap-1.5">
+                <FileText className="h-3.5 w-3.5" /> Agenda & Theme
+              </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="delegations">
-              <AnimatedSection className="mb-8">
-                <h2 className="text-2xl font-black text-foreground">Country delegations</h2>
-                <p className="mt-1 text-muted-foreground">Click a country to view nominations, voting, and verified delegates.</p>
-              </AnimatedSection>
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                {delegationCards.map((country, index) => (
-                  <AnimatedSection key={country.name} delay={index * 40}>
-                    <CountryDelegationCard {...country} />
-                  </AnimatedSection>
-                ))}
+            {/* ── Tab 1: Overview ── */}
+            <TabsContent value="overview" className="space-y-16">
+              {/* Hemicycle */}
+              <div>
+                <AnimatedSection className="mb-8 text-center">
+                  <h2 className="text-2xl font-black text-foreground">Interactive seating chart</h2>
+                  <p className="mt-1 text-muted-foreground">Hover the hemicycle to explore the {totalSeats}-seat allocation by country.</p>
+                </AnimatedSection>
+                <HemicycleChart countries={chartCountries} />
+              </div>
+
+              {/* Principal Officers */}
+              <div>
+                <AnimatedSection className="mb-8 text-center">
+                  <div className="flex items-center justify-center gap-2 mb-2">
+                    <Crown className="h-5 w-5 text-primary" />
+                    <h2 className="text-2xl font-black text-foreground">Principal Officers</h2>
+                  </div>
+                  <p className="text-muted-foreground">Leadership of the Simulated Youth Parliament · 6th Legislature</p>
+                </AnimatedSection>
+                <PrincipalOfficersBlock />
+              </div>
+
+              {/* Objectives */}
+              <div>
+                <AnimatedSection className="mb-6 text-center">
+                  <h2 className="text-2xl font-black text-foreground">Objectives</h2>
+                  <p className="mt-1 text-muted-foreground">What this programme sets out to achieve.</p>
+                </AnimatedSection>
+                <div className="grid gap-4 md:grid-cols-2">
+                  {objectives.map((objective, index) => (
+                    <AnimatedSection key={objective} delay={index * 60}>
+                      <div className="rounded-3xl border border-border bg-card p-5 shadow-sm">
+                        <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                          <Lightbulb className="h-4 w-4" />
+                        </div>
+                        <p className="text-sm leading-relaxed text-muted-foreground">{objective}</p>
+                      </div>
+                    </AnimatedSection>
+                  ))}
+                </div>
               </div>
             </TabsContent>
 
-            <TabsContent value="delegates">
-              {/* Principal officers at top */}
-              <AnimatedSection className="mb-8">
+            {/* ── Tab 2: Delegates ── */}
+            <TabsContent value="delegates" className="space-y-10">
+              <AnimatedSection>
                 <h2 className="text-2xl font-black text-foreground mb-1">Principal Officers & Country Delegates</h2>
                 <p className="text-muted-foreground">6th Legislature · Simulated Youth Parliament</p>
               </AnimatedSection>
 
-              <div className="mb-10">
+              {/* Principal officers */}
+              <div>
                 <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
                   <Crown className="h-4 w-4 text-primary" /> Principal Officers
                 </h3>
-                <div className="flex justify-center mb-4">
-                  <div className="rounded-3xl border-2 border-primary bg-card p-4 text-center shadow-lg w-56">
-                    <div className="aspect-[4/5] overflow-hidden rounded-2xl mb-3">
-                      <img src={ecowasLogo} alt="Speaker placeholder" className="w-full h-full object-contain opacity-40" loading="lazy" decoding="async" />
-                    </div>
-                    <Badge className="bg-primary/10 text-primary mb-1 text-xs font-bold">{principalOfficers[0].role}</Badge>
-                    <p className="font-bold text-card-foreground text-sm">—</p>
-                    <div className="flex items-center justify-center gap-1 mt-1">
-                      <FlagImg country={principalOfficers[0].country} className="h-3 w-3" />
-                      <span className="text-xs text-muted-foreground">{principalOfficers[0].country}</span>
-                    </div>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">6th Legislature</p>
-                  </div>
-                </div>
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                  {principalOfficers.slice(1).map((officer, index) => (
-                    <div key={officer.role} className="rounded-3xl border border-border bg-card p-4 text-center shadow-sm">
-                      <div className="aspect-[4/5] overflow-hidden rounded-2xl mb-3">
-                        <img src={ecowasLogo} alt="Placeholder" className="w-full h-full object-contain opacity-40" loading="lazy" decoding="async" />
-                      </div>
-                      <Badge className="bg-primary/10 text-primary mb-1 text-xs">{officer.role}</Badge>
-                      <p className="font-bold text-card-foreground text-sm">—</p>
-                      <div className="flex items-center justify-center gap-1 mt-1">
-                        <FlagImg country={officer.country} className="h-3 w-3" />
-                        <span className="text-xs text-muted-foreground">{officer.country}</span>
-                      </div>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">6th Legislature</p>
-                    </div>
-                  ))}
-                </div>
+                <PrincipalOfficersBlock />
               </div>
 
               {/* All country delegate slots */}
@@ -267,7 +274,7 @@ const Parliament = () => {
                 const countryReps = representatives.filter(r => r.country === country.name);
                 const emptySlots = Math.max(country.seats - countryReps.length, 0);
                 return (
-                  <div key={country.name} className="mb-10">
+                  <div key={country.name}>
                     <div className="flex items-center gap-2 mb-4">
                       <FlagImg country={country.name} className="h-6 w-6" />
                       <h3 className="text-lg font-bold text-foreground">{country.name}</h3>
@@ -297,47 +304,79 @@ const Parliament = () => {
                 );
               })}
             </TabsContent>
-          </Tabs>
-        </div>
-      </section>
 
-      {/* Hemicycle */}
-      <section className="bg-muted/30 py-16">
-        <div className="container">
-          <AnimatedSection className="mb-8 text-center">
-            <h2 className="text-2xl font-black text-foreground">Interactive seating chart</h2>
-            <p className="mt-1 text-muted-foreground">Hover the hemicycle to explore the {totalSeats}-seat allocation by country.</p>
-          </AnimatedSection>
-          <HemicycleChart countries={chartCountries} />
-        </div>
-      </section>
-
-      {/* Selection process */}
-      <section className="py-16">
-        <div className="container max-w-3xl">
-          <AnimatedSection className="mb-8">
-            <h2 className="text-2xl font-black text-foreground">Selection process</h2>
-            <p className="mt-1 text-muted-foreground">How applications, nominations, votes, and verification work together.</p>
-          </AnimatedSection>
-          <NominationTimeline />
-          <AnimatedSection delay={300} className="mt-8 text-center">
-            <Button size="lg" onClick={() => setModalOpen(true)}>Apply, nominate, or vote</Button>
-          </AnimatedSection>
-        </div>
-      </section>
-
-      <section className="bg-muted/30 py-16">
-        <div className="container grid gap-4 md:grid-cols-2">
-          {objectives.map((objective, index) => (
-            <AnimatedSection key={objective} delay={index * 60}>
-              <div className="rounded-3xl border border-border bg-card p-5 shadow-sm">
-                <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                  <Calendar className="h-4 w-4" />
+            {/* ── Tab 3: Nominations & Voting ── */}
+            <TabsContent value="nominations" className="space-y-16">
+              {/* Country delegations grid */}
+              <div>
+                <AnimatedSection className="mb-8">
+                  <h2 className="text-2xl font-black text-foreground">Country delegations</h2>
+                  <p className="mt-1 text-muted-foreground">Click a country to view nominations, voting, and verified delegates.</p>
+                </AnimatedSection>
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                  {delegationCards.map((country, index) => (
+                    <AnimatedSection key={country.name} delay={index * 40}>
+                      <CountryDelegationCard {...country} />
+                    </AnimatedSection>
+                  ))}
                 </div>
-                <p className="text-sm leading-relaxed text-muted-foreground">{objective}</p>
               </div>
-            </AnimatedSection>
-          ))}
+
+              {/* Selection process */}
+              <div className="max-w-3xl mx-auto">
+                <AnimatedSection className="mb-8">
+                  <h2 className="text-2xl font-black text-foreground">Selection process</h2>
+                  <p className="mt-1 text-muted-foreground">How applications, nominations, votes, and verification work together.</p>
+                </AnimatedSection>
+                <NominationTimeline />
+                <AnimatedSection delay={300} className="mt-8 text-center">
+                  <Button size="lg" onClick={() => setModalOpen(true)}>Apply, nominate, or vote</Button>
+                </AnimatedSection>
+              </div>
+            </TabsContent>
+
+            {/* ── Tab 4: Agenda & Theme ── */}
+            <TabsContent value="agenda" className="space-y-10">
+              <AnimatedSection>
+                <h2 className="text-2xl font-black text-foreground">Agenda & Theme</h2>
+                <p className="mt-1 text-muted-foreground">The thematic focus and agenda for the Simulated Youth Parliament.</p>
+              </AnimatedSection>
+
+              {agendaContent ? (
+                <div className="space-y-8">
+                  {agendaContent.theme && (
+                    <AnimatedSection>
+                      <div className="rounded-3xl border border-border bg-card p-8 shadow-sm">
+                        <Badge className="bg-primary/10 text-primary mb-4">Theme</Badge>
+                        <h3 className="text-xl font-black text-card-foreground mb-2">{agendaContent.theme}</h3>
+                        {agendaContent.theme_description && (
+                          <p className="text-muted-foreground leading-relaxed">{agendaContent.theme_description}</p>
+                        )}
+                      </div>
+                    </AnimatedSection>
+                  )}
+                  {agendaContent.agenda && (
+                    <AnimatedSection delay={80}>
+                      <div className="rounded-3xl border border-border bg-card p-8 shadow-sm">
+                        <Badge className="bg-secondary/10 text-secondary mb-4">Agenda</Badge>
+                        <p className="text-muted-foreground leading-relaxed whitespace-pre-line">{agendaContent.agenda}</p>
+                      </div>
+                    </AnimatedSection>
+                  )}
+                </div>
+              ) : (
+                <AnimatedSection>
+                  <div className="rounded-3xl border border-dashed border-border bg-muted/30 p-12 text-center">
+                    <FileText className="h-10 w-10 text-muted-foreground/40 mx-auto mb-4" />
+                    <h3 className="text-lg font-bold text-foreground mb-2">Agenda coming soon</h3>
+                    <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                      The theme and agenda for the upcoming Simulated Youth Parliament session will be published here. Check back for updates or subscribe to our newsletter.
+                    </p>
+                  </div>
+                </AnimatedSection>
+              )}
+            </TabsContent>
+          </Tabs>
         </div>
       </section>
 
