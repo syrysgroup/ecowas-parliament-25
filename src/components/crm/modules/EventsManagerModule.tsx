@@ -70,6 +70,13 @@ function EventDialog({ open, onClose, event }: { open: boolean; onClose: () => v
   const [tag, setTag] = useState(event?.tag ?? "");
   const [tagColor, setTagColor] = useState(event?.tag_color ?? "primary");
   const [uploading, setUploading] = useState(false);
+  const [externalLinks, setExternalLinks] = useState<{ title: string; url: string }[]>(() => {
+    try {
+      const links = (event as any)?.external_links;
+      if (Array.isArray(links)) return links;
+      return [];
+    } catch { return []; }
+  });
 
   const handleUpload = async (file: File) => {
     setUploading(true);
@@ -93,6 +100,7 @@ function EventDialog({ open, onClose, event }: { open: boolean; onClose: () => v
         capacity: capacity ? parseInt(capacity) : null, is_published: isPublished,
         cover_image_url: coverUrl || null, registration_url: regUrl || null,
         registration_type: regType, tag: tag || null, tag_color: tagColor || null,
+        external_links: externalLinks.filter(l => l.url.trim()),
         updated_at: new Date().toISOString(),
       };
       if (isEdit) {
