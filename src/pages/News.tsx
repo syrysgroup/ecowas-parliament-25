@@ -54,8 +54,7 @@ const News = () => {
                           alt={article.title}
                           className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
                           loading="lazy"
-                          width={1080}
-                          height={1350}
+                        />
                         />
                       </div>
                       <div className="p-5">
