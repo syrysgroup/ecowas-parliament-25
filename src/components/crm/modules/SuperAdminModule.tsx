@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import {
   Crown, ShieldCheck, Eye, Handshake, Users, Mail, Send, Loader2,
-  RefreshCw, Settings, Activity, Globe, Lock, Clock, UserPlus,
+  RefreshCw, Settings, Activity, Globe, Lock, Clock, UserPlus, Download,
   Trash2, CheckCircle2, AlertTriangle, LayoutDashboard,
   FileText, Star, Calendar, Newspaper, ChevronRight,
 } from "lucide-react";
@@ -271,6 +271,18 @@ export default function SuperAdminModule() {
     u.email.toLowerCase().includes(searchQ.toLowerCase()) ||
     u.country.toLowerCase().includes(searchQ.toLowerCase())
   );
+
+  const exportUsersCSV = () => {
+    const header = "Name,Email,Country,Roles,Joined\n";
+    const rows = filteredUsers.map(u =>
+      `"${u.full_name}","${u.email}","${u.country}","${u.roles.join('; ')}","${u.created_at}"`
+    ).join("\n");
+    const blob = new Blob([header + rows], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = "users-export.csv"; a.click();
+    URL.revokeObjectURL(url);
+  };
 
   const NAV: { id: Tab; label: string; icon: React.ElementType; badge?: number }[] = [
     { id:"overview",    label:"Overview",     icon:LayoutDashboard },
