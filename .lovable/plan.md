@@ -1,59 +1,38 @@
 
 
-# Revised Plan: Parliament Tab Redesign + CRM Verification
+# Parliament Page: Vision & Impact Messaging Redesign
 
-After inspecting the codebase, most items from the previous plan are already implemented:
-- All image containers (News, Events, Parliament, LatestNews) already use `aspect-[4/5]`
-- Speaker is already elevated above deputy speakers
-- DocumentsModule already supports file upload to `documents` bucket with language selector (EN/FR/PT)
-- SuperAdminModule already has CSV export, activity logging for role changes, and invitation management
-- All database tables (`documents`, `budget_items`, `invoices`, `invoice_items`) already exist with proper columns
+## Problem
+The current page reads like a technical platform description ("selection platform where young people apply, nominate, vote..."). It fails to communicate **why** this matters — that this is a historic, first-of-its-kind initiative giving West African youth a real voice in regional governance, aligned with the ECOWAS Vision 2050 shift from "ECOWAS of States" to "ECOWAS of the People."
 
-The remaining work is the **Parliament page tab redesign**.
+## Changes
 
----
+### 1. Rewrite the Hero Section (lines 148-152)
+Replace the technical description with an inspiring, purpose-driven message:
+- Title: keep "Simulated Youth Parliament"
+- Subtitle: reframe around the vision — youth from across the region deliberating on issues that affect them, producing resolutions to be forwarded to the actual ECOWAS Parliament
+- Add a line about this being the first initiative of its kind
 
-## Parliament Page Tab Restructure
+### 2. Replace the "Emulation Notice" with a "Why This Matters" Section (lines 182-191)
+Transform the dry "Emulating the ECOWAS Parliament" section into a compelling impact section with:
+- **Vision 2050 alignment**: "ECOWAS of States → ECOWAS of the People" — the Parliament as the direct representative of the people is uniquely positioned to engage youth
+- **First of its kind**: Historic significance
+- **Youth voice**: Resolutions deliberated by youth will be passed to the ECOWAS Youth Parliament
+- **Women's representation**: A parliament where women are duly represented, ensuring gender parity in youth governance
+- Use 3-4 impact cards (icons + short text) highlighting: Youth Deliberation, Women's Representation, Resolution Pipeline to ECOWAS, Vision 2050 alignment
 
-**Current state**: The page has a linear layout with separate sections for Principal Officers, a 2-tab area (Country Delegations / Delegates), Hemicycle chart, Selection Process, and Objectives -- all stacked vertically making the page very long.
+### 3. Rewrite the Objectives (lines 30-35)
+Replace the current technical/admin-focused objectives with purpose-driven ones:
+- Empower youth to deliberate on regional issues and produce actionable resolutions
+- Ensure women are duly represented in youth parliamentary governance
+- Create a direct pipeline from youth resolutions to the ECOWAS Parliament
+- Pioneer the first simulated youth parliament in West Africa's history
 
-**New tab layout** (after the hero section and emulation notice):
+### 4. Add a Quote/Vision Block in the Overview Tab
+After the objectives grid, add a styled blockquote section emphasizing the ECOWAS Vision 2050 and the shift to "ECOWAS of the People."
 
-```text
-[ Overview ] [ Delegates ] [ Nominations & Voting ] [ Agenda & Theme ]
-```
+## File Modified
+- `src/pages/programmes/Parliament.tsx` — hero text, emulation section rewrite, objectives rewrite, new vision block
 
-### Tab 1: Overview (default)
-- Interactive hemicycle seating chart (moved from bottom)
-- Principal Officers cards (Speaker elevated, 4 deputies below)
-- Objectives grid (moved from bottom)
-
-### Tab 2: Delegates
-- Principal Officers at top (Speaker elevated + 4 deputies) -- same as current "Delegates" tab content
-- All country delegate slots grouped by country (existing code)
-
-### Tab 3: Nominations & Voting
-- Country Delegations grid (existing "Country Delegations" tab -- click to view nominations/voting per country)
-- Selection process timeline (NominationTimeline component, moved from bottom)
-- "Apply, nominate, or vote" CTA button
-
-### Tab 4: Agenda & Theme
-- Placeholder section for parliament theme/agenda content
-- Will query `site_content` table for a `parliament_agenda` section key
-- Display theme description, agenda items, and any related documents
-
-**File to modify**: `src/pages/programmes/Parliament.tsx`
-
----
-
-## Technical Details
-
-- Restructure the JSX in Parliament.tsx to wrap all content below the hero in a single `<Tabs>` component with 4 tab triggers
-- Move the hemicycle section into the Overview tab
-- Move NominationTimeline + objectives into the Nominations & Voting tab
-- Create a new Agenda & Theme tab with placeholder content that reads from `site_content` where `section_key = 'parliament_agenda'`
-- No database migrations needed
-- No new dependencies
-
-**Estimated scope**: 1 file change (~150 lines restructured), no migrations.
+## No migrations or new dependencies needed.
 
