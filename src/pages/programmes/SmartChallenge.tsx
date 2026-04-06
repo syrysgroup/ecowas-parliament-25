@@ -324,7 +324,7 @@ const SmartChallenge = () => {
               { icon: <Eye className="h-6 w-6" />, title: "Spectator Portal", desc: "BigScreen broadcast, live feeds, school fan zones, and real-time leaderboards." },
             ].map((item, i) => (
               <AnimatedSection key={item.title} delay={i * 100}>
-                <div className="text-center p-6 rounded-xl bg-primary-foreground/5 border border-primary-foreground/10 hover:bg-primary-foreground/8 transition-all duration-300">
+                <div className="text-center p-6 rounded-xl bg-white/5 border border-white/10 hover:bg-white/8 transition-all duration-300">
                   <div className="w-12 h-12 rounded-full bg-accent/20 flex items-center justify-center text-accent mx-auto mb-4">
                     {item.icon}
                   </div>
