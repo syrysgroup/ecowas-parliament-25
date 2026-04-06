@@ -1,89 +1,52 @@
 
 
-## Plan: Seed Demo Data to Database, Fix Smart Challenge UI, and Optimize Images
+# Fix Build Errors + Vuexy-Inspired CRM Visual Upgrade
 
-This plan addresses three requests: (1) populate the database with all hardcoded demo data so the CRM has full control, (2) fix the Smart Challenge button/text transparency issue, and (3) optimize large images.
+## Priority 1: Fix Current Errors
 
----
+### Build Error — `PillarsGrid.tsx`
+The `programme_pillars` table doesn't exist in the Supabase types. The query uses `as any` but TypeScript still can't infer the return type. Fix: cast `data` explicitly to `PillarRow[]` in the queryFn return.
 
-### Current State
+### Runtime Error — `next-themes` useContext null
+The `ThemeProvider` from `next-themes` is likely losing its React context due to a version mismatch or duplicate React instances. Fix: ensure `next-themes` is compatible and the provider wraps the entire tree correctly in `App.tsx`.
 
-**Data flow**: Many homepage sections already read from the database (site_content, events, news_articles, sponsors, partners) with hardcoded fallbacks. However, the database tables are mostly empty (all API responses return `[]`), so users only see fallback/translated content. The CRM already has editors for site content, news, events, sponsors, and partners.
+## Priority 2: Vuexy Design Adoption (Same Stack)
 
-**Smart Challenge button**: The "Register Your School" and "Watch Trailer" buttons on `/programmes/youth/smart` use `bg-accent text-accent-foreground` and `border-primary-foreground/30 text-primary-foreground` respectively over a dark overlay. The issue is that the hero overlay uses `from-foreground/95` which in light mode is near-white, making white text invisible.
+As explained in the previous plan (which was approved), your project runs on **React + Vite + Tailwind + shadcn/ui**. The Vuexy template uses **Next.js + MUI + Emotion** — a fundamentally different stack. Directly copying the files will not work. The approved approach is to **recreate the Vuexy visual design** using your existing technology.
 
-**Images**: The `parliament-chamber.png` is 2MB. Several PNGs (logos) are 100-400KB. Most JPGs are already reasonably sized.
+### What will be built
 
----
+**Phase 1 — CRM Dashboard Visual Overhaul**
+- Install `apexcharts` and `react-apexcharts` for premium chart widgets
+- Recreate all 10 Vuexy CRM dashboard widgets (revenue growth bar chart, radar sales chart, earning reports with tabs, activity timeline, active projects, project status, sales by countries, last transactions, distributed bar chart, line area yearly sales) using ApexCharts + shadcn Cards
+- Match Vuexy's card styling: subtle shadows, rounded corners, header with icon + title + subtitle pattern
+- Apply Vuexy's color palette to the Tailwind config (primary indigo-violet, success green, warning amber, info cyan)
 
-### Step 1: Seed Demo Data into Database
+**Phase 2 — Layout and Navigation Enhancement**
+- Upgrade CRM sidebar to match Vuexy's vertical nav: collapsible sections, menu section headers, active state highlighting with left border accent
+- Upgrade top bar: search input, notification dropdown, user avatar with role badge, language switcher
+- Add a theme customizer drawer (accessible via floating button): primary color picker, sidebar style (light/dark), content width (full/boxed), dark/light mode toggle
 
-Insert initial demo data into the following tables using SQL INSERT statements via the insert tool:
+**Phase 3 — Data Tables and Forms**
+- Add `@tanstack/react-table` for advanced sortable/filterable/paginated tables
+- Build a reusable `DataTable` component styled to match Vuexy's table design
+- Create drawer-based add/edit forms using shadcn `Sheet` (matching Vuexy's `AddCustomerDrawer` pattern)
 
-**a) `site_content`** -- seed all template sections (hero, stats, speaker, quote, countdown, pillars, did_you_know, anniversary, newsletter, sponsor_cta, implementing_partners, sponsor_portal_stats) with the current hardcoded English values so the CRM can edit them immediately.
+**Phase 4 — Assets**
+- Extract avatar images and CRM-related assets from the ZIP into `public/images/`
 
-**b) `events`** -- insert 5 sample events (e.g., "25th Anniversary Ceremony", "Trade Summit", "Smart Challenge National Finals", "Innovators Pitch Day", "Women's Leadership Forum") with realistic dates, locations, tags, and `is_published = true`.
+### Technical approach
+- **No MUI, no Emotion, no Next.js APIs** — everything stays in the current Vite + Tailwind + shadcn stack
+- ApexCharts is the only significant new dependency
+- All existing Supabase integrations and CRM modules remain untouched
+- Chart widgets will use static demo data initially (like Vuexy does), with hooks ready to connect to Supabase queries
 
-**c) `news_articles`** -- insert 4 sample articles with titles, slugs, excerpts, content, and `status = 'published'` using the existing news image assets as cover URLs (relative paths won't work from DB, so we'll use placeholder descriptions and leave cover_image_url null or use a generic placeholder).
-
-**d) `sponsors`** -- insert the hardcoded sponsor names (AfDB, UNDP, NASENI, SMEDAN, Canada, SYRYS Technologies, Resident Technology, Duchess, WATH, EU Delegation) with appropriate tiers and programme associations, `is_published = true`.
-
-**e) `partners`** -- insert institutional partners (ECOWAS Commission, AWALCO) and implementing partners with `is_published = true`.
-
----
-
-### Step 2: Fix Smart Challenge Button and Text Visibility
-
-**Problem**: The hero section uses `bg-gradient-to-r from-foreground/95 via-foreground/80 to-foreground/50` as an overlay. In light theme, `foreground` is near-black so this works. But the buttons use classes that may render transparent in certain themes.
-
-**Fix in `SmartChallenge.tsx`**:
-- Change the "Back to Youth" button to use explicit dark colors instead of theme-dependent `primary-foreground`
-- Ensure the "Register Your School" button has explicit opaque background: `bg-[hsl(50,87%,45%)] text-black` instead of theme-variable `accent`
-- Ensure the "Watch Trailer" outline button has visible border/text: `border-white/30 text-white hover:bg-white/10`
-- Fix text colors in hero to use explicit `text-white` instead of `text-primary-foreground` which varies by theme
-
----
-
-### Step 3: Fix StatsSection 406 Error
-
-The `StatsSection` uses `.single()` which fails with 406 when no row exists. Change to `.maybeSingle()` to match the pattern used elsewhere.
-
----
-
-### Step 4: Optimize Large Images
-
-**a) Convert `parliament-chamber.png` (2MB)** to optimized WebP or compressed JPEG using a build script. We'll use sharp/imagemagick to compress it to ~200KB.
-
-**b) Compress `ecowas-parliament-logo.png` (403KB)** and other large PNGs.
-
-**c) Add `loading="lazy"` and explicit `width`/`height` attributes to all `<img>` tags that don't already have them to prevent layout shifts and enable lazy loading.
-
-**d) For the hero background image (`parliament-chamber.png`), add `fetchpriority="high"` since it's above the fold, while marking below-fold images as `loading="lazy"`.
-
----
-
-### Step 5: Ensure CRM Full CRUD Control
-
-The CRM already has:
-- `SiteContentModule` -- edit all site_content sections
-- `NewsEditorModule` -- CRUD news articles
-- `EventsManagerModule` -- CRUD events
-- `SponsorsManagerModule` -- CRUD sponsors/partners
-
-Verify that delete operations work for events, news, and sponsors (they already have admin RLS policies with ALL command). No new CRM modules needed -- the existing ones provide full control once data is seeded.
-
----
-
-### Technical Details
-
-**Files to modify**:
-- `src/components/home/StatsSection.tsx` -- change `.single()` to `.maybeSingle()`
-- `src/pages/programmes/SmartChallenge.tsx` -- fix hero button/text colors
-- Multiple component files -- add `loading="lazy"`, `width`, `height` to images
-- Image assets -- compress large files via build script
-
-**Database operations** (insert tool):
-- ~12 INSERT statements across site_content, events, news_articles, sponsors, partners tables
-
-**No schema changes needed** -- all tables already exist with proper columns and RLS policies.
+### Files to create/modify
+- `src/components/crm/modules/DashboardModule.tsx` — complete redesign with Vuexy-style widget grid
+- `src/components/crm/dashboard/` — new folder with 10 chart/widget components
+- `src/components/crm/CRMLayout.tsx` — sidebar and topbar visual upgrade
+- `src/components/crm/ThemeCustomizer.tsx` — new customizer drawer
+- `tailwind.config.ts` — updated color palette
+- `src/components/home/PillarsGrid.tsx` — fix TS error
+- `src/App.tsx` — fix next-themes provider issue
 
