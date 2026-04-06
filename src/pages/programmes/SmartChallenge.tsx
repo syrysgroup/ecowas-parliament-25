@@ -105,9 +105,9 @@ const SmartChallenge = () => {
                 className="text-center bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10 animate-slide-up"
                 style={{ animationDelay: `${0.5 + i * 0.1}s` }}
               >
-                <div className="text-accent mx-auto mb-2">{s.icon}</div>
-                <p className="text-2xl font-black text-primary-foreground">{s.value}</p>
-                <p className="text-xs text-primary-foreground/50 font-medium">{s.label}</p>
+                <div className="text-[hsl(50,87%,45%)] mx-auto mb-2">{s.icon}</div>
+                <p className="text-2xl font-black text-white">{s.value}</p>
+                <p className="text-xs text-white/50 font-medium">{s.label}</p>
               </div>
             ))}
           </div>
