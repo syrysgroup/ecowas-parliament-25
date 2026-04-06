@@ -77,21 +77,21 @@ const SmartChallenge = () => {
             <Badge className="bg-accent/20 text-accent border-accent/30 mb-4 animate-fade-in">
               <BrainCircuit className="h-3 w-3 mr-1" /> Powered by SMARTq
             </Badge>
-            <h1 className="text-4xl md:text-6xl font-black text-primary-foreground mb-6 animate-slide-up">
+            <h1 className="text-4xl md:text-6xl font-black text-white mb-6 animate-slide-up">
               ECOWAS Parliament<br />
-              <span className="text-accent">Smart Challenge</span>
+              <span className="text-[hsl(50,87%,45%)]">Smart Challenge</span>
             </h1>
-            <p className="text-primary-foreground/70 text-lg leading-relaxed mb-4 animate-slide-up" style={{ animationDelay: "0.2s" }}>
+            <p className="text-white/70 text-lg leading-relaxed mb-4 animate-slide-up" style={{ animationDelay: "0.2s" }}>
               The premier continental academic competition for secondary school students across all 12 ECOWAS member states.
             </p>
-            <p className="text-primary-foreground/50 text-sm mb-8 animate-slide-up" style={{ animationDelay: "0.3s" }}>
+            <p className="text-white/50 text-sm mb-8 animate-slide-up" style={{ animationDelay: "0.3s" }}>
               7 rounds · 4 subjects · Dual-track scoring · Live broadcast finale
             </p>
             <div className="flex flex-wrap gap-4 animate-slide-up" style={{ animationDelay: "0.4s" }}>
-              <Button size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90 font-bold">
+              <Button size="lg" className="bg-[hsl(50,87%,45%)] text-[hsl(0,0%,8%)] hover:bg-[hsl(50,87%,50%)] font-bold">
                 Register Your School <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
-              <Button size="lg" variant="outline" className="border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10">
+              <Button size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10">
                 Watch Trailer
               </Button>
             </div>
