@@ -182,6 +182,8 @@ function SectionEditor({ section, onSaved }: { section: SiteContentRow; onSaved:
   const template = SECTION_TEMPLATES[section.section_key];
   const [values, setValues] = useState<Record<string, string>>(section.content as any ?? {});
   const [saving, setSaving] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const handleSave = async () => {
     setSaving(true);
@@ -197,6 +199,20 @@ function SectionEditor({ section, onSaved }: { section: SiteContentRow; onSaved:
       toast({ title: "Error", description: err.message, variant: "destructive" });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      await (supabase as any).from("site_content").delete().eq("id", section.id);
+      toast({ title: "Section deleted" });
+      onSaved();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setDeleting(false);
+      setConfirmDelete(false);
     }
   };
 
