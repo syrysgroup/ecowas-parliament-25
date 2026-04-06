@@ -464,8 +464,9 @@ export default function SponsorsManagerModule() {
 
         <TabsContent value="sponsors" className="mt-4 space-y-2">
           {loadingS && <div className="flex justify-center py-12"><div className="w-6 h-6 border-2 border-emerald-700 border-t-emerald-400 rounded-full animate-spin" /></div>}
-          {!loadingS && sponsors.map(s => (
+          {!loadingS && filteredSponsors.map(s => (
             <div key={s.id} className="bg-crm-card border border-crm-border rounded-xl p-4 flex items-center gap-4 hover:border-crm-border-hover transition-colors">
+              <Checkbox checked={selectedIds.has(s.id)} onCheckedChange={() => toggleSelect(s.id)} />
               {s.logo_url ? <img src={s.logo_url} alt="" className="w-12 h-12 object-contain rounded" width={48} height={48} loading="lazy" decoding="async" /> : <div className="w-12 h-12 bg-crm-surface rounded flex items-center justify-center text-crm-text-dim"><Users size={16} /></div>}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
@@ -477,30 +478,35 @@ export default function SponsorsManagerModule() {
                 </div>
                 {s.programmes.length > 0 && <p className="text-[10px] text-crm-text-dim mt-0.5">{s.programmes.join(", ")}</p>}
               </div>
-              {isAdmin && (
-                <div className="flex gap-1">
+              <div className="flex gap-1">
+                {canEdit("sponsors") && (
                   <button onClick={() => toggleSponsorPublish.mutate({ id: s.id, published: !s.is_published })} className="w-7 h-7 rounded flex items-center justify-center bg-crm-surface border border-crm-border text-crm-text-dim hover:text-crm-text-secondary transition-colors">
                     {s.is_published ? <EyeOff size={12} /> : <Eye size={12} />}
                   </button>
+                )}
+                {canEdit("sponsors") && (
                   <button onClick={() => setEditSponsor(s)} className="w-7 h-7 rounded flex items-center justify-center bg-crm-surface border border-crm-border text-crm-text-dim hover:text-crm-text-secondary transition-colors"><Pencil size={12} /></button>
-                  {confirmDelete === s.id ? (
+                )}
+                {canDelete("sponsors") && (
+                  confirmDelete === s.id ? (
                     <div className="flex items-center gap-1">
                       <button onClick={() => deleteSponsor.mutate(s.id)} className="text-[10px] text-red-400 bg-red-950 border border-red-800 rounded px-2 py-1">Yes</button>
                       <button onClick={() => setConfirmDelete(null)} className="text-[10px] text-crm-text-dim bg-crm-surface border border-crm-border rounded px-2 py-1">No</button>
                     </div>
                   ) : (
                     <button onClick={() => setConfirmDelete(s.id)} className="w-7 h-7 rounded flex items-center justify-center bg-crm-surface border border-crm-border text-crm-text-dim hover:text-red-400 transition-colors"><Trash2 size={12} /></button>
-                  )}
-                </div>
-              )}
+                  )
+                )}
+              </div>
             </div>
           ))}
         </TabsContent>
 
         <TabsContent value="partners" className="mt-4 space-y-2">
           {loadingP && <div className="flex justify-center py-12"><div className="w-6 h-6 border-2 border-emerald-700 border-t-emerald-400 rounded-full animate-spin" /></div>}
-          {!loadingP && partners.map(p => (
+          {!loadingP && filteredPartners.map(p => (
             <div key={p.id} className="bg-crm-card border border-crm-border rounded-xl p-4 flex items-center gap-4 hover:border-crm-border-hover transition-colors">
+              <Checkbox checked={selectedIds.has(p.id)} onCheckedChange={() => toggleSelect(p.id)} />
               {p.logo_url ? <img src={p.logo_url} alt="" className="w-12 h-12 object-contain rounded" width={48} height={48} loading="lazy" decoding="async" /> : <div className="w-12 h-12 bg-crm-surface rounded flex items-center justify-center text-crm-text-dim"><Users size={16} /></div>}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
@@ -512,22 +518,26 @@ export default function SponsorsManagerModule() {
                 </div>
                 {p.lead_name && <p className="text-[10px] text-crm-text-dim mt-0.5">{p.lead_name} — {p.lead_role}</p>}
               </div>
-              {isAdmin && (
-                <div className="flex gap-1">
+              <div className="flex gap-1">
+                {canEdit("sponsors") && (
                   <button onClick={() => togglePartnerPublish.mutate({ id: p.id, published: !p.is_published })} className="w-7 h-7 rounded flex items-center justify-center bg-crm-surface border border-crm-border text-crm-text-dim hover:text-crm-text-secondary transition-colors">
                     {p.is_published ? <EyeOff size={12} /> : <Eye size={12} />}
                   </button>
+                )}
+                {canEdit("sponsors") && (
                   <button onClick={() => setEditPartner(p)} className="w-7 h-7 rounded flex items-center justify-center bg-crm-surface border border-crm-border text-crm-text-dim hover:text-crm-text-secondary transition-colors"><Pencil size={12} /></button>
-                  {confirmDelete === p.id ? (
+                )}
+                {canDelete("sponsors") && (
+                  confirmDelete === p.id ? (
                     <div className="flex items-center gap-1">
                       <button onClick={() => deletePartner.mutate(p.id)} className="text-[10px] text-red-400 bg-red-950 border border-red-800 rounded px-2 py-1">Yes</button>
                       <button onClick={() => setConfirmDelete(null)} className="text-[10px] text-crm-text-dim bg-crm-surface border border-crm-border rounded px-2 py-1">No</button>
                     </div>
                   ) : (
                     <button onClick={() => setConfirmDelete(p.id)} className="w-7 h-7 rounded flex items-center justify-center bg-crm-surface border border-crm-border text-crm-text-dim hover:text-red-400 transition-colors"><Trash2 size={12} /></button>
-                  )}
-                </div>
-              )}
+                  )
+                )}
+              </div>
             </div>
           ))}
         </TabsContent>
