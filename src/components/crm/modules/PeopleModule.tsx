@@ -860,6 +860,7 @@ function WebsiteTeamTab({ qc, toast }: { qc: ReturnType<typeof useQueryClient>; 
       )}
 
       <TeamMemberDialog
+        key={editTarget?.id ?? "new"}
         open={dialogOpen}
         onClose={() => { setDialogOpen(false); setEditTarget(undefined); }}
         member={editTarget}
