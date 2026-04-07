@@ -435,18 +435,6 @@ function EditUserDialog({
                 </span>
               </div>
 
-              {/* Migration warning */}
-              <div className="flex items-start gap-2 bg-amber-950/40 border border-amber-800/60 rounded-lg px-3 py-2.5 mb-3">
-                <AlertTriangle size={12} className="text-amber-400 mt-0.5 flex-shrink-0" />
-                <p className="text-[10px] text-amber-400 leading-relaxed">
-                  Requires a <code className="font-mono">user_email_settings</code> table. Run in Supabase SQL editor:
-                  <br />
-                  <code className="font-mono text-[9px] text-amber-300 break-all">
-                    CREATE TABLE user_email_settings (user_id UUID PRIMARY KEY REFERENCES profiles(id) ON DELETE CASCADE, smtp_host TEXT, smtp_port INT DEFAULT 587, smtp_user TEXT, smtp_password TEXT, imap_host TEXT, imap_port INT DEFAULT 993, auto_connect BOOLEAN DEFAULT true, updated_at TIMESTAMPTZ DEFAULT now());
-                  </code>
-                </p>
-              </div>
-
               {loadingEmail ? (
                 <div className="space-y-2">
                   {[1, 2, 3].map(i => <div key={i} className="h-8 bg-crm-surface rounded-lg animate-pulse" />)}
