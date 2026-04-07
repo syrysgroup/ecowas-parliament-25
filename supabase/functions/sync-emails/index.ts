@@ -21,6 +21,28 @@ async function getZohoToken() {
   return data.access_token as string;
 }
 
+async function resolveZohoAccountId(serviceClient: any, acct: any, token: string): Promise<string> {
+  if (acct.zoho_account_id) return acct.zoho_account_id;
+
+  const orgId = Deno.env.get("ZOHO_ORG_ID")!;
+  const accountsRes = await fetch(`https://mail.zoho.eu/api/organization/${orgId}/accounts`, {
+    headers: { Authorization: `Zoho-oauthtoken ${token}` },
+  });
+  const accountsData = await accountsRes.json();
+  const accounts = accountsData?.data ?? [];
+
+  const match = accounts.find((a: any) =>
+    a.primaryEmailAddress?.toLowerCase() === acct.email_address.toLowerCase() ||
+    (a.mailboxAddress ?? "").toLowerCase() === acct.email_address.toLowerCase()
+  );
+
+  if (!match) throw new Error(`No Zoho account found for ${acct.email_address}`);
+
+  const zohoAccountId = String(match.accountId ?? match.zuid);
+  await serviceClient.from("email_accounts").update({ zoho_account_id: zohoAccountId }).eq("id", acct.id);
+  return zohoAccountId;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -49,15 +71,36 @@ Deno.serve(async (req) => {
     if (!acct) return new Response(JSON.stringify({ newEmailCount: 0, message: "No active email account" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
     const token = await getZohoToken();
-    const orgId = Deno.env.get("ZOHO_ORG_ID")!;
+    const zohoAccountId = await resolveZohoAccountId(serviceClient, acct, token);
 
-    // Fetch messages from Zoho for each folder
-    const folders = ["inbox", "sent", "drafts", "spam", "trash"];
+    // First, fetch the actual folder list from Zoho to get folder IDs
+    const foldersRes = await fetch(`https://mail.zoho.eu/api/accounts/${zohoAccountId}/folders`, {
+      headers: { Authorization: `Zoho-oauthtoken ${token}` },
+    });
+    const foldersData = await foldersRes.json();
+    const zohoFolders = foldersData?.data ?? [];
+
+    // Map our folder names to Zoho folder IDs
+    const folderNameMap: Record<string, string> = {};
+    for (const zf of zohoFolders) {
+      const name = (zf.folderName ?? "").toLowerCase();
+      const id = String(zf.folderId);
+      if (name === "inbox") folderNameMap["inbox"] = id;
+      else if (name === "sent" || name === "sentmail" || name === "sent mail") folderNameMap["sent"] = id;
+      else if (name === "drafts" || name === "draft") folderNameMap["drafts"] = id;
+      else if (name === "spam" || name === "junk") folderNameMap["spam"] = id;
+      else if (name === "trash") folderNameMap["trash"] = id;
+    }
+
     let newEmailCount = 0;
+    const foldersToSync = ["inbox", "sent", "drafts", "spam", "trash"];
 
-    for (const folder of folders) {
+    for (const folder of foldersToSync) {
+      const zohoFolderId = folderNameMap[folder];
+      if (!zohoFolderId) continue;
+
       const mailRes = await fetch(
-        `https://mail.zoho.eu/api/accounts/${acct.zoho_account_id}/messages/view?folderId=${folder}&limit=50&sortorder=desc`,
+        `https://mail.zoho.eu/api/accounts/${zohoAccountId}/messages/view?folderId=${zohoFolderId}&limit=50&sortorder=desc`,
         { headers: { Authorization: `Zoho-oauthtoken ${token}` } }
       );
 
@@ -66,18 +109,19 @@ Deno.serve(async (req) => {
       const messages = mailData?.data ?? [];
 
       for (const msg of messages) {
+        const msgId = String(msg.messageId);
         // Check if already synced
         const { data: existing } = await serviceClient
           .from("emails")
           .select("id")
-          .eq("zoho_message_id", String(msg.messageId))
-          .single();
+          .eq("zoho_message_id", msgId)
+          .maybeSingle();
 
         if (existing) continue;
 
         await serviceClient.from("emails").insert({
           account_id: acct.id,
-          zoho_message_id: String(msg.messageId),
+          zoho_message_id: msgId,
           from_address: msg.fromAddress || "",
           from_name: msg.sender || "",
           to_address: msg.toAddress || "",

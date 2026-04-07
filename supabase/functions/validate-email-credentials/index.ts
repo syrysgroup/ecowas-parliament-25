@@ -5,12 +5,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-/**
- * Attempts to authenticate with an IMAP server using the provided credentials.
- * Uses the global SMTP/IMAP config stored in site_settings["smtp"].
- *
- * Returns { valid: true } on success or { valid: false, error: string } on failure.
- */
 async function validateImapCredentials(
   host: string,
   port: number,
@@ -23,20 +17,15 @@ async function validateImapCredentials(
   const encoder = new TextEncoder();
   const decoder = new TextDecoder();
 
-  // Helper to read a full response line from the connection
   async function readResponse(conn: Deno.Conn): Promise<string> {
-    const chunks: Uint8Array[] = [];
     const buf = new Uint8Array(4096);
     let total = "";
-    // Read until we get a complete tagged response line
     for (let i = 0; i < 10; i++) {
       const n = await conn.read(buf);
       if (!n) break;
       total += decoder.decode(buf.subarray(0, n));
-      // Stop once we have a tagged response (A001 OK / A001 NO / A001 BAD)
       if (/A001\s+(OK|NO|BAD)/i.test(total)) break;
-      // Or if it's a greeting line starting with *
-      if (chunks.length === 0 && /^\*\s+OK/i.test(total)) break;
+      if (total.length > 0 && i === 0 && /^\*\s+OK/i.test(total)) break;
     }
     return total;
   }
@@ -49,44 +38,27 @@ async function validateImapCredentials(
       conn = await Deno.connect({ hostname: host, port });
     }
 
-    // Read server greeting
     const greeting = await readResponse(conn);
     if (!greeting.includes("* OK") && !greeting.includes("* PREAUTH")) {
       return { valid: false, error: "IMAP server did not respond with OK greeting" };
     }
 
-    // Escape special chars in IMAP quoted strings
     const safeEmail = email.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
     const safePw = password.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
-
-    // Send LOGIN command
     await conn.write(encoder.encode(`A001 LOGIN "${safeEmail}" "${safePw}"\r\n`));
-
-    // Read response
     const response = await readResponse(conn);
+    try { await conn.write(encoder.encode(`A002 LOGOUT\r\n`)); } catch { /* ignore */ }
 
-    // Send LOGOUT regardless of outcome
-    try {
-      await conn.write(encoder.encode(`A002 LOGOUT\r\n`));
-    } catch { /* ignore logout errors */ }
-
-    if (/A001\s+OK/i.test(response)) {
-      return { valid: true };
-    } else if (/A001\s+NO/i.test(response)) {
-      return { valid: false, error: "Invalid email or password" };
-    } else if (/A001\s+BAD/i.test(response)) {
-      return { valid: false, error: "IMAP command rejected by server" };
-    } else {
-      return { valid: false, error: "Unexpected server response" };
-    }
+    if (/A001\s+OK/i.test(response)) return { valid: true };
+    if (/A001\s+NO/i.test(response)) return { valid: false, error: "Invalid email or password" };
+    if (/A001\s+BAD/i.test(response)) return { valid: false, error: "IMAP command rejected by server" };
+    return { valid: false, error: "Unexpected server response" };
   } catch (err: any) {
     const msg = String(err?.message ?? err);
     if (msg.includes("Connection refused") || msg.includes("ECONNREFUSED")) {
-      return { valid: false, error: `Cannot connect to IMAP server (${host}:${port}). Check server configuration.` };
+      return { valid: false, error: `Cannot connect to IMAP server (${host}:${port}).` };
     }
-    if (msg.includes("tls") || msg.includes("ssl") || msg.includes("SSL") || msg.includes("TLS")) {
-      return { valid: false, error: "SSL/TLS connection failed. Check SSL setting." };
-    }
+    if (/tls|ssl/i.test(msg)) return { valid: false, error: "SSL/TLS connection failed. Check SSL setting." };
     return { valid: false, error: `Connection error: ${msg}` };
   } finally {
     try { conn?.close(); } catch { /* ignore */ }
@@ -97,7 +69,6 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    // Auth check
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -130,25 +101,41 @@ Deno.serve(async (req) => {
       .single();
 
     const globalConfig = (smtpRow?.value as Record<string, any>) ?? {};
-    const imapHost: string = globalConfig.imap_host ?? "";
+    const imapHost: string = globalConfig.imap_host ?? "imappro.zoho.eu";
     const imapPort: number = Number(globalConfig.imap_port ?? 993);
     const sslEnabled: boolean = globalConfig.ssl_enabled !== false;
 
-    // Parse request body
     const body = await req.json().catch(() => ({}));
-    const { email: bodyEmail, password: bodyPassword, checkStored } = body as {
-      email?: string; password?: string; checkStored?: boolean;
+    const { email: bodyEmail, password: bodyPassword, checkStored, target_user_id } = body as {
+      email?: string; password?: string; checkStored?: boolean; target_user_id?: string;
     };
+
+    // Determine the target user (super admin can set email for another user)
+    let targetUserId = user.id;
+    if (target_user_id && target_user_id !== user.id) {
+      // Verify caller is super_admin
+      const { data: roleCheck } = await serviceClient
+        .from("user_roles")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("role", "super_admin")
+        .maybeSingle();
+      if (!roleCheck) {
+        return new Response(JSON.stringify({ error: "Only super admins can set email for other users" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      targetUserId = target_user_id;
+    }
 
     let emailToValidate: string;
     let passwordToValidate: string;
 
     if (checkStored) {
-      // Mode 2: validate stored credentials (no password sent from client)
       const { data: settings } = await serviceClient
         .from("user_email_settings")
         .select("smtp_user, smtp_password")
-        .eq("user_id", user.id)
+        .eq("user_id", targetUserId)
         .single();
 
       if (!settings?.smtp_user || !settings?.smtp_password) {
@@ -159,7 +146,6 @@ Deno.serve(async (req) => {
       emailToValidate = settings.smtp_user;
       passwordToValidate = settings.smtp_password;
     } else {
-      // Mode 1: validate provided credentials and save if valid
       if (!bodyEmail?.trim() || !bodyPassword?.trim()) {
         return new Response(JSON.stringify({ error: "email and password are required" }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -169,15 +155,14 @@ Deno.serve(async (req) => {
       passwordToValidate = bodyPassword;
     }
 
-    // Validate IMAP credentials
     const result = await validateImapCredentials(imapHost, imapPort, sslEnabled, emailToValidate, passwordToValidate);
 
     if (result.valid && !checkStored) {
       // Save credentials to user_email_settings
       await serviceClient.from("user_email_settings").upsert({
-        user_id: user.id,
-        smtp_host: globalConfig.host ?? "",
-        smtp_port: Number(globalConfig.port ?? 587),
+        user_id: targetUserId,
+        smtp_host: globalConfig.host ?? "smtppro.zoho.eu",
+        smtp_port: Number(globalConfig.port ?? 465),
         smtp_user: emailToValidate,
         smtp_password: passwordToValidate,
         imap_host: imapHost,
@@ -190,7 +175,7 @@ Deno.serve(async (req) => {
       const { data: existing } = await serviceClient
         .from("email_accounts")
         .select("id")
-        .eq("user_id", user.id)
+        .eq("user_id", targetUserId)
         .maybeSingle();
 
       if (existing) {
@@ -201,7 +186,7 @@ Deno.serve(async (req) => {
       } else {
         await serviceClient
           .from("email_accounts")
-          .insert({ user_id: user.id, email_address: emailToValidate, is_active: true });
+          .insert({ user_id: targetUserId, email_address: emailToValidate, is_active: true });
       }
     }
 

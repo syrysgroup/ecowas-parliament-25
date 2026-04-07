@@ -5,6 +5,44 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+async function getZohoToken() {
+  const res = await fetch("https://accounts.zoho.eu/oauth/v2/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      grant_type: "refresh_token",
+      client_id: Deno.env.get("ZOHO_CLIENT_ID")!,
+      client_secret: Deno.env.get("ZOHO_CLIENT_SECRET")!,
+      refresh_token: Deno.env.get("ZOHO_REFRESH_TOKEN")!,
+    }),
+  });
+  const data = await res.json();
+  if (!data.access_token) throw new Error("Failed to get Zoho token");
+  return data.access_token as string;
+}
+
+async function resolveZohoAccountId(serviceClient: any, acct: any, token: string): Promise<string> {
+  if (acct.zoho_account_id) return acct.zoho_account_id;
+
+  const orgId = Deno.env.get("ZOHO_ORG_ID")!;
+  const accountsRes = await fetch(`https://mail.zoho.eu/api/organization/${orgId}/accounts`, {
+    headers: { Authorization: `Zoho-oauthtoken ${token}` },
+  });
+  const accountsData = await accountsRes.json();
+  const accounts = accountsData?.data ?? [];
+
+  const match = accounts.find((a: any) =>
+    a.primaryEmailAddress?.toLowerCase() === acct.email_address.toLowerCase() ||
+    (a.mailboxAddress ?? "").toLowerCase() === acct.email_address.toLowerCase()
+  );
+
+  if (!match) throw new Error(`No Zoho account found for ${acct.email_address}`);
+
+  const zohoAccountId = String(match.accountId ?? match.zuid);
+  await serviceClient.from("email_accounts").update({ zoho_account_id: zohoAccountId }).eq("id", acct.id);
+  return zohoAccountId;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -34,19 +72,8 @@ Deno.serve(async (req) => {
 
     if (!acct) return new Response(JSON.stringify({ error: "No active email account" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
-    // Get Zoho token
-    const tokenRes = await fetch("https://accounts.zoho.eu/oauth/v2/token", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        grant_type: "refresh_token",
-        client_id: Deno.env.get("ZOHO_CLIENT_ID")!,
-        client_secret: Deno.env.get("ZOHO_CLIENT_SECRET")!,
-        refresh_token: Deno.env.get("ZOHO_REFRESH_TOKEN")!,
-      }),
-    });
-    const tokenData = await tokenRes.json();
-    if (!tokenData.access_token) throw new Error("Failed to get Zoho token");
+    const token = await getZohoToken();
+    const zohoAccountId = await resolveZohoAccountId(serviceClient, acct, token);
 
     // Send via Zoho
     const sendPayload: Record<string, any> = {
@@ -58,10 +85,10 @@ Deno.serve(async (req) => {
     };
     if (cc) sendPayload.ccAddress = cc;
 
-    const sendRes = await fetch(`https://mail.zoho.eu/api/accounts/${acct.zoho_account_id}/messages`, {
+    const sendRes = await fetch(`https://mail.zoho.eu/api/accounts/${zohoAccountId}/messages`, {
       method: "POST",
       headers: {
-        Authorization: `Zoho-oauthtoken ${tokenData.access_token}`,
+        Authorization: `Zoho-oauthtoken ${token}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(sendPayload),
