@@ -561,6 +561,14 @@ function EditUserDialog({
 }
 
 // ─── Website Team Tab ────────────────────────────────────────────────────────
+const TEAM_CATEGORIES = ["leadership", "implementing_team", "consultant", "volunteer"] as const;
+const TEAM_CATEGORY_LABELS: Record<string, string> = {
+  leadership: "Leadership",
+  implementing_team: "Implementing Team",
+  consultant: "Consultants",
+  volunteer: "Volunteers",
+};
+
 interface TeamMemberRow {
   id: string;
   full_name: string;
@@ -570,6 +578,7 @@ interface TeamMemberRow {
   bio: string | null;
   display_order: number;
   is_active: boolean;
+  category: string;
   created_at: string;
 }
 
@@ -590,6 +599,7 @@ function TeamMemberDialog({ open, onClose, member }: {
   const [avatarUrl,    setAvatarUrl]    = useState(member?.avatar_url ?? "");
   const [displayOrder, setDisplayOrder] = useState(member?.display_order?.toString() ?? "0");
   const [isActive,     setIsActive]     = useState(member?.is_active ?? true);
+  const [category,     setCategory]     = useState(member?.category ?? "implementing_team");
   const [uploading,    setUploading]    = useState(false);
   const [saving,       setSaving]       = useState(false);
 

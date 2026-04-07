@@ -277,6 +277,7 @@ export default function StakeholdersModule() {
       )}
 
       <StakeholderDialog
+        key={editing?.id ?? "new"}
         open={dialogOpen}
         onClose={() => { setDialogOpen(false); setEditing(undefined); }}
         stakeholder={editing}
