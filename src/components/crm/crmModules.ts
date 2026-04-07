@@ -171,7 +171,7 @@ export const CRM_MODULES: CRMModule[] = [
   },
   {
     id: "comms",
-    label: "Channels & Chat",
+    label: "Chat",
     icon: MessageSquare,
     section: "comms",
     allowedRoles: ALL_STAFF,
