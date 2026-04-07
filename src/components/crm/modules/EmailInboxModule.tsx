@@ -434,6 +434,7 @@ function EmailDetailPanel({ email, onBack, onReply, onForward, onStar, onTrash, 
 export default function EmailInboxModule() {
   const { user } = useAuthContext();
   const qc = useQueryClient();
+  const { toast } = useToast();
   const [activeFolder, setActiveFolder] = useState<Folder>("inbox");
   const [selectedEmail, setSelectedEmail] = useState<Email | null>(null);
   const [composeOpen, setComposeOpen] = useState(false);
@@ -609,50 +610,94 @@ export default function EmailInboxModule() {
   const [connectEmail, setConnectEmail] = useState("");
   const [connectPassword, setConnectPassword] = useState("");
   const [connecting, setConnecting] = useState(false);
+  const [connectError, setConnectError] = useState("");
+
+  // ── Re-auth Dialog state (triggered when stored credentials fail) ──
+  const [reauthOpen, setReauthOpen] = useState(false);
+  const [reauthEmail, setReauthEmail] = useState("");
+  const [reauthPassword, setReauthPassword] = useState("");
+  const [reauthError, setReauthError] = useState("");
+  const [reauthSaving, setReauthSaving] = useState(false);
+
+  // Track whether we've validated this browser session (avoid re-checking every render)
+  const sessionValidatedKey = `email_validated_${user?.id}`;
+
+  const callValidate = async (email: string, password: string, checkStored = false) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    const res = await supabase.functions.invoke("validate-email-credentials", {
+      body: checkStored ? { checkStored: true } : { email, password },
+      headers: { Authorization: `Bearer ${session?.session?.access_token}` },
+    });
+    if (res.error) throw new Error(res.error.message);
+    const data = res.data as { valid: boolean; error?: string };
+    return data;
+  };
+
+  // On mount: if account exists and not yet validated this session, silently check stored credentials
+  useEffect(() => {
+    if (!account || !user) return;
+    if (sessionStorage.getItem(sessionValidatedKey) === "ok") return;
+
+    (async () => {
+      try {
+        const result = await callValidate("", "", true);
+        if (result.valid) {
+          sessionStorage.setItem(sessionValidatedKey, "ok");
+        } else {
+          // Stored credentials are invalid — prompt re-auth
+          setReauthEmail(account.email_address ?? "");
+          setReauthError(result.error ?? "Your email credentials have expired or changed. Please log in again.");
+          setReauthOpen(true);
+        }
+      } catch {
+        // Network/function error — skip silently, don't block the UI
+      }
+    })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [account?.id]);
 
   const handleConnectEmail = async () => {
     if (!connectEmail.trim() || !connectPassword.trim() || !user) return;
     setConnecting(true);
+    setConnectError("");
     try {
-      // 1. Upsert email settings with default SMTP/IMAP (admin can override later)
-      await (supabase as any).from("user_email_settings").upsert({
-        user_id: user.id,
-        smtp_host: "",
-        smtp_port: 587,
-        smtp_user: connectEmail.trim(),
-        smtp_password: connectPassword,
-        imap_host: "",
-        imap_port: 993,
-        auto_connect: true,
-        updated_at: new Date().toISOString(),
-      }, { onConflict: "user_id" });
-
-      // 2. Upsert email account
-      const { data: existing } = await (supabase as any)
-        .from("email_accounts")
-        .select("id")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (existing) {
-        await (supabase as any)
-          .from("email_accounts")
-          .update({ email_address: connectEmail.trim(), is_active: true })
-          .eq("id", existing.id);
-      } else {
-        await (supabase as any)
-          .from("email_accounts")
-          .insert({ user_id: user.id, email_address: connectEmail.trim(), display_name: null, is_active: true });
+      const result = await callValidate(connectEmail.trim(), connectPassword);
+      if (!result.valid) {
+        setConnectError(result.error ?? "Invalid credentials. Please check your email and password.");
+        return;
       }
-
+      // Credentials valid — edge function already saved to DB
+      sessionStorage.setItem(sessionValidatedKey, "ok");
       qc.invalidateQueries({ queryKey: ["email-account"] });
       setConnectOpen(false);
       setConnectEmail("");
       setConnectPassword("");
     } catch (err: any) {
-      console.error("Connect email failed:", err);
+      setConnectError(err.message ?? "Connection failed. Please try again.");
     } finally {
       setConnecting(false);
+    }
+  };
+
+  const handleReauth = async () => {
+    if (!reauthPassword.trim() || !user) return;
+    setReauthSaving(true);
+    setReauthError("");
+    try {
+      const result = await callValidate(reauthEmail.trim(), reauthPassword);
+      if (!result.valid) {
+        setReauthError(result.error ?? "Invalid credentials. Please check your password.");
+        return;
+      }
+      sessionStorage.setItem(sessionValidatedKey, "ok");
+      qc.invalidateQueries({ queryKey: ["email-account"] });
+      setReauthOpen(false);
+      setReauthPassword("");
+      toast({ title: "Email reconnected successfully" });
+    } catch (err: any) {
+      setReauthError(err.message ?? "Connection failed. Please try again.");
+    } finally {
+      setReauthSaving(false);
     }
   };
 
@@ -690,15 +735,21 @@ export default function EmailInboxModule() {
                 </button>
               </div>
               <p className="text-[12px] text-crm-text-muted">
-                Enter your email credentials to connect your account. Server settings are managed by your administrator.
+                Enter your email address and password. Server settings are managed by your administrator.
               </p>
+              {connectError && (
+                <div className="flex items-start gap-2 p-3 rounded-lg bg-red-950/40 border border-red-800/50">
+                  <AlertOctagon size={13} className="text-red-400 flex-shrink-0 mt-0.5" />
+                  <p className="text-[11px] text-red-300 leading-relaxed">{connectError}</p>
+                </div>
+              )}
               <div className="space-y-3">
                 <div className="space-y-1">
                   <label className="text-[11px] text-crm-text-dim font-medium">Email Address</label>
                   <input
                     type="email"
                     value={connectEmail}
-                    onChange={e => setConnectEmail(e.target.value)}
+                    onChange={e => { setConnectEmail(e.target.value); setConnectError(""); }}
                     placeholder="you@example.com"
                     className="w-full bg-crm-surface border border-crm-border text-crm-text text-[13px] rounded-lg px-3 py-2 focus:outline-none focus:border-primary placeholder:text-crm-text-faint"
                   />
@@ -708,7 +759,8 @@ export default function EmailInboxModule() {
                   <input
                     type="password"
                     value={connectPassword}
-                    onChange={e => setConnectPassword(e.target.value)}
+                    onChange={e => { setConnectPassword(e.target.value); setConnectError(""); }}
+                    onKeyDown={e => e.key === "Enter" && handleConnectEmail()}
                     placeholder="••••••••"
                     className="w-full bg-crm-surface border border-crm-border text-crm-text text-[13px] rounded-lg px-3 py-2 focus:outline-none focus:border-primary placeholder:text-crm-text-faint"
                   />
@@ -716,7 +768,7 @@ export default function EmailInboxModule() {
               </div>
               <div className="flex items-center gap-3 pt-2">
                 <button
-                  onClick={() => setConnectOpen(false)}
+                  onClick={() => { setConnectOpen(false); setConnectError(""); }}
                   className="flex-1 px-4 py-2 text-[13px] text-crm-text-muted border border-crm-border rounded-lg hover:bg-crm-surface transition-colors"
                 >
                   Cancel
@@ -727,9 +779,75 @@ export default function EmailInboxModule() {
                   className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-primary hover:bg-primary/90 text-white text-[13px] font-medium transition-colors disabled:opacity-50"
                 >
                   {connecting ? (
-                    <><Loader2 size={14} className="animate-spin" /> Connecting…</>
+                    <><Loader2 size={14} className="animate-spin" /> Verifying…</>
                   ) : (
                     <><Mail size={14} /> Connect</>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Re-auth Dialog (triggered when stored credentials are invalid) */}
+        {reauthOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+            <div className="bg-crm-card border border-crm-border rounded-xl shadow-2xl w-full max-w-sm p-6 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-amber-950 border border-amber-800 flex items-center justify-center flex-shrink-0">
+                  <AlertOctagon size={16} className="text-amber-400" />
+                </div>
+                <div>
+                  <h3 className="text-[14px] font-semibold text-crm-text">Email Re-authentication Required</h3>
+                  <p className="text-[11px] text-crm-text-muted mt-0.5">Your email credentials need to be verified.</p>
+                </div>
+              </div>
+              {reauthError && (
+                <div className="flex items-start gap-2 p-3 rounded-lg bg-red-950/40 border border-red-800/50">
+                  <AlertOctagon size={13} className="text-red-400 flex-shrink-0 mt-0.5" />
+                  <p className="text-[11px] text-red-300 leading-relaxed">{reauthError}</p>
+                </div>
+              )}
+              <div className="space-y-3">
+                <div className="space-y-1">
+                  <label className="text-[11px] text-crm-text-dim font-medium">Email Address</label>
+                  <input
+                    type="email"
+                    value={reauthEmail}
+                    onChange={e => { setReauthEmail(e.target.value); setReauthError(""); }}
+                    placeholder="you@example.com"
+                    className="w-full bg-crm-surface border border-crm-border text-crm-text text-[13px] rounded-lg px-3 py-2 focus:outline-none focus:border-primary placeholder:text-crm-text-faint"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[11px] text-crm-text-dim font-medium">Password</label>
+                  <input
+                    type="password"
+                    value={reauthPassword}
+                    onChange={e => { setReauthPassword(e.target.value); setReauthError(""); }}
+                    onKeyDown={e => e.key === "Enter" && handleReauth()}
+                    placeholder="Enter your email password"
+                    className="w-full bg-crm-surface border border-crm-border text-crm-text text-[13px] rounded-lg px-3 py-2 focus:outline-none focus:border-primary placeholder:text-crm-text-faint"
+                    autoFocus
+                  />
+                </div>
+              </div>
+              <div className="flex items-center gap-3 pt-2">
+                <button
+                  onClick={() => { setReauthOpen(false); setReauthPassword(""); setReauthError(""); }}
+                  className="flex-1 px-4 py-2 text-[13px] text-crm-text-muted border border-crm-border rounded-lg hover:bg-crm-surface transition-colors"
+                >
+                  Later
+                </button>
+                <button
+                  onClick={handleReauth}
+                  disabled={reauthSaving || !reauthPassword.trim()}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-primary hover:bg-primary/90 text-white text-[13px] font-medium transition-colors disabled:opacity-50"
+                >
+                  {reauthSaving ? (
+                    <><Loader2 size={14} className="animate-spin" /> Verifying…</>
+                  ) : (
+                    <><Mail size={14} /> Reconnect</>
                   )}
                 </button>
               </div>

@@ -6,6 +6,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useTranslation, Locale } from "@/lib/i18n";
 import ThemeToggle from "@/components/shared/ThemeToggle";
 import ecowasLogo from "@/assets/ecowas-parliament-logo.png";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 
 const localeLabels: Record<Locale, string> = { en: "EN", fr: "FR", pt: "PT" };
 const localeOrder: Locale[] = ["en", "fr", "pt"];
@@ -13,6 +14,9 @@ const localeOrder: Locale[] = ["en", "fr", "pt"];
 const Navbar = () => {
   const { t, locale, setLocale } = useTranslation();
   const location = useLocation();
+  const { get } = useSiteSettings();
+  const dbLogoUrl = get("site_logo_url", "");
+  const dbSiteName = get("site_name", "");
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openDrop, setOpenDrop] = useState<string | null>(null);
   const [langOpen, setLangOpen] = useState(false);
@@ -70,10 +74,15 @@ const Navbar = () => {
           {/* Logo */}
           <Link to="/" className="flex items-center gap-3 flex-shrink-0">
             <div className="bg-gray-200 rounded-full p-2 shadow-sm border-2 border-ecowas-green">
-              <img src={ecowasLogo} alt="ECOWAS Parliament" className="h-12 w-12 object-contain" width={48} height={48} decoding="async" fetchPriority="high" />
+              <img
+                src={dbLogoUrl || ecowasLogo}
+                alt={dbSiteName || "ECOWAS Parliament"}
+                className="h-12 w-12 object-contain"
+                width={48} height={48} decoding="async" fetchPriority="high"
+              />
             </div>
             <div className="hidden sm:block">
-              <p className="text-sm font-bold text-foreground leading-tight">ECOWAS Parliament</p>
+              <p className="text-sm font-bold text-foreground leading-tight">{dbSiteName || "ECOWAS Parliament"}</p>
               <p className="text-[10px] text-muted-foreground leading-tight">Parlement de la CEDEAO</p>
             </div>
           </Link>

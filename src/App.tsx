@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
+import { BrowserRouter, Route, Routes, useLocation, Navigate } from "react-router-dom";
 import { useEffect } from "react";
 import { ThemeProvider } from "next-themes";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -183,12 +183,8 @@ const App = () => (
                 </ProtectedRoute>
               }/>
 
-              {/* Super Admin Settings */}
-              <Route path="/admin/settings" element={
-                <ProtectedRoute allowedRoles={["super_admin"]}>
-                  <AdminSettings />
-                </ProtectedRoute>
-              }/>
+              {/* Super Admin Settings — merged into CRM Super Admin Hub */}
+              <Route path="/admin/settings" element={<Navigate to="/crm?section=super-admin" replace />} />
 
               {/* 403 */}
               <Route path="/403" element={<Forbidden />} />

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,7 +14,8 @@ import {
   Crown, ShieldCheck, Eye, Handshake, Users, Mail, Send, Loader2,
   RefreshCw, Settings, Activity, Globe, Lock, Clock, UserPlus, Download,
   Trash2, CheckCircle2, AlertTriangle, LayoutDashboard,
-  FileText, Star, Calendar, Newspaper, ChevronRight,
+  FileText, Star, Calendar, Newspaper, ChevronRight, Palette, Upload, Save,
+  Link2, Twitter, Facebook, Instagram, Linkedin, Youtube,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -33,7 +34,7 @@ interface ActivityLog {
   actor?: { full_name: string; email: string };
 }
 
-type Tab = "overview" | "users" | "invitations" | "activity" | "routes" | "settings" | "email-config";
+type Tab = "overview" | "users" | "invitations" | "activity" | "routes" | "settings" | "email-config" | "branding";
 
 // ─── Role config ──────────────────────────────────────────────────────────────
 const ROLE_CONFIG: Partial<Record<AppRole, {
@@ -141,6 +142,9 @@ function EmailConfigTab({ userId }: { userId?: string }) {
 
   const [host, setHost] = useState("");
   const [port, setPort] = useState("587");
+  const [imapHost, setImapHost] = useState("");
+  const [imapPort, setImapPort] = useState("993");
+  const [sslEnabled, setSslEnabled] = useState(true);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [fromName, setFromName] = useState("");
@@ -152,6 +156,9 @@ function EmailConfigTab({ userId }: { userId?: string }) {
     if (smtp && Object.keys(smtp).length > 0) {
       setHost(smtp.host ?? "");
       setPort(String(smtp.port ?? 587));
+      setImapHost(smtp.imap_host ?? "");
+      setImapPort(String(smtp.imap_port ?? 993));
+      setSslEnabled(smtp.ssl_enabled !== false);
       setUsername(smtp.username ?? "");
       setFromName(smtp.from_name ?? "ECOWAS Parliament CRM");
       setFromEmail(smtp.from_email ?? "noreply@ecowas.int");
@@ -162,8 +169,10 @@ function EmailConfigTab({ userId }: { userId?: string }) {
     setSaving(true);
     try {
       const value: Record<string, any> = {
-        host, port: Number(port), username,
-        from_name: fromName, from_email: fromEmail,
+        host, port: Number(port),
+        imap_host: imapHost, imap_port: Number(imapPort),
+        ssl_enabled: sslEnabled,
+        username, from_name: fromName, from_email: fromEmail,
       };
       if (password) value.password_hint = "***";
 
@@ -228,6 +237,16 @@ function EmailConfigTab({ userId }: { userId?: string }) {
               className="bg-crm-surface border-crm-border text-crm-text text-[12px] h-9" />
           </div>
           <div className="space-y-1.5">
+            <Label className="text-[11px] text-crm-text-muted">IMAP Host</Label>
+            <Input value={imapHost} onChange={e => setImapHost(e.target.value)} placeholder="imap.zoho.eu"
+              className="bg-crm-surface border-crm-border text-crm-text text-[12px] h-9" />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-[11px] text-crm-text-muted">IMAP Port</Label>
+            <Input value={imapPort} onChange={e => setImapPort(e.target.value)} placeholder="993" type="number"
+              className="bg-crm-surface border-crm-border text-crm-text text-[12px] h-9" />
+          </div>
+          <div className="space-y-1.5">
             <Label className="text-[11px] text-crm-text-muted">Username</Label>
             <Input value={username} onChange={e => setUsername(e.target.value)} placeholder="user@domain.com"
               className="bg-crm-surface border-crm-border text-crm-text text-[12px] h-9" />
@@ -260,6 +279,13 @@ function EmailConfigTab({ userId }: { userId?: string }) {
               className="bg-crm-surface border-crm-border text-crm-text text-[12px] h-9" />
           </div>
         </div>
+        <div className="flex items-center gap-3 mt-4">
+          <Switch checked={sslEnabled} onCheckedChange={setSslEnabled} className="data-[state=checked]:bg-emerald-600" />
+          <div>
+            <p className="text-[12px] font-medium text-crm-text">Require SSL / TLS</p>
+            <p className="text-[10px] text-crm-text-dim">{sslEnabled ? "SSL enabled — use port 465 or STARTTLS on 587" : "SSL disabled — use plain connection"}</p>
+          </div>
+        </div>
         <div className="flex gap-2 mt-5">
           <Button size="sm" onClick={handleSave} disabled={saving}
             className="text-[11px] gap-1.5">
@@ -277,6 +303,160 @@ function EmailConfigTab({ userId }: { userId?: string }) {
   );
 }
 
+
+// ─── Branding & Site Tab ──────────────────────────────────────────────────────
+function BrandingTab({ userId }: { userId?: string }) {
+  const { toast } = useToast();
+  const qc = useQueryClient();
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [values, setValues] = useState<Record<string, string>>({});
+
+  const { isLoading } = useQuery({
+    queryKey: ["site-settings-admin"],
+    queryFn: async () => {
+      const { data } = await (supabase as any).from("site_settings").select("key, value");
+      const map: Record<string, string> = {};
+      (data ?? []).forEach((row: any) => {
+        const val = row.value;
+        map[row.key] = typeof val === "string" ? val : (val ?? "");
+      });
+      setValues(map);
+      return map;
+    },
+  });
+
+  const set = (key: string, val: string) => setValues(prev => ({ ...prev, [key]: val }));
+
+  const handleLogoUpload = async (file: File) => {
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop();
+      const path = `logos/site-logo-${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from("branding").upload(path, file, { upsert: true });
+      if (error) throw error;
+      const { data: { publicUrl } } = supabase.storage.from("branding").getPublicUrl(path);
+      set("site_logo_url", publicUrl);
+      toast({ title: "Logo uploaded" });
+    } catch (err: any) {
+      toast({ title: "Upload failed", description: err.message, variant: "destructive" });
+    } finally { setUploading(false); }
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const keys = ["site_name", "site_logo_url", "contact_email", "footer_text",
+        "social_facebook", "social_twitter", "social_instagram", "social_linkedin", "social_youtube"];
+      for (const key of keys) {
+        if (values[key] !== undefined) {
+          const { data: existing } = await (supabase as any).from("site_settings").select("id").eq("key", key).single();
+          if (existing) {
+            await (supabase as any).from("site_settings").update({ value: values[key], updated_by: userId, updated_at: new Date().toISOString() }).eq("key", key);
+          } else {
+            await (supabase as any).from("site_settings").insert({ key, value: values[key], updated_by: userId });
+          }
+        }
+      }
+      qc.invalidateQueries({ queryKey: ["site-settings"] });
+      qc.invalidateQueries({ queryKey: ["site-settings-admin"] });
+      toast({ title: "Site settings saved" });
+    } catch (err: any) {
+      toast({ title: "Failed", description: err.message, variant: "destructive" });
+    } finally { setSaving(false); }
+  };
+
+  const inputCls = "bg-crm-surface border-crm-border text-crm-text text-[12px] h-9";
+
+  if (isLoading) return <div className="flex justify-center py-12"><Loader2 size={20} className="animate-spin text-crm-text-muted" /></div>;
+
+  return (
+    <div className="space-y-5 max-w-2xl">
+      {/* Logo upload */}
+      <div className="bg-crm-card border border-crm-border rounded-xl p-5">
+        <h3 className="text-[13px] font-semibold text-crm-text flex items-center gap-2 mb-4">
+          <Palette size={14} className="text-amber-400" /> Branding
+        </h3>
+        <div className="flex items-start gap-6">
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-20 h-20 rounded-xl bg-crm-surface border border-crm-border flex items-center justify-center overflow-hidden">
+              {values.site_logo_url
+                ? <img src={values.site_logo_url} alt="Logo" className="w-full h-full object-contain p-1" />
+                : <Globe size={28} className="text-crm-text-dim" />}
+            </div>
+            <button
+              onClick={() => fileRef.current?.click()}
+              disabled={uploading}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-crm-border text-[11px] text-crm-text-muted hover:text-crm-text transition-colors"
+            >
+              {uploading ? <Loader2 size={12} className="animate-spin" /> : <Upload size={12} />}
+              {uploading ? "Uploading…" : "Upload Logo"}
+            </button>
+            <input ref={fileRef} type="file" accept="image/*" className="hidden"
+              onChange={e => e.target.files?.[0] && handleLogoUpload(e.target.files[0])} />
+          </div>
+          <div className="flex-1 space-y-3">
+            <div className="space-y-1.5">
+              <Label className="text-[11px] text-crm-text-muted">Site Name</Label>
+              <Input value={values.site_name ?? ""} onChange={e => set("site_name", e.target.value)} className={inputCls} placeholder="ECOWAS Parliament 25th Anniversary" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-[11px] text-crm-text-muted">Logo URL (or upload above)</Label>
+              <Input value={values.site_logo_url ?? ""} onChange={e => set("site_logo_url", e.target.value)} className={inputCls} placeholder="https://..." />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* General */}
+      <div className="bg-crm-card border border-crm-border rounded-xl p-5">
+        <h3 className="text-[13px] font-semibold text-crm-text flex items-center gap-2 mb-4">
+          <Globe size={14} className="text-amber-400" /> General
+        </h3>
+        <div className="space-y-3">
+          <div className="space-y-1.5">
+            <Label className="text-[11px] text-crm-text-muted">Contact Email</Label>
+            <Input type="email" value={values.contact_email ?? ""} onChange={e => set("contact_email", e.target.value)} className={inputCls} />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-[11px] text-crm-text-muted">Footer Copyright Text</Label>
+            <Input value={values.footer_text ?? ""} onChange={e => set("footer_text", e.target.value)} className={inputCls} />
+          </div>
+        </div>
+      </div>
+
+      {/* Social links */}
+      <div className="bg-crm-card border border-crm-border rounded-xl p-5">
+        <h3 className="text-[13px] font-semibold text-crm-text flex items-center gap-2 mb-4">
+          <Link2 size={14} className="text-amber-400" /> Social Links
+        </h3>
+        <div className="grid sm:grid-cols-2 gap-3">
+          {[
+            { key: "social_facebook", label: "Facebook", icon: Facebook },
+            { key: "social_twitter", label: "Twitter / X", icon: Twitter },
+            { key: "social_instagram", label: "Instagram", icon: Instagram },
+            { key: "social_linkedin", label: "LinkedIn", icon: Linkedin },
+            { key: "social_youtube", label: "YouTube", icon: Youtube },
+          ].map(({ key, label, icon: Icon }) => (
+            <div key={key} className="space-y-1.5">
+              <Label className="text-[11px] text-crm-text-muted flex items-center gap-1.5">
+                <Icon size={11} /> {label}
+              </Label>
+              <Input value={values[key] ?? ""} onChange={e => set(key, e.target.value)} className={inputCls} placeholder="https://..." />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <Button size="sm" onClick={handleSave} disabled={saving}
+        className="bg-amber-700 hover:bg-amber-600 text-white text-xs gap-1.5">
+        {saving ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
+        {saving ? "Saving…" : "Save Site Settings"}
+      </Button>
+    </div>
+  );
+}
 
 export default function SuperAdminModule() {
   const { user, refreshRoles, signOut } = useAuthContext();
@@ -447,6 +627,7 @@ export default function SuperAdminModule() {
     { id:"activity",    label:"Activity Log", icon:Activity },
     { id:"routes",      label:"Site Routes",  icon:Globe },
     { id:"email-config",label:"Email Config", icon:Mail },
+    { id:"branding",    label:"Branding & Site", icon:Palette },
     { id:"settings",    label:"Settings",     icon:Settings },
   ];
 
@@ -858,6 +1039,7 @@ export default function SuperAdminModule() {
 
       {/* ══ EMAIL CONFIG ══ */}
       {tab === "email-config" && <EmailConfigTab userId={user?.id} />}
+      {tab === "branding" && <BrandingTab userId={user?.id} />}
 
       {/* ══ SETTINGS ══ */}
       {tab === "settings" && (

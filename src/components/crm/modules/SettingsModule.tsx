@@ -44,23 +44,50 @@ const readOnlyCls = `${inputCls} opacity-60 cursor-not-allowed`;
 
 // ─── Email settings ───────────────────────────────────────────────────────────
 function EmailSettings() {
-  const { user } = useAuthContext();
+  const { user, roles } = useAuthContext();
   const { toast } = useToast();
+  const qc = useQueryClient();
+  const isSuperAdmin = roles.includes("super_admin" as any);
+
+  // User's own email account
   const [email, setEmail] = useState("");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  const PRESETS = {
-    smtp_host: "smtp.zoho.eu", smtp_port: "587",
-    imap_host: "imap.zoho.eu", imap_port: "993",
-    domain: "@ecowasparliamentinitiatives.org",
-  };
+  // Global server config state
+  const [smtpHost, setSmtpHost] = useState("");
+  const [smtpPort, setSmtpPort] = useState("587");
+  const [imapHost, setImapHost] = useState("");
+  const [imapPort, setImapPort] = useState("993");
+  const [sslEnabled, setSslEnabled] = useState(true);
+  const [fromName, setFromName] = useState("");
+  const [fromEmail, setFromEmail] = useState("");
+  const [serverSaving, setServerSaving] = useState(false);
 
   useEffect(() => {
     if (!user?.id) return;
     (supabase as any).from("email_accounts").select("email_address").eq("user_id", user.id).eq("is_active", true).single()
       .then(({ data }: any) => { if (data?.email_address) setEmail(data.email_address); });
   }, [user?.id]);
+
+  const { data: smtpConfig } = useQuery({
+    queryKey: ["site-settings-smtp"],
+    queryFn: async () => {
+      const { data } = await (supabase as any).from("site_settings").select("value").eq("key", "smtp").single();
+      return (data?.value as Record<string, any>) ?? {};
+    },
+  });
+
+  useEffect(() => {
+    if (!smtpConfig || !Object.keys(smtpConfig).length) return;
+    setSmtpHost(smtpConfig.host ?? "");
+    setSmtpPort(String(smtpConfig.port ?? 587));
+    setImapHost(smtpConfig.imap_host ?? "");
+    setImapPort(String(smtpConfig.imap_port ?? 993));
+    setSslEnabled(smtpConfig.ssl_enabled !== false);
+    setFromName(smtpConfig.from_name ?? "");
+    setFromEmail(smtpConfig.from_email ?? "");
+  }, [smtpConfig]);
 
   const handleSave = async () => {
     if (!email.trim()) return;
@@ -76,18 +103,33 @@ function EmailSettings() {
     } finally { setSaving(false); }
   };
 
+  const handleServerSave = async () => {
+    setServerSaving(true);
+    try {
+      const value = {
+        host: smtpHost, port: Number(smtpPort),
+        imap_host: imapHost, imap_port: Number(imapPort),
+        ssl_enabled: sslEnabled, from_name: fromName, from_email: fromEmail,
+      };
+      const { data: existing } = await (supabase as any).from("site_settings").select("id").eq("key", "smtp").single();
+      if (existing) {
+        await (supabase as any).from("site_settings").update({ value, updated_by: user!.id, updated_at: new Date().toISOString() }).eq("key", "smtp");
+      } else {
+        await (supabase as any).from("site_settings").insert({ key: "smtp", value, updated_by: user!.id });
+      }
+      qc.invalidateQueries({ queryKey: ["site-settings-smtp"] });
+      toast({ title: "Server configuration saved" });
+    } catch (err: any) {
+      toast({ title: "Failed to save", description: err.message, variant: "destructive" });
+    } finally { setServerSaving(false); }
+  };
+
   return (
     <div className="space-y-4">
-      <div className="flex items-start gap-2 p-3 bg-emerald-950/40 border border-emerald-800 rounded-lg">
-        <CheckCircle2 size={12} className="text-emerald-400 flex-shrink-0 mt-0.5" />
-        <p className="text-[10px] text-emerald-300 leading-relaxed">
-          SMTP/IMAP settings are pre-configured for <span className="font-mono">ecowasparliamentinitiatives.org</span> (Zoho Mail EU).
-        </p>
-      </div>
       <div className="grid sm:grid-cols-2 gap-4">
         <Section title="Your Email Account" icon={Mail}>
-          <Field label="Email address" hint="Your @ecowasparliamentinitiatives.org address">
-            <Input value={email} onChange={e => setEmail(e.target.value)} className={inputCls} placeholder="yourname@ecowasparliamentinitiatives.org" />
+          <Field label="Email address" hint="Your assigned email address">
+            <Input value={email} onChange={e => setEmail(e.target.value)} className={inputCls} placeholder="yourname@domain.org" />
           </Field>
           <div className="pt-2 border-t border-crm-border">
             <Button size="sm" onClick={handleSave} disabled={saving} className="bg-emerald-700 hover:bg-emerald-600 text-white text-xs gap-1.5">
@@ -96,11 +138,58 @@ function EmailSettings() {
             </Button>
           </div>
         </Section>
-        <Section title="Server Configuration (Preset)" icon={Settings}>
-          <Field label="SMTP Host"><Input value={PRESETS.smtp_host} readOnly className={readOnlyCls} /></Field>
-          <Field label="SMTP Port"><Input value={PRESETS.smtp_port} readOnly className={readOnlyCls} /></Field>
-          <Field label="IMAP Host"><Input value={PRESETS.imap_host} readOnly className={readOnlyCls} /></Field>
-          <Field label="IMAP Port"><Input value={PRESETS.imap_port} readOnly className={readOnlyCls} /></Field>
+
+        <Section title="Server Configuration" icon={Settings}>
+          {isSuperAdmin ? (
+            <div className="space-y-2">
+              <div className="grid grid-cols-2 gap-2">
+                <Field label="SMTP Host">
+                  <Input value={smtpHost} onChange={e => setSmtpHost(e.target.value)} className={inputCls} placeholder="smtp.zoho.eu" />
+                </Field>
+                <Field label="SMTP Port">
+                  <Input type="number" value={smtpPort} onChange={e => setSmtpPort(e.target.value)} className={inputCls} placeholder="587" />
+                </Field>
+                <Field label="IMAP Host">
+                  <Input value={imapHost} onChange={e => setImapHost(e.target.value)} className={inputCls} placeholder="imap.zoho.eu" />
+                </Field>
+                <Field label="IMAP Port">
+                  <Input type="number" value={imapPort} onChange={e => setImapPort(e.target.value)} className={inputCls} placeholder="993" />
+                </Field>
+                <Field label="From Name">
+                  <Input value={fromName} onChange={e => setFromName(e.target.value)} className={inputCls} placeholder="ECOWAS Parliament CRM" />
+                </Field>
+                <Field label="From Email">
+                  <Input type="email" value={fromEmail} onChange={e => setFromEmail(e.target.value)} className={inputCls} placeholder="noreply@domain.org" />
+                </Field>
+              </div>
+              <div className="flex items-center gap-3 pt-1">
+                <Switch checked={sslEnabled} onCheckedChange={setSslEnabled} className="data-[state=checked]:bg-emerald-600" />
+                <div>
+                  <p className="text-[11px] font-medium text-crm-text">Require SSL / TLS</p>
+                  <p className="text-[10px] text-crm-text-dim">{sslEnabled ? "SSL enabled (port 465 / STARTTLS on 587)" : "SSL disabled"}</p>
+                </div>
+              </div>
+              <div className="pt-2 border-t border-crm-border">
+                <Button size="sm" onClick={handleServerSave} disabled={serverSaving}
+                  className="bg-emerald-700 hover:bg-emerald-600 text-white text-xs gap-1.5">
+                  {serverSaving ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
+                  {serverSaving ? "Saving…" : "Save Server Config"}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <Field label="SMTP Host"><Input value={smtpHost || "—"} readOnly className={readOnlyCls} /></Field>
+              <Field label="SMTP Port"><Input value={smtpPort} readOnly className={readOnlyCls} /></Field>
+              <Field label="IMAP Host"><Input value={imapHost || "—"} readOnly className={readOnlyCls} /></Field>
+              <Field label="IMAP Port"><Input value={imapPort} readOnly className={readOnlyCls} /></Field>
+              <div className="flex items-center gap-2 pt-1">
+                <div className={`w-2 h-2 rounded-full ${sslEnabled ? "bg-emerald-400" : "bg-crm-text-dim"}`} />
+                <p className="text-[10px] text-crm-text-dim">SSL {sslEnabled ? "enabled" : "disabled"}</p>
+              </div>
+              <p className="text-[10px] text-crm-text-faint pt-1">Only super admins can modify server configuration.</p>
+            </div>
+          )}
         </Section>
       </div>
     </div>
@@ -479,7 +568,7 @@ function SiteSettingsPanel() {
     try {
       for (const [key, val] of Object.entries(values)) {
         await (supabase as any).from("site_settings").update({
-          value: JSON.stringify(val),
+          value: val,
           updated_at: new Date().toISOString(),
           updated_by: user!.id,
         }).eq("key", key);

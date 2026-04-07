@@ -14,7 +14,7 @@ export function useSiteSettings() {
       });
       return map;
     },
-    staleTime: 2 * 60 * 1000,
+    staleTime: 30 * 1000,
   });
 
   const get = (key: string, fallback = "") => settings[key] || fallback;
