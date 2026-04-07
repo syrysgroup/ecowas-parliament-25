@@ -53,19 +53,38 @@ Deno.serve(async (req) => {
 
     const { data: acct } = await serviceClient
       .from("email_accounts")
-      .select("id, zoho_account_id")
+      .select("id, email_address, zoho_account_id")
       .eq("user_id", user.id)
       .eq("is_active", true)
       .single();
 
-    if (!acct?.zoho_account_id) {
-      return new Response(JSON.stringify({ error: "No active email account with resolved Zoho ID. Run a sync first." }), {
+    if (!acct) {
+      return new Response(JSON.stringify({ error: "No active email account found." }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     const token = await getZohoToken();
-    const zohoAccountId = acct.zoho_account_id;
+
+    // Resolve account ID — if stored ID is invalid, clear and re-resolve
+    let zohoAccountId = acct.zoho_account_id;
+    if (!zohoAccountId) {
+      const orgId = Deno.env.get("ZOHO_ORG_ID")!;
+      const accountsRes = await fetch(`https://mail.zoho.eu/api/organization/${orgId}/accounts`, {
+        headers: { Authorization: `Zoho-oauthtoken ${token}` },
+      });
+      const accountsData = await accountsRes.json();
+      const match = (accountsData?.data ?? []).find((a: any) =>
+        (a.primaryEmailAddress ?? "").toLowerCase() === (acct.email_address ?? "").toLowerCase()
+      );
+      if (!match) {
+        return new Response(JSON.stringify({ error: "Could not resolve Zoho account ID. Check ZOHO_ORG_ID and account email." }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      zohoAccountId = String(match.accountId ?? match.zuid);
+      await serviceClient.from("email_accounts").update({ zoho_account_id: zohoAccountId }).eq("id", acct.id);
+    }
 
     if (action === "list") {
       const res = await fetch(`https://mail.zoho.eu/api/accounts/${zohoAccountId}/folders`, {

@@ -93,16 +93,28 @@ Deno.serve(async (req) => {
     if (!acct) return new Response(JSON.stringify({ newEmailCount: 0, message: "No active email account" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
     const token = await getZohoToken();
-    const zohoAccountId = await resolveZohoAccountId(serviceClient, acct, token);
+    let zohoAccountId = await resolveZohoAccountId(serviceClient, acct, token);
 
     // Fetch the actual folder list from Zoho to get folder IDs
-    const foldersRes = await fetch(`https://mail.zoho.eu/api/accounts/${zohoAccountId}/folders`, {
+    let foldersRes = await fetch(`https://mail.zoho.eu/api/accounts/${zohoAccountId}/folders`, {
       headers: { Authorization: `Zoho-oauthtoken ${token}` },
     });
-    const foldersData = await foldersRes.json();
+    let foldersData = await foldersRes.json();
+
+    // If stored account ID is rejected by Zoho, clear it and re-resolve once
+    if (!foldersRes.ok || foldersData?.status?.code === 404) {
+      console.warn("Stored zoho_account_id invalid, re-resolving:", zohoAccountId);
+      await serviceClient.from("email_accounts").update({ zoho_account_id: null }).eq("id", acct.id);
+      acct.zoho_account_id = null;
+      zohoAccountId = await resolveZohoAccountId(serviceClient, acct, token);
+      foldersRes = await fetch(`https://mail.zoho.eu/api/accounts/${zohoAccountId}/folders`, {
+        headers: { Authorization: `Zoho-oauthtoken ${token}` },
+      });
+      foldersData = await foldersRes.json();
+    }
+
     const zohoFolders = Array.isArray(foldersData?.data) ? foldersData.data : [];
 
-    // Guard — if Zoho returns no folders, log and skip gracefully
     if (zohoFolders.length === 0) {
       console.error("No folders returned from Zoho:", JSON.stringify(foldersData));
       return new Response(JSON.stringify({ success: true, newEmailCount: 0, message: "No folders returned from Zoho" }), {
