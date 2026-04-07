@@ -74,7 +74,7 @@ const Stakeholders = () => {
     },
   });
 
-  const [speaker, ...otherLeaders] = leadership;
+  const [speaker, ...otherLeaders] = leadershipProfiles;
 
   return (
     <Layout>
