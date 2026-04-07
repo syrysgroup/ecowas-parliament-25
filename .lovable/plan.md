@@ -1,88 +1,66 @@
 
 
-## Plan: Redesign CRM Email Module to Match Vuexy Template + Fix Build Error
+## Plan: CRM Email Login, Sponsors Bulk Actions, and People & Access Fixes
 
-### Overview
-Redesign the `EmailInboxModule.tsx` (the real Zoho-connected email in the CRM) to match the Vuexy email template layout exactly. Also fix the unrelated `PermissionsSettings.tsx` build error.
+This plan covers three areas of improvement in the CRM.
 
-### Build Error Fix (Quick)
-**File**: `src/views/admin/settings/PermissionsSettings.tsx`
-- Line 28-30: The `stored` variable is typed as `{}` but accessed with `.admin` and `.user`. Fix by casting `stored` properly or adding a fallback type assertion.
+---
 
-### Email Redesign — Vuexy Layout Structure
+### 1. Email Module: User Self-Service Login
 
-The Vuexy email has a distinct 3-column layout inside a single card:
+**Current state:** When a user has no email account, they see "No email account assigned — contact your admin." There is no way for non-super-admins to connect their own email. The server config (SMTP/IMAP settings) is visible to super admins in the People module's Edit User dialog.
 
-```text
-┌──────────────────────────────────────────────────────────┐
-│ Card with rounded corners, border, shadow               │
-│ ┌─────────┬──────────────────────┬──────────────────────┐│
-│ │ Sidebar │   Email List         │   Email Detail View  ││
-│ │         │                      │                      ││
-│ │ Compose │ Search bar           │ Subject + Badge      ││
-│ │ btn     │ ──────────────────── │ ──────────────────── ││
-│ │         │ ☐ ★ [avatar] Name   │ Trash/Mail/Folder/   ││
-│ │ Inbox 21│   Subject     [dot] │ Tag/Star/More        ││
-│ │ Sent    │ ☐ ★ [avatar] Name   │ ──────────────────── ││
-│ │ Draft  2│   Subject     [dot] │ [avatar] Sender Name ││
-│ │ Starred │ ☐ ★ [initials] Name │  email@addr          ││
-│ │ Spam   4│   Subject     [dot] │  Date                ││
-│ │ Trash   │                      │                      ││
-│ │         │  Hover: mail/trash/  │ Email body content   ││
-│ │ Labels: │  info icons          │                      ││
-│ │ ● Persl │                      │ ── Attachments ──    ││
-│ │ ● Compny│                      │ 📎 report.xlsx      ││
-│ │ ● Imprt │                      │                      ││
-│ │ ● Privt │                      │ Reply card           ││
-│ └─────────┴──────────────────────┴──────────────────────┘│
-│ Compose Modal (bottom-right, draggable-style)            │
-└──────────────────────────────────────────────────────────┘
-```
+**Changes:**
 
-### Key Vuexy Design Differences to Implement
+- **EmailInboxModule.tsx** — Replace the empty-state with a two-step flow:
+  1. Show "No email account connected" message with a "Connect Email" button
+  2. Clicking the button opens a simple dialog asking only for **email address** and **password** (no SMTP/IMAP server fields — those are admin-only)
+  3. On submit, upsert a row into `email_accounts` with the user's credentials, creating/activating their account
+  
+- **EmailConfigSettings.tsx** — Keep as-is (super admin only for server-level SMTP config)
 
-**1. Sidebar**
-- Full-width "Compose" button at top (primary color)
-- Folder list with icons + badges (Inbox: 21, Draft: 2, Spam: 4)
-- Labels section below with colored dots (Personal/green, Company/primary, Important/warning, Private/danger)
-- Clean spacing, no heavy borders
+- **PeopleModule.tsx** — The Email Credentials section in EditUserDialog already gates behind `isSuperAdmin`. No changes needed there.
 
-**2. Email List**
-- Search bar with icon (no border on input, merged input group style)
-- Horizontal divider below search
-- Action bar: select-all checkbox, trash, mail-opened, folder dropdown, label dropdown, refresh, more-options dropdown
-- Each email row: checkbox, star icon, avatar (image or initials circle), sender name + subject inline (on wider screens), label dots, time
-- Hover state reveals action icons (mail/trash/info) overlaying the time/label area
-- Unread emails have bolder text (h6 weight)
+- **Database:** May need to ensure `email_accounts` table allows authenticated users to insert their own row (check RLS). If the table doesn't exist or lacks self-service insert policy, add a migration.
 
-**3. Email Detail View**
-- Back arrow + subject title + badge (e.g., "Important")
-- Action bar: prev/next chevrons, trash, mail, folder dropdown, label dropdown, star, more-options
-- Stacked email cards for thread view (previous messages collapsible, latest message expanded)
-- Each card: avatar + sender name + email + date + attachment/star/more icons in header, then body content
-- Reply card at bottom with rich text toolbar (bold/italic/underline/list/link/image) + attachments button + send button
+### 2. Sponsors & Partners: Inline Publish Toggle + Bulk Actions
 
-**4. Compose Modal**
-- Bottom-right modal dialog (not centered) — minimize/close buttons
-- To field with tag-style select, CC/BCC toggle links
-- Subject field
-- Rich text editor area
-- Footer: attachments + send button
+**Current state:** The published toggle pill is already inline next to the name (Live/Draft). The bulk action bar only has "Delete selected."
 
-### Files Modified
+**Changes to SponsorsManagerModule.tsx:**
 
-1. **`src/components/crm/modules/EmailInboxModule.tsx`** — Complete UI overhaul:
-   - Restructure sidebar with Compose button, folder items with proper icons/badges, labels section
-   - Redesign email list with Vuexy-style search bar, action toolbar, email rows with checkbox + star + avatar/initials + inline sender/subject + label dots + time, hover action icons
-   - Redesign detail panel with subject + badge header, dual action bars (nav + actions), threaded card layout, inline reply card with toolbar
-   - Redesign compose modal to bottom-right positioned with minimize, CC/BCC toggles
+- **Move the publish toggle button** into the action buttons group (alongside Eye, Pencil, Trash2) instead of next to the name, for better UX consistency
+- **Expand bulk actions bar** when items are selected to include:
+  - Bulk Publish (set `is_published = true` for all selected)
+  - Bulk Unpublish (set `is_published = false` for all selected)  
+  - Bulk Delete (already exists)
+- Add two new mutations: `bulkPublish` and `bulkUnpublish` that update the relevant table for all selected IDs
 
-2. **`src/views/admin/settings/PermissionsSettings.tsx`** — Fix TS2339 build error on lines 29-30
+### 3. People & Access: End-to-End Team Member Flow
+
+**Current state:** PeopleModule has two tabs — system users and website team members. The Team.tsx page fetches from both `profiles` (where `show_on_website = true`) and `team_members` (manual entries). Need to verify the full flow works.
+
+**Changes:**
+
+- **Check `team_members` table exists** — The code references it but it may not be in the schema. If missing, create migration with columns: `id`, `full_name`, `title`, `organisation`, `avatar_url`, `bio`, `display_order`, `is_active`, `created_at`
+- **Add RLS policies** for `team_members`: admins can manage, public can read active members
+- **Verify avatar upload** works with `team-avatars` bucket (already public)
+- **Ensure the "Show on website" toggle** in EditUserDialog properly updates `profiles.show_on_website` and the Team page query picks it up
+- **Fix any issues** in the TeamMemberDialog create/edit flow to ensure new manual members appear on `/team`
+
+---
 
 ### Technical Details
-- All styling uses Tailwind classes matching the existing `crm-*` design tokens
-- Zoho integration logic (queries, mutations, sync) remains unchanged
-- Only UI/layout components are rewritten
-- Avatar initials fallback when no image (colored circle with initials, matching Vuexy)
-- Hover-reveal action icons on email list items using group/group-hover pattern
+
+**Files to modify:**
+1. `src/components/crm/modules/EmailInboxModule.tsx` — Add connect-email dialog in empty state
+2. `src/components/crm/modules/SponsorsManagerModule.tsx` — Move publish toggle to action buttons, add bulk publish/unpublish
+3. `src/components/crm/modules/PeopleModule.tsx` — Minor fixes if needed for team member flow
+
+**Database migrations (if needed):**
+- `team_members` table creation (if not already present)
+- `email_accounts` RLS policy for self-service insert
+- RLS for `team_members`
+
+**No new dependencies required.**
 
