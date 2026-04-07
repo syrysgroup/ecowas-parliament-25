@@ -526,6 +526,32 @@ export default function SponsorsManagerModule() {
     },
   });
 
+  const bulkPublish = useMutation({
+    mutationFn: async () => {
+      const table = tab === "sponsors" ? "sponsors" : "partners";
+      await Promise.all([...selectedIds].map(id => (supabase as any).from(table).update({ is_published: true }).eq("id", id)));
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [tab === "sponsors" ? "sponsors-manager" : "partners-manager"] });
+      qc.invalidateQueries({ queryKey: [tab === "sponsors" ? "sponsors-public" : "partners-public"] });
+      setSelectedIds(new Set());
+      toast("Published selected items");
+    },
+  });
+
+  const bulkUnpublish = useMutation({
+    mutationFn: async () => {
+      const table = tab === "sponsors" ? "sponsors" : "partners";
+      await Promise.all([...selectedIds].map(id => (supabase as any).from(table).update({ is_published: false }).eq("id", id)));
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [tab === "sponsors" ? "sponsors-manager" : "partners-manager"] });
+      qc.invalidateQueries({ queryKey: [tab === "sponsors" ? "sponsors-public" : "partners-public"] });
+      setSelectedIds(new Set());
+      toast("Unpublished selected items");
+    },
+  });
+
   const toggleSelect = (id: string) => {
     setSelectedIds(prev => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next; });
   };
