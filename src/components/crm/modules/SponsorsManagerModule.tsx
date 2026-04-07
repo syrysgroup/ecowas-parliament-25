@@ -564,10 +564,22 @@ export default function SponsorsManagerModule() {
       {selectedIds.size > 0 && (
         <div className="flex items-center gap-2 bg-crm-surface border border-crm-border rounded-lg px-3 py-2">
           <span className="text-[11px] text-crm-text-muted">{selectedIds.size} selected</span>
+          {canEdit("sponsors") && (
+            <>
+              <Button size="sm" variant="outline" onClick={() => bulkPublish.mutate()} disabled={bulkPublish.isPending}
+                className="border-emerald-800 text-emerald-400 text-[10px] h-6 px-2">
+                Publish selected
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => bulkUnpublish.mutate()} disabled={bulkUnpublish.isPending}
+                className="border-amber-800 text-amber-400 text-[10px] h-6 px-2">
+                Unpublish selected
+              </Button>
+            </>
+          )}
           {canDelete("sponsors") && (
             <Button size="sm" variant="outline" onClick={() => bulkDelete.mutate()} disabled={bulkDelete.isPending}
               className="border-red-800 text-red-400 text-[10px] h-6 px-2">
-              Delete {selectedIds.size} selected
+              Delete selected
             </Button>
           )}
         </div>

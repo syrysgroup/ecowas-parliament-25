@@ -543,20 +543,139 @@ export default function EmailInboxModule() {
     setSelectedIds(next);
   };
 
+  // ── Connect Email Dialog state ──
+  const [connectOpen, setConnectOpen] = useState(false);
+  const [connectEmail, setConnectEmail] = useState("");
+  const [connectPassword, setConnectPassword] = useState("");
+  const [connecting, setConnecting] = useState(false);
+
+  const handleConnectEmail = async () => {
+    if (!connectEmail.trim() || !connectPassword.trim() || !user) return;
+    setConnecting(true);
+    try {
+      // 1. Upsert email settings with default SMTP/IMAP (admin can override later)
+      await (supabase as any).from("user_email_settings").upsert({
+        user_id: user.id,
+        smtp_host: "",
+        smtp_port: 587,
+        smtp_user: connectEmail.trim(),
+        smtp_password: connectPassword,
+        imap_host: "",
+        imap_port: 993,
+        auto_connect: true,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: "user_id" });
+
+      // 2. Upsert email account
+      const { data: existing } = await (supabase as any)
+        .from("email_accounts")
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (existing) {
+        await (supabase as any)
+          .from("email_accounts")
+          .update({ email_address: connectEmail.trim(), is_active: true })
+          .eq("id", existing.id);
+      } else {
+        await (supabase as any)
+          .from("email_accounts")
+          .insert({ user_id: user.id, email_address: connectEmail.trim(), display_name: null, is_active: true });
+      }
+
+      qc.invalidateQueries({ queryKey: ["email-account"] });
+      setConnectOpen(false);
+      setConnectEmail("");
+      setConnectPassword("");
+    } catch (err: any) {
+      console.error("Connect email failed:", err);
+    } finally {
+      setConnecting(false);
+    }
+  };
+
   // No email account
   if (!account && !isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4 text-center">
-        <div className="h-16 w-16 rounded-2xl bg-crm-surface border border-crm-border flex items-center justify-center">
-          <Mail className="h-7 w-7 text-crm-text-dim" />
+      <>
+        <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4 text-center">
+          <div className="h-16 w-16 rounded-2xl bg-crm-surface border border-crm-border flex items-center justify-center">
+            <Mail className="h-7 w-7 text-crm-text-dim" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-crm-text">No email account connected</h2>
+            <p className="text-sm text-crm-text-muted mt-1 max-w-sm">
+              Connect your email to start sending and receiving messages directly from the CRM.
+            </p>
+          </div>
+          <button
+            onClick={() => setConnectOpen(true)}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary hover:bg-primary/90 text-white text-[14px] font-medium transition-colors"
+          >
+            <Mail size={16} />
+            Login to Email
+          </button>
         </div>
-        <div>
-          <h2 className="text-lg font-bold text-crm-text">No email account assigned</h2>
-          <p className="text-sm text-crm-text-muted mt-1 max-w-sm">
-            Contact your admin to have a <span className="font-mono text-primary">@ecowasparliamentinitiatives.org</span> email address assigned to your account.
-          </p>
-        </div>
-      </div>
+
+        {/* Connect Email Dialog */}
+        {connectOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+            <div className="bg-crm-card border border-crm-border rounded-xl shadow-2xl w-full max-w-sm p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-[15px] font-semibold text-crm-text">Connect Your Email</h3>
+                <button onClick={() => setConnectOpen(false)} className="text-crm-text-dim hover:text-crm-text transition-colors">
+                  <X size={16} />
+                </button>
+              </div>
+              <p className="text-[12px] text-crm-text-muted">
+                Enter your email credentials to connect your account. Server settings are managed by your administrator.
+              </p>
+              <div className="space-y-3">
+                <div className="space-y-1">
+                  <label className="text-[11px] text-crm-text-dim font-medium">Email Address</label>
+                  <input
+                    type="email"
+                    value={connectEmail}
+                    onChange={e => setConnectEmail(e.target.value)}
+                    placeholder="you@example.com"
+                    className="w-full bg-crm-surface border border-crm-border text-crm-text text-[13px] rounded-lg px-3 py-2 focus:outline-none focus:border-primary placeholder:text-crm-text-faint"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[11px] text-crm-text-dim font-medium">Password</label>
+                  <input
+                    type="password"
+                    value={connectPassword}
+                    onChange={e => setConnectPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="w-full bg-crm-surface border border-crm-border text-crm-text text-[13px] rounded-lg px-3 py-2 focus:outline-none focus:border-primary placeholder:text-crm-text-faint"
+                  />
+                </div>
+              </div>
+              <div className="flex items-center gap-3 pt-2">
+                <button
+                  onClick={() => setConnectOpen(false)}
+                  className="flex-1 px-4 py-2 text-[13px] text-crm-text-muted border border-crm-border rounded-lg hover:bg-crm-surface transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConnectEmail}
+                  disabled={connecting || !connectEmail.trim() || !connectPassword.trim()}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-primary hover:bg-primary/90 text-white text-[13px] font-medium transition-colors disabled:opacity-50"
+                >
+                  {connecting ? (
+                    <><Loader2 size={14} className="animate-spin" /> Connecting…</>
+                  ) : (
+                    <><Mail size={14} /> Connect</>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </>
     );
   }
 
