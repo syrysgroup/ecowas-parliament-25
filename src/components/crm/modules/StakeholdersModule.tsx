@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Pencil, Trash2, Image as ImageIcon } from "lucide-react";
+import { Plus, Pencil, Trash2, Image as ImageIcon, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -203,10 +203,26 @@ export default function StakeholdersModule() {
             Manage ECOWAS leadership, team, and advisory profiles displayed on the Stakeholders page.
           </p>
         </div>
-        <Button size="sm" onClick={openCreate}
-          className="bg-emerald-700 hover:bg-emerald-600 text-white text-xs gap-1">
-          <Plus size={13} /> Add Profile
-        </Button>
+        <div className="flex items-center gap-2">
+          <a
+            href="/stakeholders"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1 text-[11px] text-crm-text-dim hover:text-emerald-400 transition-colors"
+          >
+            <ExternalLink size={11} /> View Stakeholders Page
+          </a>
+          <Button size="sm" onClick={openCreate}
+            className="bg-emerald-700 hover:bg-emerald-600 text-white text-xs gap-1">
+            <Plus size={13} /> Add Profile
+          </Button>
+        </div>
+      </div>
+
+      {/* Help blurb */}
+      <div className="bg-crm-surface border border-crm-border rounded-xl px-4 py-3 text-[11px] text-crm-text-dim space-y-1">
+        <p><span className="text-crm-text font-semibold">To appear on /stakeholders:</span> Add a profile here with <span className="text-emerald-400">Category = Leadership</span> and <span className="text-emerald-400">Active = on</span>. That person will appear in the ECOWAS Leadership section of the public Stakeholders page.</p>
+        <p>Use <span className="text-crm-text font-semibold">Team</span> or <span className="text-crm-text font-semibold">Advisory</span> categories for other sections.</p>
       </div>
 
       {isLoading ? (

@@ -1,9 +1,9 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthContext";
 import {
-  Plus, Pencil, Trash2, Eye, EyeOff, Image, Users, Search,
+  Plus, Pencil, Trash2, Eye, Image, Users, Search, ChevronDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -22,7 +22,7 @@ interface SponsorRow {
   description: string | null; acronym: string | null; about: string | null;
   tier: string; website: string | null;
   email: string | null; programmes: string[]; is_published: boolean;
-  sort_order: number;
+  sort_order: number; is_ecowas_sponsor?: boolean;
 }
 
 interface PartnerRow {
@@ -34,12 +34,87 @@ interface PartnerRow {
   is_published: boolean; sort_order: number;
 }
 
+interface ProgrammePillar {
+  id: string; slug: string; emoji: string | null;
+}
+
+// ─── Programme multi-checkbox dropdown ───────────────────────────────────────
+function ProgrammeSelect({ selected, onChange }: { selected: string[]; onChange: (v: string[]) => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  const { data: pillars = [] } = useQuery<ProgrammePillar[]>({
+    queryKey: ["programme_pillars_active"],
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("programme_pillars")
+        .select("id, slug, emoji")
+        .eq("is_active", true)
+        .order("display_order");
+      return data ?? [];
+    },
+  });
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    if (open) document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  const toggle = (slug: string) => {
+    onChange(selected.includes(slug) ? selected.filter(s => s !== slug) : [...selected, slug]);
+  };
+
+  const label = (slug: string) =>
+    slug.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        className="w-full flex items-center justify-between gap-2 bg-crm-surface border border-crm-border text-crm-text text-xs h-8 px-2.5 rounded-md hover:border-crm-border-hover transition-colors"
+      >
+        <span className="truncate">
+          {selected.length === 0
+            ? "Select programmes…"
+            : `${selected.length} programme${selected.length > 1 ? "s" : ""} selected`}
+        </span>
+        <ChevronDown size={12} className={`flex-shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && (
+        <div className="absolute z-50 mt-1 w-full max-h-48 overflow-y-auto bg-crm-card border border-crm-border rounded-lg shadow-lg">
+          {pillars.length === 0 ? (
+            <p className="text-[11px] text-crm-text-dim px-3 py-2">No active programmes found</p>
+          ) : (
+            pillars.map(p => (
+              <label key={p.id} className="flex items-center gap-2.5 px-3 py-2 hover:bg-crm-surface cursor-pointer">
+                <Checkbox
+                  checked={selected.includes(p.slug)}
+                  onCheckedChange={() => toggle(p.slug)}
+                  className="data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
+                />
+                <span className="text-xs text-crm-text">
+                  {p.emoji && <span className="mr-1">{p.emoji}</span>}
+                  {label(p.slug)}
+                </span>
+              </label>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Sponsor Dialog ───────────────────────────────────────────────────────────
 function SponsorDialog({ open, onClose, sponsor }: { open: boolean; onClose: () => void; sponsor?: SponsorRow }) {
   const qc = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
   const isEdit = !!sponsor;
   const [name, setName] = useState(sponsor?.name ?? "");
-  const [slug, setSlug] = useState(sponsor?.slug ?? "");
   const [logoUrl, setLogoUrl] = useState(sponsor?.logo_url ?? "");
   const [acronym, setAcronym] = useState(sponsor?.acronym ?? "");
   const [description, setDescription] = useState(sponsor?.description ?? "");
@@ -47,7 +122,8 @@ function SponsorDialog({ open, onClose, sponsor }: { open: boolean; onClose: () 
   const [tier, setTier] = useState(sponsor?.tier ?? "standard");
   const [website, setWebsite] = useState(sponsor?.website ?? "");
   const [email, setEmail] = useState(sponsor?.email ?? "");
-  const [programmes, setProgrammes] = useState(sponsor?.programmes?.join(", ") ?? "");
+  const [programmes, setProgrammes] = useState<string[]>(sponsor?.programmes ?? []);
+  const [isEcowas, setIsEcowas] = useState(sponsor?.is_ecowas_sponsor ?? false);
   const [isPublished, setIsPublished] = useState(sponsor?.is_published ?? false);
   const [sortOrder, setSortOrder] = useState(sponsor?.sort_order?.toString() ?? "0");
   const [uploading, setUploading] = useState(false);
@@ -64,12 +140,16 @@ function SponsorDialog({ open, onClose, sponsor }: { open: boolean; onClose: () 
 
   const save = useMutation({
     mutationFn: async () => {
+      const autoSlug = name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
       const payload: any = {
-        name, slug: slug || name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, ""),
+        name,
+        // On create: auto-generate slug. On edit: keep existing slug (stable URLs).
+        slug: isEdit ? sponsor.slug : autoSlug,
         logo_url: logoUrl || null, description: description || null,
         acronym: acronym || null, about: about || null, tier,
         website: website || null, email: email || null,
-        programmes: programmes ? programmes.split(",").map(p => p.trim()).filter(Boolean) : [],
+        programmes,
+        is_ecowas_sponsor: isEcowas,
         is_published: isPublished, sort_order: parseInt(sortOrder) || 0,
         updated_at: new Date().toISOString(),
       };
@@ -91,6 +171,7 @@ function SponsorDialog({ open, onClose, sponsor }: { open: boolean; onClose: () 
           <DialogTitle className="text-sm font-semibold text-crm-text">{isEdit ? "Edit Sponsor" : "Add Sponsor"}</DialogTitle>
         </DialogHeader>
         <div className="space-y-3 py-1">
+          {/* Logo */}
           <div className="space-y-2">
             <Label className="text-[11px] text-crm-text-dim">Logo</Label>
             {logoUrl && <img src={logoUrl} alt="" className="h-16 w-auto rounded border border-crm-border" loading="lazy" decoding="async" />}
@@ -98,24 +179,21 @@ function SponsorDialog({ open, onClose, sponsor }: { open: boolean; onClose: () 
             <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()} disabled={uploading}
               className="border-crm-border text-crm-text-muted text-xs gap-1"><Image size={12} /> {uploading ? "Uploading…" : "Upload Logo"}</Button>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <Label className="text-[11px] text-crm-text-dim">Name *</Label>
-              <Input value={name} onChange={e => { setName(e.target.value); if (!isEdit) setSlug(e.target.value.toLowerCase().replace(/\s+/g,"-").replace(/[^a-z0-9-]/g,"")); }}
-                className="bg-crm-surface border-crm-border text-crm-text text-xs h-8" />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-[11px] text-crm-text-dim">Slug</Label>
-              <Input value={slug} onChange={e => setSlug(e.target.value)}
-                className="bg-crm-surface border-crm-border text-crm-text text-xs h-8 font-mono" />
-            </div>
-          </div>
+
+          {/* Name (full width) */}
           <div className="space-y-1">
-            <Label className="text-[11px] text-crm-text-dim">Acronym / Short Name</Label>
-            <Input value={acronym} onChange={e => setAcronym(e.target.value)}
-              className="bg-crm-surface border-crm-border text-crm-text text-xs h-8" placeholder="e.g. NASENI" />
+            <Label className="text-[11px] text-crm-text-dim">Name *</Label>
+            <Input value={name} onChange={e => setName(e.target.value)}
+              className="bg-crm-surface border-crm-border text-crm-text text-xs h-8" />
           </div>
+
+          {/* Short Name + Tier */}
           <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label className="text-[11px] text-crm-text-dim">Short Name</Label>
+              <Input value={acronym} onChange={e => setAcronym(e.target.value)}
+                className="bg-crm-surface border-crm-border text-crm-text text-xs h-8" placeholder="e.g. NASENI" />
+            </div>
             <div className="space-y-1">
               <Label className="text-[11px] text-crm-text-dim">Tier</Label>
               <Select value={tier} onValueChange={setTier}>
@@ -128,38 +206,60 @@ function SponsorDialog({ open, onClose, sponsor }: { open: boolean; onClose: () 
                 </SelectContent>
               </Select>
             </div>
+          </div>
+
+          {/* Website + Email */}
+          <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <Label className="text-[11px] text-crm-text-dim">Sort Order</Label>
-              <Input type="number" value={sortOrder} onChange={e => setSortOrder(e.target.value)}
+              <Label className="text-[11px] text-crm-text-dim">Website</Label>
+              <Input value={website} onChange={e => setWebsite(e.target.value)}
+                className="bg-crm-surface border-crm-border text-crm-text text-xs h-8" placeholder="https://…" />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-[11px] text-crm-text-dim">Email</Label>
+              <Input value={email} onChange={e => setEmail(e.target.value)}
                 className="bg-crm-surface border-crm-border text-crm-text text-xs h-8" />
             </div>
           </div>
+
+          {/* Programmes multi-select */}
           <div className="space-y-1">
-            <Label className="text-[11px] text-crm-text-dim">Website</Label>
-            <Input value={website} onChange={e => setWebsite(e.target.value)}
-              className="bg-crm-surface border-crm-border text-crm-text text-xs h-8" placeholder="https://..." />
+            <Label className="text-[11px] text-crm-text-dim">Programmes</Label>
+            <ProgrammeSelect selected={programmes} onChange={setProgrammes} />
           </div>
+
+          {/* ECOWAS Parliament Initiatives toggle */}
+          <div className="flex items-center justify-between bg-crm-surface border border-crm-border rounded-lg px-3 py-2">
+            <div>
+              <p className="text-[12px] text-crm-text">Sponsor of ECOWAS Parliament Initiatives</p>
+              <p className="text-[10px] text-crm-text-dim mt-0.5">Mark this sponsor as supporting ECOWAS Parliament directly</p>
+            </div>
+            <Switch checked={isEcowas} onCheckedChange={setIsEcowas} />
+          </div>
+
+          {/* Sort order */}
           <div className="space-y-1">
-            <Label className="text-[11px] text-crm-text-dim">Email</Label>
-            <Input value={email} onChange={e => setEmail(e.target.value)}
+            <Label className="text-[11px] text-crm-text-dim">Sort Order</Label>
+            <Input type="number" value={sortOrder} onChange={e => setSortOrder(e.target.value)}
               className="bg-crm-surface border-crm-border text-crm-text text-xs h-8" />
           </div>
-          <div className="space-y-1">
-            <Label className="text-[11px] text-crm-text-dim">Programmes (comma-separated)</Label>
-            <Input value={programmes} onChange={e => setProgrammes(e.target.value)}
-              className="bg-crm-surface border-crm-border text-crm-text text-xs h-8" placeholder="Trade, Youth, Women" />
-          </div>
+
+          {/* Short description */}
           <div className="space-y-1">
             <Label className="text-[11px] text-crm-text-dim">Short Description</Label>
             <Textarea value={description} onChange={e => setDescription(e.target.value)}
               className="bg-crm-surface border-crm-border text-crm-text text-xs resize-none" rows={2} />
           </div>
+
+          {/* Full about */}
           <div className="space-y-1">
             <Label className="text-[11px] text-crm-text-dim">Full About (shown on sponsor detail page)</Label>
             <Textarea value={about} onChange={e => setAbout(e.target.value)}
               className="bg-crm-surface border-crm-border text-crm-text text-xs resize-none" rows={4}
-              placeholder="Detailed description of the sponsor shown on their dedicated page..." />
+              placeholder="Detailed description shown on their dedicated page…" />
           </div>
+
+          {/* Published */}
           <div className="flex items-center justify-between">
             <Label className="text-[11px] text-crm-text-dim">Published</Label>
             <Switch checked={isPublished} onCheckedChange={setIsPublished} />
@@ -175,13 +275,13 @@ function SponsorDialog({ open, onClose, sponsor }: { open: boolean; onClose: () 
   );
 }
 
+// ─── Partner Dialog ───────────────────────────────────────────────────────────
 function PartnerDialog({ open, onClose, partner }: { open: boolean; onClose: () => void; partner?: PartnerRow }) {
   const qc = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
   const leadImageRef = useRef<HTMLInputElement>(null);
   const isEdit = !!partner;
   const [name, setName] = useState(partner?.name ?? "");
-  const [slug, setSlug] = useState(partner?.slug ?? "");
   const [logoUrl, setLogoUrl] = useState(partner?.logo_url ?? "");
   const [description, setDescription] = useState(partner?.description ?? "");
   const [longDescription, setLongDescription] = useState(partner?.long_description?.join("\n\n") ?? "");
@@ -224,8 +324,10 @@ function PartnerDialog({ open, onClose, partner }: { open: boolean; onClose: () 
       if (linkedinUrl) socialLinks.linkedin = linkedinUrl;
       if (facebookUrl) socialLinks.facebook = facebookUrl;
 
+      const autoSlug = name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
       const payload: any = {
-        name, slug: slug || name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, ""),
+        name,
+        slug: isEdit ? partner.slug : autoSlug,
         logo_url: logoUrl || null, description: description || null, partner_type: partnerType,
         long_description: longDescription
           ? longDescription.split(/\n\n+/).map(p => p.trim()).filter(Boolean)
@@ -263,7 +365,7 @@ function PartnerDialog({ open, onClose, partner }: { open: boolean; onClose: () 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label className="text-[11px] text-crm-text-dim">Name *</Label>
-              <Input value={name} onChange={e => { setName(e.target.value); if (!isEdit) setSlug(e.target.value.toLowerCase().replace(/\s+/g,"-").replace(/[^a-z0-9-]/g,"")); }}
+              <Input value={name} onChange={e => setName(e.target.value)}
                 className="bg-crm-surface border-crm-border text-crm-text text-xs h-8" />
             </div>
             <div className="space-y-1">
@@ -300,7 +402,7 @@ function PartnerDialog({ open, onClose, partner }: { open: boolean; onClose: () 
           <div className="space-y-1">
             <Label className="text-[11px] text-crm-text-dim">Website</Label>
             <Input value={website} onChange={e => setWebsite(e.target.value)}
-              className="bg-crm-surface border-crm-border text-crm-text text-xs h-8" placeholder="https://..." />
+              className="bg-crm-surface border-crm-border text-crm-text text-xs h-8" placeholder="https://…" />
           </div>
           <div className="space-y-1">
             <Label className="text-[11px] text-crm-text-dim">Short Description</Label>
@@ -311,22 +413,22 @@ function PartnerDialog({ open, onClose, partner }: { open: boolean; onClose: () 
             <Label className="text-[11px] text-crm-text-dim">Full Description (separate paragraphs with a blank line)</Label>
             <Textarea value={longDescription} onChange={e => setLongDescription(e.target.value)}
               className="bg-crm-surface border-crm-border text-crm-text text-xs resize-none" rows={6}
-              placeholder={"Paragraph one...\n\nParagraph two...\n\nParagraph three..."} />
+              placeholder={"Paragraph one…\n\nParagraph two…\n\nParagraph three…"} />
           </div>
           <div className="space-y-1">
             <Label className="text-[11px] text-crm-text-dim">Twitter / X URL</Label>
             <Input value={twitterUrl} onChange={e => setTwitterUrl(e.target.value)}
-              className="bg-crm-surface border-crm-border text-crm-text text-xs h-8" placeholder="https://x.com/..." />
+              className="bg-crm-surface border-crm-border text-crm-text text-xs h-8" placeholder="https://x.com/…" />
           </div>
           <div className="space-y-1">
             <Label className="text-[11px] text-crm-text-dim">LinkedIn URL</Label>
             <Input value={linkedinUrl} onChange={e => setLinkedinUrl(e.target.value)}
-              className="bg-crm-surface border-crm-border text-crm-text text-xs h-8" placeholder="https://linkedin.com/in/..." />
+              className="bg-crm-surface border-crm-border text-crm-text text-xs h-8" placeholder="https://linkedin.com/in/…" />
           </div>
           <div className="space-y-1">
             <Label className="text-[11px] text-crm-text-dim">Facebook URL</Label>
             <Input value={facebookUrl} onChange={e => setFacebookUrl(e.target.value)}
-              className="bg-crm-surface border-crm-border text-crm-text text-xs h-8" placeholder="https://facebook.com/..." />
+              className="bg-crm-surface border-crm-border text-crm-text text-xs h-8" placeholder="https://facebook.com/…" />
           </div>
           <div className="flex items-center justify-between">
             <Label className="text-[11px] text-crm-text-dim">Published</Label>
@@ -343,6 +445,7 @@ function PartnerDialog({ open, onClose, partner }: { open: boolean; onClose: () 
   );
 }
 
+// ─── Main Component ───────────────────────────────────────────────────────────
 export default function SponsorsManagerModule() {
   const { isAdmin } = useAuthContext();
   const { canCreate, canEdit, canDelete } = usePermissions();
@@ -368,6 +471,14 @@ export default function SponsorsManagerModule() {
 
   const filteredSponsors = sponsors.filter(s => !search || s.name.toLowerCase().includes(search.toLowerCase()));
   const filteredPartners = partners.filter(p => !search || p.name.toLowerCase().includes(search.toLowerCase()));
+
+  // Clear selection when switching tabs
+  const handleTabChange = (t: string) => { setTab(t); setSelectedIds(new Set()); };
+
+  // Master checkbox state
+  const activeList = tab === "sponsors" ? filteredSponsors : filteredPartners;
+  const allSelected = activeList.length > 0 && activeList.every(item => selectedIds.has(item.id));
+  const someSelected = activeList.some(item => selectedIds.has(item.id)) && !allSelected;
 
   const deleteSponsor = useMutation({
     mutationFn: async (id: string) => { await (supabase as any).from("sponsors").delete().eq("id", id); },
@@ -419,6 +530,14 @@ export default function SponsorsManagerModule() {
     setSelectedIds(prev => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next; });
   };
 
+  const toggleAll = () => {
+    if (allSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(activeList.map(item => item.id)));
+    }
+  };
+
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
@@ -446,13 +565,15 @@ export default function SponsorsManagerModule() {
         <div className="flex items-center gap-2 bg-crm-surface border border-crm-border rounded-lg px-3 py-2">
           <span className="text-[11px] text-crm-text-muted">{selectedIds.size} selected</span>
           {canDelete("sponsors") && (
-            <Button size="sm" variant="outline" onClick={() => bulkDelete.mutate()}
-              className="border-red-800 text-red-400 text-[10px] h-6 px-2">Delete</Button>
+            <Button size="sm" variant="outline" onClick={() => bulkDelete.mutate()} disabled={bulkDelete.isPending}
+              className="border-red-800 text-red-400 text-[10px] h-6 px-2">
+              Delete {selectedIds.size} selected
+            </Button>
           )}
         </div>
       )}
 
-      <Tabs value={tab} onValueChange={setTab}>
+      <Tabs value={tab} onValueChange={handleTabChange}>
         <TabsList className="bg-crm-surface border border-crm-border">
           <TabsTrigger value="sponsors" className="text-xs data-[state=active]:bg-emerald-950 data-[state=active]:text-emerald-400">
             Sponsors ({sponsors.length})
@@ -462,28 +583,60 @@ export default function SponsorsManagerModule() {
           </TabsTrigger>
         </TabsList>
 
+        {/* ── Sponsors tab ── */}
         <TabsContent value="sponsors" className="mt-4 space-y-2">
+          {/* Master select-all row */}
+          {!loadingS && filteredSponsors.length > 0 && (
+            <div className="flex items-center gap-3 px-4 py-2 bg-crm-surface border border-crm-border rounded-xl">
+              <Checkbox
+                checked={allSelected ? true : someSelected ? "indeterminate" : false}
+                onCheckedChange={toggleAll}
+                className="data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
+              />
+              <span className="text-[11px] text-crm-text-dim">Select all ({filteredSponsors.length})</span>
+            </div>
+          )}
           {loadingS && <div className="flex justify-center py-12"><div className="w-6 h-6 border-2 border-emerald-700 border-t-emerald-400 rounded-full animate-spin" /></div>}
           {!loadingS && filteredSponsors.map(s => (
             <div key={s.id} className="bg-crm-card border border-crm-border rounded-xl p-4 flex items-center gap-4 hover:border-crm-border-hover transition-colors">
               <Checkbox checked={selectedIds.has(s.id)} onCheckedChange={() => toggleSelect(s.id)} />
-              {s.logo_url ? <img src={s.logo_url} alt="" className="w-12 h-12 object-contain rounded" width={48} height={48} loading="lazy" decoding="async" /> : <div className="w-12 h-12 bg-crm-surface rounded flex items-center justify-center text-crm-text-dim"><Users size={16} /></div>}
+              {s.logo_url
+                ? <img src={s.logo_url} alt="" className="w-12 h-12 object-contain rounded" width={48} height={48} loading="lazy" decoding="async" />
+                : <div className="w-12 h-12 bg-crm-surface rounded flex items-center justify-center text-crm-text-dim"><Users size={16} /></div>}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <p className="text-[13px] font-semibold text-crm-text">{s.name}</p>
-                  <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded border ${s.is_published ? "bg-emerald-950 text-emerald-400 border-emerald-800" : "bg-crm-surface text-crm-text-muted border-crm-border"}`}>
-                    {s.is_published ? "Published" : "Draft"}
-                  </span>
+                  {/* Published pill toggle */}
+                  {canEdit("sponsors") && (
+                    <button
+                      onClick={() => toggleSponsorPublish.mutate({ id: s.id, published: !s.is_published })}
+                      title={s.is_published ? "Click to unpublish" : "Click to publish"}
+                      className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border transition-colors ${
+                        s.is_published
+                          ? "bg-emerald-950 border-emerald-700 text-emerald-400 hover:bg-emerald-900"
+                          : "bg-red-950/60 border-red-800 text-red-400 hover:bg-red-950"
+                      }`}
+                    >
+                      {s.is_published ? "● Live" : "● Draft"}
+                    </button>
+                  )}
                   <span className="text-[9px] font-mono px-1.5 py-0.5 rounded border bg-crm-surface text-crm-text-dim border-crm-border capitalize">{s.tier}</span>
                 </div>
-                {s.programmes.length > 0 && <p className="text-[10px] text-crm-text-dim mt-0.5">{s.programmes.join(", ")}</p>}
+                {s.programmes && s.programmes.length > 0 && (
+                  <p className="text-[10px] text-crm-text-dim mt-0.5">{s.programmes.join(", ")}</p>
+                )}
               </div>
               <div className="flex gap-1">
-                {canEdit("sponsors") && (
-                  <button onClick={() => toggleSponsorPublish.mutate({ id: s.id, published: !s.is_published })} className="w-7 h-7 rounded flex items-center justify-center bg-crm-surface border border-crm-border text-crm-text-dim hover:text-crm-text-secondary transition-colors">
-                    {s.is_published ? <EyeOff size={12} /> : <Eye size={12} />}
-                  </button>
-                )}
+                {/* Preview link */}
+                <a
+                  href={`/sponsors/${s.slug}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="Preview sponsor page"
+                  className="w-7 h-7 rounded flex items-center justify-center bg-crm-surface border border-crm-border text-crm-text-dim hover:text-blue-400 transition-colors"
+                >
+                  <Eye size={12} />
+                </a>
                 {canEdit("sponsors") && (
                   <button onClick={() => setEditSponsor(s)} className="w-7 h-7 rounded flex items-center justify-center bg-crm-surface border border-crm-border text-crm-text-dim hover:text-crm-text-secondary transition-colors"><Pencil size={12} /></button>
                 )}
@@ -502,28 +655,58 @@ export default function SponsorsManagerModule() {
           ))}
         </TabsContent>
 
+        {/* ── Partners tab ── */}
         <TabsContent value="partners" className="mt-4 space-y-2">
+          {/* Master select-all row */}
+          {!loadingP && filteredPartners.length > 0 && (
+            <div className="flex items-center gap-3 px-4 py-2 bg-crm-surface border border-crm-border rounded-xl">
+              <Checkbox
+                checked={allSelected ? true : someSelected ? "indeterminate" : false}
+                onCheckedChange={toggleAll}
+                className="data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
+              />
+              <span className="text-[11px] text-crm-text-dim">Select all ({filteredPartners.length})</span>
+            </div>
+          )}
           {loadingP && <div className="flex justify-center py-12"><div className="w-6 h-6 border-2 border-emerald-700 border-t-emerald-400 rounded-full animate-spin" /></div>}
           {!loadingP && filteredPartners.map(p => (
             <div key={p.id} className="bg-crm-card border border-crm-border rounded-xl p-4 flex items-center gap-4 hover:border-crm-border-hover transition-colors">
               <Checkbox checked={selectedIds.has(p.id)} onCheckedChange={() => toggleSelect(p.id)} />
-              {p.logo_url ? <img src={p.logo_url} alt="" className="w-12 h-12 object-contain rounded" width={48} height={48} loading="lazy" decoding="async" /> : <div className="w-12 h-12 bg-crm-surface rounded flex items-center justify-center text-crm-text-dim"><Users size={16} /></div>}
+              {p.logo_url
+                ? <img src={p.logo_url} alt="" className="w-12 h-12 object-contain rounded" width={48} height={48} loading="lazy" decoding="async" />
+                : <div className="w-12 h-12 bg-crm-surface rounded flex items-center justify-center text-crm-text-dim"><Users size={16} /></div>}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <p className="text-[13px] font-semibold text-crm-text">{p.name}</p>
-                  <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded border ${p.is_published ? "bg-emerald-950 text-emerald-400 border-emerald-800" : "bg-crm-surface text-crm-text-muted border-crm-border"}`}>
-                    {p.is_published ? "Published" : "Draft"}
-                  </span>
+                  {/* Published pill toggle */}
+                  {canEdit("sponsors") && (
+                    <button
+                      onClick={() => togglePartnerPublish.mutate({ id: p.id, published: !p.is_published })}
+                      title={p.is_published ? "Click to unpublish" : "Click to publish"}
+                      className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border transition-colors ${
+                        p.is_published
+                          ? "bg-emerald-950 border-emerald-700 text-emerald-400 hover:bg-emerald-900"
+                          : "bg-red-950/60 border-red-800 text-red-400 hover:bg-red-950"
+                      }`}
+                    >
+                      {p.is_published ? "● Live" : "● Draft"}
+                    </button>
+                  )}
                   <span className="text-[9px] font-mono px-1.5 py-0.5 rounded border bg-crm-surface text-crm-text-dim border-crm-border capitalize">{p.partner_type}</span>
                 </div>
                 {p.lead_name && <p className="text-[10px] text-crm-text-dim mt-0.5">{p.lead_name} — {p.lead_role}</p>}
               </div>
               <div className="flex gap-1">
-                {canEdit("sponsors") && (
-                  <button onClick={() => togglePartnerPublish.mutate({ id: p.id, published: !p.is_published })} className="w-7 h-7 rounded flex items-center justify-center bg-crm-surface border border-crm-border text-crm-text-dim hover:text-crm-text-secondary transition-colors">
-                    {p.is_published ? <EyeOff size={12} /> : <Eye size={12} />}
-                  </button>
-                )}
+                {/* Preview link */}
+                <a
+                  href={`/partners/${p.slug}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="Preview partner page"
+                  className="w-7 h-7 rounded flex items-center justify-center bg-crm-surface border border-crm-border text-crm-text-dim hover:text-blue-400 transition-colors"
+                >
+                  <Eye size={12} />
+                </a>
                 {canEdit("sponsors") && (
                   <button onClick={() => setEditPartner(p)} className="w-7 h-7 rounded flex items-center justify-center bg-crm-surface border border-crm-border text-crm-text-dim hover:text-crm-text-secondary transition-colors"><Pencil size={12} /></button>
                 )}

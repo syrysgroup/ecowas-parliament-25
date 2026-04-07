@@ -7,7 +7,7 @@ import type { AppRole } from "@/contexts/AuthContext";
 import { CRM_ROLE_META } from "../crmRoles";
 import {
   Send, Trash2, CheckCircle2, Clock, UserPlus, RefreshCw, X,
-  Eye, Pencil, UserMinus, EyeOff, AlertTriangle, Camera, Globe, Plus,
+  Eye, Pencil, UserMinus, EyeOff, AlertTriangle, Camera, Globe, Plus, ExternalLink,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -774,10 +774,20 @@ function WebsiteTeamTab({ qc, toast }: { qc: ReturnType<typeof useQueryClient>; 
             Add anyone — no CRM login needed. These appear alongside registered users on the public Team page.
           </p>
         </div>
-        <Button size="sm" onClick={() => { setEditTarget(undefined); setDialogOpen(true); }}
-          className="bg-emerald-700 hover:bg-emerald-600 text-white text-xs gap-1.5">
-          <Plus size={12} /> Add Member
-        </Button>
+        <div className="flex items-center gap-2">
+          <a
+            href="/team"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1 text-[11px] text-crm-text-dim hover:text-emerald-400 transition-colors"
+          >
+            <ExternalLink size={11} /> View Team Page
+          </a>
+          <Button size="sm" onClick={() => { setEditTarget(undefined); setDialogOpen(true); }}
+            className="bg-emerald-700 hover:bg-emerald-600 text-white text-xs gap-1.5">
+            <Plus size={12} /> Add Member
+          </Button>
+        </div>
       </div>
 
       {isLoading ? (
@@ -1105,6 +1115,22 @@ export default function PeopleModule() {
       {/* Users tab */}
       {!loading && tab === "users" && (
         <div className="space-y-3">
+          {/* How-to blurb */}
+          <div className="flex items-start justify-between gap-3 bg-crm-surface border border-crm-border rounded-xl px-4 py-3">
+            <p className="text-[11px] text-crm-text-dim">
+              <span className="text-crm-text font-semibold">To show a CRM user on the public Team page:</span> toggle the{" "}
+              <Eye size={10} className="inline mx-0.5 text-emerald-400" /> eye icon in their row below.
+              Green = visible, dim = hidden.
+            </p>
+            <a
+              href="/team"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 text-[11px] text-crm-text-dim hover:text-emerald-400 transition-colors whitespace-nowrap flex-shrink-0"
+            >
+              <ExternalLink size={11} /> View Team Page
+            </a>
+          </div>
           <input
             type="text"
             placeholder="Search by name, email or country…"

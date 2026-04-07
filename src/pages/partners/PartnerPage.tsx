@@ -34,7 +34,6 @@ const PartnerPage = () => {
         .from("partners")
         .select("id, name, slug, description, long_description, partner_type, website, lead_name, lead_role, lead_image_url, logo_url, social_links")
         .eq("slug", slug!)
-        .eq("is_published", true)
         .maybeSingle();
       if (error) throw error;
       return data as PartnerRecord | null;

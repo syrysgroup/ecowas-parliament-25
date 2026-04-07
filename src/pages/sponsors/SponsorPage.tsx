@@ -21,7 +21,6 @@ export default function SponsorPage() {
         .from("sponsors")
         .select("id, name, slug, acronym, about, description, tier, website, email, programmes, logo_url")
         .eq("slug", slug!)
-        .eq("is_published", true)
         .maybeSingle();
       if (error) throw error;
       return data as {
