@@ -122,7 +122,162 @@ function TabBtn({ id, label, icon: Icon, badge, active, onClick }: {
   );
 }
 
-// ─── Main ─────────────────────────────────────────────────────────────────────
+// ─── Email Config Tab ─────────────────────────────────────────────────────────
+function EmailConfigTab({ userId }: { userId?: string }) {
+  const { toast } = useToast();
+  const qc = useQueryClient();
+
+  const { data: smtp = {} as Record<string, any>, isLoading } = useQuery({
+    queryKey: ["site-settings-smtp"],
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("site_settings")
+        .select("value")
+        .eq("key", "smtp")
+        .single();
+      return (data?.value as Record<string, any>) ?? {};
+    },
+  });
+
+  const [host, setHost] = useState("");
+  const [port, setPort] = useState("587");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [fromName, setFromName] = useState("");
+  const [fromEmail, setFromEmail] = useState("");
+  const [showPw, setShowPw] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (smtp && Object.keys(smtp).length > 0) {
+      setHost(smtp.host ?? "");
+      setPort(String(smtp.port ?? 587));
+      setUsername(smtp.username ?? "");
+      setFromName(smtp.from_name ?? "ECOWAS Parliament CRM");
+      setFromEmail(smtp.from_email ?? "noreply@ecowas.int");
+    }
+  }, [smtp]);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const value: Record<string, any> = {
+        host, port: Number(port), username,
+        from_name: fromName, from_email: fromEmail,
+      };
+      if (password) value.password_hint = "***";
+
+      const { data: existing } = await (supabase as any)
+        .from("site_settings").select("id").eq("key", "smtp").single();
+
+      if (existing) {
+        await (supabase as any).from("site_settings")
+          .update({ value, updated_by: userId, updated_at: new Date().toISOString() })
+          .eq("key", "smtp");
+      } else {
+        await (supabase as any).from("site_settings")
+          .insert({ key: "smtp", value, updated_by: userId });
+      }
+      qc.invalidateQueries({ queryKey: ["site-settings-smtp"] });
+      toast({ title: "Email configuration saved" });
+    } catch (err: any) {
+      toast({ title: "Error saving config", description: err.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      await (supabase as any).from("site_settings").delete().eq("key", "smtp");
+      qc.invalidateQueries({ queryKey: ["site-settings-smtp"] });
+      setHost(""); setPort("587"); setUsername(""); setPassword("");
+      setFromName(""); setFromEmail("");
+      toast({ title: "Email configuration deleted" });
+    } catch (err: any) {
+      toast({ title: "Error deleting config", description: err.message, variant: "destructive" });
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 size={20} className="animate-spin text-crm-text-muted" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="bg-crm-card border border-crm-border rounded-xl p-5">
+        <h3 className="text-[13px] font-semibold text-crm-text flex items-center gap-2 mb-4">
+          <Mail size={14} /> Global Email Server Configuration
+        </h3>
+        <p className="text-[11px] text-crm-text-muted mb-5">
+          Configure the SMTP server used for sending emails from the CRM. These settings apply system-wide.
+        </p>
+        <div className="grid sm:grid-cols-2 gap-4 max-w-lg">
+          <div className="space-y-1.5">
+            <Label className="text-[11px] text-crm-text-muted">SMTP Host</Label>
+            <Input value={host} onChange={e => setHost(e.target.value)} placeholder="smtp.zoho.eu"
+              className="bg-crm-surface border-crm-border text-crm-text text-[12px] h-9" />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-[11px] text-crm-text-muted">SMTP Port</Label>
+            <Input value={port} onChange={e => setPort(e.target.value)} placeholder="587" type="number"
+              className="bg-crm-surface border-crm-border text-crm-text text-[12px] h-9" />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-[11px] text-crm-text-muted">Username</Label>
+            <Input value={username} onChange={e => setUsername(e.target.value)} placeholder="user@domain.com"
+              className="bg-crm-surface border-crm-border text-crm-text text-[12px] h-9" />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-[11px] text-crm-text-muted">Password</Label>
+            <div className="relative">
+              <Input
+                type={showPw ? "text" : "password"}
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                placeholder="Leave blank to keep existing"
+                className="bg-crm-surface border-crm-border text-crm-text text-[12px] h-9 pr-9"
+              />
+              <button type="button"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-crm-text-muted"
+                onClick={() => setShowPw(!showPw)}>
+                {showPw ? <Lock size={13} /> : <Lock size={13} />}
+              </button>
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-[11px] text-crm-text-muted">From Name</Label>
+            <Input value={fromName} onChange={e => setFromName(e.target.value)}
+              className="bg-crm-surface border-crm-border text-crm-text text-[12px] h-9" />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-[11px] text-crm-text-muted">From Email</Label>
+            <Input type="email" value={fromEmail} onChange={e => setFromEmail(e.target.value)}
+              className="bg-crm-surface border-crm-border text-crm-text text-[12px] h-9" />
+          </div>
+        </div>
+        <div className="flex gap-2 mt-5">
+          <Button size="sm" onClick={handleSave} disabled={saving}
+            className="text-[11px] gap-1.5">
+            {saving ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle2 size={12} />}
+            {saving ? "Saving…" : "Save Config"}
+          </Button>
+          <Button size="sm" variant="outline" onClick={handleDelete}
+            className="text-[11px] gap-1.5 border-red-900 text-red-400 hover:bg-red-950 hover:text-red-300">
+            <Trash2 size={12} />
+            Delete Config
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
 export default function SuperAdminModule() {
   const { user, refreshRoles, signOut } = useAuthContext();
   const { toast } = useToast();
