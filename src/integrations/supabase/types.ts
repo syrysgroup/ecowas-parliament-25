@@ -721,6 +721,45 @@ export type Database = {
           },
         ]
       }
+      media_kit_items: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          display_order: number
+          file_type: string
+          file_url: string | null
+          id: string
+          is_published: boolean
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          file_type?: string
+          file_url?: string | null
+          id?: string
+          is_published?: boolean
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          file_type?: string
+          file_url?: string | null
+          id?: string
+          is_published?: boolean
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       news_articles: {
         Row: {
           author_id: string | null
@@ -1047,6 +1086,57 @@ export type Database = {
           organisation?: string | null
           show_on_website?: boolean
           title?: string | null
+        }
+        Relationships: []
+      }
+      programme_pillars: {
+        Row: {
+          color: string | null
+          created_at: string
+          display_order: number
+          emoji: string | null
+          icon_bg: string | null
+          id: string
+          is_active: boolean
+          lead_name: string | null
+          progress_percent: number
+          route: string | null
+          slug: string
+          sponsors: string[]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          display_order?: number
+          emoji?: string | null
+          icon_bg?: string | null
+          id?: string
+          is_active?: boolean
+          lead_name?: string | null
+          progress_percent?: number
+          route?: string | null
+          slug: string
+          sponsors?: string[]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          display_order?: number
+          emoji?: string | null
+          icon_bg?: string | null
+          id?: string
+          is_active?: boolean
+          lead_name?: string | null
+          progress_percent?: number
+          route?: string | null
+          slug?: string
+          sponsors?: string[]
+          title?: string
+          updated_at?: string
         }
         Relationships: []
       }
