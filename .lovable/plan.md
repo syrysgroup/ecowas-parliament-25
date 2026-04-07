@@ -1,66 +1,55 @@
 
 
-## Plan: CRM Email Login, Sponsors Bulk Actions, and People & Access Fixes
+## Plan: Fix CRM Edit Dialogs & Add Team Categories
 
-This plan covers three areas of improvement in the CRM.
+### Problems Identified
+
+1. **CRM edit dialogs don't pre-fill data**: Both `StakeholderDialog` and `TeamMemberDialog` use `useState(prop)` for initial values. React only sets initial state on first mount -- since the dialog component stays mounted, switching from "create" to "edit" (or between edits) shows stale/blank fields. The user has to re-enter everything including re-uploading photos.
+
+2. **Stakeholders not visible on public page**: The CRM stakeholder categories are `["leadership", "team", "advisory"]`, but the public Stakeholders page (`/stakeholders`) only queries `category = "leadership"`. Stakeholders added with other categories never appear.
+
+3. **Team page needs categorization**: Team members should be grouped into Leadership, Implementing Team, Consultants, and Volunteers -- with empty categories hidden.
 
 ---
 
-### 1. Email Module: User Self-Service Login
+### Changes
 
-**Current state:** When a user has no email account, they see "No email account assigned — contact your admin." There is no way for non-super-admins to connect their own email. The server config (SMTP/IMAP settings) is visible to super admins in the People module's Edit User dialog.
+#### 1. Fix StakeholderDialog state reset on edit
+**File**: `src/components/crm/modules/StakeholdersModule.tsx`
+- Add `useEffect` to reset all form state when the `stakeholder` prop changes (or use a `key` prop on the dialog to force remount)
+- Simplest fix: add `key={editing?.id ?? "new"}` on the `<StakeholderDialog>` component so React creates a fresh instance each time
 
-**Changes:**
+#### 2. Fix TeamMemberDialog state reset on edit
+**File**: `src/components/crm/modules/PeopleModule.tsx`
+- Same fix: add `key={editTarget?.id ?? "new"}` on the `<TeamMemberDialog>` component
 
-- **EmailInboxModule.tsx** — Replace the empty-state with a two-step flow:
-  1. Show "No email account connected" message with a "Connect Email" button
-  2. Clicking the button opens a simple dialog asking only for **email address** and **password** (no SMTP/IMAP server fields — those are admin-only)
-  3. On submit, upsert a row into `email_accounts` with the user's credentials, creating/activating their account
-  
-- **EmailConfigSettings.tsx** — Keep as-is (super admin only for server-level SMTP config)
+#### 3. Add `category` column to `team_members` table
+**Migration**: Add a `category` text column with default `'implementing_team'` and allowed values: `leadership`, `implementing_team`, `consultant`, `volunteer`
 
-- **PeopleModule.tsx** — The Email Credentials section in EditUserDialog already gates behind `isSuperAdmin`. No changes needed there.
+#### 4. Update TeamMemberDialog with category selector
+**File**: `src/components/crm/modules/PeopleModule.tsx`
+- Add a category dropdown to the team member form (Leadership, Implementing Team, Consultants, Volunteers)
+- Include category in the save payload
 
-- **Database:** May need to ensure `email_accounts` table allows authenticated users to insert their own row (check RLS). If the table doesn't exist or lacks self-service insert policy, add a migration.
+#### 5. Update Team page to group by category
+**File**: `src/pages/Team.tsx`
+- Query team members and group them by category
+- Display sections in order: Leadership, Implementing Team, Consultants, Volunteers
+- Hide sections with no members
 
-### 2. Sponsors & Partners: Inline Publish Toggle + Bulk Actions
+#### 6. Fix Stakeholders page to show all categories
+**File**: `src/pages/Stakeholders.tsx`
+- The leadership section already works. Ensure any "team" or "advisory" stakeholder profiles also appear (or align the CRM categories with what the page renders)
 
-**Current state:** The published toggle pill is already inline next to the name (Live/Draft). The bulk action bar only has "Delete selected."
-
-**Changes to SponsorsManagerModule.tsx:**
-
-- **Move the publish toggle button** into the action buttons group (alongside Eye, Pencil, Trash2) instead of next to the name, for better UX consistency
-- **Expand bulk actions bar** when items are selected to include:
-  - Bulk Publish (set `is_published = true` for all selected)
-  - Bulk Unpublish (set `is_published = false` for all selected)  
-  - Bulk Delete (already exists)
-- Add two new mutations: `bulkPublish` and `bulkUnpublish` that update the relevant table for all selected IDs
-
-### 3. People & Access: End-to-End Team Member Flow
-
-**Current state:** PeopleModule has two tabs — system users and website team members. The Team.tsx page fetches from both `profiles` (where `show_on_website = true`) and `team_members` (manual entries). Need to verify the full flow works.
-
-**Changes:**
-
-- **Check `team_members` table exists** — The code references it but it may not be in the schema. If missing, create migration with columns: `id`, `full_name`, `title`, `organisation`, `avatar_url`, `bio`, `display_order`, `is_active`, `created_at`
-- **Add RLS policies** for `team_members`: admins can manage, public can read active members
-- **Verify avatar upload** works with `team-avatars` bucket (already public)
-- **Ensure the "Show on website" toggle** in EditUserDialog properly updates `profiles.show_on_website` and the Team page query picks it up
-- **Fix any issues** in the TeamMemberDialog create/edit flow to ensure new manual members appear on `/team`
+#### 7. Update translation keys
+**Files**: `src/lib/translations/en.ts`, `fr.ts`, `pt.ts`
+- Add keys for team category headings
 
 ---
 
 ### Technical Details
 
-**Files to modify:**
-1. `src/components/crm/modules/EmailInboxModule.tsx` — Add connect-email dialog in empty state
-2. `src/components/crm/modules/SponsorsManagerModule.tsx` — Move publish toggle to action buttons, add bulk publish/unpublish
-3. `src/components/crm/modules/PeopleModule.tsx` — Minor fixes if needed for team member flow
-
-**Database migrations (if needed):**
-- `team_members` table creation (if not already present)
-- `email_accounts` RLS policy for self-service insert
-- RLS for `team_members`
-
-**No new dependencies required.**
+- Using `key` prop on dialog components is the cleanest React pattern to force state re-initialization -- no `useEffect` needed
+- The `team_members.category` column will use a text type with a default of `'implementing_team'` so existing rows are automatically categorized
+- The public Team page will query all active team members in one request, then group client-side by category
 
