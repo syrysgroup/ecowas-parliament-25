@@ -1,65 +1,88 @@
 
 
-## Plan: Four Fixes
+## Plan: Redesign CRM Email Module to Match Vuexy Template + Fix Build Error
 
-### 1. Parliament Page — Vision & Impact Messaging Redesign
-The Parliament page (lines 148-155, 184-213, 30-35, 278-286) already contains the updated messaging from a previous iteration. **No changes needed** — the hero, "Why This Matters" section, objectives, and Vision 2050 quote block already match the requested content.
+### Overview
+Redesign the `EmailInboxModule.tsx` (the real Zoho-connected email in the CRM) to match the Vuexy email template layout exactly. Also fix the unrelated `PermissionsSettings.tsx` build error.
 
-### 2. Stakeholders Module — Create Missing Table & Storage Bucket
-**Root cause**: The `stakeholder_profiles` table does not exist in the database, and the code uploads to an `avatars` storage bucket that also doesn't exist.
+### Build Error Fix (Quick)
+**File**: `src/views/admin/settings/PermissionsSettings.tsx`
+- Line 28-30: The `stored` variable is typed as `{}` but accessed with `.admin` and `.user`. Fix by casting `stored` properly or adding a fallback type assertion.
 
-**Fix**:
-- Create a migration for the `stakeholder_profiles` table with columns: `id`, `name`, `title`, `image_url`, `category`, `display_order`, `is_active`, `created_at`, `updated_at`
-- Enable RLS with policies: admins/super_admins have full CRUD, public can SELECT where `is_active = true`
-- Create the `avatars` storage bucket (or switch the upload code to use the existing `team-avatars` bucket instead — simpler approach)
-- Update `StakeholdersModule.tsx` to use `team-avatars` bucket instead of `avatars`
+### Email Redesign — Vuexy Layout Structure
 
-### 3. Site Content CRM Module — Add Delete (CRUD) Functionality
-**Current state**: The module supports Create (new sections) and Update (save), but lacks Delete.
+The Vuexy email has a distinct 3-column layout inside a single card:
 
-**Fix**:
-- Add a delete button to each `SectionEditor` card with confirmation dialog
-- Add a delete mutation that removes the row from `site_content`
-- The existing save-on-click pattern is already in place; no auto-save changes needed
-
-### 4. News & Event Images — Fit Properly in Placeholders
-**Current state**: Both pages use `aspect-[4/5]` with `object-cover`, which crops landscape images badly.
-
-**Fix**:
-- Change the image aspect ratio from `aspect-[4/5]` to `aspect-video` (16:9) on both News and Events pages — this better accommodates typical uploaded photos
-- Keep `object-cover` so images fill the container without distortion
-
-### Technical Details
-
-**Migration SQL** (stakeholder_profiles):
-```sql
-CREATE TABLE public.stakeholder_profiles (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  name text NOT NULL,
-  title text,
-  image_url text,
-  category text NOT NULL DEFAULT 'leadership',
-  display_order integer NOT NULL DEFAULT 0,
-  is_active boolean NOT NULL DEFAULT true,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now()
-);
-
-ALTER TABLE public.stakeholder_profiles ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Admins manage stakeholders" ON public.stakeholder_profiles
-  FOR ALL TO authenticated
-  USING (has_role(auth.uid(), 'super_admin'::app_role) OR has_role(auth.uid(), 'admin'::app_role))
-  WITH CHECK (has_role(auth.uid(), 'super_admin'::app_role) OR has_role(auth.uid(), 'admin'::app_role));
-
-CREATE POLICY "Public can read active stakeholders" ON public.stakeholder_profiles
-  FOR SELECT TO public
-  USING (is_active = true);
+```text
+┌──────────────────────────────────────────────────────────┐
+│ Card with rounded corners, border, shadow               │
+│ ┌─────────┬──────────────────────┬──────────────────────┐│
+│ │ Sidebar │   Email List         │   Email Detail View  ││
+│ │         │                      │                      ││
+│ │ Compose │ Search bar           │ Subject + Badge      ││
+│ │ btn     │ ──────────────────── │ ──────────────────── ││
+│ │         │ ☐ ★ [avatar] Name   │ Trash/Mail/Folder/   ││
+│ │ Inbox 21│   Subject     [dot] │ Tag/Star/More        ││
+│ │ Sent    │ ☐ ★ [avatar] Name   │ ──────────────────── ││
+│ │ Draft  2│   Subject     [dot] │ [avatar] Sender Name ││
+│ │ Starred │ ☐ ★ [initials] Name │  email@addr          ││
+│ │ Spam   4│   Subject     [dot] │  Date                ││
+│ │ Trash   │                      │                      ││
+│ │         │  Hover: mail/trash/  │ Email body content   ││
+│ │ Labels: │  info icons          │                      ││
+│ │ ● Persl │                      │ ── Attachments ──    ││
+│ │ ● Compny│                      │ 📎 report.xlsx      ││
+│ │ ● Imprt │                      │                      ││
+│ │ ● Privt │                      │ Reply card           ││
+│ └─────────┴──────────────────────┴──────────────────────┘│
+│ Compose Modal (bottom-right, draggable-style)            │
+└──────────────────────────────────────────────────────────┘
 ```
 
-**Files modified**:
-- `src/components/crm/modules/StakeholdersModule.tsx` — change bucket from `avatars` to `team-avatars`
-- `src/components/crm/modules/SiteContentModule.tsx` — add delete button + mutation per section
-- `src/pages/News.tsx` — change `aspect-[4/5]` to `aspect-video`
-- `src/pages/Events.tsx` — change `aspect-[4/5]` to `aspect-video`
+### Key Vuexy Design Differences to Implement
+
+**1. Sidebar**
+- Full-width "Compose" button at top (primary color)
+- Folder list with icons + badges (Inbox: 21, Draft: 2, Spam: 4)
+- Labels section below with colored dots (Personal/green, Company/primary, Important/warning, Private/danger)
+- Clean spacing, no heavy borders
+
+**2. Email List**
+- Search bar with icon (no border on input, merged input group style)
+- Horizontal divider below search
+- Action bar: select-all checkbox, trash, mail-opened, folder dropdown, label dropdown, refresh, more-options dropdown
+- Each email row: checkbox, star icon, avatar (image or initials circle), sender name + subject inline (on wider screens), label dots, time
+- Hover state reveals action icons (mail/trash/info) overlaying the time/label area
+- Unread emails have bolder text (h6 weight)
+
+**3. Email Detail View**
+- Back arrow + subject title + badge (e.g., "Important")
+- Action bar: prev/next chevrons, trash, mail, folder dropdown, label dropdown, star, more-options
+- Stacked email cards for thread view (previous messages collapsible, latest message expanded)
+- Each card: avatar + sender name + email + date + attachment/star/more icons in header, then body content
+- Reply card at bottom with rich text toolbar (bold/italic/underline/list/link/image) + attachments button + send button
+
+**4. Compose Modal**
+- Bottom-right modal dialog (not centered) — minimize/close buttons
+- To field with tag-style select, CC/BCC toggle links
+- Subject field
+- Rich text editor area
+- Footer: attachments + send button
+
+### Files Modified
+
+1. **`src/components/crm/modules/EmailInboxModule.tsx`** — Complete UI overhaul:
+   - Restructure sidebar with Compose button, folder items with proper icons/badges, labels section
+   - Redesign email list with Vuexy-style search bar, action toolbar, email rows with checkbox + star + avatar/initials + inline sender/subject + label dots + time, hover action icons
+   - Redesign detail panel with subject + badge header, dual action bars (nav + actions), threaded card layout, inline reply card with toolbar
+   - Redesign compose modal to bottom-right positioned with minimize, CC/BCC toggles
+
+2. **`src/views/admin/settings/PermissionsSettings.tsx`** — Fix TS2339 build error on lines 29-30
+
+### Technical Details
+- All styling uses Tailwind classes matching the existing `crm-*` design tokens
+- Zoho integration logic (queries, mutations, sync) remains unchanged
+- Only UI/layout components are rewritten
+- Avatar initials fallback when no image (colored circle with initials, matching Vuexy)
+- Hover-reveal action icons on email list items using group/group-hover pattern
 
