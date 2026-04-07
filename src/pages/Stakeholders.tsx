@@ -21,17 +21,20 @@ const Stakeholders = () => {
   const { t } = useTranslation();
 
   const { data: leadership = [], isLoading: leadLoading } = useQuery<StakeholderProfile[]>({
-    queryKey: ["stakeholder-profiles", "leadership"],
+    queryKey: ["stakeholder-profiles", "all-active"],
     queryFn: async () => {
       const { data } = await (supabase as any)
         .from("stakeholder_profiles")
         .select("*")
         .eq("is_active", true)
-        .eq("category", "leadership")
         .order("display_order");
       return data ?? [];
     },
   });
+
+  const leadershipProfiles = leadership.filter(s => s.category === "leadership");
+  const teamProfiles = leadership.filter(s => s.category === "team");
+  const advisoryProfiles = leadership.filter(s => s.category === "advisory");
 
   const { data: implPartners = [] } = useQuery({
     queryKey: ["stakeholders-implementing-partners"],
