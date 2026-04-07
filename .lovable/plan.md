@@ -1,88 +1,63 @@
 
 
-# CRM UI Redesign + Programme Pillars Fix
+## Plan: CRM Email, Inbox, Stakeholders & Spam Improvements
 
-## Problem Summary
-
-1. **Programme Pillars table missing**: The `programme_pillars` table was never created because migration `20260406200001` calls `is_crm_staff()` without arguments, but the function signature is `is_crm_staff(_user_id uuid)`. This caused the migration to fail silently, so the PillarsGrid on the homepage shows nothing.
-
-2. **CRM modules need Vuexy-style UI redesign**: Four CRM modules need to be redesigned to match the uploaded Vuexy Bootstrap template designs.
+This plan covers 5 changes you've requested.
 
 ---
 
-## Part 1: Fix Programme Pillars (Database)
+### 1. Add Email Server Configuration (CRUD) to Super Admin Hub
 
-**New migration** to:
-- Create a no-argument `is_crm_staff()` overload that calls `is_crm_staff(auth.uid())`
-- Create the `programme_pillars` table (if not exists) with RLS policies
-- Seed the 7 programme pillars (Youth, Trade, Parliament, Women, Culture, Awards, Civic)
-- Also create `stakeholder_profiles` and `media_kit_items` tables that were in the same failed migration
+Currently `EmailConfigSettings` exists in settings but isn't wired into the Super Admin area. We'll add a dedicated "Email Server Config" tab/section in the SuperAdminModule where the super admin can create, read, update, and delete SMTP/IMAP server settings (Zoho host, port, credentials, from-name, from-email). This will use the existing `site_settings` table (key: `smtp`) and the `user_email_settings` table for per-user config.
 
-This fixes the 404 errors on the homepage and gives the CRM full control over programme data.
+**Files to modify:**
+- `src/components/crm/modules/SuperAdminModule.tsx` — Add a new "Email Config" tab with full CRUD for global SMTP settings (host, port, username, password, from_name, from_email) stored in `site_settings`
 
 ---
 
-## Part 2: Profile Module Redesign (Vuexy style)
+### 2. CRM Email Notifications (Internal + External)
 
-**File**: `src/components/crm/modules/ProfileModule.tsx`
+Currently the notification email is only for external alerts. We'll add a check for new emails in the CRM `emails` table and surface an unread badge / notification indicator in the CRM sidebar for the Email module. The refresh button will be updated to invalidate the React Query cache with `refetchType: 'active'` so it always queries fresh data from Supabase rather than serving stale cache.
 
-Redesign to match the Vuexy profile page layout:
-- **Banner header** with profile image overlay, name, title, location, join date
-- **Tab navigation**: Profile, Teams, Projects, Connections
-- **Left column**: About card (full name, status, role, country, languages) + Overview card (tasks completed, projects, connections)
-- **Right column**: Activity Timeline with styled timeline items
-- Keep all existing Supabase functionality (avatar upload, profile save, password change)
+**Files to modify:**
+- `src/components/crm/modules/EmailInboxModule.tsx` — Ensure the refresh/sync button calls `syncEmails()` AND explicitly invalidates queries with `{ refetchType: 'all' }` so fresh data is fetched
+- `src/components/crm/CRMSidebar.tsx` — Add an unread email count badge next to the Email module link (query `emails` table for unread count)
 
 ---
 
-## Part 3: Calendar Module Redesign (Vuexy style)
+### 3. Remove the "Inbox" Module (Duplicate)
 
-**File**: `src/components/crm/modules/CalendarModule.tsx`
+The "Inbox" module (`InboxModule.tsx`) uses `crm_messages` table and is a simpler duplicate of the full "Email" module. We'll remove it from the sidebar and module registry.
 
-Redesign to match the Vuexy calendar layout:
-- **Left sidebar**: "Add Event" button, mini inline calendar picker, event filter checkboxes by color category (Personal/Business/Family/Holiday/ETC)
-- **Main area**: Full-width calendar grid (keep existing month view with event dots)
-- **Right offcanvas/sheet**: Event form with title, label/category select, start/end dates, URL, description, guests, all-day toggle
-- Keep all existing CRUD operations against `crm_calendar_events` table
+**Files to modify:**
+- `src/components/crm/crmModules.ts` — Remove the `inbox` entry from `CRM_MODULES` and `ModuleId`
+- `src/components/crm/modules/InboxModule.tsx` — Delete this file
 
 ---
 
-## Part 4: Chat Module Redesign (Vuexy style)
+### 4. Add Spam Folder to Email UI
 
-**File**: `src/components/crm/modules/MessagingModule.tsx`
+The Email module currently has inbox, sent, drafts, starred, and trash. We'll add a "spam" folder so users can view spam emails synced from Zoho.
 
-Rename from "Channels & Chat" to "Chat". Redesign to match Vuexy chat layout:
-- **Left sidebar**: Current user avatar + search input at top, "Chats" section (recent conversations with last message preview + time), "Contacts" section (all team members with role)
-- **Empty state**: Centered icon + "Select a contact to start a conversation" message
-- **Chat history**: Messages with sender avatar on left (received) or right (sent), timestamp below each message group, chat header with contact name/status and action icons (phone, video, search, kebab menu)
-- **Message input**: Text input + send button + attachment icon at bottom
-- Merge channels and DM into a unified chat interface
-- Keep all existing Supabase functionality (channel messages, direct messages)
+**Files to modify:**
+- `src/components/crm/modules/EmailInboxModule.tsx` — Add `"spam"` to the `Folder` type and `FOLDERS` array with `AlertOctagon` icon
+- `supabase/functions/sync-emails/index.ts` — Add `"spam"` to the folders array so spam is synced from Zoho
 
 ---
 
-## Part 5: People/User List Redesign (Vuexy style)
+### 5. Implementing Partners — Already Editable via CRM
 
-**File**: `src/components/crm/modules/PeopleModule.tsx`
-
-Redesign the user list view to match Vuexy user list:
-- **4 stat cards at top**: Total Users (with icon), Active Users, Pending Invitations, Total Roles -- computed from actual DB data
-- **Filter bar**: Role dropdown, Country dropdown, Status dropdown
-- **DataTable-style list**: Columns for User (avatar + name + email), Role (badge), Country, Status (active/pending badge), Joined date, Actions (view/edit/delete)
-- **Add User offcanvas/sheet**: Full Name, Email, Contact, Organisation, Country select, Role select
-- Keep all existing user management CRUD + invite functionality
+The Stakeholders page on the frontend pulls implementing partners from the `partners` table. These are already fully editable (CRUD) from the CRM under **Sponsors & Partners → Partners tab** in `SponsorsManagerModule.tsx`. No code changes needed — just awareness that the "Partners" tab in Sponsors & Partners is where implementing partners are managed. I can add a note/link in the Stakeholders module pointing users to Sponsors & Partners for editing implementing partners if that would help.
 
 ---
 
-## Technical Details
+### Technical Summary
 
-| Task | Files Modified | Migration |
-|------|---------------|-----------|
-| Fix programme_pillars | -- | New migration: create `is_crm_staff()` overload, create tables, seed data |
-| Profile redesign | `ProfileModule.tsx` | None |
-| Calendar redesign | `CalendarModule.tsx` | None |
-| Chat redesign | `MessagingModule.tsx` | None |
-| User list redesign | `PeopleModule.tsx` | None |
-
-**Estimated scope**: 1 migration + 4 large component rewrites (~400-600 lines each)
+| Change | Files | DB Migration |
+|--------|-------|-------------|
+| Email server CRUD in Super Admin | SuperAdminModule.tsx | None |
+| Fresh email refresh + CRM notifications | EmailInboxModule.tsx, CRMSidebar.tsx | None |
+| Remove duplicate Inbox | crmModules.ts, delete InboxModule.tsx | None |
+| Add spam folder | EmailInboxModule.tsx, sync-emails/index.ts | None |
+| Implementing partners | No changes (already in SponsorsManagerModule) | None |
 
