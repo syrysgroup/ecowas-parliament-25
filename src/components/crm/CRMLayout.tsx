@@ -45,11 +45,11 @@ function useNotifications() {
       // Unread inbox messages
       const msgRes = await (supabase as any)
         .from("crm_messages")
-        .select("id, subject, body, created_at, is_read")
+        .select("id, subject, body, sent_at, is_read")
         .eq("to_user_id", user!.id)
         .eq("is_read", false)
         .eq("is_archived", false)
-        .order("created_at", { ascending: false })
+        .order("sent_at", { ascending: false })
         .limit(5);
 
       (msgRes.data ?? []).forEach((m: any) => {
@@ -58,7 +58,7 @@ function useNotifications() {
           type: "message",
           title: "New message",
           body: m.subject || "(No subject)",
-          time: m.created_at,
+          time: m.sent_at,
           read: false,
           sourceId: m.id,
         });

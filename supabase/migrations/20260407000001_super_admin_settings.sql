@@ -16,6 +16,9 @@ CREATE TABLE IF NOT EXISTS global_settings (
 -- 3. RLS for global_settings
 ALTER TABLE global_settings ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "global_settings_read" ON global_settings;
+DROP POLICY IF EXISTS "global_settings_write" ON global_settings;
+
 -- All authenticated users can read
 CREATE POLICY "global_settings_read" ON global_settings
   FOR SELECT TO authenticated USING (true);
@@ -23,20 +26,8 @@ CREATE POLICY "global_settings_read" ON global_settings
 -- Only super_admin can write
 CREATE POLICY "global_settings_write" ON global_settings
   FOR ALL TO authenticated
-  USING (
-    EXISTS (
-      SELECT 1 FROM profiles
-      WHERE profiles.id = auth.uid()
-      AND profiles.role = 'super_admin'
-    )
-  )
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM profiles
-      WHERE profiles.id = auth.uid()
-      AND profiles.role = 'super_admin'
-    )
-  );
+  USING (public.has_role(auth.uid(), 'super_admin'))
+  WITH CHECK (public.has_role(auth.uid(), 'super_admin'));
 
 -- 4. Seed default settings
 INSERT INTO global_settings (key, value) VALUES
@@ -62,23 +53,13 @@ CREATE TABLE IF NOT EXISTS admin_audit_log (
 
 ALTER TABLE admin_audit_log ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "audit_log_super_admin" ON admin_audit_log;
+
 -- Only super_admin can read audit logs
 CREATE POLICY "audit_log_super_admin" ON admin_audit_log
   FOR ALL TO authenticated
-  USING (
-    EXISTS (
-      SELECT 1 FROM profiles
-      WHERE profiles.id = auth.uid()
-      AND profiles.role = 'super_admin'
-    )
-  )
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM profiles
-      WHERE profiles.id = auth.uid()
-      AND profiles.role = 'super_admin'
-    )
-  );
+  USING (public.has_role(auth.uid(), 'super_admin'))
+  WITH CHECK (public.has_role(auth.uid(), 'super_admin'));
 
 -- 6. Trigger to auto-set updated_at on global_settings
 CREATE OR REPLACE FUNCTION update_global_settings_updated_at()
@@ -88,6 +69,8 @@ BEGIN
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS global_settings_updated_at ON global_settings;
 
 CREATE TRIGGER global_settings_updated_at
   BEFORE UPDATE ON global_settings
