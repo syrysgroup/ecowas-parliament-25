@@ -20,22 +20,6 @@ export default function CRMSidebar({ activeSection, onNavigate }: CRMSidebarProp
     catch { return false; }
   });
 
-  // Unread CRM inbox count
-  const { data: unreadCount = 0 } = useQuery<number>({
-    queryKey: ["crm-inbox-unread", user?.id],
-    queryFn: async () => {
-      const { count } = await (supabase as any)
-        .from("crm_messages")
-        .select("id", { count: "exact", head: true })
-        .eq("to_user_id", user!.id)
-        .eq("is_read", false)
-        .eq("is_archived", false);
-      return count ?? 0;
-    },
-    enabled: !!user?.id,
-    refetchInterval: 60_000,
-  });
-
   // Unread Email inbox count
   const { data: emailUnreadCount = 0 } = useQuery<number>({
     queryKey: ["email-inbox-unread", user?.id],
@@ -167,16 +151,6 @@ export default function CRMSidebar({ activeSection, onNavigate }: CRMSidebarProp
                         <span className="ml-auto text-[9px] font-mono text-crm-text-faint bg-crm-surface border border-crm-border rounded px-1 flex-shrink-0">
                           soon
                         </span>
-                      )}
-                      {/* Inbox unread badge */}
-                      {mod.section === "inbox" && unreadCount > 0 && (
-                        collapsed ? (
-                          <span className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-red-500" />
-                        ) : (
-                          <span className="ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-red-950 border border-red-800 text-red-400 flex-shrink-0">
-                            {unreadCount > 99 ? "99+" : unreadCount}
-                          </span>
-                        )
                       )}
                       {/* Email unread badge */}
                       {mod.section === "email-inbox" && emailUnreadCount > 0 && (
