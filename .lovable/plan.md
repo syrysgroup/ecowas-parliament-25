@@ -1,55 +1,88 @@
 
 
-## Plan: Fix CRM Edit Dialogs & Add Team Categories
+# CRM UI Redesign + Programme Pillars Fix
 
-### Problems Identified
+## Problem Summary
 
-1. **CRM edit dialogs don't pre-fill data**: Both `StakeholderDialog` and `TeamMemberDialog` use `useState(prop)` for initial values. React only sets initial state on first mount -- since the dialog component stays mounted, switching from "create" to "edit" (or between edits) shows stale/blank fields. The user has to re-enter everything including re-uploading photos.
+1. **Programme Pillars table missing**: The `programme_pillars` table was never created because migration `20260406200001` calls `is_crm_staff()` without arguments, but the function signature is `is_crm_staff(_user_id uuid)`. This caused the migration to fail silently, so the PillarsGrid on the homepage shows nothing.
 
-2. **Stakeholders not visible on public page**: The CRM stakeholder categories are `["leadership", "team", "advisory"]`, but the public Stakeholders page (`/stakeholders`) only queries `category = "leadership"`. Stakeholders added with other categories never appear.
-
-3. **Team page needs categorization**: Team members should be grouped into Leadership, Implementing Team, Consultants, and Volunteers -- with empty categories hidden.
+2. **CRM modules need Vuexy-style UI redesign**: Four CRM modules need to be redesigned to match the uploaded Vuexy Bootstrap template designs.
 
 ---
 
-### Changes
+## Part 1: Fix Programme Pillars (Database)
 
-#### 1. Fix StakeholderDialog state reset on edit
-**File**: `src/components/crm/modules/StakeholdersModule.tsx`
-- Add `useEffect` to reset all form state when the `stakeholder` prop changes (or use a `key` prop on the dialog to force remount)
-- Simplest fix: add `key={editing?.id ?? "new"}` on the `<StakeholderDialog>` component so React creates a fresh instance each time
+**New migration** to:
+- Create a no-argument `is_crm_staff()` overload that calls `is_crm_staff(auth.uid())`
+- Create the `programme_pillars` table (if not exists) with RLS policies
+- Seed the 7 programme pillars (Youth, Trade, Parliament, Women, Culture, Awards, Civic)
+- Also create `stakeholder_profiles` and `media_kit_items` tables that were in the same failed migration
 
-#### 2. Fix TeamMemberDialog state reset on edit
-**File**: `src/components/crm/modules/PeopleModule.tsx`
-- Same fix: add `key={editTarget?.id ?? "new"}` on the `<TeamMemberDialog>` component
-
-#### 3. Add `category` column to `team_members` table
-**Migration**: Add a `category` text column with default `'implementing_team'` and allowed values: `leadership`, `implementing_team`, `consultant`, `volunteer`
-
-#### 4. Update TeamMemberDialog with category selector
-**File**: `src/components/crm/modules/PeopleModule.tsx`
-- Add a category dropdown to the team member form (Leadership, Implementing Team, Consultants, Volunteers)
-- Include category in the save payload
-
-#### 5. Update Team page to group by category
-**File**: `src/pages/Team.tsx`
-- Query team members and group them by category
-- Display sections in order: Leadership, Implementing Team, Consultants, Volunteers
-- Hide sections with no members
-
-#### 6. Fix Stakeholders page to show all categories
-**File**: `src/pages/Stakeholders.tsx`
-- The leadership section already works. Ensure any "team" or "advisory" stakeholder profiles also appear (or align the CRM categories with what the page renders)
-
-#### 7. Update translation keys
-**Files**: `src/lib/translations/en.ts`, `fr.ts`, `pt.ts`
-- Add keys for team category headings
+This fixes the 404 errors on the homepage and gives the CRM full control over programme data.
 
 ---
 
-### Technical Details
+## Part 2: Profile Module Redesign (Vuexy style)
 
-- Using `key` prop on dialog components is the cleanest React pattern to force state re-initialization -- no `useEffect` needed
-- The `team_members.category` column will use a text type with a default of `'implementing_team'` so existing rows are automatically categorized
-- The public Team page will query all active team members in one request, then group client-side by category
+**File**: `src/components/crm/modules/ProfileModule.tsx`
+
+Redesign to match the Vuexy profile page layout:
+- **Banner header** with profile image overlay, name, title, location, join date
+- **Tab navigation**: Profile, Teams, Projects, Connections
+- **Left column**: About card (full name, status, role, country, languages) + Overview card (tasks completed, projects, connections)
+- **Right column**: Activity Timeline with styled timeline items
+- Keep all existing Supabase functionality (avatar upload, profile save, password change)
+
+---
+
+## Part 3: Calendar Module Redesign (Vuexy style)
+
+**File**: `src/components/crm/modules/CalendarModule.tsx`
+
+Redesign to match the Vuexy calendar layout:
+- **Left sidebar**: "Add Event" button, mini inline calendar picker, event filter checkboxes by color category (Personal/Business/Family/Holiday/ETC)
+- **Main area**: Full-width calendar grid (keep existing month view with event dots)
+- **Right offcanvas/sheet**: Event form with title, label/category select, start/end dates, URL, description, guests, all-day toggle
+- Keep all existing CRUD operations against `crm_calendar_events` table
+
+---
+
+## Part 4: Chat Module Redesign (Vuexy style)
+
+**File**: `src/components/crm/modules/MessagingModule.tsx`
+
+Rename from "Channels & Chat" to "Chat". Redesign to match Vuexy chat layout:
+- **Left sidebar**: Current user avatar + search input at top, "Chats" section (recent conversations with last message preview + time), "Contacts" section (all team members with role)
+- **Empty state**: Centered icon + "Select a contact to start a conversation" message
+- **Chat history**: Messages with sender avatar on left (received) or right (sent), timestamp below each message group, chat header with contact name/status and action icons (phone, video, search, kebab menu)
+- **Message input**: Text input + send button + attachment icon at bottom
+- Merge channels and DM into a unified chat interface
+- Keep all existing Supabase functionality (channel messages, direct messages)
+
+---
+
+## Part 5: People/User List Redesign (Vuexy style)
+
+**File**: `src/components/crm/modules/PeopleModule.tsx`
+
+Redesign the user list view to match Vuexy user list:
+- **4 stat cards at top**: Total Users (with icon), Active Users, Pending Invitations, Total Roles -- computed from actual DB data
+- **Filter bar**: Role dropdown, Country dropdown, Status dropdown
+- **DataTable-style list**: Columns for User (avatar + name + email), Role (badge), Country, Status (active/pending badge), Joined date, Actions (view/edit/delete)
+- **Add User offcanvas/sheet**: Full Name, Email, Contact, Organisation, Country select, Role select
+- Keep all existing user management CRUD + invite functionality
+
+---
+
+## Technical Details
+
+| Task | Files Modified | Migration |
+|------|---------------|-----------|
+| Fix programme_pillars | -- | New migration: create `is_crm_staff()` overload, create tables, seed data |
+| Profile redesign | `ProfileModule.tsx` | None |
+| Calendar redesign | `CalendarModule.tsx` | None |
+| Chat redesign | `MessagingModule.tsx` | None |
+| User list redesign | `PeopleModule.tsx` | None |
+
+**Estimated scope**: 1 migration + 4 large component rewrites (~400-600 lines each)
 
