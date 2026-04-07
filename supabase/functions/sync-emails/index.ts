@@ -46,21 +46,27 @@ async function getZohoToken(): Promise<string> {
 async function resolveZohoAccountId(serviceClient: any, acct: any, token: string): Promise<string> {
   if (acct.zoho_account_id) return acct.zoho_account_id;
 
-  const orgId = Deno.env.get("ZOHO_ORG_ID")!;
-  const accountsRes = await fetch(`https://mail.zoho.eu/api/organization/${orgId}/accounts`, {
+  // Use the authenticated user's own account list — this returns the correct accountId
+  // for all subsequent Zoho Mail API calls (/api/accounts/{accountId}/...)
+  const accountsRes = await fetch("https://mail.zoho.eu/api/accounts", {
     headers: { Authorization: `Zoho-oauthtoken ${token}` },
   });
   const accountsData = await accountsRes.json();
-  const accounts = accountsData?.data ?? [];
+  const accounts: any[] = Array.isArray(accountsData?.data) ? accountsData.data : [];
+
+  console.log("Zoho accounts returned:", JSON.stringify(accounts.map((a: any) => ({
+    accountId: a.accountId,
+    email: a.primaryEmailAddress ?? a.mailboxAddress,
+  }))));
 
   const match = accounts.find((a: any) =>
-    a.primaryEmailAddress?.toLowerCase() === acct.email_address.toLowerCase() ||
+    (a.primaryEmailAddress ?? "").toLowerCase() === acct.email_address.toLowerCase() ||
     (a.mailboxAddress ?? "").toLowerCase() === acct.email_address.toLowerCase()
-  );
+  ) ?? accounts[0]; // fall back to first account if email doesn't match exactly
 
-  if (!match) throw new Error(`No Zoho account found for ${acct.email_address}. Org accounts returned: ${JSON.stringify(accounts.map((a: any) => a.primaryEmailAddress))}`);
+  if (!match) throw new Error(`No Zoho account found. Accounts returned: ${JSON.stringify(accountsData)}`);
 
-  const zohoAccountId = String(match.accountId ?? match.zuid);
+  const zohoAccountId = String(match.accountId);
   await serviceClient.from("email_accounts").update({ zoho_account_id: zohoAccountId }).eq("id", acct.id);
   return zohoAccountId;
 }

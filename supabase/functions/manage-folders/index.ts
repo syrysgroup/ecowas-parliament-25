@@ -69,20 +69,20 @@ Deno.serve(async (req) => {
     // Resolve account ID — if stored ID is invalid, clear and re-resolve
     let zohoAccountId = acct.zoho_account_id;
     if (!zohoAccountId) {
-      const orgId = Deno.env.get("ZOHO_ORG_ID")!;
-      const accountsRes = await fetch(`https://mail.zoho.eu/api/organization/${orgId}/accounts`, {
+      const accountsRes = await fetch("https://mail.zoho.eu/api/accounts", {
         headers: { Authorization: `Zoho-oauthtoken ${token}` },
       });
       const accountsData = await accountsRes.json();
-      const match = (accountsData?.data ?? []).find((a: any) =>
+      const accounts: any[] = Array.isArray(accountsData?.data) ? accountsData.data : [];
+      const match = accounts.find((a: any) =>
         (a.primaryEmailAddress ?? "").toLowerCase() === (acct.email_address ?? "").toLowerCase()
-      );
+      ) ?? accounts[0];
       if (!match) {
-        return new Response(JSON.stringify({ error: "Could not resolve Zoho account ID. Check ZOHO_ORG_ID and account email." }), {
+        return new Response(JSON.stringify({ error: "Could not resolve Zoho account ID.", detail: JSON.stringify(accountsData) }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      zohoAccountId = String(match.accountId ?? match.zuid);
+      zohoAccountId = String(match.accountId);
       await serviceClient.from("email_accounts").update({ zoho_account_id: zohoAccountId }).eq("id", acct.id);
     }
 
