@@ -1,0 +1,1 @@
+ALTER TABLE public.team_members ADD COLUMN category text NOT NULL DEFAULT 'implementing_team';

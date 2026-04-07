@@ -471,6 +471,10 @@ export const en: Record<string, string> = {
   "team.executiveLeadership": "Executive leadership",
   "team.programmeDelivery": "Programme delivery",
   "team.commsMedia": "Communications and media",
+  "team.leadership": "Leadership",
+  "team.implementingTeam": "Implementing Team",
+  "team.consultants": "Consultants",
+  "team.volunteers": "Volunteers",
 
   // ─── Timeline Page ────────────────────────────────────────────────
   "timeline.badge": "January  November 2026",
@@ -1214,7 +1218,7 @@ export const en: Record<string, string> = {
   "trade.applyNow": "Apply Now",
   "trade.partnerWithUs": "Partner With Us",
 
-  // ─── Team Page ────────────────────────────────────────────────────
-  "team.implementationTeam": "Implementation Team",
-  "team.consultants": "Consultants",
+  // ─── Stakeholders Page (extra) ──────────────────────────────────
+  "stakeholders.teamSection": "Team",
+  "stakeholders.advisorySection": "Advisory",
 };
