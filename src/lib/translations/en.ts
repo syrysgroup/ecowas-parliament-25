@@ -1218,7 +1218,7 @@ export const en: Record<string, string> = {
   "trade.applyNow": "Apply Now",
   "trade.partnerWithUs": "Partner With Us",
 
-  // ─── Team Page ────────────────────────────────────────────────────
-  "team.implementationTeam": "Implementation Team",
-  "team.consultants": "Consultants",
+  // ─── Stakeholders Page (extra) ──────────────────────────────────
+  "stakeholders.teamSection": "Team",
+  "stakeholders.advisorySection": "Advisory",
 };
