@@ -644,20 +644,6 @@ export default function SponsorsManagerModule() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <p className="text-[13px] font-semibold text-crm-text">{s.name}</p>
-                  {/* Published pill toggle */}
-                  {canEdit("sponsors") && (
-                    <button
-                      onClick={() => toggleSponsorPublish.mutate({ id: s.id, published: !s.is_published })}
-                      title={s.is_published ? "Click to unpublish" : "Click to publish"}
-                      className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border transition-colors ${
-                        s.is_published
-                          ? "bg-emerald-950 border-emerald-700 text-emerald-400 hover:bg-emerald-900"
-                          : "bg-red-950/60 border-red-800 text-red-400 hover:bg-red-950"
-                      }`}
-                    >
-                      {s.is_published ? "● Live" : "● Draft"}
-                    </button>
-                  )}
                   <span className="text-[9px] font-mono px-1.5 py-0.5 rounded border bg-crm-surface text-crm-text-dim border-crm-border capitalize">{s.tier}</span>
                 </div>
                 {s.programmes && s.programmes.length > 0 && (
@@ -665,6 +651,20 @@ export default function SponsorsManagerModule() {
                 )}
               </div>
               <div className="flex gap-1">
+                {/* Publish toggle */}
+                {canEdit("sponsors") && (
+                  <button
+                    onClick={() => toggleSponsorPublish.mutate({ id: s.id, published: !s.is_published })}
+                    title={s.is_published ? "Click to unpublish" : "Click to publish"}
+                    className={`w-7 h-7 rounded flex items-center justify-center border transition-colors ${
+                      s.is_published
+                        ? "bg-emerald-950 border-emerald-700 text-emerald-400 hover:bg-emerald-900"
+                        : "bg-red-950/60 border-red-800 text-red-400 hover:bg-red-950"
+                    }`}
+                  >
+                    {s.is_published ? <Eye size={12} /> : <EyeOff size={12} />}
+                  </button>
+                )}
                 {/* Preview link */}
                 <a
                   href={`/sponsors/${s.slug}`}
@@ -673,7 +673,7 @@ export default function SponsorsManagerModule() {
                   title="Preview sponsor page"
                   className="w-7 h-7 rounded flex items-center justify-center bg-crm-surface border border-crm-border text-crm-text-dim hover:text-blue-400 transition-colors"
                 >
-                  <Eye size={12} />
+                  <ExternalLink size={12} />
                 </a>
                 {canEdit("sponsors") && (
                   <button onClick={() => setEditSponsor(s)} className="w-7 h-7 rounded flex items-center justify-center bg-crm-surface border border-crm-border text-crm-text-dim hover:text-crm-text-secondary transition-colors"><Pencil size={12} /></button>
