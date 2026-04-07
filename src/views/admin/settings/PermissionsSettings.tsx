@@ -18,7 +18,7 @@ const PERMS: { key: PermKey; label: string }[] = [
 
 const PermissionsSettings = () => {
   const { settings, updateSetting } = useGlobalSettings();
-  const stored = (settings.permissions as Record<Role, Record<PermKey, boolean>>) ?? {};
+  const stored = ((settings.permissions ?? {}) as Record<string, Record<PermKey, boolean>>);
 
   const defaultPerms: Record<Role, Record<PermKey, boolean>> = {
     admin: { delete_contacts: true, export_data: true, view_reports: true, manage_deals: true, send_invoices: true },
