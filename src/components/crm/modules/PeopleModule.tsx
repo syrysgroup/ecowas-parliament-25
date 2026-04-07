@@ -8,7 +8,7 @@ import { CRM_ROLE_META } from "../crmRoles";
 import {
   Send, Trash2, CheckCircle2, Clock, UserPlus, RefreshCw, X,
   Eye, Pencil, UserMinus, EyeOff, AlertTriangle, Camera, Globe, Plus, ExternalLink,
-  Users, UserCheck, Mail, Shield,
+  Users, UserCheck, Mail, Shield, Loader2, Copy, Check,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -486,10 +486,139 @@ function TeamMemberDialog({ open, onClose, member }: {
   );
 }
 
-function WebsiteTeamTab({ qc, toast }: { qc: ReturnType<typeof useQueryClient>; toast: ReturnType<typeof useToast>["toast"] }) {
+// ─── Convert Team Member to User Dialog ──────────────────────────────────────
+function ConvertTeamMemberDialog({ open, onClose, member, assignableRoles }: {
+  open: boolean; onClose: () => void; member: TeamMemberRow; assignableRoles: AppRole[];
+}) {
+  const { toast } = useToast();
+  const [email, setEmail] = useState("");
+  const [role, setRole] = useState<AppRole>(assignableRoles[0] ?? "admin");
+  const [converting, setConverting] = useState(false);
+  const [generatedLink, setGeneratedLink] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  const handleClose = () => {
+    setEmail(""); setRole(assignableRoles[0] ?? "admin");
+    setConverting(false); setGeneratedLink(null); setCopied(false);
+    onClose();
+  };
+
+  const handleConvert = async () => {
+    if (!email.trim() || !email.includes("@")) {
+      toast({ title: "Enter a valid email address", variant: "destructive" }); return;
+    }
+    setConverting(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await supabase.functions.invoke("invite-user", {
+        body: { email: email.trim(), role },
+        headers: { Authorization: `Bearer ${session?.access_token}` },
+      });
+      if (res.error) throw new Error(res.error.message);
+      const body = res.data as any;
+      if (body?.error) throw new Error(body.error);
+      setGeneratedLink(body?.actionLink ?? null);
+      toast({ title: "Invitation sent", description: `${email} has been invited as ${role}` });
+    } catch (err: any) {
+      toast({ title: "Failed", description: err.message, variant: "destructive" });
+    } finally {
+      setConverting(false);
+    }
+  };
+
+  const handleCopy = async () => {
+    if (!generatedLink) return;
+    await navigator.clipboard.writeText(generatedLink);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent className="bg-crm-card border-crm-border text-crm-text max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-sm font-semibold text-crm-text flex items-center gap-2">
+            <UserPlus size={14} className="text-emerald-400" />
+            Convert to System User
+          </DialogTitle>
+        </DialogHeader>
+
+        {!generatedLink ? (
+          <div className="space-y-4 py-1">
+            <p className="text-[11px] text-crm-text-muted">
+              Converting <span className="font-semibold text-crm-text">{member.full_name}</span> will send them an invitation to create an account. They will set their password on first sign-in.
+            </p>
+            <div className="space-y-1.5">
+              <Label className="text-[11px] text-crm-text-muted">Email Address *</Label>
+              <Input value={email} onChange={e => setEmail(e.target.value)} type="email"
+                placeholder="member@example.com"
+                className="bg-crm-surface border-crm-border text-crm-text-secondary text-sm" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-[11px] text-crm-text-muted">Assign Role</Label>
+              <Select value={role} onValueChange={v => setRole(v as AppRole)}>
+                <SelectTrigger className="bg-crm-surface border-crm-border text-crm-text-secondary text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-crm-card border-crm-border text-crm-text">
+                  {assignableRoles.map(r => (
+                    <SelectItem key={r} value={r}>{CRM_ROLE_META[r]?.label ?? r}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <DialogFooter className="gap-2 pt-1">
+              <Button variant="outline" size="sm" onClick={handleClose}
+                className="border-crm-border text-crm-text-muted text-xs">Cancel</Button>
+              <Button size="sm" onClick={handleConvert} disabled={converting || !email.trim()}
+                className="bg-emerald-700 hover:bg-emerald-600 text-white text-xs gap-1.5">
+                {converting ? <Loader2 size={11} className="animate-spin" /> : <Send size={11} />}
+                {converting ? "Sending…" : "Send Invitation"}
+              </Button>
+            </DialogFooter>
+          </div>
+        ) : (
+          <div className="space-y-4 py-1">
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-emerald-950/40 border border-emerald-800/40">
+              <CheckCircle2 size={14} className="text-emerald-400 flex-shrink-0" />
+              <p className="text-[11px] text-emerald-300">
+                Invitation sent to <span className="font-semibold">{email}</span>. Share the link below for their first sign-in.
+              </p>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-[11px] text-crm-text-muted">Invitation Link</Label>
+              <div className="flex items-center gap-2">
+                <input readOnly value={generatedLink}
+                  className="flex-1 bg-crm-surface border border-crm-border rounded-lg px-3 py-1.5 text-[11px] text-crm-text-secondary font-mono truncate outline-none" />
+                <button onClick={handleCopy}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-crm-border text-[11px] text-crm-text-muted hover:text-crm-text transition-colors flex-shrink-0">
+                  {copied ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
+                  {copied ? "Copied" : "Copy"}
+                </button>
+              </div>
+              <p className="text-[10px] text-crm-text-faint">The user must create a password on their first visit to this link.</p>
+            </div>
+            <DialogFooter>
+              <Button size="sm" onClick={handleClose}
+                className="bg-emerald-700 hover:bg-emerald-600 text-white text-xs">Done</Button>
+            </DialogFooter>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function WebsiteTeamTab({ qc, toast, isSuperAdmin, assignableRoles }: {
+  qc: ReturnType<typeof useQueryClient>;
+  toast: ReturnType<typeof useToast>["toast"];
+  isSuperAdmin: boolean;
+  assignableRoles: AppRole[];
+}) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<TeamMemberRow | undefined>(undefined);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [convertTarget, setConvertTarget] = useState<TeamMemberRow | null>(null);
 
   const { data: teamMembers = [], isLoading } = useQuery<TeamMemberRow[]>({
     queryKey: ["team-members-manual"],
@@ -555,6 +684,12 @@ function WebsiteTeamTab({ qc, toast }: { qc: ReturnType<typeof useQueryClient>; 
                 </button>
                 <button onClick={() => { setEditTarget(m); setDialogOpen(true); }}
                   className="p-1.5 text-crm-text-dim hover:text-crm-text-secondary rounded"><Pencil size={13} /></button>
+                {isSuperAdmin && (
+                  <button onClick={() => setConvertTarget(m)} title="Convert to system user"
+                    className="p-1.5 text-crm-text-dim hover:text-emerald-400 rounded">
+                    <UserPlus size={13} />
+                  </button>
+                )}
                 {deleteId === m.id ? (
                   <span className="flex items-center gap-1 text-[9px]">
                     <button onClick={() => deleteRow(m.id)} className="text-red-400">Yes</button>
@@ -577,6 +712,14 @@ function WebsiteTeamTab({ qc, toast }: { qc: ReturnType<typeof useQueryClient>; 
         onClose={() => setDialogOpen(false)}
         member={editTarget}
       />
+      {convertTarget && (
+        <ConvertTeamMemberDialog
+          open={!!convertTarget}
+          onClose={() => setConvertTarget(null)}
+          member={convertTarget}
+          assignableRoles={assignableRoles}
+        />
+      )}
     </div>
   );
 }
@@ -652,6 +795,27 @@ export default function PeopleModule() {
   const revokeInvitation = async (invId: string) => {
     await (supabase as any).from("invitations").delete().eq("id", invId);
     toast({ title: "Invitation revoked" }); loadData();
+  };
+
+  const [resendingId, setResendingId] = useState<string | null>(null);
+
+  const handleResend = async (inv: Invitation) => {
+    setResendingId(inv.id);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await supabase.functions.invoke("invite-user", {
+        body: { email: inv.email, role: inv.role },
+        headers: { Authorization: `Bearer ${session?.access_token}` },
+      });
+      if (res.error) throw new Error(res.error.message);
+      const body = res.data as any;
+      if (body?.error) throw new Error(body.error);
+      toast({ title: "Invitation resent", description: inv.email });
+    } catch (err: any) {
+      toast({ title: "Failed to resend", description: err.message, variant: "destructive" });
+    } finally {
+      setResendingId(null);
+    }
   };
 
   const handleToggleWebsite = async (userId: string, current: boolean) => {
@@ -844,7 +1008,19 @@ export default function PeopleModule() {
                       </div>
                     </div>
                     {!accepted && (
-                      <button onClick={() => revokeInvitation(inv.id)} className="text-crm-text-faint hover:text-red-400 p-1"><Trash2 size={13} /></button>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => handleResend(inv)}
+                          disabled={resendingId === inv.id}
+                          title="Resend invitation"
+                          className="text-crm-text-faint hover:text-emerald-400 p-1 disabled:opacity-50"
+                        >
+                          {resendingId === inv.id
+                            ? <Loader2 size={13} className="animate-spin" />
+                            : <RefreshCw size={13} />}
+                        </button>
+                        <button onClick={() => revokeInvitation(inv.id)} className="text-crm-text-faint hover:text-red-400 p-1"><Trash2 size={13} /></button>
+                      </div>
                     )}
                   </div>
                 );
@@ -855,7 +1031,7 @@ export default function PeopleModule() {
       )}
 
       {/* Website Team tab */}
-      {tab === "website-team" && <WebsiteTeamTab qc={qc} toast={toast} />}
+      {tab === "website-team" && <WebsiteTeamTab qc={qc} toast={toast} isSuperAdmin={isSuperAdmin} assignableRoles={assignableRoles} />}
 
       {/* Dialogs */}
       {viewOpen && viewTarget && <ViewUserDialog target={viewTarget} onClose={() => { setViewOpen(false); setViewTarget(null); }} />}

@@ -9,7 +9,12 @@ const corsHeaders = {
 
 const BodySchema = z.object({
   email: z.string().email(),
-  role: z.enum(["admin", "moderator", "sponsor", "super_admin"]),
+  role: z.enum([
+    "super_admin", "admin", "moderator", "sponsor", "media",
+    "project_director", "programme_lead", "website_editor", "marketing_manager",
+    "communications_officer", "finance_coordinator", "logistics_coordinator",
+    "sponsor_manager", "consultant",
+  ]),
 });
 
 Deno.serve(async (req) => {
@@ -91,9 +96,11 @@ Deno.serve(async (req) => {
       throw invErr;
     }
 
-    // Send auth invite email
-    const { error: authErr } = await serviceClient.auth.admin.inviteUserByEmail(email, {
-      redirectTo: `${req.headers.get("origin") || "https://ecowasparliamentinitiatives.org"}/auth`,
+    // Send auth invite email and capture the action link
+    const siteUrl = Deno.env.get("SITE_URL") || req.headers.get("origin") || "https://ecowasparliamentinitiatives.org";
+    const { data: inviteData, error: authErr } = await serviceClient.auth.admin.inviteUserByEmail(email, {
+      redirectTo: `${siteUrl}/set-password`,
+      data: { role },
     });
 
     if (authErr) {
@@ -101,8 +108,10 @@ Deno.serve(async (req) => {
       // Invitation record exists, user can still sign up manually
     }
 
+    const actionLink = (inviteData as any)?.properties?.action_link ?? null;
+
     return new Response(
-      JSON.stringify({ success: true, message: `Invitation sent to ${email} with role ${role}` }),
+      JSON.stringify({ success: true, message: `Invitation sent to ${email} with role ${role}`, actionLink }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {

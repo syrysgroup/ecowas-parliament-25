@@ -5,12 +5,13 @@ import {
   Reply, Forward, Search, X, Paperclip, ChevronLeft, ChevronRight,
   Loader2, MailOpen, Mail, AlertOctagon, Tag, Folder,
   MoreVertical, Circle, Info, Minus, Bold, Italic, Underline,
-  List, ListOrdered, Link, Image,
+  List, ListOrdered, Link, Image, Save,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { format, parseISO } from "date-fns";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useToast } from "@/hooks/use-toast";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Email {
@@ -81,6 +82,7 @@ interface ComposeProps {
 }
 
 function ComposeModal({ account, replyTo, forwardOf, onClose, onSent }: ComposeProps) {
+  const { toast } = useToast();
   const [to, setTo] = useState(replyTo?.from_address ?? "");
   const [cc, setCc] = useState("");
   const [bcc, setBcc] = useState("");
@@ -98,6 +100,8 @@ function ComposeModal({ account, replyTo, forwardOf, onClose, onSent }: ComposeP
     return "";
   });
   const [sending, setSending] = useState(false);
+  const [savingDraft, setSavingDraft] = useState(false);
+  const [draftId, setDraftId] = useState<string | null>(null);
 
   const handleSend = async () => {
     if (!to.trim() || !subject.trim()) return;
@@ -106,16 +110,61 @@ function ComposeModal({ account, replyTo, forwardOf, onClose, onSent }: ComposeP
       const { data: session } = await supabase.auth.getSession();
       const token = session?.session?.access_token;
       const res = await supabase.functions.invoke("send-email", {
-        body: { to, cc: cc || undefined, subject, bodyHtml: body.replace(/\n/g, "<br>"), replyToId: replyTo?.id },
+        body: {
+          to,
+          cc: cc || undefined,
+          bcc: bcc || undefined,
+          subject,
+          bodyHtml: body.replace(/\n/g, "<br>"),
+          replyToId: replyTo?.id,
+        },
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.error) throw new Error(res.error.message);
+      // If this was a draft, delete it now that it's been sent
+      if (draftId) {
+        await (supabase as any).from("emails").delete().eq("id", draftId);
+      }
+      toast({ title: "Email sent" });
       onSent();
       onClose();
     } catch (err: any) {
-      console.error("Send failed:", err);
+      toast({ title: "Failed to send", description: err.message, variant: "destructive" });
     } finally {
       setSending(false);
+    }
+  };
+
+  const handleSaveDraft = async () => {
+    if (!to && !subject && !body.trim()) return;
+    setSavingDraft(true);
+    try {
+      const row: Record<string, any> = {
+        account_id: account.id,
+        folder: "drafts",
+        from_address: account.email_address,
+        to_address: to || null,
+        cc_address: cc || null,
+        subject: subject || "(No subject)",
+        body_html: body.replace(/\n/g, "<br>"),
+        body_text: body,
+        is_read: true,
+        sent_at: new Date().toISOString(),
+      };
+      if (draftId) {
+        const { error } = await (supabase as any).from("emails").update(row).eq("id", draftId);
+        if (error) throw error;
+      } else {
+        const newId = crypto.randomUUID();
+        const { error } = await (supabase as any).from("emails").insert({ id: newId, ...row });
+        if (error) throw error;
+        setDraftId(newId);
+      }
+      toast({ title: "Draft saved" });
+    } catch (err: any) {
+      toast({ title: "Failed to save draft", description: err.message, variant: "destructive" });
+    } finally {
+      setSavingDraft(false);
     }
   };
 
@@ -193,19 +242,29 @@ function ComposeModal({ account, replyTo, forwardOf, onClose, onSent }: ComposeP
           />
 
           {/* Footer */}
-          <div className="flex items-center justify-end gap-3 px-5 py-3 border-t border-crm-border">
+          <div className="flex items-center justify-between gap-3 px-5 py-3 border-t border-crm-border">
             <button className="flex items-center gap-2 px-3 py-1.5 text-[13px] text-crm-text-muted hover:text-crm-text transition-colors">
               <Paperclip size={14} />
               <span>Attachments</span>
             </button>
-            <button
-              onClick={handleSend}
-              disabled={sending || !to.trim() || !subject.trim()}
-              className="flex items-center gap-2 px-5 py-2 rounded-lg bg-primary hover:bg-primary/90 text-white text-[13px] font-medium transition-colors disabled:opacity-50"
-            >
-              <span>{sending ? "Sending…" : "Send"}</span>
-              {sending ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleSaveDraft}
+                disabled={savingDraft || (!to && !subject && !body.trim())}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-crm-border text-crm-text-muted hover:text-crm-text text-[13px] transition-colors disabled:opacity-40"
+              >
+                {savingDraft ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                <span>{savingDraft ? "Saving…" : "Save Draft"}</span>
+              </button>
+              <button
+                onClick={handleSend}
+                disabled={sending || !to.trim() || !subject.trim()}
+                className="flex items-center gap-2 px-5 py-2 rounded-lg bg-primary hover:bg-primary/90 text-white text-[13px] font-medium transition-colors disabled:opacity-50"
+              >
+                <span>{sending ? "Sending…" : "Send"}</span>
+                {sending ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+              </button>
+            </div>
           </div>
         </>
       )}

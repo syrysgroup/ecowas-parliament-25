@@ -214,9 +214,12 @@ function SecuritySettings() {
   const { user } = useAuthContext();
   const { toast } = useToast();
   const [sending, setSending] = useState(false);
+  const [currentPw, setCurrentPw] = useState("");
   const [newPw, setNewPw] = useState("");
   const [confirmPw, setConfirmPw] = useState("");
   const [hasEmailAcct, setHasEmailAcct] = useState(false);
+  const [newEmail, setNewEmail] = useState("");
+  const [emailSending, setEmailSending] = useState(false);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -226,10 +229,15 @@ function SecuritySettings() {
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!currentPw) { toast({ title: "Current password required", variant: "destructive" }); return; }
     if (newPw.length < 8) { toast({ title: "Too short", variant: "destructive" }); return; }
-    if (newPw !== confirmPw) { toast({ title: "Mismatch", variant: "destructive" }); return; }
+    if (newPw !== confirmPw) { toast({ title: "Passwords do not match", variant: "destructive" }); return; }
     setSending(true);
     try {
+      // Re-authenticate with current password to get a fresh session
+      const { error: signInErr } = await supabase.auth.signInWithPassword({ email: user!.email!, password: currentPw });
+      if (signInErr) throw new Error("Current password is incorrect");
+
       if (hasEmailAcct) {
         const { data: session } = await supabase.auth.getSession();
         const res = await supabase.functions.invoke("sync-password", {
@@ -243,28 +251,64 @@ function SecuritySettings() {
         if (error) throw error;
         toast({ title: "Password updated" });
       }
-      setNewPw(""); setConfirmPw("");
+      setCurrentPw(""); setNewPw(""); setConfirmPw("");
     } catch (err: any) {
       toast({ title: "Failed", description: err.message, variant: "destructive" });
     } finally { setSending(false); }
   };
 
+  const handleChangeEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newEmail.trim() || !newEmail.includes("@")) {
+      toast({ title: "Enter a valid email address", variant: "destructive" });
+      return;
+    }
+    setEmailSending(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ email: newEmail.trim() });
+      if (error) throw error;
+      toast({ title: "Confirmation sent", description: "Check both your old and new inbox to confirm the change." });
+      setNewEmail("");
+    } catch (err: any) {
+      toast({ title: "Failed", description: err.message, variant: "destructive" });
+    } finally { setEmailSending(false); }
+  };
+
   return (
     <Section title="Security" icon={Shield}>
-      <div className="space-y-3">
+      <div className="space-y-4">
         <div className="flex items-center justify-between py-2 border-b border-crm-border">
           <div>
-            <p className="text-[12px] font-medium text-crm-text">Email address</p>
+            <p className="text-[12px] font-medium text-crm-text">Current email address</p>
             <p className="text-[11px] text-crm-text-muted font-mono">{user?.email}</p>
           </div>
         </div>
+
+        {/* Change Email */}
+        <form onSubmit={handleChangeEmail} className="space-y-2">
+          <p className="text-[12px] font-medium text-crm-text">Change email address</p>
+          <Input type="email" value={newEmail} onChange={e => setNewEmail(e.target.value)}
+            placeholder="New email address" className={inputCls} />
+          <p className="text-[10px] text-crm-text-faint">A confirmation link will be sent to the new address.</p>
+          <Button type="submit" size="sm" disabled={emailSending || !newEmail.trim()}
+            className="bg-emerald-700 hover:bg-emerald-600 text-white text-xs gap-1.5 h-7">
+            {emailSending ? <Loader2 size={11} className="animate-spin" /> : <Mail size={11} />}
+            {emailSending ? "Sending…" : "Update Email"}
+          </Button>
+        </form>
+
+        <div className="border-t border-crm-border pt-3" />
+
+        {/* Change Password */}
         <form onSubmit={handleChangePassword} className="space-y-2">
           <p className="text-[12px] font-medium text-crm-text">Change password</p>
+          <Input type="password" value={currentPw} onChange={e => setCurrentPw(e.target.value)}
+            placeholder="Current password" className={inputCls} />
           <Input type="password" value={newPw} onChange={e => setNewPw(e.target.value)}
             placeholder="New password (min 8 chars)" minLength={8} className={inputCls} />
           <Input type="password" value={confirmPw} onChange={e => setConfirmPw(e.target.value)}
             placeholder="Confirm new password" className={inputCls} />
-          <Button type="submit" size="sm" disabled={sending || newPw.length < 8 || newPw !== confirmPw}
+          <Button type="submit" size="sm" disabled={sending || !currentPw || newPw.length < 8 || newPw !== confirmPw}
             className="bg-emerald-700 hover:bg-emerald-600 text-white text-xs gap-1.5 h-7">
             {sending ? <Loader2 size={11} className="animate-spin" /> : <Shield size={11} />}
             {sending ? "Updating…" : "Update Password"}
