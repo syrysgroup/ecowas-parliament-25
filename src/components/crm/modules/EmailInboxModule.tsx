@@ -3,8 +3,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Inbox, Send, FileText, Star, Trash2, RefreshCw, Pencil,
   Reply, Forward, Search, X, Paperclip, ChevronLeft, ChevronRight,
-  Loader2, MailOpen, Mail, AlertOctagon, Tag, Folder,
-  MoreVertical, Circle, Info, Minus, Bold, Italic, Underline,
+  Loader2, MailOpen, Mail, AlertOctagon, Folder,
+  MoreVertical, Minus, Bold, Italic, Underline,
   List, ListOrdered, Link, Image, Save,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -38,9 +38,8 @@ interface EmailAccount {
   display_name: string | null;
 }
 
-type Folder = "inbox" | "sent" | "drafts" | "starred" | "spam" | "trash";
-
-const FOLDERS: { id: Folder; label: string; icon: React.ElementType }[] = [
+// activeFolder is a string — supports both system folders and custom Zoho folder names
+const SYSTEM_FOLDERS: { id: string; label: string; icon: React.ElementType }[] = [
   { id: "inbox",   label: "Inbox",   icon: Mail         },
   { id: "sent",    label: "Sent",    icon: Send         },
   { id: "drafts",  label: "Draft",   icon: FileText     },
@@ -49,12 +48,13 @@ const FOLDERS: { id: Folder; label: string; icon: React.ElementType }[] = [
   { id: "trash",   label: "Trash",   icon: Trash2       },
 ];
 
-const LABELS = [
-  { key: "personal",  label: "Personal",  color: "bg-emerald-500" },
-  { key: "company",   label: "Company",   color: "bg-primary"     },
-  { key: "important", label: "Important", color: "bg-amber-500"   },
-  { key: "private",   label: "Private",   color: "bg-red-500"     },
-];
+interface ZohoFolder {
+  folderId: string;
+  folderName: string;
+  unreadCount: number;
+  messageCount: number;
+  isSystemFolder: boolean;
+}
 
 const AVATAR_COLORS = [
   "bg-emerald-600", "bg-blue-600", "bg-purple-600", "bg-amber-600",
@@ -82,6 +82,13 @@ interface ComposeProps {
   onSent: () => void;
 }
 
+interface ComposeAttachment {
+  name: string;
+  base64: string;
+  contentType: string;
+  size: number;
+}
+
 function ComposeModal({ account, replyTo, forwardOf, onClose, onSent }: ComposeProps) {
   const { toast } = useToast();
   const [to, setTo] = useState(replyTo?.from_address ?? "");
@@ -103,6 +110,31 @@ function ComposeModal({ account, replyTo, forwardOf, onClose, onSent }: ComposeP
   const [sending, setSending] = useState(false);
   const [savingDraft, setSavingDraft] = useState(false);
   const [draftId, setDraftId] = useState<string | null>(null);
+  const [zohoDraftId, setZohoDraftId] = useState<string | null>(null);
+  const [attachments, setAttachments] = useState<ComposeAttachment[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+    files.forEach(file => {
+      if (file.size > MAX_SIZE) {
+        toast({ title: "File too large", description: `${file.name} exceeds 5MB limit`, variant: "destructive" });
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataUrl = reader.result as string;
+        const base64 = dataUrl.split(",")[1] ?? "";
+        setAttachments(prev => [...prev, { name: file.name, base64, contentType: file.type || "application/octet-stream", size: file.size }]);
+      };
+      reader.readAsDataURL(file);
+    });
+    // Reset so same file can be re-selected
+    e.target.value = "";
+  };
+
+  const removeAttachment = (idx: number) => setAttachments(prev => prev.filter((_, i) => i !== idx));
 
   const handleSend = async () => {
     if (!to.trim() || !subject.trim()) return;
@@ -118,13 +150,22 @@ function ComposeModal({ account, replyTo, forwardOf, onClose, onSent }: ComposeP
           subject,
           bodyHtml: body.replace(/\n/g, "<br>"),
           replyToId: replyTo?.id,
+          attachments: attachments.length > 0 ? attachments : undefined,
         },
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.error) throw new Error(res.error.message);
-      // If this was a draft, delete it now that it's been sent
+      if (res.data?.error) throw new Error(res.data.error);
+      // If this was a draft, delete it from DB and Zoho
       if (draftId) {
-        await (supabase as any).from("emails").delete().eq("id", draftId);
+        if (zohoDraftId) {
+          await supabase.functions.invoke("update-email", {
+            body: { action: "delete", email_id: draftId },
+            headers: { Authorization: `Bearer ${token}` },
+          }).catch(() => {});
+        } else {
+          await (supabase as any).from("emails").delete().eq("id", draftId);
+        }
       }
       toast({ title: "Email sent" });
       onSent();
@@ -140,6 +181,8 @@ function ComposeModal({ account, replyTo, forwardOf, onClose, onSent }: ComposeP
     if (!to && !subject && !body.trim()) return;
     setSavingDraft(true);
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
       const row: Record<string, any> = {
         account_id: account.id,
         folder: "drafts",
@@ -152,15 +195,30 @@ function ComposeModal({ account, replyTo, forwardOf, onClose, onSent }: ComposeP
         is_read: true,
         sent_at: new Date().toISOString(),
       };
-      if (draftId) {
-        const { error } = await (supabase as any).from("emails").update(row).eq("id", draftId);
+
+      let currentDraftId = draftId;
+      if (currentDraftId) {
+        const { error } = await (supabase as any).from("emails").update(row).eq("id", currentDraftId);
         if (error) throw error;
       } else {
-        const newId = crypto.randomUUID();
-        const { error } = await (supabase as any).from("emails").insert({ id: newId, ...row });
+        currentDraftId = crypto.randomUUID();
+        const { error } = await (supabase as any).from("emails").insert({ id: currentDraftId, ...row });
         if (error) throw error;
-        setDraftId(newId);
+        setDraftId(currentDraftId);
       }
+
+      // Sync draft to Zoho
+      const draftRes = await supabase.functions.invoke("save-draft", {
+        body: { to, cc: cc || undefined, subject: subject || "(No subject)", bodyHtml: body.replace(/\n/g, "<br>"), zoho_draft_message_id: zohoDraftId },
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (draftRes.data?.zoho_draft_message_id) {
+        const newZohoId = draftRes.data.zoho_draft_message_id;
+        setZohoDraftId(newZohoId);
+        // Backfill zoho_message_id on the DB row
+        await (supabase as any).from("emails").update({ zoho_message_id: newZohoId }).eq("id", currentDraftId);
+      }
+
       toast({ title: "Draft saved" });
     } catch (err: any) {
       toast({ title: "Failed to save draft", description: err.message, variant: "destructive" });
@@ -242,12 +300,31 @@ function ComposeModal({ account, replyTo, forwardOf, onClose, onSent }: ComposeP
             placeholder="Write your message…"
           />
 
+          {/* Attachment chips */}
+          {attachments.length > 0 && (
+            <div className="flex flex-wrap gap-2 px-5 pb-2">
+              {attachments.map((a, i) => (
+                <div key={i} className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-crm-surface border border-crm-border text-[12px] text-crm-text-muted">
+                  <FileText size={12} />
+                  <span className="truncate max-w-[140px]">{a.name}</span>
+                  <button onClick={() => removeAttachment(i)} className="hover:text-red-400 transition-colors">
+                    <X size={12} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
           {/* Footer */}
           <div className="flex items-center justify-between gap-3 px-5 py-3 border-t border-crm-border">
-            <button className="flex items-center gap-2 px-3 py-1.5 text-[13px] text-crm-text-muted hover:text-crm-text transition-colors">
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="flex items-center gap-2 px-3 py-1.5 text-[13px] text-crm-text-muted hover:text-crm-text transition-colors"
+            >
               <Paperclip size={14} />
               <span>Attachments</span>
             </button>
+            <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFileSelect} />
             <div className="flex items-center gap-2">
               <button
                 onClick={handleSaveDraft}
@@ -281,23 +358,88 @@ interface DetailPanelProps {
   onForward: (e: Email) => void;
   onStar: (id: string, starred: boolean) => void;
   onTrash: (id: string) => void;
+  onMarkUnread: (id: string) => void;
+  onMove: (id: string, folderId: string, folderName: string) => void;
   onPrev: () => void;
   onNext: () => void;
   hasPrev: boolean;
   hasNext: boolean;
+  folders: ZohoFolder[];
 }
 
-function EmailDetailPanel({ email, onBack, onReply, onForward, onStar, onTrash, onPrev, onNext, hasPrev, hasNext }: DetailPanelProps) {
-  const safeHtml = email.body_html
+function EmailDetailPanel({ email, onBack, onReply, onForward, onStar, onTrash, onMarkUnread, onMove, onPrev, onNext, hasPrev, hasNext, folders }: DetailPanelProps) {
+  const { toast } = useToast();
+  const [bodyHtml, setBodyHtml] = useState(email.body_html);
+  const [fetchingBody, setFetchingBody] = useState(false);
+  const [showMoveMenu, setShowMoveMenu] = useState(false);
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setBodyHtml(email.body_html);
+    if (email.body_html || !email.id) return;
+    let cancelled = false;
+    setFetchingBody(true);
+    supabase.auth.getSession().then(({ data: { session } }) =>
+      supabase.functions.invoke("fetch-email-body", {
+        body: { email_id: email.id },
+        headers: { Authorization: `Bearer ${session?.access_token}` },
+      })
+    ).then(({ data }) => {
+      if (!cancelled && data?.body_html) setBodyHtml(data.body_html);
+    }).finally(() => {
+      if (!cancelled) setFetchingBody(false);
+    });
+    return () => { cancelled = true; };
+  }, [email.id, email.body_html]);
+
+  // Fetch attachment list when email has attachments
+  const { data: attachments = [] } = useQuery<{ attachmentId: string; fileName: string; fileSize: number; contentType: string }[]>({
+    queryKey: ["attachments", email.id],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await supabase.functions.invoke("get-attachments", {
+        body: { email_id: email.id },
+        headers: { Authorization: `Bearer ${session?.access_token}` },
+      });
+      return res.data?.attachments ?? [];
+    },
+    enabled: email.has_attachments,
+    staleTime: 10 * 60 * 1000,
+  });
+
+  const handleDownload = async (a: { attachmentId: string; fileName: string; contentType: string }) => {
+    setDownloadingId(a.attachmentId);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await supabase.functions.invoke("download-attachment", {
+        body: { email_id: email.id, attachment_id: a.attachmentId, file_name: a.fileName },
+        headers: { Authorization: `Bearer ${session?.access_token}` },
+      });
+      if (res.data?.error) throw new Error(res.data.error);
+      const { base64, fileName, contentType } = res.data;
+      const link = document.createElement("a");
+      link.href = `data:${contentType};base64,${base64}`;
+      link.download = fileName;
+      link.click();
+    } catch (err: any) {
+      toast({ title: "Download failed", description: err.message, variant: "destructive" });
+    } finally {
+      setDownloadingId(null);
+    }
+  };
+
+  const safeHtml = bodyHtml
     .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
     .replace(/on\w+="[^"]*"/gi, "");
 
   const senderInitials = getInitials(email.from_name || email.from_address);
   const senderColor = getAvatarColor(email.from_name || email.from_address);
+  const movableFolders = folders.filter(f => f.folderName.toLowerCase() !== email.folder.toLowerCase());
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Top bar: back + subject + actions */}
+    <div className="flex flex-col h-full" onClick={() => { setShowMoveMenu(false); setShowMoreMenu(false); }}>
+      {/* Top bar: back + subject */}
       <div className="px-5 py-3 border-b border-crm-border flex items-center gap-3 flex-shrink-0">
         <button onClick={onBack} className="p-1 rounded-full hover:bg-crm-surface text-crm-text-muted transition-colors">
           <ChevronLeft size={18} />
@@ -308,21 +450,61 @@ function EmailDetailPanel({ email, onBack, onReply, onForward, onStar, onTrash, 
       {/* Action bar */}
       <div className="px-5 py-2 border-b border-crm-border flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-1">
-          <button onClick={() => onTrash(email.id)} className="p-2 rounded-full hover:bg-crm-surface text-crm-text-muted transition-colors" title="Delete">
+          <button onClick={() => onTrash(email.id)} className="p-2 rounded-full hover:bg-crm-surface text-crm-text-muted transition-colors" title="Move to trash">
             <Trash2 size={18} />
           </button>
-          <button className="p-2 rounded-full hover:bg-crm-surface text-crm-text-muted transition-colors" title="Move to folder">
-            <Folder size={18} />
-          </button>
-          <button className="p-2 rounded-full hover:bg-crm-surface text-crm-text-muted transition-colors" title="Label">
-            <Tag size={18} />
-          </button>
+
+          {/* Move to folder dropdown */}
+          <div className="relative" onClick={e => e.stopPropagation()}>
+            <button
+              onClick={() => { setShowMoveMenu(v => !v); setShowMoreMenu(false); }}
+              className="p-2 rounded-full hover:bg-crm-surface text-crm-text-muted transition-colors"
+              title="Move to folder"
+            >
+              <Folder size={18} />
+            </button>
+            {showMoveMenu && (
+              <div className="absolute left-0 top-full mt-1 z-50 w-44 bg-crm-card border border-crm-border rounded-lg shadow-xl py-1 max-h-56 overflow-y-auto">
+                {movableFolders.length === 0 ? (
+                  <p className="px-3 py-2 text-[12px] text-crm-text-muted">No other folders</p>
+                ) : movableFolders.map(f => (
+                  <button
+                    key={f.folderId}
+                    onClick={() => { onMove(email.id, f.folderId, f.folderName); setShowMoveMenu(false); }}
+                    className="w-full text-left px-3 py-2 text-[13px] text-crm-text hover:bg-crm-surface transition-colors"
+                  >
+                    {f.folderName}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
           <button onClick={() => onStar(email.id, !email.is_starred)} className={`p-2 rounded-full hover:bg-crm-surface transition-colors ${email.is_starred ? "text-amber-400" : "text-crm-text-muted"}`} title="Star">
             <Star size={18} fill={email.is_starred ? "currentColor" : "none"} />
           </button>
-          <button className="p-2 rounded-full hover:bg-crm-surface text-crm-text-muted transition-colors" title="More">
-            <MoreVertical size={18} />
-          </button>
+
+          {/* More menu (mark unread) */}
+          <div className="relative" onClick={e => e.stopPropagation()}>
+            <button
+              onClick={() => { setShowMoreMenu(v => !v); setShowMoveMenu(false); }}
+              className="p-2 rounded-full hover:bg-crm-surface text-crm-text-muted transition-colors"
+              title="More"
+            >
+              <MoreVertical size={18} />
+            </button>
+            {showMoreMenu && (
+              <div className="absolute left-0 top-full mt-1 z-50 w-44 bg-crm-card border border-crm-border rounded-lg shadow-xl py-1">
+                <button
+                  onClick={() => { onMarkUnread(email.id); setShowMoreMenu(false); }}
+                  className="w-full text-left px-3 py-2 text-[13px] text-crm-text hover:bg-crm-surface transition-colors flex items-center gap-2"
+                >
+                  <Mail size={14} />
+                  Mark as unread
+                </button>
+              </div>
+            )}
+          </div>
         </div>
         <div className="flex items-center gap-1">
           <button onClick={onPrev} disabled={!hasPrev} className="p-2 rounded-full hover:bg-crm-surface text-crm-text-muted transition-colors disabled:opacity-30" title="Previous">
@@ -353,23 +535,20 @@ function EmailDetailPanel({ email, onBack, onReply, onForward, onStar, onTrash, 
               <span className="text-[12px] text-crm-text-muted">
                 {email.sent_at ? format(parseISO(email.sent_at), "MMMM do yyyy, hh:mm a") : "—"}
               </span>
-              {email.has_attachments && (
-                <button className="p-1.5 rounded-full hover:bg-crm-surface text-crm-text-muted transition-colors">
-                  <Paperclip size={18} />
-                </button>
-              )}
               <button onClick={() => onStar(email.id, !email.is_starred)} className={`p-1.5 rounded-full hover:bg-crm-surface transition-colors ${email.is_starred ? "text-amber-400" : "text-crm-text-muted"}`}>
                 <Star size={18} fill={email.is_starred ? "currentColor" : "none"} />
-              </button>
-              <button className="p-1.5 rounded-full hover:bg-crm-surface text-crm-text-muted transition-colors">
-                <MoreVertical size={18} />
               </button>
             </div>
           </div>
 
           {/* Card body */}
           <div className="px-5 py-5">
-            {email.body_html ? (
+            {fetchingBody ? (
+              <div className="flex items-center gap-2 text-crm-text-muted text-[13px]">
+                <Loader2 size={14} className="animate-spin" />
+                Loading message…
+              </div>
+            ) : bodyHtml ? (
               <div
                 className="text-[13px] text-crm-text-secondary leading-relaxed prose-sm max-w-none [&_a]:text-primary [&_a]:underline"
                 dangerouslySetInnerHTML={{ __html: safeHtml }}
@@ -380,13 +559,31 @@ function EmailDetailPanel({ email, onBack, onReply, onForward, onStar, onTrash, 
               </p>
             )}
 
-            {email.has_attachments && (
+            {/* Attachments */}
+            {email.has_attachments && attachments.length > 0 && (
               <>
                 <hr className="border-crm-border my-4" />
-                <p className="text-[12px] text-crm-text-muted mb-2">Attachments</p>
-                <div className="flex items-center gap-1.5 text-[13px] text-crm-text-secondary cursor-pointer hover:text-crm-text">
-                  <FileText size={14} />
-                  <span>attachment.file</span>
+                <p className="text-[12px] text-crm-text-muted mb-2">Attachments ({attachments.length})</p>
+                <div className="space-y-1.5">
+                  {attachments.map(a => (
+                    <div key={a.attachmentId} className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg bg-crm-surface border border-crm-border">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <FileText size={14} className="text-crm-text-muted flex-shrink-0" />
+                        <span className="text-[13px] text-crm-text-secondary truncate">{a.fileName}</span>
+                        <span className="text-[11px] text-crm-text-faint flex-shrink-0">
+                          {a.fileSize > 0 ? `(${(a.fileSize / 1024).toFixed(0)} KB)` : ""}
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => handleDownload(a)}
+                        disabled={downloadingId === a.attachmentId}
+                        className="flex-shrink-0 flex items-center gap-1 px-2 py-1 rounded text-[12px] text-primary hover:bg-primary/10 transition-colors disabled:opacity-50"
+                      >
+                        {downloadingId === a.attachmentId ? <Loader2 size={12} className="animate-spin" /> : null}
+                        Download
+                      </button>
+                    </div>
+                  ))}
                 </div>
               </>
             )}
@@ -399,7 +596,6 @@ function EmailDetailPanel({ email, onBack, onReply, onForward, onStar, onTrash, 
             Reply to {email.from_name || email.from_address}
           </h6>
           <div className="px-5 pb-4">
-            {/* Mini toolbar */}
             <div className="flex items-center gap-0.5 pb-3 border-b border-crm-border mb-3">
               {[Bold, Italic, Underline, ListOrdered, List, Link, Image].map((Icon, i) => (
                 <button key={i} className="p-1.5 rounded hover:bg-crm-surface text-crm-text-muted transition-colors">
@@ -411,15 +607,11 @@ function EmailDetailPanel({ email, onBack, onReply, onForward, onStar, onTrash, 
               Click to write your reply…
             </div>
             <div className="flex items-center justify-end gap-3 mt-4">
-              <button className="flex items-center gap-2 px-3 py-1.5 text-[13px] text-crm-text-muted hover:text-crm-text transition-colors">
-                <Paperclip size={14} />
-                <span>Attachments</span>
-              </button>
               <button
                 onClick={() => onReply(email)}
                 className="flex items-center gap-2 px-5 py-2 rounded-lg bg-primary hover:bg-primary/90 text-white text-[13px] font-medium transition-colors"
               >
-                <span>Send</span>
+                <span>Reply</span>
                 <Send size={14} />
               </button>
             </div>
@@ -435,7 +627,7 @@ export default function EmailInboxModule() {
   const { user } = useAuthContext();
   const qc = useQueryClient();
   const { toast } = useToast();
-  const [activeFolder, setActiveFolder] = useState<Folder>("inbox");
+  const [activeFolder, setActiveFolder] = useState<string>("inbox");
   const [selectedEmail, setSelectedEmail] = useState<Email | null>(null);
   const [composeOpen, setComposeOpen] = useState(false);
   const [replyTarget, setReplyTarget] = useState<Email | null>(null);
@@ -443,6 +635,11 @@ export default function EmailInboxModule() {
   const [search, setSearch] = useState("");
   const [syncing, setSyncing] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkOperating, setBulkOperating] = useState(false);
+  const [showBulkMoveMenu, setShowBulkMoveMenu] = useState(false);
+  const [newFolderInput, setNewFolderInput] = useState(false);
+  const [newFolderName, setNewFolderName] = useState("");
+  const [creatingFolder, setCreatingFolder] = useState(false);
   const syncInterval = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Load email account
@@ -459,6 +656,31 @@ export default function EmailInboxModule() {
     },
     enabled: !!user?.id,
   });
+
+  // Load Zoho folder list (system + custom)
+  const { data: zohoFolders = [] } = useQuery<ZohoFolder[]>({
+    queryKey: ["email-folders", account?.id],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await supabase.functions.invoke("manage-folders", {
+        body: { action: "list" },
+        headers: { Authorization: `Bearer ${session?.access_token}` },
+      });
+      return res.data?.folders ?? [];
+    },
+    enabled: !!account,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Shared helper: invoke update-email edge function
+  const invokeUpdateEmail = async (action: string, emailId: string, extra?: Record<string, string>) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    const { data, error } = await supabase.functions.invoke("update-email", {
+      body: { action, email_id: emailId, ...extra },
+      headers: { Authorization: `Bearer ${session?.access_token}` },
+    });
+    if (error || data?.error) throw new Error(error?.message ?? data?.error ?? "Update failed");
+  };
 
   // Load emails
   const { data: emails = [], isLoading } = useQuery<Email[]>({
@@ -527,16 +749,26 @@ export default function EmailInboxModule() {
     setSyncing(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      await supabase.functions.invoke("sync-emails", {
+      const { data, error } = await supabase.functions.invoke("sync-emails", {
         headers: { Authorization: `Bearer ${session?.access_token}` },
       });
+      if (error || data?.error) {
+        toast({
+          title: "Email sync failed",
+          description: error?.message ?? data?.error ?? "Unknown error",
+          variant: "destructive",
+        });
+        return;
+      }
       qc.invalidateQueries({ queryKey: ["emails"], refetchType: "all" });
       qc.invalidateQueries({ queryKey: ["email-unread-counts"], refetchType: "all" });
       qc.invalidateQueries({ queryKey: ["email-inbox-unread"], refetchType: "all" });
+    } catch (err: any) {
+      toast({ title: "Email sync failed", description: err.message, variant: "destructive" });
     } finally {
       setSyncing(false);
     }
-  }, [user, qc]);
+  }, [user, qc, toast]);
 
   useEffect(() => {
     if (!account) return;
@@ -546,9 +778,16 @@ export default function EmailInboxModule() {
   }, [account?.id]);
 
   const markRead = useMutation({
-    mutationFn: async (emailId: string) => {
-      await (supabase as any).from("emails").update({ is_read: true }).eq("id", emailId);
+    mutationFn: async (emailId: string) => { await invokeUpdateEmail("mark_read", emailId); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["emails"] });
+      qc.invalidateQueries({ queryKey: ["email-unread-counts"] });
+      qc.invalidateQueries({ queryKey: ["email-inbox-unread"] });
     },
+  });
+
+  const markUnread = useMutation({
+    mutationFn: async (emailId: string) => { await invokeUpdateEmail("mark_unread", emailId); },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["emails"] });
       qc.invalidateQueries({ queryKey: ["email-unread-counts"] });
@@ -558,14 +797,22 @@ export default function EmailInboxModule() {
 
   const toggleStar = useMutation({
     mutationFn: async ({ id, starred }: { id: string; starred: boolean }) => {
-      await (supabase as any).from("emails").update({ is_starred: starred }).eq("id", id);
+      await invokeUpdateEmail(starred ? "star" : "unstar", id);
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["emails"] }),
   });
 
   const moveToTrash = useMutation({
-    mutationFn: async (id: string) => {
-      await (supabase as any).from("emails").update({ folder: "trash" }).eq("id", id);
+    mutationFn: async (id: string) => { await invokeUpdateEmail("trash", id); },
+    onSuccess: () => {
+      setSelectedEmail(null);
+      qc.invalidateQueries({ queryKey: ["emails"] });
+    },
+  });
+
+  const moveEmail = useMutation({
+    mutationFn: async ({ id, folderId, folderName }: { id: string; folderId: string; folderName: string }) => {
+      await invokeUpdateEmail("move", id, { folder_id: folderId, folder_name: folderName });
     },
     onSuccess: () => {
       setSelectedEmail(null);
@@ -576,6 +823,94 @@ export default function EmailInboxModule() {
   const handleSelectEmail = (email: Email) => {
     setSelectedEmail(email);
     if (!email.is_read) markRead.mutate(email.id);
+  };
+
+  // Bulk operations
+  const handleBulkTrash = async () => {
+    if (selectedIds.size === 0) return;
+    setBulkOperating(true);
+    try {
+      for (const id of Array.from(selectedIds)) {
+        await invokeUpdateEmail("trash", id);
+      }
+      setSelectedIds(new Set());
+      qc.invalidateQueries({ queryKey: ["emails"] });
+    } catch (err: any) {
+      toast({ title: "Bulk delete failed", description: err.message, variant: "destructive" });
+    } finally {
+      setBulkOperating(false);
+    }
+  };
+
+  const handleBulkMarkRead = async () => {
+    if (selectedIds.size === 0) return;
+    setBulkOperating(true);
+    try {
+      for (const id of Array.from(selectedIds)) {
+        await invokeUpdateEmail("mark_read", id);
+      }
+      setSelectedIds(new Set());
+      qc.invalidateQueries({ queryKey: ["emails"] });
+      qc.invalidateQueries({ queryKey: ["email-unread-counts"] });
+    } catch (err: any) {
+      toast({ title: "Bulk mark read failed", description: err.message, variant: "destructive" });
+    } finally {
+      setBulkOperating(false);
+    }
+  };
+
+  const handleBulkMove = async (folderId: string, folderName: string) => {
+    if (selectedIds.size === 0) return;
+    setBulkOperating(true);
+    setShowBulkMoveMenu(false);
+    try {
+      for (const id of Array.from(selectedIds)) {
+        await invokeUpdateEmail("move", id, { folder_id: folderId, folder_name: folderName });
+      }
+      setSelectedIds(new Set());
+      qc.invalidateQueries({ queryKey: ["emails"] });
+    } catch (err: any) {
+      toast({ title: "Bulk move failed", description: err.message, variant: "destructive" });
+    } finally {
+      setBulkOperating(false);
+    }
+  };
+
+  const handleCreateFolder = async () => {
+    if (!newFolderName.trim()) return;
+    setCreatingFolder(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await supabase.functions.invoke("manage-folders", {
+        body: { action: "create", folder_name: newFolderName.trim() },
+        headers: { Authorization: `Bearer ${session?.access_token}` },
+      });
+      if (res.data?.error) throw new Error(res.data.error);
+      setNewFolderName("");
+      setNewFolderInput(false);
+      qc.invalidateQueries({ queryKey: ["email-folders"] });
+      toast({ title: `Folder "${newFolderName.trim()}" created` });
+    } catch (err: any) {
+      toast({ title: "Failed to create folder", description: err.message, variant: "destructive" });
+    } finally {
+      setCreatingFolder(false);
+    }
+  };
+
+  const handleDeleteFolder = async (folder: ZohoFolder) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await supabase.functions.invoke("manage-folders", {
+        body: { action: "delete", folder_id: folder.folderId },
+        headers: { Authorization: `Bearer ${session?.access_token}` },
+      });
+      if (res.data?.error) throw new Error(res.data.error);
+      if (activeFolder === folder.folderName) setActiveFolder("inbox");
+      qc.invalidateQueries({ queryKey: ["email-folders"] });
+      toast({ title: `Folder "${folder.folderName}" deleted` });
+    } catch (err: any) {
+      toast({ title: "Failed to delete folder", description: err.message, variant: "destructive" });
+    }
   };
 
   const filteredEmails = emails.filter(e => {
@@ -873,8 +1208,9 @@ export default function EmailInboxModule() {
         </div>
 
         {/* Folder list */}
-        <nav className="flex-1 px-4 pt-4 pb-2 space-y-0.5">
-          {FOLDERS.map(f => {
+        <nav className="flex-1 px-4 pt-4 pb-2 space-y-0.5 overflow-y-auto">
+          {/* System folders (always shown) */}
+          {SYSTEM_FOLDERS.map(f => {
             const Icon = f.icon;
             const count = f.id === "starred" ? undefined : unreadMap[f.id];
             const isActive = activeFolder === f.id;
@@ -905,15 +1241,70 @@ export default function EmailInboxModule() {
             );
           })}
 
-          {/* Labels section */}
-          <div className="pt-5">
-            <p className="text-[11px] font-medium uppercase text-crm-text-faint tracking-wider px-3 mb-2">Labels</p>
-            {LABELS.map(l => (
-              <button key={l.key} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left text-crm-text-muted hover:text-crm-text hover:bg-crm-surface transition-colors">
-                <span className={`w-2.5 h-2.5 rounded-full ${l.color}`} />
-                <span className="text-[14px]">{l.label}</span>
+          {/* Custom folders from Zoho */}
+          {zohoFolders.filter(f => !f.isSystemFolder).length > 0 && (
+            <div className="pt-3">
+              <p className="text-[11px] font-medium uppercase text-crm-text-faint tracking-wider px-3 mb-1">Folders</p>
+              {zohoFolders.filter(f => !f.isSystemFolder).map(f => {
+                const isActive = activeFolder === f.folderName;
+                return (
+                  <div key={f.folderId} className="group flex items-center">
+                    <button
+                      onClick={() => { setActiveFolder(f.folderName); setSelectedEmail(null); setSelectedIds(new Set()); }}
+                      className={`flex-1 flex items-center justify-between px-3 py-2 rounded-lg text-left transition-colors ${
+                        isActive ? "bg-primary/10 text-primary font-medium" : "text-crm-text-muted hover:text-crm-text hover:bg-crm-surface"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Folder size={18} className="flex-shrink-0" />
+                        <span className="text-[14px] truncate">{f.folderName}</span>
+                      </div>
+                      {f.unreadCount > 0 && (
+                        <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-crm-surface text-crm-text-muted">
+                          {f.unreadCount}
+                        </span>
+                      )}
+                    </button>
+                    <button
+                      onClick={() => handleDeleteFolder(f)}
+                      className="hidden group-hover:flex p-1 mr-1 rounded text-crm-text-faint hover:text-red-400 transition-colors"
+                      title="Delete folder"
+                    >
+                      <X size={13} />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* New Folder */}
+          <div className="pt-2">
+            {newFolderInput ? (
+              <div className="flex items-center gap-1 px-3 py-1">
+                <input
+                  autoFocus
+                  value={newFolderName}
+                  onChange={e => setNewFolderName(e.target.value)}
+                  onKeyDown={e => { if (e.key === "Enter") handleCreateFolder(); if (e.key === "Escape") { setNewFolderInput(false); setNewFolderName(""); } }}
+                  placeholder="Folder name"
+                  className="flex-1 bg-crm-surface border border-crm-border rounded text-[13px] text-crm-text px-2 py-1 outline-none focus:border-primary"
+                />
+                <button onClick={handleCreateFolder} disabled={creatingFolder || !newFolderName.trim()} className="p-1 text-primary hover:bg-primary/10 rounded disabled:opacity-40">
+                  {creatingFolder ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
+                </button>
+                <button onClick={() => { setNewFolderInput(false); setNewFolderName(""); }} className="p-1 text-crm-text-faint hover:text-crm-text rounded">
+                  <X size={13} />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setNewFolderInput(true)}
+                className="w-full flex items-center gap-2 px-3 py-1.5 text-left text-[13px] text-crm-text-faint hover:text-crm-text-muted transition-colors"
+              >
+                <span className="text-lg leading-none">+</span> New Folder
               </button>
-            ))}
+            )}
           </div>
         </nav>
 
@@ -962,7 +1353,7 @@ export default function EmailInboxModule() {
         <hr className="border-crm-border mx-3" />
 
         {/* Action toolbar */}
-        <div className="flex items-center justify-between px-3 py-1.5">
+        <div className="flex items-center justify-between px-3 py-1.5" onClick={() => setShowBulkMoveMenu(false)}>
           <div className="flex items-center gap-0.5">
             <div className="px-2">
               <Checkbox
@@ -971,18 +1362,46 @@ export default function EmailInboxModule() {
                 className="border-crm-border"
               />
             </div>
-            <button className="p-2 rounded-full hover:bg-crm-surface text-crm-text-muted transition-colors" title="Delete">
-              <Trash2 size={18} />
+            <button
+              onClick={handleBulkTrash}
+              disabled={selectedIds.size === 0 || bulkOperating}
+              className="p-2 rounded-full hover:bg-crm-surface text-crm-text-muted transition-colors disabled:opacity-40"
+              title="Delete selected"
+            >
+              {bulkOperating ? <Loader2 size={18} className="animate-spin" /> : <Trash2 size={18} />}
             </button>
-            <button className="p-2 rounded-full hover:bg-crm-surface text-crm-text-muted transition-colors" title="Mark as read">
+            <button
+              onClick={handleBulkMarkRead}
+              disabled={selectedIds.size === 0 || bulkOperating}
+              className="p-2 rounded-full hover:bg-crm-surface text-crm-text-muted transition-colors disabled:opacity-40"
+              title="Mark selected as read"
+            >
               <MailOpen size={18} />
             </button>
-            <button className="p-2 rounded-full hover:bg-crm-surface text-crm-text-muted transition-colors" title="Move to folder">
-              <Folder size={18} />
-            </button>
-            <button className="p-2 rounded-full hover:bg-crm-surface text-crm-text-muted transition-colors" title="Label">
-              <Tag size={18} />
-            </button>
+            {/* Bulk move to folder */}
+            <div className="relative" onClick={e => e.stopPropagation()}>
+              <button
+                onClick={() => setShowBulkMoveMenu(v => !v)}
+                disabled={selectedIds.size === 0 || bulkOperating}
+                className="p-2 rounded-full hover:bg-crm-surface text-crm-text-muted transition-colors disabled:opacity-40"
+                title="Move selected to folder"
+              >
+                <Folder size={18} />
+              </button>
+              {showBulkMoveMenu && (
+                <div className="absolute left-0 top-full mt-1 z-50 w-44 bg-crm-card border border-crm-border rounded-lg shadow-xl py-1 max-h-56 overflow-y-auto">
+                  {zohoFolders.map(f => (
+                    <button
+                      key={f.folderId}
+                      onClick={() => handleBulkMove(f.folderId, f.folderName)}
+                      className="w-full text-left px-3 py-2 text-[13px] text-crm-text hover:bg-crm-surface transition-colors"
+                    >
+                      {f.folderName}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
           <div className="flex items-center gap-0.5">
             <button
@@ -992,9 +1411,6 @@ export default function EmailInboxModule() {
               title="Refresh"
             >
               <RefreshCw size={18} className={syncing ? "animate-spin" : ""} />
-            </button>
-            <button className="p-2 rounded-full hover:bg-crm-surface text-crm-text-muted transition-colors" title="More options">
-              <MoreVertical size={18} />
             </button>
           </div>
         </div>
@@ -1071,14 +1487,15 @@ export default function EmailInboxModule() {
                     </div>
                     {/* Hover state: action icons */}
                     <div className="absolute right-0 top-1/2 -translate-y-1/2 hidden group-hover:flex items-center gap-0.5 bg-crm-surface rounded-lg px-1">
-                      <button onClick={(e) => { e.stopPropagation(); markRead.mutate(email.id); }} className="p-1.5 rounded-full hover:bg-crm-border text-crm-text-muted transition-colors" title="Mark as read">
-                        <Mail size={15} />
+                      <button
+                        onClick={(e) => { e.stopPropagation(); email.is_read ? markUnread.mutate(email.id) : markRead.mutate(email.id); }}
+                        className="p-1.5 rounded-full hover:bg-crm-border text-crm-text-muted transition-colors"
+                        title={email.is_read ? "Mark as unread" : "Mark as read"}
+                      >
+                        {email.is_read ? <Mail size={15} /> : <MailOpen size={15} />}
                       </button>
-                      <button onClick={(e) => { e.stopPropagation(); moveToTrash.mutate(email.id); }} className="p-1.5 rounded-full hover:bg-crm-border text-crm-text-muted transition-colors" title="Delete">
+                      <button onClick={(e) => { e.stopPropagation(); moveToTrash.mutate(email.id); }} className="p-1.5 rounded-full hover:bg-crm-border text-crm-text-muted transition-colors" title="Move to trash">
                         <Trash2 size={15} />
-                      </button>
-                      <button className="p-1.5 rounded-full hover:bg-crm-border text-crm-text-muted transition-colors" title="Info">
-                        <Info size={15} />
                       </button>
                     </div>
                   </div>
@@ -1099,10 +1516,13 @@ export default function EmailInboxModule() {
             onForward={e => { setForwardTarget(e); setReplyTarget(null); setComposeOpen(true); }}
             onStar={(id, starred) => toggleStar.mutate({ id, starred })}
             onTrash={id => moveToTrash.mutate(id)}
+            onMarkUnread={id => markUnread.mutate(id)}
+            onMove={(id, folderId, folderName) => moveEmail.mutate({ id, folderId, folderName })}
             onPrev={() => { if (currentIdx > 0) handleSelectEmail(filteredEmails[currentIdx - 1]); }}
             onNext={() => { if (currentIdx < filteredEmails.length - 1) handleSelectEmail(filteredEmails[currentIdx + 1]); }}
             hasPrev={currentIdx > 0}
             hasNext={currentIdx < filteredEmails.length - 1}
+            folders={zohoFolders}
           />
         ) : (
           <div className="flex flex-col items-center justify-center h-full gap-3 text-center">

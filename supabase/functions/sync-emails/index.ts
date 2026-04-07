@@ -5,6 +5,11 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+function flatAddr(v: unknown): string {
+  if (Array.isArray(v)) return v.map((a: any) => a.address ?? String(a)).join(", ");
+  return (v as string) ?? "";
+}
+
 async function getZohoToken() {
   const res = await fetch("https://accounts.zoho.eu/oauth/v2/token", {
     method: "POST",
@@ -36,7 +41,7 @@ async function resolveZohoAccountId(serviceClient: any, acct: any, token: string
     (a.mailboxAddress ?? "").toLowerCase() === acct.email_address.toLowerCase()
   );
 
-  if (!match) throw new Error(`No Zoho account found for ${acct.email_address}`);
+  if (!match) throw new Error(`No Zoho account found for ${acct.email_address}. Org accounts returned: ${JSON.stringify(accounts.map((a: any) => a.primaryEmailAddress))}`);
 
   const zohoAccountId = String(match.accountId ?? match.zuid);
   await serviceClient.from("email_accounts").update({ zoho_account_id: zohoAccountId }).eq("id", acct.id);
@@ -73,31 +78,44 @@ Deno.serve(async (req) => {
     const token = await getZohoToken();
     const zohoAccountId = await resolveZohoAccountId(serviceClient, acct, token);
 
-    // First, fetch the actual folder list from Zoho to get folder IDs
+    // Fetch the actual folder list from Zoho to get folder IDs
     const foldersRes = await fetch(`https://mail.zoho.eu/api/accounts/${zohoAccountId}/folders`, {
       headers: { Authorization: `Zoho-oauthtoken ${token}` },
     });
     const foldersData = await foldersRes.json();
     const zohoFolders = foldersData?.data ?? [];
 
-    // Map our folder names to Zoho folder IDs
-    const folderNameMap: Record<string, string> = {};
-    for (const zf of zohoFolders) {
-      const name = (zf.folderName ?? "").toLowerCase();
-      const id = String(zf.folderId);
-      if (name === "inbox") folderNameMap["inbox"] = id;
-      else if (name === "sent" || name === "sentmail" || name === "sent mail") folderNameMap["sent"] = id;
-      else if (name === "drafts" || name === "draft") folderNameMap["drafts"] = id;
-      else if (name === "spam" || name === "junk") folderNameMap["spam"] = id;
-      else if (name === "trash") folderNameMap["trash"] = id;
+    // Bug 4: Guard — if Zoho returns no folders, fail loudly
+    if (zohoFolders.length === 0) {
+      console.error("No folders returned from Zoho:", JSON.stringify(foldersData));
+      throw new Error("No folders returned from Zoho — check ZOHO_ORG_ID and account permissions");
     }
 
-    let newEmailCount = 0;
-    const foldersToSync = ["inbox", "sent", "drafts", "spam", "trash"];
+    // Bug 8: Batch-fetch all known message IDs upfront (one query instead of N+1)
+    const { data: existingRows } = await serviceClient
+      .from("emails")
+      .select("zoho_message_id")
+      .eq("account_id", acct.id);
+    const seenIds = new Set((existingRows ?? []).map((r: any) => r.zoho_message_id));
 
-    for (const folder of foldersToSync) {
-      const zohoFolderId = folderNameMap[folder];
+    let newEmailCount = 0;
+    // Sync all Zoho folders (not just system ones) so custom folders appear in the UI
+    const allFolders: { folderName: string; folderId: string }[] = zohoFolders.map((zf: any) => ({
+      folderName: (zf.folderName ?? "").toLowerCase(),
+      folderId: String(zf.folderId),
+    }));
+
+    for (const { folderName, folderId: zohoFolderId } of allFolders) {
+      // Skip duplicates that might appear (Zoho can return sub-folders)
       if (!zohoFolderId) continue;
+      // Map known system folder names to canonical DB names
+      const dbFolder =
+        folderName === "inbox" ? "inbox" :
+        folderName === "sent" || folderName === "sentmail" || folderName === "sent mail" ? "sent" :
+        folderName === "drafts" || folderName === "draft" ? "drafts" :
+        folderName === "spam" || folderName === "junk" ? "spam" :
+        folderName === "trash" ? "trash" :
+        folderName; // custom folders use their Zoho name as-is
 
       const mailRes = await fetch(
         `https://mail.zoho.eu/api/accounts/${zohoAccountId}/messages/view?folderId=${zohoFolderId}&limit=50&sortorder=desc`,
@@ -110,29 +128,28 @@ Deno.serve(async (req) => {
 
       for (const msg of messages) {
         const msgId = String(msg.messageId);
-        // Check if already synced
-        const { data: existing } = await serviceClient
-          .from("emails")
-          .select("id")
-          .eq("zoho_message_id", msgId)
-          .maybeSingle();
 
-        if (existing) continue;
+        // Bug 8: check in-memory Set instead of per-message DB query
+        if (seenIds.has(msgId)) continue;
+        seenIds.add(msgId);
 
         await serviceClient.from("emails").insert({
           account_id: acct.id,
           zoho_message_id: msgId,
           from_address: msg.fromAddress || "",
           from_name: msg.sender || "",
-          to_address: msg.toAddress || "",
-          cc_address: msg.ccAddress || "",
+          // Bug 7: address fields may be arrays of objects
+          to_address: flatAddr(msg.toAddress),
+          cc_address: flatAddr(msg.ccAddress),
           subject: msg.subject || "(No subject)",
-          body_html: msg.content || "",
+          // Bug 3: message-list endpoint doesn't return body; fetch-email-body handles this on demand
+          body_html: "",
           body_text: msg.summary || "",
-          is_read: msg.isRead ?? false,
-          is_starred: msg.isFlagged ?? false,
-          folder: folder,
-          has_attachments: (msg.hasAttachment ?? false),
+          // Bug 6: Zoho may return "true"/"false" strings instead of booleans
+          is_read: msg.isRead === true || msg.isRead === "true",
+          is_starred: msg.isFlagged === true || msg.isFlagged === "true",
+          folder: dbFolder,
+          has_attachments: msg.hasAttachment === true || msg.hasAttachment === "true",
           sent_at: msg.sentDateInGMT ? new Date(Number(msg.sentDateInGMT)).toISOString() : new Date().toISOString(),
         });
         newEmailCount++;

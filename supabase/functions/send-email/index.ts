@@ -81,8 +81,9 @@ Deno.serve(async (req) => {
     const { data: { user }, error: authErr } = await anonClient.auth.getUser();
     if (authErr || !user) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
-    const { to, cc, subject, bodyHtml, replyToId } = await req.json();
+    const { to, cc, subject, bodyHtml, replyToId, attachments } = await req.json();
     if (!to || !subject) return new Response(JSON.stringify({ error: "to and subject required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    // attachments: [{ name: string, base64: string, contentType: string }]
 
     const serviceClient = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
@@ -129,6 +130,13 @@ Deno.serve(async (req) => {
       mailFormat: "html",
     };
     if (cc) sendPayload.ccAddress = cc;
+    if (Array.isArray(attachments) && attachments.length > 0) {
+      sendPayload.attachments = attachments.map((a: any) => ({
+        name: a.name ?? "attachment",
+        content: a.base64 ?? "",
+        contentType: a.contentType ?? "application/octet-stream",
+      }));
+    }
 
     const sendRes = await fetch(`https://mail.zoho.eu/api/accounts/${zohoAccountId}/messages`, {
       method: "POST",
