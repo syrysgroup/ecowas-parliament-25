@@ -7,7 +7,7 @@ import CRMLayout from "@/components/crm/CRMLayout";
 // Eager — core modules used immediately
 import DashboardModule    from "@/components/crm/modules/DashboardModule";
 import TaskBoardModule    from "@/components/crm/modules/TaskBoardModule";
-import InboxModule        from "@/components/crm/modules/InboxModule";
+
 import CalendarModule     from "@/components/crm/modules/CalendarModule";
 import TeamModule         from "@/components/crm/modules/TeamModule";
 import PeopleModule       from "@/components/crm/modules/PeopleModule";
@@ -77,7 +77,6 @@ export default function CRMDashboard() {
     switch (section) {
       case "":                return <DashboardModule onNavigate={navigateSection} />;
       case "tasks":           return <TaskBoardModule />;
-      case "inbox":           return <InboxModule />;
       case "calendar":        return <CalendarModule />;
       case "team":            return <TeamModule />;
       case "people":          return <PeopleModule />;
