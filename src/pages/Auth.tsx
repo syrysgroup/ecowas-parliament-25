@@ -254,13 +254,13 @@ export default function Auth() {
   };
 
   const handleCaptchaWidgetLoad = () => {
-    // Start a 10-second timeout — if token isn't received, show retry
+    // Start a 30-second timeout — if token isn't received, show retry
     captchaTimeoutRef.current = setTimeout(() => {
       if (!captchaToken) {
         setCaptchaLoading(false);
         setCaptchaError(true);
       }
-    }, 10000);
+    }, 30000);
   };
 
   const TurnstileWidget = (

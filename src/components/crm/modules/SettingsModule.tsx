@@ -49,10 +49,14 @@ function EmailSettings() {
   const qc = useQueryClient();
   const isSuperAdmin = roles.includes("super_admin" as any);
 
-  // User's own email account
+  // User's email credentials
   const [email, setEmail] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
+  const [password, setPassword] = useState("");
+  const [showPw, setShowPw] = useState(false);
+  const [connecting, setConnecting] = useState(false);
+  const [testing, setTesting] = useState(false);
+  // Status: "none" | "connected" | "failed" | "unknown"
+  const [connectionStatus, setConnectionStatus] = useState<"none" | "connected" | "failed" | "unknown">("none");
 
   // Global server config state
   const [smtpHost, setSmtpHost] = useState("");
@@ -60,14 +64,18 @@ function EmailSettings() {
   const [imapHost, setImapHost] = useState("");
   const [imapPort, setImapPort] = useState("993");
   const [sslEnabled, setSslEnabled] = useState(true);
-  const [fromName, setFromName] = useState("");
-  const [fromEmail, setFromEmail] = useState("");
   const [serverSaving, setServerSaving] = useState(false);
 
+  // Load existing account
   useEffect(() => {
     if (!user?.id) return;
     (supabase as any).from("email_accounts").select("email_address").eq("user_id", user.id).eq("is_active", true).single()
-      .then(({ data }: any) => { if (data?.email_address) setEmail(data.email_address); });
+      .then(({ data }: any) => {
+        if (data?.email_address) {
+          setEmail(data.email_address);
+          setConnectionStatus("unknown"); // has account but not tested this session
+        }
+      });
   }, [user?.id]);
 
   const { data: smtpConfig } = useQuery({
@@ -85,22 +93,57 @@ function EmailSettings() {
     setImapHost(smtpConfig.imap_host ?? "");
     setImapPort(String(smtpConfig.imap_port ?? 993));
     setSslEnabled(smtpConfig.ssl_enabled !== false);
-    setFromName(smtpConfig.from_name ?? "");
-    setFromEmail(smtpConfig.from_email ?? "");
   }, [smtpConfig]);
 
-  const handleSave = async () => {
-    if (!email.trim()) return;
-    setSaving(true);
+  const handleConnect = async () => {
+    if (!email.trim() || !password.trim()) {
+      toast({ title: "Enter both email and password", variant: "destructive" });
+      return;
+    }
+    setConnecting(true);
     try {
-      const { data: existing } = await (supabase as any).from("email_accounts").select("id").eq("user_id", user!.id).eq("is_active", true).single();
-      if (existing) await (supabase as any).from("email_accounts").update({ email_address: email.trim() }).eq("id", existing.id);
-      toast({ title: "Email account saved" });
-      setSaved(true);
-      setTimeout(() => setSaved(false), 3000);
+      const { data: session } = await supabase.auth.getSession();
+      const res = await supabase.functions.invoke("validate-email-credentials", {
+        body: { email: email.trim(), password },
+        headers: { Authorization: `Bearer ${session?.session?.access_token}` },
+      });
+      if (res.error) throw new Error(res.error.message);
+      const result = res.data as { valid: boolean; error?: string };
+      if (result.valid) {
+        setConnectionStatus("connected");
+        setPassword("");
+        toast({ title: "Email connected successfully" });
+      } else {
+        setConnectionStatus("failed");
+        toast({ title: "Connection failed", description: result.error || "Invalid credentials", variant: "destructive" });
+      }
     } catch (err: any) {
-      toast({ title: "Failed to save", description: err.message, variant: "destructive" });
-    } finally { setSaving(false); }
+      setConnectionStatus("failed");
+      toast({ title: "Connection failed", description: err.message, variant: "destructive" });
+    } finally { setConnecting(false); }
+  };
+
+  const handleTestConnection = async () => {
+    setTesting(true);
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      const res = await supabase.functions.invoke("validate-email-credentials", {
+        body: { checkStored: true },
+        headers: { Authorization: `Bearer ${session?.session?.access_token}` },
+      });
+      if (res.error) throw new Error(res.error.message);
+      const result = res.data as { valid: boolean; error?: string };
+      if (result.valid) {
+        setConnectionStatus("connected");
+        toast({ title: "Connection verified" });
+      } else {
+        setConnectionStatus("failed");
+        toast({ title: "Connection failed", description: result.error || "Stored credentials invalid", variant: "destructive" });
+      }
+    } catch (err: any) {
+      setConnectionStatus("failed");
+      toast({ title: "Test failed", description: err.message, variant: "destructive" });
+    } finally { setTesting(false); }
   };
 
   const handleServerSave = async () => {
@@ -109,7 +152,7 @@ function EmailSettings() {
       const value = {
         host: smtpHost, port: Number(smtpPort),
         imap_host: imapHost, imap_port: Number(imapPort),
-        ssl_enabled: sslEnabled, from_name: fromName, from_email: fromEmail,
+        ssl_enabled: sslEnabled,
       };
       const { data: existing } = await (supabase as any).from("site_settings").select("id").eq("key", "smtp").single();
       if (existing) {
@@ -118,24 +161,58 @@ function EmailSettings() {
         await (supabase as any).from("site_settings").insert({ key: "smtp", value, updated_by: user!.id });
       }
       qc.invalidateQueries({ queryKey: ["site-settings-smtp"] });
-      toast({ title: "Server configuration saved" });
+      toast({ title: "Server configuration saved and applied to all users" });
     } catch (err: any) {
       toast({ title: "Failed to save", description: err.message, variant: "destructive" });
     } finally { setServerSaving(false); }
   };
 
+  const statusDot = connectionStatus === "connected"
+    ? "bg-emerald-400" : connectionStatus === "failed"
+    ? "bg-red-400" : connectionStatus === "unknown"
+    ? "bg-amber-400" : "bg-crm-text-dim";
+
+  const statusLabel = connectionStatus === "connected"
+    ? "Connected" : connectionStatus === "failed"
+    ? "Not connected" : connectionStatus === "unknown"
+    ? "Not verified" : "No account";
+
   return (
     <div className="space-y-4">
       <div className="grid sm:grid-cols-2 gap-4">
         <Section title="Your Email Account" icon={Mail}>
-          <Field label="Email address" hint="Your assigned email address">
+          <div className="flex items-center gap-2 mb-2">
+            <div className={`w-2.5 h-2.5 rounded-full ${statusDot}`} />
+            <span className="text-[11px] text-crm-text-dim font-medium">{statusLabel}</span>
+          </div>
+          <Field label="Email address" hint="Your Zoho email address">
             <Input value={email} onChange={e => setEmail(e.target.value)} className={inputCls} placeholder="yourname@domain.org" />
           </Field>
-          <div className="pt-2 border-t border-crm-border">
-            <Button size="sm" onClick={handleSave} disabled={saving} className="bg-emerald-700 hover:bg-emerald-600 text-white text-xs gap-1.5">
-              {saving ? <Loader2 size={12} className="animate-spin" /> : saved ? <CheckCircle2 size={12} /> : <Save size={12} />}
-              {saved ? "Saved!" : "Save"}
+          <Field label="Password" hint="Leave blank if already connected">
+            <div className="relative">
+              <Input
+                type={showPw ? "text" : "password"}
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                className={`${inputCls} pr-8`}
+                placeholder="Enter password to connect"
+              />
+              <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 text-crm-text-dim" onClick={() => setShowPw(!showPw)}>
+                {showPw ? <EyeOff size={12} /> : <Eye size={12} />}
+              </button>
+            </div>
+          </Field>
+          <div className="pt-2 border-t border-crm-border flex gap-2">
+            <Button size="sm" onClick={handleConnect} disabled={connecting || !email.trim() || !password.trim()} className="bg-emerald-700 hover:bg-emerald-600 text-white text-xs gap-1.5">
+              {connecting ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle2 size={12} />}
+              {connecting ? "Connecting…" : "Connect"}
             </Button>
+            {connectionStatus !== "none" && (
+              <Button size="sm" variant="outline" onClick={handleTestConnection} disabled={testing} className="text-xs gap-1.5 border-crm-border text-crm-text-secondary">
+                {testing ? <Loader2 size={12} className="animate-spin" /> : <AlertTriangle size={12} />}
+                Test
+              </Button>
+            )}
           </div>
         </Section>
 
@@ -144,22 +221,16 @@ function EmailSettings() {
             <div className="space-y-2">
               <div className="grid grid-cols-2 gap-2">
                 <Field label="SMTP Host">
-                  <Input value={smtpHost} onChange={e => setSmtpHost(e.target.value)} className={inputCls} placeholder="smtp.zoho.eu" />
+                  <Input value={smtpHost} onChange={e => setSmtpHost(e.target.value)} className={inputCls} placeholder="smtppro.zoho.eu" />
                 </Field>
                 <Field label="SMTP Port">
-                  <Input type="number" value={smtpPort} onChange={e => setSmtpPort(e.target.value)} className={inputCls} placeholder="587" />
+                  <Input type="number" value={smtpPort} onChange={e => setSmtpPort(e.target.value)} className={inputCls} placeholder="465" />
                 </Field>
                 <Field label="IMAP Host">
-                  <Input value={imapHost} onChange={e => setImapHost(e.target.value)} className={inputCls} placeholder="imap.zoho.eu" />
+                  <Input value={imapHost} onChange={e => setImapHost(e.target.value)} className={inputCls} placeholder="imappro.zoho.eu" />
                 </Field>
                 <Field label="IMAP Port">
                   <Input type="number" value={imapPort} onChange={e => setImapPort(e.target.value)} className={inputCls} placeholder="993" />
-                </Field>
-                <Field label="From Name">
-                  <Input value={fromName} onChange={e => setFromName(e.target.value)} className={inputCls} placeholder="ECOWAS Parliament CRM" />
-                </Field>
-                <Field label="From Email">
-                  <Input type="email" value={fromEmail} onChange={e => setFromEmail(e.target.value)} className={inputCls} placeholder="noreply@domain.org" />
                 </Field>
               </div>
               <div className="flex items-center gap-3 pt-1">

@@ -15,8 +15,6 @@ const EmailConfigSettings = () => {
   const [port, setPort] = useState(String(stored.port ?? 465));
   const [username, setUsername] = useState(stored.username ?? "");
   const [password, setPassword] = useState("");
-  const [fromName, setFromName] = useState(stored.from_name ?? "ECOWAS Parliament CRM");
-  const [fromEmail, setFromEmail] = useState(stored.from_email ?? "noreply@ecowas.int");
   const [showPw, setShowPw] = useState(false);
 
   // IMAP settings
@@ -29,8 +27,6 @@ const EmailConfigSettings = () => {
       host,
       port: Number(port),
       username,
-      from_name: fromName,
-      from_email: fromEmail,
       imap_host: imapHost,
       imap_port: Number(imapPort),
       ssl_enabled: sslEnabled,
@@ -80,14 +76,6 @@ const EmailConfigSettings = () => {
                 {showPw ? <EyeOff size={14} /> : <Eye size={14} />}
               </button>
             </div>
-          </div>
-          <div className="space-y-1.5">
-            <Label>From Name</Label>
-            <Input value={fromName} onChange={(e) => setFromName(e.target.value)} />
-          </div>
-          <div className="space-y-1.5">
-            <Label>From Email</Label>
-            <Input type="email" value={fromEmail} onChange={(e) => setFromEmail(e.target.value)} />
           </div>
         </div>
       </div>

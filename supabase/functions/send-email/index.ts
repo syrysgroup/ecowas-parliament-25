@@ -2,32 +2,53 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-async function getZohoToken() {
+async function getZohoToken(): Promise<string> {
+  const clientId = Deno.env.get("ZOHO_CLIENT_ID");
+  const clientSecret = Deno.env.get("ZOHO_CLIENT_SECRET");
+  const refreshToken = Deno.env.get("ZOHO_REFRESH_TOKEN");
+
+  if (!clientId || !clientSecret || !refreshToken) {
+    throw new Error("Zoho OAuth credentials not configured. Check ZOHO_CLIENT_ID, ZOHO_CLIENT_SECRET, and ZOHO_REFRESH_TOKEN secrets.");
+  }
+
   const res = await fetch("https://accounts.zoho.eu/oauth/v2/token", {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
       grant_type: "refresh_token",
-      client_id: Deno.env.get("ZOHO_CLIENT_ID")!,
-      client_secret: Deno.env.get("ZOHO_CLIENT_SECRET")!,
-      refresh_token: Deno.env.get("ZOHO_REFRESH_TOKEN")!,
+      client_id: clientId,
+      client_secret: clientSecret,
+      refresh_token: refreshToken,
     }),
   });
+
   const data = await res.json();
-  if (!data.access_token) throw new Error("Failed to get Zoho token");
+  if (!data.access_token) {
+    console.error("Zoho token refresh failed:", JSON.stringify(data));
+    throw new Error(`Zoho token refresh failed: ${data.error || "no access_token returned"}`);
+  }
   return data.access_token as string;
 }
 
 async function resolveZohoAccountId(serviceClient: any, acct: any, token: string): Promise<string> {
   if (acct.zoho_account_id) return acct.zoho_account_id;
 
-  const orgId = Deno.env.get("ZOHO_ORG_ID")!;
+  const orgId = Deno.env.get("ZOHO_ORG_ID");
+  if (!orgId) throw new Error("ZOHO_ORG_ID secret not configured");
+
   const accountsRes = await fetch(`https://mail.zoho.eu/api/organization/${orgId}/accounts`, {
     headers: { Authorization: `Zoho-oauthtoken ${token}` },
   });
+
+  if (!accountsRes.ok) {
+    const errText = await accountsRes.text();
+    console.error("Zoho org accounts lookup failed:", accountsRes.status, errText);
+    throw new Error(`Failed to look up Zoho accounts (HTTP ${accountsRes.status})`);
+  }
+
   const accountsData = await accountsRes.json();
   const accounts = accountsData?.data ?? [];
 
@@ -36,7 +57,9 @@ async function resolveZohoAccountId(serviceClient: any, acct: any, token: string
     (a.mailboxAddress ?? "").toLowerCase() === acct.email_address.toLowerCase()
   );
 
-  if (!match) throw new Error(`No Zoho account found for ${acct.email_address}`);
+  if (!match) {
+    throw new Error(`No Zoho mail account found for "${acct.email_address}". Ensure this email exists in your Zoho organisation.`);
+  }
 
   const zohoAccountId = String(match.accountId ?? match.zuid);
   await serviceClient.from("email_accounts").update({ zoho_account_id: zohoAccountId }).eq("id", acct.id);
@@ -63,17 +86,39 @@ Deno.serve(async (req) => {
 
     const serviceClient = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
-    const { data: acct } = await serviceClient
+    const { data: acct, error: acctErr } = await serviceClient
       .from("email_accounts")
       .select("id, email_address, zoho_account_id")
       .eq("user_id", user.id)
       .eq("is_active", true)
       .single();
 
-    if (!acct) return new Response(JSON.stringify({ error: "No active email account" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    if (!acct) {
+      console.error("No active email account for user:", user.id, acctErr);
+      return new Response(JSON.stringify({ error: "No active email account. Go to Settings → Email Config to connect your email." }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
-    const token = await getZohoToken();
-    const zohoAccountId = await resolveZohoAccountId(serviceClient, acct, token);
+    let token: string;
+    try {
+      token = await getZohoToken();
+    } catch (err: any) {
+      console.error("Zoho token error:", err.message);
+      return new Response(JSON.stringify({ error: `Email service authentication failed: ${err.message}` }), {
+        status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    let zohoAccountId: string;
+    try {
+      zohoAccountId = await resolveZohoAccountId(serviceClient, acct, token);
+    } catch (err: any) {
+      console.error("Zoho account resolve error:", err.message);
+      return new Response(JSON.stringify({ error: err.message }), {
+        status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // Send via Zoho
     const sendPayload: Record<string, any> = {
@@ -93,7 +138,17 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify(sendPayload),
     });
+
     const sendData = await sendRes.json();
+
+    if (!sendRes.ok) {
+      const zohoError = sendData?.data?.errorCode || sendData?.data?.moreInfo || sendData?.status?.description || JSON.stringify(sendData);
+      console.error("Zoho send failed:", sendRes.status, JSON.stringify(sendData));
+      return new Response(JSON.stringify({ error: `Zoho rejected the email: ${zohoError}` }), {
+        status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const messageId = sendData?.data?.messageId ?? null;
 
     // Save to emails table as sent
