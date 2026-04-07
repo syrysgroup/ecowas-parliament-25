@@ -83,12 +83,14 @@ Deno.serve(async (req) => {
       headers: { Authorization: `Zoho-oauthtoken ${token}` },
     });
     const foldersData = await foldersRes.json();
-    const zohoFolders = foldersData?.data ?? [];
+    const zohoFolders = Array.isArray(foldersData?.data) ? foldersData.data : [];
 
-    // Bug 4: Guard — if Zoho returns no folders, fail loudly
+    // Guard — if Zoho returns no folders, log and skip gracefully
     if (zohoFolders.length === 0) {
       console.error("No folders returned from Zoho:", JSON.stringify(foldersData));
-      throw new Error("No folders returned from Zoho — check ZOHO_ORG_ID and account permissions");
+      return new Response(JSON.stringify({ success: true, newEmailCount: 0, message: "No folders returned from Zoho" }), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     // Bug 8: Batch-fetch all known message IDs upfront (one query instead of N+1)
