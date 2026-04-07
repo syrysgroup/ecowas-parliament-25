@@ -159,6 +159,66 @@ const Stakeholders = () => {
         </div>
       </section>
 
+      {/* Team Profiles */}
+      {teamProfiles.length > 0 && (
+        <section className="bg-muted/30 py-16">
+          <div className="container">
+            <AnimatedSection className="mb-8">
+              <h2 className="text-2xl font-black text-foreground">{t("stakeholders.teamSection")}</h2>
+            </AnimatedSection>
+            <div className="grid gap-6 md:grid-cols-3">
+              {teamProfiles.map((person, index) => (
+                <AnimatedSection key={person.id} delay={index * 60}>
+                  <article className="overflow-hidden rounded-3xl border border-primary/20 bg-card shadow-sm w-full">
+                    {person.image_url ? (
+                      <img src={person.image_url} alt={person.name} className="w-full aspect-[4/3] object-cover object-top" loading="lazy" width={400} height={300} decoding="async" />
+                    ) : (
+                      <div className="w-full aspect-[4/3] bg-muted flex items-center justify-center">
+                        <span className="text-4xl font-black text-muted-foreground">{person.name.charAt(0) || "?"}</span>
+                      </div>
+                    )}
+                    <div className="p-5">
+                      <h3 className="text-xl font-black text-card-foreground">{person.name}</h3>
+                      <p className="mt-1 text-sm text-muted-foreground">{person.title}</p>
+                    </div>
+                  </article>
+                </AnimatedSection>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Advisory Profiles */}
+      {advisoryProfiles.length > 0 && (
+        <section className="py-16">
+          <div className="container">
+            <AnimatedSection className="mb-8">
+              <h2 className="text-2xl font-black text-foreground">{t("stakeholders.advisorySection")}</h2>
+            </AnimatedSection>
+            <div className="grid gap-6 md:grid-cols-3">
+              {advisoryProfiles.map((person, index) => (
+                <AnimatedSection key={person.id} delay={index * 60}>
+                  <article className="overflow-hidden rounded-3xl border border-primary/20 bg-card shadow-sm w-full">
+                    {person.image_url ? (
+                      <img src={person.image_url} alt={person.name} className="w-full aspect-[4/3] object-cover object-top" loading="lazy" width={400} height={300} decoding="async" />
+                    ) : (
+                      <div className="w-full aspect-[4/3] bg-muted flex items-center justify-center">
+                        <span className="text-4xl font-black text-muted-foreground">{person.name.charAt(0) || "?"}</span>
+                      </div>
+                    )}
+                    <div className="p-5">
+                      <h3 className="text-xl font-black text-card-foreground">{person.name}</h3>
+                      <p className="mt-1 text-sm text-muted-foreground">{person.title}</p>
+                    </div>
+                  </article>
+                </AnimatedSection>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Implementing Partners — from DB */}
       <section className="bg-muted/30 py-16">
         <div className="container">
