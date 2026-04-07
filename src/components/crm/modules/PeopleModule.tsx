@@ -631,6 +631,7 @@ function TeamMemberDialog({ open, onClose, member }: {
         avatar_url:   avatarUrl || null,
         display_order: parseInt(displayOrder) || 0,
         is_active:    isActive,
+        category,
       };
       if (isEdit) {
         const { error } = await (supabase as any).from("team_members").update(payload).eq("id", member.id);
@@ -703,7 +704,16 @@ function TeamMemberDialog({ open, onClose, member }: {
               className="bg-crm-surface border-crm-border text-crm-text-secondary text-sm focus:border-emerald-700 resize-none" />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
+            <div className="space-y-1.5">
+              <Label className="text-[11px] text-crm-text-muted">Category</Label>
+              <select value={category} onChange={e => setCategory(e.target.value)}
+                className="w-full bg-crm-surface border border-crm-border text-crm-text-secondary text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-emerald-700">
+                {TEAM_CATEGORIES.map(c => (
+                  <option key={c} value={c}>{TEAM_CATEGORY_LABELS[c]}</option>
+                ))}
+              </select>
+            </div>
             <div className="space-y-1.5">
               <Label className="text-[11px] text-crm-text-muted">Display Order</Label>
               <Input type="number" value={displayOrder} onChange={e => setDisplayOrder(e.target.value)} min={0}
