@@ -343,6 +343,7 @@ export type Database = {
           id: string
           is_active: boolean
           user_id: string
+          zoho_account_id: string | null
         }
         Insert: {
           created_at?: string
@@ -351,6 +352,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           user_id: string
+          zoho_account_id?: string | null
         }
         Update: {
           created_at?: string
@@ -359,6 +361,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           user_id?: string
+          zoho_account_id?: string | null
         }
         Relationships: [
           {
@@ -1051,6 +1054,7 @@ export type Database = {
           email: string
           full_name: string
           id: string
+          is_active: boolean
           is_public: boolean
           notification_email: string | null
           organisation: string | null
@@ -1066,6 +1070,7 @@ export type Database = {
           email: string
           full_name: string
           id: string
+          is_active?: boolean
           is_public?: boolean
           notification_email?: string | null
           organisation?: string | null
@@ -1081,6 +1086,7 @@ export type Database = {
           email?: string
           full_name?: string
           id?: string
+          is_active?: boolean
           is_public?: boolean
           notification_email?: string | null
           organisation?: string | null

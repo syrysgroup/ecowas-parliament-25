@@ -526,9 +526,9 @@ export default function EmailInboxModule() {
     if (!user) return;
     setSyncing(true);
     try {
-      const { data: session } = await supabase.auth.getSession();
+      const { data: { session } } = await supabase.auth.getSession();
       await supabase.functions.invoke("sync-emails", {
-        headers: { Authorization: `Bearer ${session?.session?.access_token}` },
+        headers: { Authorization: `Bearer ${session?.access_token}` },
       });
       qc.invalidateQueries({ queryKey: ["emails"], refetchType: "all" });
       qc.invalidateQueries({ queryKey: ["email-unread-counts"], refetchType: "all" });
@@ -626,7 +626,7 @@ export default function EmailInboxModule() {
     const { data: { session } } = await supabase.auth.getSession();
     const res = await supabase.functions.invoke("validate-email-credentials", {
       body: checkStored ? { checkStored: true } : { email, password },
-      headers: { Authorization: `Bearer ${session?.session?.access_token}` },
+      headers: { Authorization: `Bearer ${session?.access_token}` },
     });
     if (res.error) throw new Error(res.error.message);
     const data = res.data as { valid: boolean; error?: string };
