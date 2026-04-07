@@ -38,14 +38,15 @@ interface EmailAccount {
   display_name: string | null;
 }
 
-type Folder = "inbox" | "sent" | "drafts" | "starred" | "trash";
+type Folder = "inbox" | "sent" | "drafts" | "starred" | "spam" | "trash";
 
 const FOLDERS: { id: Folder; label: string; icon: React.ElementType }[] = [
-  { id: "inbox",   label: "Inbox",   icon: Mail     },
-  { id: "sent",    label: "Sent",    icon: Send     },
-  { id: "drafts",  label: "Draft",   icon: FileText },
-  { id: "starred", label: "Starred", icon: Star     },
-  { id: "trash",   label: "Trash",   icon: Trash2   },
+  { id: "inbox",   label: "Inbox",   icon: Mail         },
+  { id: "sent",    label: "Sent",    icon: Send         },
+  { id: "drafts",  label: "Draft",   icon: FileText     },
+  { id: "starred", label: "Starred", icon: Star         },
+  { id: "spam",    label: "Spam",    icon: AlertOctagon },
+  { id: "trash",   label: "Trash",   icon: Trash2       },
 ];
 
 const LABELS = [
@@ -528,8 +529,9 @@ export default function EmailInboxModule() {
       await supabase.functions.invoke("sync-emails", {
         headers: { Authorization: `Bearer ${session?.session?.access_token}` },
       });
-      qc.invalidateQueries({ queryKey: ["emails"] });
-      qc.invalidateQueries({ queryKey: ["email-unread-counts"] });
+      qc.invalidateQueries({ queryKey: ["emails"], refetchType: "all" });
+      qc.invalidateQueries({ queryKey: ["email-unread-counts"], refetchType: "all" });
+      qc.invalidateQueries({ queryKey: ["email-inbox-unread"], refetchType: "all" });
     } finally {
       setSyncing(false);
     }
