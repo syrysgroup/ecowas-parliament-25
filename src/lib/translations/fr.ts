@@ -394,6 +394,12 @@ export const fr: Record<string, string> = {
   "team.executiveLeadership": "Direction exécutive",
   "team.programmeDelivery": "Mise en œuvre du programme",
   "team.commsMedia": "Communications et médias",
+  "team.leadership": "Direction",
+  "team.implementingTeam": "Équipe de mise en œuvre",
+  "team.consultants": "Consultants",
+  "team.volunteers": "Bénévoles",
+  "stakeholders.teamSection": "Équipe",
+  "stakeholders.advisorySection": "Consultatif",
 
   // ─── Timeline Page ────────────────────────────────────────────────
   "timeline.badge": "Janvier  Novembre 2026",
