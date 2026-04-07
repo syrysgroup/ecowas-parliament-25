@@ -10,7 +10,13 @@ function flatAddr(v: unknown): string {
   return (v as string) ?? "";
 }
 
-async function getZohoToken() {
+// Module-level token cache — reused across warm invocations of the same instance
+let _cachedToken: string | null = null;
+let _tokenExpiresAt = 0;
+
+async function getZohoToken(): Promise<string> {
+  if (_cachedToken && Date.now() < _tokenExpiresAt) return _cachedToken;
+
   const res = await fetch("https://accounts.zoho.eu/oauth/v2/token", {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -22,8 +28,19 @@ async function getZohoToken() {
     }),
   });
   const data = await res.json();
-  if (!data.access_token) throw new Error(`Zoho token error: ${JSON.stringify(data)}`);
-  return data.access_token as string;
+
+  if (data.error === "Access Denied" || !data.access_token) {
+    const isRateLimit = (data.error_description ?? "").toLowerCase().includes("too many");
+    throw Object.assign(
+      new Error(`Zoho token error: ${JSON.stringify(data)}`),
+      { isRateLimit }
+    );
+  }
+
+  _cachedToken = data.access_token as string;
+  // Zoho tokens live 1 hour; refresh 2 min early
+  _tokenExpiresAt = Date.now() + ((data.expires_in ?? 3600) - 120) * 1000;
+  return _cachedToken;
 }
 
 async function resolveZohoAccountId(serviceClient: any, acct: any, token: string): Promise<string> {
@@ -164,6 +181,12 @@ Deno.serve(async (req) => {
     });
   } catch (err: any) {
     console.error("sync-emails error:", err);
+    if (err.isRateLimit) {
+      return new Response(JSON.stringify({ success: false, newEmailCount: 0, error: "Zoho rate limit — try again in a moment" }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     return new Response(JSON.stringify({ error: err.message || "Internal server error" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
