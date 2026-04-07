@@ -335,6 +335,120 @@ export type Database = {
           },
         ]
       }
+      email_accounts: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          email_address: string
+          id: string
+          is_active: boolean
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          email_address: string
+          id?: string
+          is_active?: boolean
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          email_address?: string
+          id?: string
+          is_active?: boolean
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_accounts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_accounts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_nominee_leaderboard"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "email_accounts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_representatives"
+            referencedColumns: ["profile_id"]
+          },
+        ]
+      }
+      emails: {
+        Row: {
+          account_id: string
+          body_html: string
+          body_text: string
+          cc_address: string | null
+          folder: string
+          from_address: string
+          from_name: string
+          has_attachments: boolean
+          id: string
+          is_read: boolean
+          is_starred: boolean
+          sent_at: string | null
+          subject: string
+          synced_at: string | null
+          to_address: string
+          zoho_message_id: string | null
+        }
+        Insert: {
+          account_id: string
+          body_html?: string
+          body_text?: string
+          cc_address?: string | null
+          folder?: string
+          from_address?: string
+          from_name?: string
+          has_attachments?: boolean
+          id?: string
+          is_read?: boolean
+          is_starred?: boolean
+          sent_at?: string | null
+          subject?: string
+          synced_at?: string | null
+          to_address?: string
+          zoho_message_id?: string | null
+        }
+        Update: {
+          account_id?: string
+          body_html?: string
+          body_text?: string
+          cc_address?: string | null
+          folder?: string
+          from_address?: string
+          from_name?: string
+          has_attachments?: boolean
+          id?: string
+          is_read?: boolean
+          is_starred?: boolean
+          sent_at?: string | null
+          subject?: string
+          synced_at?: string | null
+          to_address?: string
+          zoho_message_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "emails_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "email_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_registrations: {
         Row: {
           country: string | null
@@ -1225,6 +1339,100 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      team_members: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string
+          display_order: number
+          full_name: string
+          id: string
+          is_active: boolean
+          organisation: string | null
+          title: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          display_order?: number
+          full_name: string
+          id?: string
+          is_active?: boolean
+          organisation?: string | null
+          title?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          display_order?: number
+          full_name?: string
+          id?: string
+          is_active?: boolean
+          organisation?: string | null
+          title?: string | null
+        }
+        Relationships: []
+      }
+      user_email_settings: {
+        Row: {
+          auto_connect: boolean | null
+          imap_host: string | null
+          imap_port: number | null
+          smtp_host: string | null
+          smtp_password: string | null
+          smtp_port: number | null
+          smtp_user: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          auto_connect?: boolean | null
+          imap_host?: string | null
+          imap_port?: number | null
+          smtp_host?: string | null
+          smtp_password?: string | null
+          smtp_port?: number | null
+          smtp_user?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          auto_connect?: boolean | null
+          imap_host?: string | null
+          imap_port?: number | null
+          smtp_host?: string | null
+          smtp_password?: string | null
+          smtp_port?: number | null
+          smtp_user?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_email_settings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_email_settings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "public_nominee_leaderboard"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "user_email_settings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "public_representatives"
+            referencedColumns: ["profile_id"]
+          },
+        ]
       }
       user_roles: {
         Row: {

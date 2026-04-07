@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthContext";
 import {
-  Plus, Pencil, Trash2, Eye, Image, Users, Search, ChevronDown,
+  Plus, Pencil, Trash2, Eye, EyeOff, ExternalLink, Image, Users, Search, ChevronDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -526,6 +526,32 @@ export default function SponsorsManagerModule() {
     },
   });
 
+  const bulkPublish = useMutation({
+    mutationFn: async () => {
+      const table = tab === "sponsors" ? "sponsors" : "partners";
+      await Promise.all([...selectedIds].map(id => (supabase as any).from(table).update({ is_published: true }).eq("id", id)));
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [tab === "sponsors" ? "sponsors-manager" : "partners-manager"] });
+      qc.invalidateQueries({ queryKey: [tab === "sponsors" ? "sponsors-public" : "partners-public"] });
+      setSelectedIds(new Set());
+      toast("Published selected items");
+    },
+  });
+
+  const bulkUnpublish = useMutation({
+    mutationFn: async () => {
+      const table = tab === "sponsors" ? "sponsors" : "partners";
+      await Promise.all([...selectedIds].map(id => (supabase as any).from(table).update({ is_published: false }).eq("id", id)));
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [tab === "sponsors" ? "sponsors-manager" : "partners-manager"] });
+      qc.invalidateQueries({ queryKey: [tab === "sponsors" ? "sponsors-public" : "partners-public"] });
+      setSelectedIds(new Set());
+      toast("Unpublished selected items");
+    },
+  });
+
   const toggleSelect = (id: string) => {
     setSelectedIds(prev => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next; });
   };
@@ -564,10 +590,22 @@ export default function SponsorsManagerModule() {
       {selectedIds.size > 0 && (
         <div className="flex items-center gap-2 bg-crm-surface border border-crm-border rounded-lg px-3 py-2">
           <span className="text-[11px] text-crm-text-muted">{selectedIds.size} selected</span>
+          {canEdit("sponsors") && (
+            <>
+              <Button size="sm" variant="outline" onClick={() => bulkPublish.mutate()} disabled={bulkPublish.isPending}
+                className="border-emerald-800 text-emerald-400 text-[10px] h-6 px-2">
+                Publish selected
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => bulkUnpublish.mutate()} disabled={bulkUnpublish.isPending}
+                className="border-amber-800 text-amber-400 text-[10px] h-6 px-2">
+                Unpublish selected
+              </Button>
+            </>
+          )}
           {canDelete("sponsors") && (
             <Button size="sm" variant="outline" onClick={() => bulkDelete.mutate()} disabled={bulkDelete.isPending}
               className="border-red-800 text-red-400 text-[10px] h-6 px-2">
-              Delete {selectedIds.size} selected
+              Delete selected
             </Button>
           )}
         </div>
@@ -606,20 +644,6 @@ export default function SponsorsManagerModule() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <p className="text-[13px] font-semibold text-crm-text">{s.name}</p>
-                  {/* Published pill toggle */}
-                  {canEdit("sponsors") && (
-                    <button
-                      onClick={() => toggleSponsorPublish.mutate({ id: s.id, published: !s.is_published })}
-                      title={s.is_published ? "Click to unpublish" : "Click to publish"}
-                      className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border transition-colors ${
-                        s.is_published
-                          ? "bg-emerald-950 border-emerald-700 text-emerald-400 hover:bg-emerald-900"
-                          : "bg-red-950/60 border-red-800 text-red-400 hover:bg-red-950"
-                      }`}
-                    >
-                      {s.is_published ? "● Live" : "● Draft"}
-                    </button>
-                  )}
                   <span className="text-[9px] font-mono px-1.5 py-0.5 rounded border bg-crm-surface text-crm-text-dim border-crm-border capitalize">{s.tier}</span>
                 </div>
                 {s.programmes && s.programmes.length > 0 && (
@@ -627,6 +651,20 @@ export default function SponsorsManagerModule() {
                 )}
               </div>
               <div className="flex gap-1">
+                {/* Publish toggle */}
+                {canEdit("sponsors") && (
+                  <button
+                    onClick={() => toggleSponsorPublish.mutate({ id: s.id, published: !s.is_published })}
+                    title={s.is_published ? "Click to unpublish" : "Click to publish"}
+                    className={`w-7 h-7 rounded flex items-center justify-center border transition-colors ${
+                      s.is_published
+                        ? "bg-emerald-950 border-emerald-700 text-emerald-400 hover:bg-emerald-900"
+                        : "bg-red-950/60 border-red-800 text-red-400 hover:bg-red-950"
+                    }`}
+                  >
+                    {s.is_published ? <Eye size={12} /> : <EyeOff size={12} />}
+                  </button>
+                )}
                 {/* Preview link */}
                 <a
                   href={`/sponsors/${s.slug}`}
@@ -635,7 +673,7 @@ export default function SponsorsManagerModule() {
                   title="Preview sponsor page"
                   className="w-7 h-7 rounded flex items-center justify-center bg-crm-surface border border-crm-border text-crm-text-dim hover:text-blue-400 transition-colors"
                 >
-                  <Eye size={12} />
+                  <ExternalLink size={12} />
                 </a>
                 {canEdit("sponsors") && (
                   <button onClick={() => setEditSponsor(s)} className="w-7 h-7 rounded flex items-center justify-center bg-crm-surface border border-crm-border text-crm-text-dim hover:text-crm-text-secondary transition-colors"><Pencil size={12} /></button>
@@ -678,25 +716,25 @@ export default function SponsorsManagerModule() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <p className="text-[13px] font-semibold text-crm-text">{p.name}</p>
-                  {/* Published pill toggle */}
-                  {canEdit("sponsors") && (
-                    <button
-                      onClick={() => togglePartnerPublish.mutate({ id: p.id, published: !p.is_published })}
-                      title={p.is_published ? "Click to unpublish" : "Click to publish"}
-                      className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border transition-colors ${
-                        p.is_published
-                          ? "bg-emerald-950 border-emerald-700 text-emerald-400 hover:bg-emerald-900"
-                          : "bg-red-950/60 border-red-800 text-red-400 hover:bg-red-950"
-                      }`}
-                    >
-                      {p.is_published ? "● Live" : "● Draft"}
-                    </button>
-                  )}
                   <span className="text-[9px] font-mono px-1.5 py-0.5 rounded border bg-crm-surface text-crm-text-dim border-crm-border capitalize">{p.partner_type}</span>
                 </div>
                 {p.lead_name && <p className="text-[10px] text-crm-text-dim mt-0.5">{p.lead_name} — {p.lead_role}</p>}
               </div>
               <div className="flex gap-1">
+                {/* Publish toggle */}
+                {canEdit("sponsors") && (
+                  <button
+                    onClick={() => togglePartnerPublish.mutate({ id: p.id, published: !p.is_published })}
+                    title={p.is_published ? "Click to unpublish" : "Click to publish"}
+                    className={`w-7 h-7 rounded flex items-center justify-center border transition-colors ${
+                      p.is_published
+                        ? "bg-emerald-950 border-emerald-700 text-emerald-400 hover:bg-emerald-900"
+                        : "bg-red-950/60 border-red-800 text-red-400 hover:bg-red-950"
+                    }`}
+                  >
+                    {p.is_published ? <Eye size={12} /> : <EyeOff size={12} />}
+                  </button>
+                )}
                 {/* Preview link */}
                 <a
                   href={`/partners/${p.slug}`}
@@ -705,7 +743,7 @@ export default function SponsorsManagerModule() {
                   title="Preview partner page"
                   className="w-7 h-7 rounded flex items-center justify-center bg-crm-surface border border-crm-border text-crm-text-dim hover:text-blue-400 transition-colors"
                 >
-                  <Eye size={12} />
+                  <ExternalLink size={12} />
                 </a>
                 {canEdit("sponsors") && (
                   <button onClick={() => setEditPartner(p)} className="w-7 h-7 rounded flex items-center justify-center bg-crm-surface border border-crm-border text-crm-text-dim hover:text-crm-text-secondary transition-colors"><Pencil size={12} /></button>
