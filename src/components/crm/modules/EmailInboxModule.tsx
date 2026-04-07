@@ -526,9 +526,9 @@ export default function EmailInboxModule() {
     if (!user) return;
     setSyncing(true);
     try {
-      const { data: session } = await supabase.auth.getSession();
+      const { data: { session } } = await supabase.auth.getSession();
       await supabase.functions.invoke("sync-emails", {
-        headers: { Authorization: `Bearer ${session?.session?.access_token}` },
+        headers: { Authorization: `Bearer ${session?.access_token}` },
       });
       qc.invalidateQueries({ queryKey: ["emails"], refetchType: "all" });
       qc.invalidateQueries({ queryKey: ["email-unread-counts"], refetchType: "all" });
@@ -626,7 +626,7 @@ export default function EmailInboxModule() {
     const { data: { session } } = await supabase.auth.getSession();
     const res = await supabase.functions.invoke("validate-email-credentials", {
       body: checkStored ? { checkStored: true } : { email, password },
-      headers: { Authorization: `Bearer ${session?.session?.access_token}` },
+      headers: { Authorization: `Bearer ${session?.access_token}` },
     });
     if (res.error) throw new Error(res.error.message);
     const data = res.data as { valid: boolean; error?: string };
@@ -918,8 +918,29 @@ export default function EmailInboxModule() {
         </nav>
 
         {account && (
-          <div className="px-5 py-3 border-t border-crm-border">
+          <div className="px-5 py-3 border-t border-crm-border space-y-2">
             <p className="text-[10px] text-crm-text-faint font-mono leading-tight break-all">{account.email_address}</p>
+            {/* Connection status indicator */}
+            {(() => {
+              const validated = sessionStorage.getItem(sessionValidatedKey) === "ok";
+              if (validated) {
+                return (
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                    <span className="text-[10px] text-emerald-400 font-medium">Connected</span>
+                  </div>
+                );
+              }
+              return (
+                <button
+                  onClick={() => { setReauthEmail(account.email_address); setReauthOpen(true); }}
+                  className="flex items-center gap-1.5 group"
+                >
+                  <span className="w-2 h-2 rounded-full bg-amber-500" />
+                  <span className="text-[10px] text-amber-400 font-medium group-hover:underline">Revalidate</span>
+                </button>
+              );
+            })()}
           </div>
         )}
       </div>
