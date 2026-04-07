@@ -2,12 +2,15 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Inbox, Send, FileText, Star, Trash2, RefreshCw, Pencil,
-  Reply, Forward, Search, X, Paperclip, ChevronRight,
-  Loader2, MailOpen, Mail,
+  Reply, Forward, Search, X, Paperclip, ChevronLeft, ChevronRight,
+  Loader2, MailOpen, Mail, AlertOctagon, Tag, Folder,
+  MoreVertical, Circle, Info, Minus, Bold, Italic, Underline,
+  List, ListOrdered, Link, Image,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { format, parseISO } from "date-fns";
+import { Checkbox } from "@/components/ui/checkbox";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Email {
@@ -37,14 +40,38 @@ interface EmailAccount {
 type Folder = "inbox" | "sent" | "drafts" | "starred" | "trash";
 
 const FOLDERS: { id: Folder; label: string; icon: React.ElementType }[] = [
-  { id: "inbox",   label: "Inbox",   icon: Inbox    },
+  { id: "inbox",   label: "Inbox",   icon: Mail     },
   { id: "sent",    label: "Sent",    icon: Send     },
-  { id: "drafts",  label: "Drafts",  icon: FileText },
+  { id: "drafts",  label: "Draft",   icon: FileText },
   { id: "starred", label: "Starred", icon: Star     },
   { id: "trash",   label: "Trash",   icon: Trash2   },
 ];
 
-// ─── Compose Modal ────────────────────────────────────────────────────────────
+const LABELS = [
+  { key: "personal",  label: "Personal",  color: "bg-emerald-500" },
+  { key: "company",   label: "Company",   color: "bg-primary"     },
+  { key: "important", label: "Important", color: "bg-amber-500"   },
+  { key: "private",   label: "Private",   color: "bg-red-500"     },
+];
+
+const AVATAR_COLORS = [
+  "bg-emerald-600", "bg-blue-600", "bg-purple-600", "bg-amber-600",
+  "bg-red-600", "bg-teal-600", "bg-pink-600", "bg-indigo-600",
+];
+
+function getAvatarColor(name: string) {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+}
+
+function getInitials(name: string) {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  return name.slice(0, 2).toUpperCase();
+}
+
+// ─── Compose Modal (Bottom-right, Vuexy-style) ───────────────────────────────
 interface ComposeProps {
   account: EmailAccount;
   replyTo?: Email;
@@ -54,14 +81,18 @@ interface ComposeProps {
 }
 
 function ComposeModal({ account, replyTo, forwardOf, onClose, onSent }: ComposeProps) {
-  const [to, setTo]         = useState(replyTo?.from_address ?? "");
-  const [cc, setCc]         = useState("");
+  const [to, setTo] = useState(replyTo?.from_address ?? "");
+  const [cc, setCc] = useState("");
+  const [bcc, setBcc] = useState("");
+  const [showCc, setShowCc] = useState(false);
+  const [showBcc, setShowBcc] = useState(false);
+  const [minimized, setMinimized] = useState(false);
   const [subject, setSubject] = useState(() => {
     if (replyTo) return `Re: ${replyTo.subject}`;
     if (forwardOf) return `Fwd: ${forwardOf.subject}`;
     return "";
   });
-  const [body, setBody]     = useState(() => {
+  const [body, setBody] = useState(() => {
     if (replyTo) return `\n\n---\nOn ${replyTo.sent_at ? format(parseISO(replyTo.sent_at), "d MMM yyyy") : ""}, ${replyTo.from_name || replyTo.from_address} wrote:\n${replyTo.body_text || ""}`;
     if (forwardOf) return `\n\n---\nForwarded message:\nFrom: ${forwardOf.from_name || forwardOf.from_address}\nSubject: ${forwardOf.subject}\n\n${forwardOf.body_text || ""}`;
     return "";
@@ -89,148 +120,251 @@ function ComposeModal({ account, replyTo, forwardOf, onClose, onSent }: ComposeP
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/50">
-      <div className="w-full max-w-xl bg-crm-card border border-crm-border rounded-2xl shadow-2xl flex flex-col max-h-[85vh]">
-        {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-crm-border">
-          <span className="text-[13px] font-semibold text-crm-text">
-            {replyTo ? "Reply" : forwardOf ? "Forward" : "New Message"}
-          </span>
-          <button onClick={onClose} className="text-crm-text-dim hover:text-crm-text transition-colors">
-            <X size={15} />
+    <div className="fixed bottom-0 right-6 z-50 w-full max-w-[36rem] shadow-2xl rounded-t-xl overflow-hidden border border-crm-border bg-crm-card">
+      {/* Header */}
+      <div className="flex items-center justify-between px-5 py-3 bg-crm-surface">
+        <h5 className="text-[15px] font-medium text-crm-text">
+          {replyTo ? "Reply" : forwardOf ? "Forward" : "Compose Mail"}
+        </h5>
+        <div className="flex items-center gap-1">
+          <button onClick={() => setMinimized(!minimized)} className="p-1.5 rounded-full hover:bg-crm-border text-crm-text-muted transition-colors">
+            <Minus size={16} />
           </button>
-        </div>
-
-        {/* Fields */}
-        <div className="px-4 pt-3 space-y-2 flex-shrink-0">
-          <div className="flex items-center gap-2 text-[12px] text-crm-text-dim border-b border-crm-border pb-2">
-            <span className="w-8 flex-shrink-0">To:</span>
-            <input value={to} onChange={e => setTo(e.target.value)}
-              className="flex-1 bg-transparent text-crm-text outline-none placeholder-crm-text-faint"
-              placeholder="recipient@example.com" />
-          </div>
-          <div className="flex items-center gap-2 text-[12px] text-crm-text-dim border-b border-crm-border pb-2">
-            <span className="w-8 flex-shrink-0">CC:</span>
-            <input value={cc} onChange={e => setCc(e.target.value)}
-              className="flex-1 bg-transparent text-crm-text outline-none placeholder-crm-text-faint"
-              placeholder="Optional CC" />
-          </div>
-          <div className="flex items-center gap-2 text-[12px] text-crm-text-dim border-b border-crm-border pb-2">
-            <span className="w-8 flex-shrink-0">Re:</span>
-            <input value={subject} onChange={e => setSubject(e.target.value)}
-              className="flex-1 bg-transparent text-crm-text outline-none placeholder-crm-text-faint"
-              placeholder="Subject" />
-          </div>
-        </div>
-
-        {/* Body */}
-        <textarea
-          value={body}
-          onChange={e => setBody(e.target.value)}
-          className="flex-1 bg-transparent text-crm-text text-[12.5px] outline-none px-4 pt-3 pb-2 resize-none placeholder-crm-text-faint min-h-[160px]"
-          placeholder="Write your message…"
-        />
-
-        {/* Footer */}
-        <div className="flex items-center justify-between px-4 py-3 border-t border-crm-border">
-          <span className="text-[10px] text-crm-text-dim font-mono">From: {account.email_address}</span>
-          <button
-            onClick={handleSend}
-            disabled={sending || !to.trim() || !subject.trim()}
-            className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-primary hover:bg-primary/90 text-white text-[12px] font-semibold transition-colors disabled:opacity-50"
-          >
-            {sending ? <Loader2 size={12} className="animate-spin" /> : <Send size={12} />}
-            {sending ? "Sending…" : "Send"}
+          <button onClick={onClose} className="p-1.5 rounded-full hover:bg-crm-border text-crm-text-muted transition-colors">
+            <X size={16} />
           </button>
         </div>
       </div>
+
+      {!minimized && (
+        <>
+          {/* Fields */}
+          <div className="px-5 py-2">
+            {/* To */}
+            <div className="flex items-center gap-2 py-2">
+              <label className="text-[13px] text-crm-text-muted font-medium w-8">To:</label>
+              <input value={to} onChange={e => setTo(e.target.value)}
+                className="flex-1 bg-transparent text-[13px] text-crm-text outline-none placeholder-crm-text-faint"
+                placeholder="recipient@example.com" />
+              <div className="flex items-center gap-1 text-[13px]">
+                <button onClick={() => setShowCc(!showCc)} className="text-crm-text-muted hover:text-crm-text transition-colors">Cc</button>
+                <span className="text-crm-text-faint">|</span>
+                <button onClick={() => setShowBcc(!showBcc)} className="text-crm-text-muted hover:text-crm-text transition-colors">Bcc</button>
+              </div>
+            </div>
+            {showCc && (
+              <>
+                <hr className="border-crm-border -mx-5 my-0" />
+                <div className="flex items-center gap-2 py-2">
+                  <label className="text-[13px] text-crm-text-muted font-medium w-8">Cc:</label>
+                  <input value={cc} onChange={e => setCc(e.target.value)}
+                    className="flex-1 bg-transparent text-[13px] text-crm-text outline-none placeholder-crm-text-faint"
+                    placeholder="someone@email.com" />
+                </div>
+              </>
+            )}
+            {showBcc && (
+              <>
+                <hr className="border-crm-border -mx-5 my-0" />
+                <div className="flex items-center gap-2 py-2">
+                  <label className="text-[13px] text-crm-text-muted font-medium w-8">Bcc:</label>
+                  <input value={bcc} onChange={e => setBcc(e.target.value)}
+                    className="flex-1 bg-transparent text-[13px] text-crm-text outline-none placeholder-crm-text-faint"
+                    placeholder="someone@email.com" />
+                </div>
+              </>
+            )}
+            <hr className="border-crm-border -mx-5 my-0" />
+            <div className="flex items-center gap-2 py-2">
+              <label className="text-[13px] text-crm-text-muted font-medium w-16">Subject:</label>
+              <input value={subject} onChange={e => setSubject(e.target.value)}
+                className="flex-1 bg-transparent text-[13px] text-crm-text outline-none placeholder-crm-text-faint"
+                placeholder="Subject" />
+            </div>
+            <hr className="border-crm-border -mx-5 my-0" />
+          </div>
+
+          {/* Body */}
+          <textarea
+            value={body}
+            onChange={e => setBody(e.target.value)}
+            className="w-full bg-transparent text-crm-text text-[13px] outline-none px-5 py-3 resize-none placeholder-crm-text-faint min-h-[180px]"
+            placeholder="Write your message…"
+          />
+
+          {/* Footer */}
+          <div className="flex items-center justify-end gap-3 px-5 py-3 border-t border-crm-border">
+            <button className="flex items-center gap-2 px-3 py-1.5 text-[13px] text-crm-text-muted hover:text-crm-text transition-colors">
+              <Paperclip size={14} />
+              <span>Attachments</span>
+            </button>
+            <button
+              onClick={handleSend}
+              disabled={sending || !to.trim() || !subject.trim()}
+              className="flex items-center gap-2 px-5 py-2 rounded-lg bg-primary hover:bg-primary/90 text-white text-[13px] font-medium transition-colors disabled:opacity-50"
+            >
+              <span>{sending ? "Sending…" : "Send"}</span>
+              {sending ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 }
 
-// ─── Email Detail Panel ───────────────────────────────────────────────────────
+// ─── Email Detail Panel (Vuexy thread card layout) ────────────────────────────
 interface DetailPanelProps {
   email: Email;
+  onBack: () => void;
   onReply: (e: Email) => void;
   onForward: (e: Email) => void;
   onStar: (id: string, starred: boolean) => void;
   onTrash: (id: string) => void;
+  onPrev: () => void;
+  onNext: () => void;
+  hasPrev: boolean;
+  hasNext: boolean;
 }
 
-function EmailDetailPanel({ email, onReply, onForward, onStar, onTrash }: DetailPanelProps) {
+function EmailDetailPanel({ email, onBack, onReply, onForward, onStar, onTrash, onPrev, onNext, hasPrev, hasNext }: DetailPanelProps) {
   const safeHtml = email.body_html
     .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
     .replace(/on\w+="[^"]*"/gi, "");
 
+  const senderInitials = getInitials(email.from_name || email.from_address);
+  const senderColor = getAvatarColor(email.from_name || email.from_address);
+
   return (
     <div className="flex flex-col h-full">
-      {/* Header */}
-      <div className="px-5 pt-5 pb-4 border-b border-crm-border flex-shrink-0">
-        <h2 className="text-[14px] font-bold text-crm-text mb-3 leading-snug">{email.subject}</h2>
-        <div className="space-y-1 text-[11px] text-crm-text-muted">
-          <div className="flex gap-2">
-            <span className="text-crm-text-dim w-6">From</span>
-            <span className="text-crm-text-secondary">{email.from_name || email.from_address} {email.from_name && <span className="text-crm-text-dim">&lt;{email.from_address}&gt;</span>}</span>
-          </div>
-          <div className="flex gap-2">
-            <span className="text-crm-text-dim w-6">To</span>
-            <span>{email.to_address}</span>
-          </div>
-          {email.cc_address && (
-            <div className="flex gap-2">
-              <span className="text-crm-text-dim w-6">CC</span>
-              <span>{email.cc_address}</span>
-            </div>
-          )}
-          <div className="flex gap-2">
-            <span className="text-crm-text-dim w-6">Date</span>
-            <span>{email.sent_at ? format(parseISO(email.sent_at), "d MMM yyyy · h:mm a") : "—"}</span>
-          </div>
-        </div>
+      {/* Top bar: back + subject + actions */}
+      <div className="px-5 py-3 border-b border-crm-border flex items-center gap-3 flex-shrink-0">
+        <button onClick={onBack} className="p-1 rounded-full hover:bg-crm-surface text-crm-text-muted transition-colors">
+          <ChevronLeft size={18} />
+        </button>
+        <h2 className="text-[15px] font-semibold text-crm-text flex-1 truncate">{email.subject}</h2>
+      </div>
 
-        {/* Actions */}
-        <div className="flex items-center gap-2 mt-4">
-          {[
-            { label: "Reply",   icon: Reply,   action: () => onReply(email)                    },
-            { label: "Forward", icon: Forward, action: () => onForward(email)                  },
-            { label: email.is_starred ? "Unstar" : "Star", icon: Star, action: () => onStar(email.id, !email.is_starred) },
-            { label: "Trash",   icon: Trash2,  action: () => onTrash(email.id)                 },
-          ].map(({ label, icon: Icon, action }) => (
-            <button
-              key={label}
-              onClick={action}
-              className={`flex items-center gap-1 text-[11px] px-2.5 py-1.5 rounded-lg border transition-colors ${
-                label === "Trash"
-                  ? "border-red-900 text-crm-text-dim hover:text-red-400 hover:bg-red-950"
-                  : label.includes("Star") && email.is_starred
-                  ? "border-amber-700 text-amber-400 bg-amber-950"
-                  : "border-crm-border text-crm-text-dim hover:text-crm-text-secondary hover:bg-crm-surface"
-              }`}
-            >
-              <Icon size={11} />
-              {label}
-            </button>
-          ))}
-          {email.has_attachments && (
-            <span className="flex items-center gap-1 text-[10px] text-crm-text-dim ml-auto">
-              <Paperclip size={10} /> Attachments
-            </span>
-          )}
+      {/* Action bar */}
+      <div className="px-5 py-2 border-b border-crm-border flex items-center justify-between flex-shrink-0">
+        <div className="flex items-center gap-1">
+          <button onClick={() => onTrash(email.id)} className="p-2 rounded-full hover:bg-crm-surface text-crm-text-muted transition-colors" title="Delete">
+            <Trash2 size={18} />
+          </button>
+          <button className="p-2 rounded-full hover:bg-crm-surface text-crm-text-muted transition-colors" title="Move to folder">
+            <Folder size={18} />
+          </button>
+          <button className="p-2 rounded-full hover:bg-crm-surface text-crm-text-muted transition-colors" title="Label">
+            <Tag size={18} />
+          </button>
+          <button onClick={() => onStar(email.id, !email.is_starred)} className={`p-2 rounded-full hover:bg-crm-surface transition-colors ${email.is_starred ? "text-amber-400" : "text-crm-text-muted"}`} title="Star">
+            <Star size={18} fill={email.is_starred ? "currentColor" : "none"} />
+          </button>
+          <button className="p-2 rounded-full hover:bg-crm-surface text-crm-text-muted transition-colors" title="More">
+            <MoreVertical size={18} />
+          </button>
+        </div>
+        <div className="flex items-center gap-1">
+          <button onClick={onPrev} disabled={!hasPrev} className="p-2 rounded-full hover:bg-crm-surface text-crm-text-muted transition-colors disabled:opacity-30" title="Previous">
+            <ChevronLeft size={18} />
+          </button>
+          <button onClick={onNext} disabled={!hasNext} className="p-2 rounded-full hover:bg-crm-surface text-crm-text-muted transition-colors disabled:opacity-30" title="Next">
+            <ChevronRight size={18} />
+          </button>
         </div>
       </div>
 
-      {/* Body */}
-      <div className="flex-1 overflow-y-auto px-5 py-4">
-        {email.body_html ? (
-          <div
-            className="text-[12.5px] text-crm-text-secondary leading-relaxed prose-sm max-w-none [&_a]:text-emerald-400 [&_a]:underline"
-            dangerouslySetInnerHTML={{ __html: safeHtml }}
-          />
-        ) : (
-          <p className="text-[12.5px] text-crm-text-secondary leading-relaxed whitespace-pre-wrap">
-            {email.body_text || "(No content)"}
-          </p>
-        )}
+      {/* Email content (thread card layout) */}
+      <div className="flex-1 overflow-y-auto py-5 px-4 sm:px-6">
+        {/* Email card */}
+        <div className="border border-crm-border rounded-xl bg-crm-card shadow-sm">
+          {/* Card header */}
+          <div className="flex items-center justify-between flex-wrap gap-3 px-5 py-4 border-b border-crm-border">
+            <div className="flex items-center gap-3">
+              <div className={`w-10 h-10 rounded-full ${senderColor} flex items-center justify-center text-white text-[13px] font-bold flex-shrink-0`}>
+                {senderInitials}
+              </div>
+              <div>
+                <h6 className="text-[14px] font-medium text-crm-text">{email.from_name || email.from_address}</h6>
+                <span className="text-[12px] text-crm-text-muted">{email.from_address}</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[12px] text-crm-text-muted">
+                {email.sent_at ? format(parseISO(email.sent_at), "MMMM do yyyy, hh:mm a") : "—"}
+              </span>
+              {email.has_attachments && (
+                <button className="p-1.5 rounded-full hover:bg-crm-surface text-crm-text-muted transition-colors">
+                  <Paperclip size={18} />
+                </button>
+              )}
+              <button onClick={() => onStar(email.id, !email.is_starred)} className={`p-1.5 rounded-full hover:bg-crm-surface transition-colors ${email.is_starred ? "text-amber-400" : "text-crm-text-muted"}`}>
+                <Star size={18} fill={email.is_starred ? "currentColor" : "none"} />
+              </button>
+              <button className="p-1.5 rounded-full hover:bg-crm-surface text-crm-text-muted transition-colors">
+                <MoreVertical size={18} />
+              </button>
+            </div>
+          </div>
+
+          {/* Card body */}
+          <div className="px-5 py-5">
+            {email.body_html ? (
+              <div
+                className="text-[13px] text-crm-text-secondary leading-relaxed prose-sm max-w-none [&_a]:text-primary [&_a]:underline"
+                dangerouslySetInnerHTML={{ __html: safeHtml }}
+              />
+            ) : (
+              <p className="text-[13px] text-crm-text-secondary leading-relaxed whitespace-pre-wrap">
+                {email.body_text || "(No content)"}
+              </p>
+            )}
+
+            {email.has_attachments && (
+              <>
+                <hr className="border-crm-border my-4" />
+                <p className="text-[12px] text-crm-text-muted mb-2">Attachments</p>
+                <div className="flex items-center gap-1.5 text-[13px] text-crm-text-secondary cursor-pointer hover:text-crm-text">
+                  <FileText size={14} />
+                  <span>attachment.file</span>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Reply card */}
+        <div className="border border-crm-border rounded-xl bg-crm-card shadow-sm mt-4">
+          <h6 className="px-5 py-3 text-[14px] font-normal text-crm-text">
+            Reply to {email.from_name || email.from_address}
+          </h6>
+          <div className="px-5 pb-4">
+            {/* Mini toolbar */}
+            <div className="flex items-center gap-0.5 pb-3 border-b border-crm-border mb-3">
+              {[Bold, Italic, Underline, ListOrdered, List, Link, Image].map((Icon, i) => (
+                <button key={i} className="p-1.5 rounded hover:bg-crm-surface text-crm-text-muted transition-colors">
+                  <Icon size={15} />
+                </button>
+              ))}
+            </div>
+            <div className="min-h-[80px] text-[13px] text-crm-text-faint italic">
+              Click to write your reply…
+            </div>
+            <div className="flex items-center justify-end gap-3 mt-4">
+              <button className="flex items-center gap-2 px-3 py-1.5 text-[13px] text-crm-text-muted hover:text-crm-text transition-colors">
+                <Paperclip size={14} />
+                <span>Attachments</span>
+              </button>
+              <button
+                onClick={() => onReply(email)}
+                className="flex items-center gap-2 px-5 py-2 rounded-lg bg-primary hover:bg-primary/90 text-white text-[13px] font-medium transition-colors"
+              >
+                <span>Send</span>
+                <Send size={14} />
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -247,6 +381,7 @@ export default function EmailInboxModule() {
   const [forwardTarget, setForwardTarget] = useState<Email | null>(null);
   const [search, setSearch] = useState("");
   const [syncing, setSyncing] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const syncInterval = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Load email account
@@ -341,7 +476,6 @@ export default function EmailInboxModule() {
     }
   }, [user, qc]);
 
-  // Auto-sync on mount + every 5 minutes
   useEffect(() => {
     if (!account) return;
     syncEmails();
@@ -393,6 +527,22 @@ export default function EmailInboxModule() {
     );
   });
 
+  const currentIdx = selectedEmail ? filteredEmails.findIndex(e => e.id === selectedEmail.id) : -1;
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filteredEmails.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredEmails.map(e => e.id)));
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    const next = new Set(selectedIds);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    setSelectedIds(next);
+  };
+
   // No email account
   if (!account && !isLoading) {
     return (
@@ -403,7 +553,7 @@ export default function EmailInboxModule() {
         <div>
           <h2 className="text-lg font-bold text-crm-text">No email account assigned</h2>
           <p className="text-sm text-crm-text-muted mt-1 max-w-sm">
-            Contact your admin to have a <span className="font-mono text-emerald-500">@ecowasparliamentinitiatives.org</span> email address assigned to your account.
+            Contact your admin to have a <span className="font-mono text-primary">@ecowasparliamentinitiatives.org</span> email address assigned to your account.
           </p>
         </div>
       </div>
@@ -411,145 +561,241 @@ export default function EmailInboxModule() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-3.5rem)] -m-6 overflow-hidden">
-      {/* Folder sidebar */}
-      <div className="w-[160px] flex-shrink-0 border-r border-crm-border bg-crm-card flex flex-col py-3">
-        <div className="px-3 mb-3">
+    <div className="flex h-[calc(100vh-3.5rem)] -m-6 overflow-hidden rounded-xl border border-crm-border bg-crm-card shadow-sm">
+      {/* ── Sidebar ── */}
+      <div className="w-[220px] flex-shrink-0 border-r border-crm-border flex flex-col">
+        {/* Compose button */}
+        <div className="p-5 pb-2">
           <button
             onClick={() => { setReplyTarget(null); setForwardTarget(null); setComposeOpen(true); }}
-            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-primary hover:bg-primary/90 text-white text-[12px] font-semibold transition-colors"
+            className="w-full py-2.5 rounded-lg bg-primary hover:bg-primary/90 text-white text-[14px] font-medium transition-colors"
           >
-            <Pencil size={12} /> Compose
+            Compose
           </button>
         </div>
 
-        <nav className="flex-1 px-2 space-y-0.5">
+        {/* Folder list */}
+        <nav className="flex-1 px-4 pt-4 pb-2 space-y-0.5">
           {FOLDERS.map(f => {
             const Icon = f.icon;
             const count = f.id === "starred" ? undefined : unreadMap[f.id];
+            const isActive = activeFolder === f.id;
             return (
               <button
                 key={f.id}
-                onClick={() => { setActiveFolder(f.id); setSelectedEmail(null); }}
-                className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left transition-colors ${
-                  activeFolder === f.id
-                    ? "bg-emerald-950 text-emerald-400 border border-emerald-800"
-                    : "text-crm-text-muted hover:text-crm-text-secondary hover:bg-crm-surface border border-transparent"
+                onClick={() => { setActiveFolder(f.id); setSelectedEmail(null); setSelectedIds(new Set()); }}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-left transition-colors ${
+                  isActive
+                    ? "bg-primary/10 text-primary font-medium"
+                    : "text-crm-text-muted hover:text-crm-text hover:bg-crm-surface"
                 }`}
               >
-                <Icon size={13} className="flex-shrink-0" />
-                <span className="text-[12px] font-medium flex-1 truncate">{f.label}</span>
+                <div className="flex items-center gap-3">
+                  <Icon size={18} className="flex-shrink-0" />
+                  <span className="text-[14px]">{f.label}</span>
+                </div>
                 {count != null && count > 0 && (
-                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-red-950 border border-red-800 text-red-400 flex-shrink-0">
+                  <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${
+                    f.id === "inbox" ? "bg-primary/15 text-primary" :
+                    f.id === "drafts" ? "bg-amber-500/15 text-amber-500" :
+                    "bg-red-500/15 text-red-500"
+                  }`}>
                     {count > 99 ? "99+" : count}
                   </span>
                 )}
               </button>
             );
           })}
+
+          {/* Labels section */}
+          <div className="pt-5">
+            <p className="text-[11px] font-medium uppercase text-crm-text-faint tracking-wider px-3 mb-2">Labels</p>
+            {LABELS.map(l => (
+              <button key={l.key} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left text-crm-text-muted hover:text-crm-text hover:bg-crm-surface transition-colors">
+                <span className={`w-2.5 h-2.5 rounded-full ${l.color}`} />
+                <span className="text-[14px]">{l.label}</span>
+              </button>
+            ))}
+          </div>
         </nav>
 
         {account && (
-          <div className="px-3 mt-3 border-t border-crm-border pt-3">
-            <p className="text-[9px] text-crm-text-faint font-mono leading-tight break-all">{account.email_address}</p>
+          <div className="px-5 py-3 border-t border-crm-border">
+            <p className="text-[10px] text-crm-text-faint font-mono leading-tight break-all">{account.email_address}</p>
           </div>
         )}
       </div>
 
-      {/* Email list */}
-      <div className="w-[280px] flex-shrink-0 border-r border-crm-border flex flex-col bg-crm">
-        {/* List header */}
-        <div className="px-3 py-2.5 border-b border-crm-border flex items-center gap-2 flex-shrink-0">
-          <div className="relative flex-1">
-            <Search size={11} className="absolute left-2 top-1/2 -translate-y-1/2 text-crm-text-dim" />
+      {/* ── Email List ── */}
+      <div className={`flex flex-col border-r border-crm-border ${selectedEmail ? "w-[340px] flex-shrink-0" : "flex-1"}`}>
+        {/* Search bar */}
+        <div className="px-5 pt-4 pb-2 flex items-center gap-3">
+          <div className="flex-1 flex items-center gap-2">
+            <Search size={18} className="text-crm-text-muted flex-shrink-0" />
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder="Search emails…"
-              className="w-full bg-crm-surface border border-crm-border rounded-md text-[11px] text-crm-text placeholder-crm-text-faint pl-6 pr-2 py-1.5 outline-none focus:border-emerald-700"
+              placeholder="Search mail"
+              className="w-full bg-transparent text-[14px] text-crm-text placeholder-crm-text-faint outline-none"
             />
           </div>
-          <button
-            onClick={syncEmails}
-            disabled={syncing}
-            className="p-1.5 rounded text-crm-text-dim hover:text-crm-text-secondary hover:bg-crm-surface transition-colors"
-            title="Sync emails"
-          >
-            <RefreshCw size={12} className={syncing ? "animate-spin" : ""} />
-          </button>
         </div>
+        <hr className="border-crm-border mx-3" />
+
+        {/* Action toolbar */}
+        <div className="flex items-center justify-between px-3 py-1.5">
+          <div className="flex items-center gap-0.5">
+            <div className="px-2">
+              <Checkbox
+                checked={filteredEmails.length > 0 && selectedIds.size === filteredEmails.length}
+                onCheckedChange={toggleSelectAll}
+                className="border-crm-border"
+              />
+            </div>
+            <button className="p-2 rounded-full hover:bg-crm-surface text-crm-text-muted transition-colors" title="Delete">
+              <Trash2 size={18} />
+            </button>
+            <button className="p-2 rounded-full hover:bg-crm-surface text-crm-text-muted transition-colors" title="Mark as read">
+              <MailOpen size={18} />
+            </button>
+            <button className="p-2 rounded-full hover:bg-crm-surface text-crm-text-muted transition-colors" title="Move to folder">
+              <Folder size={18} />
+            </button>
+            <button className="p-2 rounded-full hover:bg-crm-surface text-crm-text-muted transition-colors" title="Label">
+              <Tag size={18} />
+            </button>
+          </div>
+          <div className="flex items-center gap-0.5">
+            <button
+              onClick={syncEmails}
+              disabled={syncing}
+              className="p-2 rounded-full hover:bg-crm-surface text-crm-text-muted transition-colors"
+              title="Refresh"
+            >
+              <RefreshCw size={18} className={syncing ? "animate-spin" : ""} />
+            </button>
+            <button className="p-2 rounded-full hover:bg-crm-surface text-crm-text-muted transition-colors" title="More options">
+              <MoreVertical size={18} />
+            </button>
+          </div>
+        </div>
+        <hr className="border-crm-border" />
 
         {/* Email items */}
-        <div className="flex-1 overflow-y-auto divide-y divide-[#0f1a12]">
+        <div className="flex-1 overflow-y-auto">
           {isLoading ? (
             <div className="flex items-center justify-center h-32">
-              <div className="w-5 h-5 border-2 border-emerald-700 border-t-emerald-400 rounded-full animate-spin" />
+              <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
             </div>
           ) : filteredEmails.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-40 gap-2">
-              <MailOpen size={24} className="text-crm-text-faint" />
-              <p className="text-[11px] text-crm-text-faint">{search ? "No results" : "No emails"}</p>
+              <MailOpen size={28} className="text-crm-text-faint" />
+              <p className="text-[13px] text-crm-text-faint">{search ? "No results" : "No emails"}</p>
             </div>
           ) : (
-            filteredEmails.map(email => (
-              <button
-                key={email.id}
-                onClick={() => handleSelectEmail(email)}
-                className={`w-full text-left px-3 py-3 transition-colors hover:bg-crm-surface ${
-                  selectedEmail?.id === email.id ? "bg-crm-surface border-l-2 border-emerald-600" : ""
-                }`}
-              >
-                <div className="flex items-start gap-2">
-                  {!email.is_read && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0 mt-1.5" />
-                  )}
-                  <div className={`flex-1 min-w-0 ${!email.is_read ? "" : "pl-3.5"}`}>
-                    <div className="flex items-center justify-between gap-1 mb-0.5">
-                      <p className={`text-[11.5px] truncate ${!email.is_read ? "font-bold text-crm-text" : "font-medium text-crm-text-muted"}`}>
-                        {email.from_name || email.from_address}
-                      </p>
-                      <span className="text-[9px] text-crm-text-faint flex-shrink-0">
-                        {email.sent_at ? format(parseISO(email.sent_at), "d MMM") : ""}
+            filteredEmails.map(email => {
+              const isUnread = !email.is_read;
+              const senderName = email.from_name || email.from_address;
+              const initials = getInitials(senderName);
+              const avatarColor = getAvatarColor(senderName);
+              const isChecked = selectedIds.has(email.id);
+
+              return (
+                <div
+                  key={email.id}
+                  className={`group flex items-center gap-2 px-3 py-3 border-b border-crm-border/50 cursor-pointer transition-colors hover:bg-crm-surface/60 ${
+                    selectedEmail?.id === email.id ? "bg-crm-surface" : ""
+                  } ${isUnread ? "bg-crm-card" : ""}`}
+                >
+                  {/* Checkbox */}
+                  <div className="flex-shrink-0 px-1">
+                    <Checkbox
+                      checked={isChecked}
+                      onCheckedChange={() => toggleSelect(email.id)}
+                      className="border-crm-border"
+                    />
+                  </div>
+
+                  {/* Star */}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); toggleStar.mutate({ id: email.id, starred: !email.is_starred }); }}
+                    className={`flex-shrink-0 p-0.5 ${email.is_starred ? "text-amber-400" : "text-crm-text-faint hover:text-amber-400"} transition-colors`}
+                  >
+                    <Star size={16} fill={email.is_starred ? "currentColor" : "none"} />
+                  </button>
+
+                  {/* Avatar */}
+                  <div className={`w-8 h-8 rounded-full ${avatarColor} flex items-center justify-center text-white text-[11px] font-bold flex-shrink-0`}>
+                    {initials}
+                  </div>
+
+                  {/* Content */}
+                  <div className="flex-1 min-w-0" onClick={() => handleSelectEmail(email)}>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-[13px] truncate ${isUnread ? "font-semibold text-crm-text" : "text-crm-text-muted"}`}>
+                        {senderName}
+                      </span>
+                      <span className={`text-[13px] truncate flex-1 ${isUnread ? "text-crm-text-secondary" : "text-crm-text-dim"}`}>
+                        {email.subject}
                       </span>
                     </div>
-                    <p className={`text-[11px] truncate ${!email.is_read ? "text-crm-text-secondary" : "text-crm-text-muted"}`}>
-                      {email.subject}
-                    </p>
-                    <p className="text-[10px] text-crm-text-dim truncate mt-0.5">
-                      {(email.body_text || "").slice(0, 80)}
-                    </p>
                   </div>
-                  {email.is_starred && (
-                    <Star size={10} className="text-[#e4ca00] flex-shrink-0 fill-[#e4ca00] mt-1" />
-                  )}
+
+                  {/* Meta (time + label dot + hover actions) */}
+                  <div className="flex items-center gap-2 flex-shrink-0 relative">
+                    {/* Normal state: label dot + time */}
+                    <div className="flex items-center gap-2 group-hover:invisible">
+                      {email.has_attachments && <Paperclip size={13} className="text-crm-text-faint" />}
+                      <small className="text-[12px] text-crm-text-muted whitespace-nowrap">
+                        {email.sent_at ? format(parseISO(email.sent_at), "h:mm a") : ""}
+                      </small>
+                    </div>
+                    {/* Hover state: action icons */}
+                    <div className="absolute right-0 top-1/2 -translate-y-1/2 hidden group-hover:flex items-center gap-0.5 bg-crm-surface rounded-lg px-1">
+                      <button onClick={(e) => { e.stopPropagation(); markRead.mutate(email.id); }} className="p-1.5 rounded-full hover:bg-crm-border text-crm-text-muted transition-colors" title="Mark as read">
+                        <Mail size={15} />
+                      </button>
+                      <button onClick={(e) => { e.stopPropagation(); moveToTrash.mutate(email.id); }} className="p-1.5 rounded-full hover:bg-crm-border text-crm-text-muted transition-colors" title="Delete">
+                        <Trash2 size={15} />
+                      </button>
+                      <button className="p-1.5 rounded-full hover:bg-crm-border text-crm-text-muted transition-colors" title="Info">
+                        <Info size={15} />
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              </button>
-            ))
+              );
+            })
           )}
         </div>
       </div>
 
-      {/* Detail panel */}
-      <div className="flex-1 overflow-hidden bg-crm-card">
+      {/* ── Detail Panel ── */}
+      <div className="flex-1 overflow-hidden bg-crm">
         {selectedEmail ? (
           <EmailDetailPanel
             email={selectedEmail}
+            onBack={() => setSelectedEmail(null)}
             onReply={e => { setReplyTarget(e); setForwardTarget(null); setComposeOpen(true); }}
             onForward={e => { setForwardTarget(e); setReplyTarget(null); setComposeOpen(true); }}
             onStar={(id, starred) => toggleStar.mutate({ id, starred })}
             onTrash={id => moveToTrash.mutate(id)}
+            onPrev={() => { if (currentIdx > 0) handleSelectEmail(filteredEmails[currentIdx - 1]); }}
+            onNext={() => { if (currentIdx < filteredEmails.length - 1) handleSelectEmail(filteredEmails[currentIdx + 1]); }}
+            hasPrev={currentIdx > 0}
+            hasNext={currentIdx < filteredEmails.length - 1}
           />
         ) : (
           <div className="flex flex-col items-center justify-center h-full gap-3 text-center">
             <div className="h-14 w-14 rounded-2xl bg-crm-surface border border-crm-border flex items-center justify-center">
               <Mail className="h-6 w-6 text-crm-text-faint" />
             </div>
-            <p className="text-sm text-crm-text-dim">Select an email to read</p>
+            <p className="text-[14px] text-crm-text-dim">Select an email to read</p>
           </div>
         )}
       </div>
 
-      {/* Compose modal */}
+      {/* ── Compose Modal (bottom-right) ── */}
       {composeOpen && account && (
         <ComposeModal
           account={account}
