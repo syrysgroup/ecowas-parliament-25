@@ -4,7 +4,6 @@ import {
   LayoutDashboard,
   Image,
   CheckSquare,
-  Mail,
   Inbox,
   Calendar,
   MessageSquare,
@@ -45,7 +44,6 @@ export type ModuleGroup =
 export type ModuleId =
   | "dashboard"
   | "tasks"
-  | "inbox"
   | "email-inbox"
   | "calendar"
   | "comms"
@@ -151,15 +149,6 @@ export const CRM_MODULES: CRMModule[] = [
   },
 
   // ── COMMUNICATION ─────────────────────────────────────────────────────────
-  {
-    id: "inbox",
-    label: "Inbox",
-    icon: Mail,
-    section: "inbox",
-    allowedRoles: ALL_STAFF,
-    isStub: false,
-    group: "COMMUNICATION",
-  },
   {
     id: "email-inbox",
     label: "Email",

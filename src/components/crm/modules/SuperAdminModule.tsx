@@ -32,7 +32,7 @@ interface ActivityLog {
   actor?: { full_name: string; email: string };
 }
 
-type Tab = "overview" | "users" | "invitations" | "activity" | "routes" | "settings";
+type Tab = "overview" | "users" | "invitations" | "activity" | "routes" | "settings" | "email-config";
 
 // ─── Role config ──────────────────────────────────────────────────────────────
 const ROLE_CONFIG: Partial<Record<AppRole, {
@@ -290,6 +290,7 @@ export default function SuperAdminModule() {
     { id:"invitations", label:"Invitations",  icon:Mail,   badge:stats.pendingInv },
     { id:"activity",    label:"Activity Log", icon:Activity },
     { id:"routes",      label:"Site Routes",  icon:Globe },
+    { id:"email-config",label:"Email Config", icon:Mail },
     { id:"settings",    label:"Settings",     icon:Settings },
   ];
 
@@ -698,6 +699,9 @@ export default function SuperAdminModule() {
           })}
         </div>
       )}
+
+      {/* ══ EMAIL CONFIG ══ */}
+      {tab === "email-config" && <EmailConfigTab userId={user?.id} />}
 
       {/* ══ SETTINGS ══ */}
       {tab === "settings" && (

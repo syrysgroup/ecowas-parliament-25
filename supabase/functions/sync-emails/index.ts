@@ -52,7 +52,7 @@ Deno.serve(async (req) => {
     const orgId = Deno.env.get("ZOHO_ORG_ID")!;
 
     // Fetch messages from Zoho for each folder
-    const folders = ["inbox", "sent", "drafts", "trash"];
+    const folders = ["inbox", "sent", "drafts", "spam", "trash"];
     let newEmailCount = 0;
 
     for (const folder of folders) {
