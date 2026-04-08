@@ -294,7 +294,9 @@ export type Database = {
           body: string
           channel_id: string
           deleted_at: string | null
+          delivered_at: string | null
           id: string
+          read_at: string | null
           sender_id: string
           sent_at: string
         }
@@ -302,7 +304,9 @@ export type Database = {
           body: string
           channel_id: string
           deleted_at?: string | null
+          delivered_at?: string | null
           id?: string
+          read_at?: string | null
           sender_id: string
           sent_at?: string
         }
@@ -310,7 +314,9 @@ export type Database = {
           body?: string
           channel_id?: string
           deleted_at?: string | null
+          delivered_at?: string | null
           id?: string
+          read_at?: string | null
           sender_id?: string
           sent_at?: string
         }
@@ -594,7 +600,9 @@ export type Database = {
         Row: {
           body: string
           deleted_at: string | null
+          delivered_at: string | null
           id: string
+          read_at: string | null
           recipient_id: string
           sender_id: string
           sent_at: string
@@ -602,7 +610,9 @@ export type Database = {
         Insert: {
           body: string
           deleted_at?: string | null
+          delivered_at?: string | null
           id?: string
+          read_at?: string | null
           recipient_id: string
           sender_id: string
           sent_at?: string
@@ -610,7 +620,9 @@ export type Database = {
         Update: {
           body?: string
           deleted_at?: string | null
+          delivered_at?: string | null
           id?: string
+          read_at?: string | null
           recipient_id?: string
           sender_id?: string
           sent_at?: string
@@ -1433,10 +1445,13 @@ export type Database = {
           id: string
           is_active: boolean
           is_public: boolean
+          linkedin_url: string | null
           notification_email: string | null
           organisation: string | null
+          phone: string | null
           show_on_website: boolean
           title: string | null
+          twitter_url: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -1450,10 +1465,13 @@ export type Database = {
           id: string
           is_active?: boolean
           is_public?: boolean
+          linkedin_url?: string | null
           notification_email?: string | null
           organisation?: string | null
+          phone?: string | null
           show_on_website?: boolean
           title?: string | null
+          twitter_url?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -1467,10 +1485,13 @@ export type Database = {
           id?: string
           is_active?: boolean
           is_public?: boolean
+          linkedin_url?: string | null
           notification_email?: string | null
           organisation?: string | null
+          phone?: string | null
           show_on_website?: boolean
           title?: string | null
+          twitter_url?: string | null
         }
         Relationships: []
       }
