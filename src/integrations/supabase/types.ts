@@ -475,6 +475,33 @@ export type Database = {
         }
         Relationships: []
       }
+      direct_messages: {
+        Row: {
+          body: string
+          deleted_at: string | null
+          id: string
+          recipient_id: string
+          sender_id: string
+          sent_at: string
+        }
+        Insert: {
+          body: string
+          deleted_at?: string | null
+          id?: string
+          recipient_id: string
+          sender_id: string
+          sent_at?: string
+        }
+        Update: {
+          body?: string
+          deleted_at?: string | null
+          id?: string
+          recipient_id?: string
+          sender_id?: string
+          sent_at?: string
+        }
+        Relationships: []
+      }
       documents: {
         Row: {
           category: string
@@ -1907,7 +1934,9 @@ export type Database = {
         }
         Returns: boolean
       }
-      is_crm_staff: { Args: { _user_id: string }; Returns: boolean }
+      is_crm_staff:
+        | { Args: never; Returns: boolean }
+        | { Args: { _user_id: string }; Returns: boolean }
       next_invoice_number: { Args: never; Returns: string }
     }
     Enums: {
