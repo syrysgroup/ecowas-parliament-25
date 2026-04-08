@@ -143,7 +143,6 @@ function SponsorDialog({ open, onClose, sponsor }: { open: boolean; onClose: () 
       const autoSlug = name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
       const payload: any = {
         name,
-        // On create: auto-generate slug. On edit: keep existing slug (stable URLs).
         slug: isEdit ? sponsor.slug : autoSlug,
         logo_url: logoUrl || null, description: description || null,
         acronym: acronym || null, about: about || null, tier,
@@ -153,14 +152,23 @@ function SponsorDialog({ open, onClose, sponsor }: { open: boolean; onClose: () 
         is_published: isPublished, sort_order: parseInt(sortOrder) || 0,
         updated_at: new Date().toISOString(),
       };
-      if (isEdit) await (supabase as any).from("sponsors").update(payload).eq("id", sponsor.id);
-      else await (supabase as any).from("sponsors").insert(payload);
+      if (isEdit) {
+        const { error } = await (supabase as any).from("sponsors").update(payload).eq("id", sponsor.id);
+        if (error) throw error;
+      } else {
+        const { error } = await (supabase as any).from("sponsors").insert(payload);
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["sponsors-manager"] });
       qc.invalidateQueries({ queryKey: ["sponsors-public"] });
       qc.invalidateQueries({ queryKey: ["sponsor"] });
+      toast.success(isEdit ? "Sponsor updated" : "Sponsor added");
       onClose();
+    },
+    onError: (err: any) => {
+      toast.error("Failed to save sponsor", { description: err.message });
     },
   });
 
@@ -337,14 +345,23 @@ function PartnerDialog({ open, onClose, partner }: { open: boolean; onClose: () 
         social_links: Object.keys(socialLinks).length > 0 ? socialLinks : {},
         is_published: isPublished, updated_at: new Date().toISOString(),
       };
-      if (isEdit) await (supabase as any).from("partners").update(payload).eq("id", partner.id);
-      else await (supabase as any).from("partners").insert(payload);
+      if (isEdit) {
+        const { error } = await (supabase as any).from("partners").update(payload).eq("id", partner.id);
+        if (error) throw error;
+      } else {
+        const { error } = await (supabase as any).from("partners").insert(payload);
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["partners-manager"] });
       qc.invalidateQueries({ queryKey: ["partners-public"] });
       qc.invalidateQueries({ queryKey: ["partner"] });
+      toast.success(isEdit ? "Partner updated" : "Partner added");
       onClose();
+    },
+    onError: (err: any) => {
+      toast.error("Failed to save partner", { description: err.message });
     },
   });
 
