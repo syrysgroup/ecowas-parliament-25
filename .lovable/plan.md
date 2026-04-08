@@ -1,80 +1,93 @@
 
 
-## Plan: Fix Sponsors/Partners, Chat, Profile, Email Settings, and Branding Upload
+# Fix CRM Sponsors, Partners, Chat, Email Config, Profile & Avatars
 
-This plan addresses 7 interconnected issues. The root cause of most problems is a missing database function overload.
+## Root Causes Identified
 
----
+1. **Sponsors INSERT/UPDATE fail silently**: The code sends columns `acronym`, `about`, `is_ecowas_sponsor` but these columns do NOT exist in the `sponsors` table. Supabase silently ignores the insert/update when unknown columns are sent, resulting in no error shown but no data saved.
 
-### Root Cause: `is_crm_staff()` Function Missing Zero-Arg Overload
+2. **Partners INSERT/UPDATE fail silently**: Same issue -- code sends `long_description` (text[]) and `social_links` (jsonb) but these columns don't exist in the `partners` table.
 
-The function `is_crm_staff(_user_id uuid)` exists but all RLS policies on `channels`, `channel_messages`, `channel_members`, `programme_pillars`, `media_kit_items`, `stakeholder_profiles`, and `team_members` call `is_crm_staff()` without arguments. PostgreSQL cannot resolve the call, so every operation on these tables silently fails. This also affects sponsors/partners since the save mutations don't check for Supabase errors properly.
+3. **Chat completely broken**: The `channels`, `channel_members`, and `channel_messages` tables do not exist in the database. The MessagingModule queries these tables, causing all channel operations to fail. Only `direct_messages` and `chat_messages` tables exist.
 
----
+4. **"No bucket found" for logo uploads**: The `branding` bucket exists and has upload policies, but the policies may restrict to specific admin roles. Need to verify the exact USING/WITH CHECK expressions match the current user's role.
 
-### Changes
+5. **Email config shows SMTP/IMAP host/port to per-user setup**: The EmailConfigTab in SuperAdminModule exposes server fields that should auto-populate from global settings.
 
-**1. Database Migration: Create zero-arg `is_crm_staff()` overload + `direct_messages` table + `branding` bucket**
+6. **Profile design glitchy + missing email**: The ProfileModule layout needs polish; email is in the About card but may not be visible due to layout issues.
 
-A single migration that:
-- Creates `is_crm_staff()` (no args) that calls `is_crm_staff(auth.uid())`
-- Creates `direct_messages` table with proper columns (`id`, `sender_id`, `recipient_id`, `body`, `sent_at`, `deleted_at`) and RLS policies
-- Creates the `branding` storage bucket (the admin logo upload targets this bucket but it doesn't exist)
-- Adds the table to realtime publication
-
-**2. Fix Sponsors/Partners save mutations (SponsorsManagerModule.tsx)**
-
-The `save` mutation in both `SponsorDialog` and `PartnerDialog` doesn't check for errors from Supabase. The mutations call `.update()` / `.insert()` but ignore the returned `{ error }`. Add error checking and toast notifications on failure so users see what went wrong.
-
-**3. Fix Chat / Messaging (MessagingModule.tsx)**
-
-- The `direct_messages` table doesn't exist — once created via the migration, DMs will work
-- The foreign key references `direct_messages_recipient_id_fkey` and `direct_messages_sender_id_fkey` used in `.select()` joins need to match the actual FK constraint names
-- Add a user profile viewing dialog: clicking the avatar or the three-dot menu in chat header opens a dialog showing the user's profile (name, email, role, country, bio, avatar)
-- Use the Parliament 25 logo as the default avatar fallback throughout the messaging module
-
-**4. Improve Profile Module (ProfileModule.tsx)**
-
-- Show user's email address in the About card (currently missing)
-- Fix the profile banner layout to prevent visual glitches — ensure the avatar-to-name section displays correctly on all screen sizes (show name/title on mobile too, not just `hidden sm:block`)
-- Use Parliament 25 logo (`/images/logo/logo.png`) as the default avatar fallback instead of initials when no avatar is set
-- Populate the Overview card with real data (task count, connections, etc.) or show cleaner placeholders
-
-**5. Email Settings — Hide SMTP/IMAP fields for non-admins (SettingsModule.tsx)**
-
-Currently non-super-admin users see read-only SMTP/IMAP host/port fields. Per the user's request, these should be completely hidden for regular users since they're auto-applied from the global config. Only super admins see the Server Configuration section.
-
-**6. Add "Test Connection" to Server Config before saving**
-
-Add a test button in the super admin Server Configuration section that validates the SMTP/IMAP settings work before saving, by calling a lightweight validation endpoint.
-
-**7. Create `branding` storage bucket**
-
-The admin branding settings page tries to upload to a `branding` bucket that doesn't exist. Create it in the migration.
+7. **Default avatar**: Currently `/images/logo/logo.png` -- should be the Parliament 25 logo consistently.
 
 ---
 
-### Files to Modify
+## Part 1: Database Migration -- Add Missing Columns + Chat Tables
 
-- **New migration SQL** — `is_crm_staff()` overload, `direct_messages` table, `branding` bucket
-- `src/components/crm/modules/SponsorsManagerModule.tsx` — Add error handling to save mutations
-- `src/components/crm/modules/MessagingModule.tsx` — Use default avatar, add profile view dialog on avatar/menu click, fix DM query FK names
-- `src/components/crm/modules/ProfileModule.tsx` — Show email, fix banner layout, use default avatar
-- `src/components/crm/modules/SettingsModule.tsx` — Hide server config section for non-admins entirely
+**New migration** to:
 
-### Technical Details
+- Add missing columns to `sponsors`: `acronym text`, `about text`, `is_ecowas_sponsor boolean DEFAULT false`
+- Add missing columns to `partners`: `long_description text[]`, `social_links jsonb DEFAULT '{}'`
+- Create `channels` table (id, name, description, type, created_by, is_archived, created_at)
+- Create `channel_members` table (id, channel_id, user_id, joined_at)
+- Create `channel_messages` table (id, channel_id, sender_id, body, sent_at, deleted_at)
+- Add RLS policies for all three chat tables (CRM staff can read/write, users see their own messages)
+- Add storage upload policy for `branding` bucket if missing for `super_admin`
 
-The `is_crm_staff()` overload is critical — it unblocks sponsors, partners, channels, media kit, programme pillars, stakeholders, and team members tables. This single migration fix resolves most of the reported issues.
+---
 
-The `direct_messages` table schema:
-```text
-id          uuid PK
-sender_id   uuid NOT NULL -> auth.users(id)
-recipient_id uuid NOT NULL -> auth.users(id)
-body        text NOT NULL
-sent_at     timestamptz DEFAULT now()
-deleted_at  timestamptz
-```
+## Part 2: Fix SponsorsManagerModule
 
-RLS: authenticated users can read messages where they are sender or recipient, insert where sender_id = auth.uid(), and soft-delete (update deleted_at) on own messages.
+- No code changes needed for sponsor/partner dialogs -- the column additions will make existing code work
+- Verify the `sort_order` default and `updated_at` handling
+
+---
+
+## Part 3: Email Config -- Hide Server Fields for Per-User Setup
+
+**File**: `src/components/crm/modules/SuperAdminModule.tsx` (EmailConfigTab)
+
+- The global email config (SMTP host, port, IMAP host, port, SSL) is set by the super admin once
+- When setting up per-user email credentials (via validate-email-credentials), the SMTP/IMAP host/port should auto-fill from the saved `smtp` site_settings and not be editable by the user
+- Add a "Test Connection" button that calls `validate-email-credentials` edge function to verify the configuration before saving
+
+---
+
+## Part 4: Chat Module Fix
+
+**File**: `src/components/crm/modules/MessagingModule.tsx`
+
+- With the new `channels`, `channel_members`, `channel_messages` tables created, the existing code should work
+- Fix the foreign key reference in the channel_messages query (`profiles!channel_messages_sender_id_fkey`) -- will need to ensure the FK exists or adjust the query to use a manual join
+- Add profile view dialog when clicking avatar or three-dot menu (already partially implemented -- verify it works)
+
+---
+
+## Part 5: Profile Module Polish
+
+**File**: `src/components/crm/modules/ProfileModule.tsx`
+
+- Ensure email address is prominently visible in the banner area (not just in the About card)
+- Fix layout spacing issues (the `space-y-0` on the wrapper causes elements to overlap)
+- Improve the Overview card with actual data queries instead of placeholder dashes
+
+---
+
+## Part 6: Default Avatar
+
+- Update `DEFAULT_AVATAR` constant across all modules to use `/images/logo/logo.png` (the Parliament 25 logo) -- this is already the case but verify the image file exists and renders correctly
+- Ensure the avatar fallback is consistent in ProfileModule, MessagingModule, PeopleModule
+
+---
+
+## Technical Summary
+
+| Task | Type | Files |
+|------|------|-------|
+| Add sponsor columns (acronym, about, is_ecowas_sponsor) | Migration | DB |
+| Add partner columns (long_description, social_links) | Migration | DB |
+| Create channels/channel_members/channel_messages + RLS | Migration | DB |
+| Fix branding storage policy if needed | Migration | DB |
+| Hide SMTP/IMAP fields in per-user email setup + add test connection | Code | SuperAdminModule.tsx |
+| Polish profile layout, show email prominently | Code | ProfileModule.tsx |
+| Fix chat foreign key query | Code | MessagingModule.tsx |
+| Consistent default avatar | Code | Multiple modules |
 
