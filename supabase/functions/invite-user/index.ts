@@ -15,6 +15,14 @@ const BodySchema = z.object({
     "communications_officer", "finance_coordinator", "logistics_coordinator",
     "sponsor_manager", "consultant",
   ]),
+  redirectUrl: z.string().url().optional(),
+  metadata: z.object({
+    full_name: z.string().optional(),
+    title: z.string().optional(),
+    organisation: z.string().optional(),
+    bio: z.string().optional(),
+    avatar_url: z.string().optional(),
+  }).optional(),
 });
 
 Deno.serve(async (req) => {
@@ -70,7 +78,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { email, role } = parsed.data;
+    const { email, role, redirectUrl, metadata } = parsed.data;
 
     // Use service role client to invite user
     const serviceClient = createClient(
@@ -83,6 +91,7 @@ Deno.serve(async (req) => {
       email,
       role,
       invited_by: userId,
+      ...(metadata ? { metadata } : {}),
     });
 
     if (invErr) {
@@ -97,9 +106,13 @@ Deno.serve(async (req) => {
     }
 
     // Send auth invite email and capture the action link
-    const siteUrl = Deno.env.get("SITE_URL") || req.headers.get("origin") || "https://ecowasparliamentinitiatives.org";
+    const siteUrl = redirectUrl
+      ?? req.headers.get("origin")
+      ?? Deno.env.get("SITE_URL")
+      ?? "https://ecowasparliamentinitiatives.org";
+    const redirectTo = redirectUrl ?? `${siteUrl}/set-password`;
     const { data: inviteData, error: authErr } = await serviceClient.auth.admin.inviteUserByEmail(email, {
-      redirectTo: `${siteUrl}/set-password`,
+      redirectTo,
       data: { role },
     });
 

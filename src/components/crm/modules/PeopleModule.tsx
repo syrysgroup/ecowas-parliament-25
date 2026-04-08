@@ -62,9 +62,9 @@ function StatCard({ icon: Icon, label, value, color }: {
 }
 
 // ─── Add User Sheet ───────────────────────────────────────────────────────────
-function AddUserSheet({ open, onClose, assignableRoles, onInvited }: {
+function AddUserSheet({ open, onClose, assignableRoles, onInvited, isSuperAdmin }: {
   open: boolean; onClose: () => void;
-  assignableRoles: AppRole[]; onInvited: () => void;
+  assignableRoles: AppRole[]; onInvited: () => void; isSuperAdmin: boolean;
 }) {
   const { toast } = useToast();
   const [email, setEmail] = useState("");
@@ -77,7 +77,7 @@ function AddUserSheet({ open, onClose, assignableRoles, onInvited }: {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const res = await supabase.functions.invoke("invite-user", {
-        body: { email: email.trim(), role },
+        body: { email: email.trim(), role, redirectUrl: `${window.location.origin}/set-password` },
         headers: { Authorization: `Bearer ${session?.access_token}` },
       });
       if (res.error) throw new Error(res.error.message);
@@ -106,19 +106,21 @@ function AddUserSheet({ open, onClose, assignableRoles, onInvited }: {
             <Input value={email} onChange={e => setEmail(e.target.value)} placeholder="john.doe@example.com" type="email"
               className="bg-crm-surface border-crm-border text-crm-text-secondary text-sm" />
           </div>
-          <div className="space-y-1.5">
-            <Label className="text-[11px] text-crm-text-muted">User Role</Label>
-            <Select value={role} onValueChange={v => setRole(v as AppRole)}>
-              <SelectTrigger className="bg-crm-surface border-crm-border text-crm-text-secondary text-sm">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-crm-card border-crm-border text-crm-text">
-                {assignableRoles.map(r => (
-                  <SelectItem key={r} value={r}>{CRM_ROLE_META[r]?.label ?? r}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {isSuperAdmin && (
+            <div className="space-y-1.5">
+              <Label className="text-[11px] text-crm-text-muted">User Role</Label>
+              <Select value={role} onValueChange={v => setRole(v as AppRole)}>
+                <SelectTrigger className="bg-crm-surface border-crm-border text-crm-text-secondary text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-crm-card border-crm-border text-crm-text">
+                  {assignableRoles.map(r => (
+                    <SelectItem key={r} value={r}>{CRM_ROLE_META[r]?.label ?? r}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div className="flex gap-2 pt-2">
             <Button size="sm" onClick={handleSubmit} disabled={sending || !email.trim()}
               className="bg-emerald-700 hover:bg-emerald-600 text-white text-xs flex-1">
@@ -134,7 +136,7 @@ function AddUserSheet({ open, onClose, assignableRoles, onInvited }: {
 }
 
 // ─── View User Dialog ────────────────────────────────────────────────────────
-function ViewUserDialog({ target, onClose }: { target: UserWithRoles; onClose: () => void }) {
+function ViewUserDialog({ target, onClose, isSuperAdmin }: { target: UserWithRoles; onClose: () => void; isSuperAdmin: boolean }) {
   const initials = target.full_name.split(" ").map((n: string) => n[0]).slice(0, 2).join("").toUpperCase() || "?";
   return (
     <Dialog open onOpenChange={onClose}>
@@ -161,7 +163,7 @@ function ViewUserDialog({ target, onClose }: { target: UserWithRoles; onClose: (
               <p className="text-crm-text-secondary font-medium">{target.roles.length} assigned</p>
             </div>
           </div>
-          {target.roles.length > 0 && (
+          {isSuperAdmin && target.roles.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
               {target.roles.map(role => {
                 const m = CRM_ROLE_META[role];
@@ -563,7 +565,18 @@ function ConvertTeamMemberDialog({ open, onClose, member, assignableRoles }: {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const res = await supabase.functions.invoke("invite-user", {
-        body: { email: email.trim(), role },
+        body: {
+          email: email.trim(),
+          role,
+          redirectUrl: `${window.location.origin}/set-password`,
+          metadata: {
+            full_name: member.full_name || undefined,
+            title: member.title ?? undefined,
+            organisation: member.organisation ?? undefined,
+            bio: member.bio ?? undefined,
+            avatar_url: member.avatar_url ?? undefined,
+          },
+        },
         headers: { Authorization: `Bearer ${session?.access_token}` },
       });
       if (res.error) throw new Error(res.error.message);
@@ -856,7 +869,7 @@ export default function PeopleModule() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const res = await supabase.functions.invoke("invite-user", {
-        body: { email: inv.email, role: inv.role },
+        body: { email: inv.email, role: inv.role, redirectUrl: `${window.location.origin}/set-password` },
         headers: { Authorization: `Bearer ${session?.access_token}` },
       });
       if (res.error) throw new Error(res.error.message);
@@ -908,13 +921,15 @@ export default function PeopleModule() {
       {/* Filters */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
-          <select value={roleFilter} onChange={e => setRoleFilter(e.target.value)}
-            className="bg-crm-surface border border-crm-border text-crm-text-secondary text-xs rounded-lg px-3 py-2">
-            <option value="all">All Roles</option>
-            {Array.from(uniqueRoles).map(r => (
-              <option key={r} value={r}>{CRM_ROLE_META[r as keyof typeof CRM_ROLE_META]?.label ?? r}</option>
-            ))}
-          </select>
+          {isSuperAdmin && (
+            <select value={roleFilter} onChange={e => setRoleFilter(e.target.value)}
+              className="bg-crm-surface border border-crm-border text-crm-text-secondary text-xs rounded-lg px-3 py-2">
+              <option value="all">All Roles</option>
+              {Array.from(uniqueRoles).map(r => (
+                <option key={r} value={r}>{CRM_ROLE_META[r as keyof typeof CRM_ROLE_META]?.label ?? r}</option>
+              ))}
+            </select>
+          )}
           <input type="text" placeholder="Search users…" value={search} onChange={e => setSearch(e.target.value)}
             className="bg-crm-surface border border-crm-border text-crm-text-secondary text-xs rounded-lg px-3 py-2 w-60 focus:outline-none focus:border-emerald-700 placeholder:text-crm-text-faint" />
         </div>
@@ -957,7 +972,7 @@ export default function PeopleModule() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-crm-border">
-                  {["User", "Role", "Country", "Joined", "Actions"].map(h => (
+                  {["User", ...(isSuperAdmin ? ["Role"] : []), "Country", "Joined", "Actions"].map(h => (
                     <th key={h} className="px-4 py-2.5 text-[10px] font-semibold text-crm-text-dim uppercase tracking-wider text-left">{h}</th>
                   ))}
                 </tr>
@@ -979,29 +994,31 @@ export default function PeopleModule() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 py-3">
-                        <div className="flex flex-wrap gap-1">
-                          {u.roles.map(role => {
-                            const m = CRM_ROLE_META[role];
-                            if (!m) return null;
-                            return (
-                              <span key={role} className={`flex items-center gap-1 text-[9px] font-mono border rounded px-1.5 py-0.5 ${m.bgColour} ${m.colour} ${m.borderColour}`}>
-                                {m.shortLabel}
-                                {(assignableRoles.includes(role) || isSuperAdmin) && (
-                                  <button onClick={() => handleRoleChange(u.id, role, "remove")} className="hover:opacity-70"><X size={8} /></button>
-                                )}
-                              </span>
-                            );
-                          })}
-                          {addableRoles.length > 0 && (
-                            <select defaultValue="" onChange={e => { if (e.target.value) { handleRoleChange(u.id, e.target.value as AppRole, "add"); e.target.value = ""; }}}
-                              className="text-[9px] font-mono bg-crm-surface border border-crm-border text-crm-text-dim rounded px-1 py-0.5 cursor-pointer">
-                              <option value="">+</option>
-                              {addableRoles.map(r => <option key={r} value={r}>{CRM_ROLE_META[r]?.shortLabel ?? r}</option>)}
-                            </select>
-                          )}
-                        </div>
-                      </td>
+                      {isSuperAdmin && (
+                        <td className="px-4 py-3">
+                          <div className="flex flex-wrap gap-1">
+                            {u.roles.map(role => {
+                              const m = CRM_ROLE_META[role];
+                              if (!m) return null;
+                              return (
+                                <span key={role} className={`flex items-center gap-1 text-[9px] font-mono border rounded px-1.5 py-0.5 ${m.bgColour} ${m.colour} ${m.borderColour}`}>
+                                  {m.shortLabel}
+                                  {(assignableRoles.includes(role) || isSuperAdmin) && (
+                                    <button onClick={() => handleRoleChange(u.id, role, "remove")} className="hover:opacity-70"><X size={8} /></button>
+                                  )}
+                                </span>
+                              );
+                            })}
+                            {addableRoles.length > 0 && (
+                              <select defaultValue="" onChange={e => { if (e.target.value) { handleRoleChange(u.id, e.target.value as AppRole, "add"); e.target.value = ""; }}}
+                                className="text-[9px] font-mono bg-crm-surface border border-crm-border text-crm-text-dim rounded px-1 py-0.5 cursor-pointer">
+                                <option value="">+</option>
+                                {addableRoles.map(r => <option key={r} value={r}>{CRM_ROLE_META[r]?.shortLabel ?? r}</option>)}
+                              </select>
+                            )}
+                          </div>
+                        </td>
+                      )}
                       <td className="px-4 py-3 text-[11px] text-crm-text-muted">{u.country || "—"}</td>
                       <td className="px-4 py-3 text-[10px] text-crm-text-faint">{format(parseISO(u.created_at), "d MMM yyyy")}</td>
                       <td className="px-4 py-3">
@@ -1086,14 +1103,14 @@ export default function PeopleModule() {
       {tab === "website-team" && <WebsiteTeamTab qc={qc} toast={toast} isSuperAdmin={isSuperAdmin} assignableRoles={assignableRoles} />}
 
       {/* Dialogs */}
-      {viewOpen && viewTarget && <ViewUserDialog target={viewTarget} onClose={() => { setViewOpen(false); setViewTarget(null); }} />}
+      {viewOpen && viewTarget && <ViewUserDialog target={viewTarget} isSuperAdmin={isSuperAdmin} onClose={() => { setViewOpen(false); setViewTarget(null); }} />}
       {editOpen && editTarget && (
         <EditUserDialog target={editTarget} isSuperAdmin={isSuperAdmin}
           onClose={() => { setEditOpen(false); setEditTarget(null); }}
           onSaved={() => { setEditOpen(false); setEditTarget(null); loadData(); }} />
       )}
       <AddUserSheet open={addSheetOpen} onClose={() => setAddSheetOpen(false)}
-        assignableRoles={assignableRoles} onInvited={loadData} />
+        assignableRoles={assignableRoles} onInvited={loadData} isSuperAdmin={isSuperAdmin} />
     </div>
   );
 }

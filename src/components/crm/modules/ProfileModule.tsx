@@ -21,10 +21,10 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 // ─── Profile Banner ───────────────────────────────────────────────────────────
 function ProfileBanner({
-  avatarUrl, fullName, title, country, joinDate, email, roles, uploading, onUpload, onUrlChange,
+  avatarUrl, fullName, title, country, joinDate, email, roles, uploading, onUpload, onUrlChange, isSuperAdmin,
 }: {
   avatarUrl: string; fullName: string; title: string; country: string;
-  joinDate: string; email: string; roles: string[];
+  joinDate: string; email: string; roles: string[]; isSuperAdmin: boolean;
   uploading: boolean; onUpload: (f: File) => void; onUrlChange: (url: string) => void;
 }) {
   const { t } = useTranslation();
@@ -68,7 +68,7 @@ function ProfileBanner({
             {country && <span className="flex items-center gap-1"><MapPin size={10} /> {country}</span>}
             {joinDate && <span className="flex items-center gap-1"><Calendar size={10} /> {t("crm.profile.joined")} {format(parseISO(joinDate), "MMM yyyy")}</span>}
           </div>
-          {roles.length > 0 && (
+          {isSuperAdmin && roles.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-1.5 justify-center sm:justify-start">
               {roles.map(r => {
                 const m = CRM_ROLE_META[r as keyof typeof CRM_ROLE_META];
@@ -118,7 +118,7 @@ function InfoRow({ icon: Icon, label, value, isLink }: { icon: any; label: strin
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 export default function ProfileModule() {
-  const { user, roles } = useAuthContext();
+  const { user, roles, isSuperAdmin } = useAuthContext();
   const { toast } = useToast();
   const { t } = useTranslation();
   const qc = useQueryClient();
@@ -286,6 +286,7 @@ export default function ProfileModule() {
           joinDate={joinDate} email={user?.email ?? ""} roles={roles}
           uploading={uploading} onUpload={handleAvatarUpload}
           onUrlChange={(url) => setAvatarUrl(url)}
+          isSuperAdmin={isSuperAdmin}
         />
       </div>
 

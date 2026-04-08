@@ -520,7 +520,7 @@ export default function SuperAdminModule() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const res = await supabase.functions.invoke("invite-user", {
-        body: { email: inviteEmail.trim(), role: inviteRole },
+        body: { email: inviteEmail.trim(), role: inviteRole, redirectUrl: `${window.location.origin}/set-password` },
         headers: { Authorization: `Bearer ${session?.access_token}` },
       });
       if (res.error) throw new Error(res.error.message);
@@ -583,12 +583,41 @@ export default function SuperAdminModule() {
     }
   };
 
-  // ── Revoke invitation ─────────────────────────────────────────────────────
-  const revokeInvitation = async (invId: string) => {
+  // ── Revoke / delete invitation ────────────────────────────────────────────
+  const revokeInvitation = async (invId: string, isAccepted: boolean) => {
+    const label = isAccepted ? "Delete this accepted invitation?" : "Revoke this pending invitation?";
+    if (!confirm(label)) return;
     try {
       await (supabase as any).from("invitations").delete().eq("id", invId);
-      toast({ title: "Invitation revoked" });
+      toast({ title: isAccepted ? "Invitation deleted" : "Invitation revoked" });
       loadData();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  };
+
+  // ── Delete user ───────────────────────────────────────────────────────────
+  const deleteUser = async (targetId: string, name: string) => {
+    if (targetId === user?.id) {
+      toast({ title: "Cannot delete your own account", variant: "destructive" });
+      return;
+    }
+    if (!confirm(`Delete user "${name}"? This cannot be undone.`)) return;
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await supabase.functions.invoke("delete-user", {
+        body: { user_ids: [targetId] },
+        headers: { Authorization: `Bearer ${session?.access_token}` },
+      });
+      if (res.error) throw new Error(res.error.message);
+      const results = (res.data?.results ?? []) as { success: boolean; error?: string }[];
+      const failed = results.filter(r => !r.success);
+      if (failed.length > 0) {
+        toast({ title: "Deletion failed", description: failed[0]?.error ?? "Unknown error", variant: "destructive" });
+      } else {
+        toast({ title: "User deleted" });
+        loadData();
+      }
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     }
@@ -870,6 +899,16 @@ export default function SuperAdminModule() {
                           </SelectContent>
                         </Select>
                       )}
+                      {/* Delete user */}
+                      {u.id !== user?.id && (
+                        <button
+                          onClick={() => deleteUser(u.id, u.full_name || u.email)}
+                          className="text-crm-text-faint hover:text-red-400 transition-colors mt-1"
+                          title="Delete user"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -914,24 +953,24 @@ export default function SuperAdminModule() {
                         {cfg?.label ?? inv.role} · Invited {new Date(inv.created_at).toLocaleDateString()}
                       </p>
                     </div>
-                    {inv.accepted_at ? (
-                      <span className="flex items-center gap-1 text-[10px] text-emerald-400">
-                        <CheckCircle2 size={11} /> Accepted
-                      </span>
-                    ) : (
-                      <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {inv.accepted_at ? (
+                        <span className="flex items-center gap-1 text-[10px] text-emerald-400">
+                          <CheckCircle2 size={11} /> Accepted
+                        </span>
+                      ) : (
                         <span className="text-[10px] text-amber-400 flex items-center gap-1">
                           <Clock size={10} /> Pending
                         </span>
-                        <button
-                          onClick={() => revokeInvitation(inv.id)}
-                          className="text-crm-text-faint hover:text-red-400 transition-colors"
-                          title="Revoke"
-                        >
-                          <Trash2 size={12} />
-                        </button>
-                      </div>
-                    )}
+                      )}
+                      <button
+                        onClick={() => revokeInvitation(inv.id, !!inv.accepted_at)}
+                        className="text-crm-text-faint hover:text-red-400 transition-colors"
+                        title={inv.accepted_at ? "Delete" : "Revoke"}
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
                   </div>
                 );
               })}

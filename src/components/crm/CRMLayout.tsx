@@ -1,8 +1,8 @@
 import { ReactNode, useState, useRef, useEffect } from "react";
-import { Bell, Settings, X, Sun, Moon, User, Lock, Globe, LogOut } from "lucide-react";
+import { Bell, Settings, X, Sun, Moon, User, Lock, Globe, LogOut, CheckCircle2 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { format, parseISO, isToday, addHours } from "date-fns";
+import { format, parseISO } from "date-fns";
 import CRMSidebar from "./CRMSidebar";
 import { CRM_MODULES } from "./crmModules";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +15,29 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
+import {
+  Select as UISelect,
+  SelectContent as UISelectContent,
+  SelectItem as UISelectItem,
+  SelectTrigger as UISelectTrigger,
+  SelectValue as UISelectValue,
+} from "@/components/ui/select";
+
+const ECOWAS_COUNTRIES = [
+  "Benin","Burkina Faso","Cape Verde","Côte d'Ivoire","Gambia",
+  "Ghana","Guinea","Guinea-Bissau","Liberia","Mali","Niger",
+  "Nigeria","Senegal","Sierra Leone","Togo",
+];
 
 interface CRMLayoutProps {
   activeSection: string;
@@ -87,17 +110,17 @@ function useNotifications() {
         });
       });
 
-      // Events today
-      const todayStart = new Date();
-      todayStart.setHours(0, 0, 0, 0);
+      // Events today created by this user or in next 2 hours
+      const nowTs = new Date();
       const todayEnd = new Date();
       todayEnd.setHours(23, 59, 59, 999);
 
       const evtRes = await (supabase as any)
         .from("crm_calendar_events")
-        .select("id, title, start_time")
-        .gte("start_time", todayStart.toISOString())
+        .select("id, title, start_time, created_by")
+        .gte("start_time", nowTs.toISOString())
         .lte("start_time", todayEnd.toISOString())
+        .eq("created_by", user!.id)
         .order("start_time", { ascending: true })
         .limit(3);
 
@@ -154,9 +177,25 @@ const NOTIF_ICON: Record<NotifItem["type"], string> = {
 // ─── Notification dropdown ────────────────────────────────────────────────────
 function NotificationBell({ onNavigate }: { onNavigate: (s: string) => void }) {
   const [open, setOpen] = useState(false);
+  const [dismissed, setDismissed] = useState<Set<string>>(new Set());
   const ref = useRef<HTMLDivElement>(null);
-  const { data: notifs = [], isLoading } = useNotifications();
-  const unread = notifs.filter(n => !n.read).length;
+  const qc = useQueryClient();
+  const { user } = useAuthContext();
+  const { data: rawNotifs = [], isLoading } = useNotifications();
+
+  const notifs = rawNotifs.filter(n => !dismissed.has(n.id));
+  const unread = notifs.length;
+
+  const markMessageRead = useMutation({
+    mutationFn: async (messageId: string) => {
+      await (supabase as any)
+        .from("crm_messages")
+        .update({ is_read: true })
+        .eq("id", messageId)
+        .eq("to_user_id", user?.id);
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["crm-notifications", user?.id] }),
+  });
 
   // Close on outside click
   useEffect(() => {
@@ -169,10 +208,23 @@ function NotificationBell({ onNavigate }: { onNavigate: (s: string) => void }) {
 
   const handleNotifClick = (n: NotifItem) => {
     setOpen(false);
-    if (n.type === "message")     onNavigate("inbox");
-    if (n.type === "task")        onNavigate("tasks");
-    if (n.type === "event")       onNavigate("calendar");
-    if (n.type === "application") onNavigate("parliament-ops");
+    // Dismiss locally
+    setDismissed(prev => new Set(prev).add(n.id));
+    // Mark message as read in DB
+    if (n.type === "message" && n.sourceId) {
+      markMessageRead.mutate(n.sourceId);
+      onNavigate("email-inbox");
+    } else if (n.type === "task") {
+      onNavigate("tasks");
+    } else if (n.type === "event") {
+      onNavigate("calendar");
+    } else if (n.type === "application") {
+      onNavigate("parliament-ops");
+    }
+  };
+
+  const handleDismissAll = () => {
+    setDismissed(new Set(rawNotifs.map(n => n.id)));
   };
 
   return (
@@ -196,11 +248,18 @@ function NotificationBell({ onNavigate }: { onNavigate: (s: string) => void }) {
         <div className="absolute right-0 top-full mt-2 w-80 bg-crm-card border border-crm-border rounded-xl shadow-2xl shadow-black/60 z-50 overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-crm-border">
             <span className="text-[12px] font-semibold text-crm-text-secondary">Notifications</span>
-            {unread > 0 && (
-              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-red-950 border border-red-800 text-red-400">
-                {unread} new
-              </span>
-            )}
+            <div className="flex items-center gap-2">
+              {unread > 0 && (
+                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-red-950 border border-red-800 text-red-400">
+                  {unread} new
+                </span>
+              )}
+              {unread > 0 && (
+                <button onClick={handleDismissAll} className="text-[9px] text-crm-text-faint hover:text-crm-text-muted transition-colors">
+                  Dismiss all
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="max-h-80 overflow-y-auto">
@@ -240,10 +299,10 @@ function NotificationBell({ onNavigate }: { onNavigate: (s: string) => void }) {
             )}
           </div>
 
-          {notifs.length > 0 && (
+          {rawNotifs.length > 0 && (
             <div className="px-4 py-2 border-t border-crm-border">
               <button
-                onClick={() => { onNavigate("inbox"); setOpen(false); }}
+                onClick={() => { onNavigate("email-inbox"); setOpen(false); }}
                 className="text-[10px] text-emerald-500 hover:text-emerald-400 transition-colors"
               >
                 Go to inbox →
@@ -253,6 +312,143 @@ function NotificationBell({ onNavigate }: { onNavigate: (s: string) => void }) {
         </div>
       )}
     </div>
+  );
+}
+
+// ─── Profile Completion Modal ─────────────────────────────────────────────────
+function ProfileCompletionModal({ userId }: { userId: string }) {
+  const { toast } = useToast();
+  const qc = useQueryClient();
+
+  const { data: profile, isLoading } = useQuery({
+    queryKey: ["profile-completion-check", userId],
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("profiles")
+        .select("full_name, title, country, phone")
+        .eq("id", userId)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!userId,
+  });
+
+  const needsCompletion = !isLoading && profile && (!profile.full_name || !profile.title);
+
+  const [fullName, setFullName] = useState("");
+  const [title, setTitle] = useState("");
+  const [country, setCountry] = useState("");
+  const [phone, setPhone] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (profile) {
+      setFullName(profile.full_name ?? "");
+      setTitle(profile.title ?? "");
+      setCountry(profile.country ?? "");
+      setPhone(profile.phone ?? "");
+    }
+  }, [profile]);
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!fullName.trim() || !title.trim()) {
+      toast({ title: "Full name and title are required", variant: "destructive" });
+      return;
+    }
+    setSaving(true);
+    try {
+      const { error } = await (supabase as any)
+        .from("profiles")
+        .update({
+          full_name: fullName.trim(),
+          title: title.trim(),
+          country: country || null,
+          phone: phone.trim() || null,
+        })
+        .eq("id", userId);
+      if (error) throw error;
+      qc.invalidateQueries({ queryKey: ["profile-completion-check", userId] });
+      toast({ title: "Profile saved" });
+    } catch (err: any) {
+      toast({ title: "Failed to save profile", description: err.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (isLoading || !needsCompletion) return null;
+
+  return (
+    <Dialog open modal>
+      <DialogContent
+        className="bg-crm-card border-crm-border text-crm-text max-w-md"
+        onInteractOutside={e => e.preventDefault()}
+        onEscapeKeyDown={e => e.preventDefault()}
+      >
+        <DialogHeader>
+          <DialogTitle className="text-base font-semibold text-crm-text flex items-center gap-2">
+            <User size={16} className="text-emerald-400" />
+            Complete your profile
+          </DialogTitle>
+        </DialogHeader>
+        <p className="text-[12px] text-crm-text-muted -mt-1">
+          Please fill in the required information before using the CRM.
+        </p>
+        <form onSubmit={handleSave} className="space-y-4 mt-1">
+          <div className="space-y-1.5">
+            <Label className="text-[11px] text-crm-text-muted">Full Name <span className="text-red-400">*</span></Label>
+            <Input
+              value={fullName}
+              onChange={e => setFullName(e.target.value)}
+              placeholder="e.g. Amara Koné"
+              required
+              className="bg-crm-surface border-crm-border text-crm-text text-sm"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-[11px] text-crm-text-muted">Title / Position <span className="text-red-400">*</span></Label>
+            <Input
+              value={title}
+              onChange={e => setTitle(e.target.value)}
+              placeholder="e.g. Programme Coordinator"
+              required
+              className="bg-crm-surface border-crm-border text-crm-text text-sm"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-[11px] text-crm-text-muted">Country</Label>
+            <UISelect value={country} onValueChange={setCountry}>
+              <UISelectTrigger className="bg-crm-surface border-crm-border text-crm-text text-sm">
+                <UISelectValue placeholder="Select country" />
+              </UISelectTrigger>
+              <UISelectContent className="bg-crm-card border-crm-border text-crm-text">
+                {ECOWAS_COUNTRIES.map(c => (
+                  <UISelectItem key={c} value={c}>{c}</UISelectItem>
+                ))}
+              </UISelectContent>
+            </UISelect>
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-[11px] text-crm-text-muted">Phone (optional)</Label>
+            <Input
+              value={phone}
+              onChange={e => setPhone(e.target.value)}
+              placeholder="+226 00 00 00 00"
+              type="tel"
+              className="bg-crm-surface border-crm-border text-crm-text text-sm"
+            />
+          </div>
+          <Button
+            type="submit"
+            disabled={saving || !fullName.trim() || !title.trim()}
+            className="w-full bg-emerald-700 hover:bg-emerald-600 text-white font-semibold gap-2"
+          >
+            {saving ? "Saving…" : "Save & Continue"}
+          </Button>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -399,6 +595,9 @@ export default function CRMLayout({ activeSection, onNavigate, children }: CRMLa
           {children}
         </main>
       </div>
+
+      {/* Profile completion gate */}
+      {user && <ProfileCompletionModal userId={user.id} />}
     </div>
   );
 }
