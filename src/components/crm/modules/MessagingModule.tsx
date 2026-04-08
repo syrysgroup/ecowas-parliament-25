@@ -241,6 +241,39 @@ function MessageBubble({ body, senderName, time, isOwn, avatarUrl, readAt, deliv
   );
 }
 
+// ─── Presence Hook ────────────────────────────────────────────────────────────
+function usePresenceData() {
+  const { data: presenceMap = {} } = useQuery<Record<string, { is_online: boolean; last_seen_at: string }>>({
+    queryKey: ["user-presence"],
+    queryFn: async () => {
+      const { data } = await (supabase as any).from("user_presence").select("user_id, is_online, last_seen_at");
+      const map: Record<string, { is_online: boolean; last_seen_at: string }> = {};
+      for (const row of (data ?? [])) {
+        map[row.user_id] = { is_online: row.is_online, last_seen_at: row.last_seen_at };
+      }
+      return map;
+    },
+    refetchInterval: 30_000,
+  });
+  return presenceMap;
+}
+
+function isUserOnline(presence: { is_online: boolean; last_seen_at: string } | undefined): boolean {
+  if (!presence) return false;
+  if (!presence.is_online) return false;
+  const twoMinAgo = Date.now() - 2 * 60 * 1000;
+  return new Date(presence.last_seen_at).getTime() > twoMinAgo;
+}
+
+function PresenceDot({ online, size = 8 }: { online: boolean; size?: number }) {
+  return (
+    <span
+      className={`inline-block rounded-full flex-shrink-0 ${online ? "bg-emerald-500" : "bg-muted-foreground/40"}`}
+      style={{ width: size, height: size }}
+    />
+  );
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 export default function MessagingModule() {
   const { user } = useAuthContext();
@@ -248,6 +281,7 @@ export default function MessagingModule() {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const presenceMap = usePresenceData();
 
   const [view, setView] = useState<ActiveView | null>(null);
   const [body, setBody] = useState("");
