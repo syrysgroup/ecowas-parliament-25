@@ -34,10 +34,11 @@ async function getZohoToken(): Promise<string> {
 }
 
 async function resolveZohoAccountId(serviceClient: any, acct: any, token: string): Promise<string> {
-  // Validate cached ID before trusting it
   if (acct.zoho_account_id) {
+    // Validate cached ID
+    const orgId = Deno.env.get("ZOHO_ORG_ID")!;
     const probe = await fetch(
-      `https://mail.zoho.eu/api/accounts/${acct.zoho_account_id}/folders`,
+      `https://mail.zoho.eu/api/organization/${orgId}/accounts/${acct.zoho_account_id}/folders`,
       { headers: { Authorization: `Zoho-oauthtoken ${token}` } }
     );
     if (probe.ok) return acct.zoho_account_id as string;
@@ -46,8 +47,8 @@ async function resolveZohoAccountId(serviceClient: any, acct: any, token: string
       .update({ zoho_account_id: null }).eq("id", acct.id);
   }
 
-  // Use /api/accounts (user-level) — same as sync-emails
-  const accountsRes = await fetch("https://mail.zoho.eu/api/accounts", {
+  const orgId = Deno.env.get("ZOHO_ORG_ID")!;
+  const accountsRes = await fetch(`https://mail.zoho.eu/api/organization/${orgId}/accounts`, {
     headers: { Authorization: `Zoho-oauthtoken ${token}` },
   });
   if (!accountsRes.ok) {
@@ -93,7 +94,6 @@ Deno.serve(async (req) => {
 
     const { to, cc, subject, bodyHtml, replyToId, attachments } = await req.json();
     if (!to || !subject) return new Response(JSON.stringify({ error: "to and subject required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    // attachments: [{ name: string, base64: string, contentType: string }]
 
     const serviceClient = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
@@ -131,7 +131,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Send via Zoho
+    const orgId = Deno.env.get("ZOHO_ORG_ID")!;
+
+    // Send via Zoho org-level API
     const sendPayload: Record<string, any> = {
       fromAddress: acct.email_address,
       toAddress: to,
@@ -148,7 +150,7 @@ Deno.serve(async (req) => {
       }));
     }
 
-    const sendRes = await fetch(`https://mail.zoho.eu/api/accounts/${zohoAccountId}/messages`, {
+    const sendRes = await fetch(`https://mail.zoho.eu/api/organization/${orgId}/accounts/${zohoAccountId}/messages`, {
       method: "POST",
       headers: {
         Authorization: `Zoho-oauthtoken ${token}`,

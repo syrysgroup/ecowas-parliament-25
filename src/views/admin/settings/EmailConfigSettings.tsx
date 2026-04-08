@@ -1,108 +1,343 @@
 import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuthContext } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { useGlobalSettings } from "@/contexts/GlobalSettingsContext";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Plus, Pencil, RefreshCw, Lock, CheckCircle, Clock, Mail } from "lucide-react";
+import { format, parseISO } from "date-fns";
+
+interface EmailAccountRow {
+  id: string;
+  user_id: string;
+  email_address: string;
+  display_name: string | null;
+  is_active: boolean;
+  zoho_account_id: string | null;
+  last_synced_at: string | null;
+  app_password: string | null;
+  profile?: { full_name: string; email: string } | null;
+}
+
+interface ProfileOption {
+  id: string;
+  full_name: string;
+  email: string;
+}
 
 const EmailConfigSettings = () => {
-  const { settings, updateSetting } = useGlobalSettings();
-  const stored = (settings.smtp as Record<string, any>) ?? {};
+  const { roles } = useAuthContext();
+  const qc = useQueryClient();
+  const isSuperAdmin = roles.includes("super_admin");
 
-  const [host, setHost] = useState(stored.host ?? "smtppro.zoho.eu");
-  const [port, setPort] = useState(String(stored.port ?? 465));
-  const [username, setUsername] = useState(stored.username ?? "");
-  const [password, setPassword] = useState("");
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingAccount, setEditingAccount] = useState<EmailAccountRow | null>(null);
+  const [selectedUserId, setSelectedUserId] = useState("");
+  const [emailAddress, setEmailAddress] = useState("");
+  const [appPassword, setAppPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [syncingId, setSyncingId] = useState<string | null>(null);
 
-  // IMAP settings
-  const [imapHost, setImapHost] = useState(stored.imap_host ?? "imappro.zoho.eu");
-  const [imapPort, setImapPort] = useState(String(stored.imap_port ?? 993));
-  const [sslEnabled, setSslEnabled] = useState(stored.ssl_enabled !== false);
+  // Fetch all email accounts with profiles
+  const { data: accounts = [], isLoading } = useQuery<EmailAccountRow[]>({
+    queryKey: ["admin-email-accounts"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("email_accounts")
+        .select("id, user_id, email_address, display_name, is_active, zoho_account_id, last_synced_at, app_password")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      // Fetch profiles for all user_ids
+      const userIds = [...new Set((data ?? []).map((a: any) => a.user_id))];
+      let profileMap: Record<string, ProfileOption> = {};
+      if (userIds.length > 0) {
+        const { data: profiles } = await (supabase as any)
+          .from("profiles")
+          .select("id, full_name, email")
+          .in("id", userIds);
+        for (const p of (profiles ?? [])) profileMap[p.id] = p;
+      }
+      return (data ?? []).map((a: any) => ({
+        ...a,
+        profile: profileMap[a.user_id] ?? null,
+      }));
+    },
+    enabled: isSuperAdmin,
+  });
+
+  // Profiles for dropdown
+  const { data: profiles = [] } = useQuery<ProfileOption[]>({
+    queryKey: ["all-profiles-for-email"],
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("profiles")
+        .select("id, full_name, email")
+        .order("full_name");
+      return data ?? [];
+    },
+    enabled: isSuperAdmin,
+  });
+
+  if (!isSuperAdmin) return null;
+
+  const openAdd = () => {
+    setEditingAccount(null);
+    setSelectedUserId("");
+    setEmailAddress("");
+    setAppPassword("");
+    setShowPw(false);
+    setModalOpen(true);
+  };
+
+  const openEdit = (acct: EmailAccountRow) => {
+    setEditingAccount(acct);
+    setSelectedUserId(acct.user_id);
+    setEmailAddress(acct.email_address);
+    setAppPassword("");
+    setShowPw(false);
+    setModalOpen(true);
+  };
 
   const handleSave = async () => {
-    const smtp: Record<string, any> = {
-      host,
-      port: Number(port),
-      username,
-      imap_host: imapHost,
-      imap_port: Number(imapPort),
-      ssl_enabled: sslEnabled,
-    };
-    if (password) smtp.password_hint = "***";
-    await updateSetting("smtp", smtp);
-    toast.success("Email config saved");
+    if (!selectedUserId || !emailAddress.trim()) return;
+    setSaving(true);
+    try {
+      const payload: Record<string, any> = {
+        user_id: selectedUserId,
+        email_address: emailAddress.trim(),
+        is_active: true,
+      };
+      if (appPassword) payload.app_password = appPassword;
+
+      if (editingAccount) {
+        const { error } = await (supabase as any)
+          .from("email_accounts")
+          .update(payload)
+          .eq("id", editingAccount.id);
+        if (error) throw error;
+        toast.success("Email account updated");
+      } else {
+        const { error } = await (supabase as any)
+          .from("email_accounts")
+          .upsert(payload, { onConflict: "user_id" });
+        if (error) throw error;
+        toast.success("Email account added");
+      }
+      qc.invalidateQueries({ queryKey: ["admin-email-accounts"] });
+      setModalOpen(false);
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleTest = () => {
-    toast.info("Test connection feature requires server-side SMTP. Add a Supabase Edge Function to handle this.");
+  const handleToggleActive = async (acct: EmailAccountRow) => {
+    try {
+      const { error } = await (supabase as any)
+        .from("email_accounts")
+        .update({ is_active: !acct.is_active })
+        .eq("id", acct.id);
+      if (error) throw error;
+      toast.success(acct.is_active ? "Account deactivated" : "Account activated");
+      qc.invalidateQueries({ queryKey: ["admin-email-accounts"] });
+    } catch (err: any) {
+      toast.error(err.message);
+    }
   };
+
+  const handleTestSync = async (acct: EmailAccountRow) => {
+    setSyncingId(acct.id);
+    try {
+      // We need to invoke sync-emails on behalf of the account user
+      // Using the service role key via an edge function call
+      const { data: { session } } = await supabase.auth.getSession();
+      const { data, error } = await supabase.functions.invoke("sync-emails", {
+        headers: { Authorization: `Bearer ${session?.access_token}` },
+      });
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
+      const count = data?.newEmailCount ?? 0;
+      toast.success(`Sync complete: ${count} new email(s)`);
+      qc.invalidateQueries({ queryKey: ["admin-email-accounts"] });
+    } catch (err: any) {
+      toast.error(`Sync failed: ${err.message}`);
+    } finally {
+      setSyncingId(null);
+    }
+  };
+
+  const handleUserSelect = (userId: string) => {
+    setSelectedUserId(userId);
+    if (!editingAccount) {
+      const p = profiles.find(pr => pr.id === userId);
+      if (p) setEmailAddress(p.email);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4 max-w-4xl">
+        <Skeleton className="h-8 w-48" />
+        {[1, 2, 3].map(i => <Skeleton key={i} className="h-16 w-full" />)}
+      </div>
+    );
+  }
 
   return (
-    <div className="flex flex-col gap-6 max-w-lg">
-      {/* SMTP / Outgoing */}
-      <div>
-        <h4 className="text-sm font-semibold text-foreground mb-3">Outgoing (SMTP)</h4>
-        <div className="grid sm:grid-cols-2 gap-4">
-          <div className="space-y-1.5">
-            <Label>SMTP Host</Label>
-            <Input value={host} onChange={(e) => setHost(e.target.value)} placeholder="smtppro.zoho.eu" />
-          </div>
-          <div className="space-y-1.5">
-            <Label>SMTP Port</Label>
-            <Input value={port} onChange={(e) => setPort(e.target.value)} placeholder="465" type="number" />
-          </div>
-          <div className="space-y-1.5">
-            <Label>Username</Label>
-            <Input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="user@example.com" />
-          </div>
-          <div className="space-y-1.5">
-            <Label>Password</Label>
-            <div className="relative">
-              <Input
-                type={showPw ? "text" : "password"}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Leave blank to keep existing"
-                className="pr-9"
-              />
-              <button
-                type="button"
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground"
-                onClick={() => setShowPw(!showPw)}
-              >
-                {showPw ? <EyeOff size={14} /> : <Eye size={14} />}
-              </button>
+    <div className="space-y-6 max-w-4xl">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-semibold text-foreground">Email Accounts</h3>
+          <p className="text-sm text-muted-foreground">Manage Zoho Mail accounts for CRM users</p>
+        </div>
+        <Button onClick={openAdd} size="sm" className="gap-2">
+          <Plus size={14} /> Add Email Account
+        </Button>
+      </div>
+
+      {accounts.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-16 border border-dashed border-border rounded-xl">
+          <Mail size={40} className="text-muted-foreground mb-3" />
+          <p className="text-sm text-muted-foreground mb-4">No email accounts configured</p>
+          <Button onClick={openAdd} size="sm" variant="outline" className="gap-2">
+            <Plus size={14} /> Add Email Account
+          </Button>
+        </div>
+      ) : (
+        <div className="border border-border rounded-xl overflow-hidden">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/50">
+              <tr className="text-left text-muted-foreground text-xs">
+                <th className="px-4 py-3 font-medium">User</th>
+                <th className="px-4 py-3 font-medium">Email</th>
+                <th className="px-4 py-3 font-medium">Status</th>
+                <th className="px-4 py-3 font-medium">Zoho</th>
+                <th className="px-4 py-3 font-medium">Last Synced</th>
+                <th className="px-4 py-3 font-medium">Password</th>
+                <th className="px-4 py-3 font-medium text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {accounts.map(acct => (
+                <tr key={acct.id} className="hover:bg-muted/30 transition-colors">
+                  <td className="px-4 py-3 font-medium text-foreground">
+                    {acct.profile?.full_name ?? "Unknown"}
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground">{acct.email_address}</td>
+                  <td className="px-4 py-3">
+                    <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full ${
+                      acct.is_active
+                        ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                        : "bg-destructive/10 text-destructive"
+                    }`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${acct.is_active ? "bg-emerald-500" : "bg-destructive"}`} />
+                      {acct.is_active ? "Active" : "Inactive"}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    {acct.zoho_account_id ? (
+                      <span className="inline-flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400">
+                        <CheckCircle size={12} /> Resolved
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400">
+                        <Clock size={12} /> Pending
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-xs text-muted-foreground">
+                    {acct.last_synced_at ? format(parseISO(acct.last_synced_at), "d MMM yyyy, h:mm a") : "Never"}
+                  </td>
+                  <td className="px-4 py-3">
+                    {acct.app_password ? (
+                      <Lock size={14} className="text-muted-foreground" />
+                    ) : (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center justify-end gap-1">
+                      <Button size="sm" variant="ghost" onClick={() => openEdit(acct)} className="h-7 px-2">
+                        <Pencil size={13} />
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => handleTestSync(acct)}
+                        disabled={syncingId === acct.id} className="h-7 px-2">
+                        <RefreshCw size={13} className={syncingId === acct.id ? "animate-spin" : ""} />
+                      </Button>
+                      <Switch
+                        checked={acct.is_active}
+                        onCheckedChange={() => handleToggleActive(acct)}
+                        className="scale-75"
+                      />
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Add / Edit Modal */}
+      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{editingAccount ? "Edit Email Account" : "Add Email Account"}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <Label>User</Label>
+              <Select value={selectedUserId} onValueChange={handleUserSelect} disabled={!!editingAccount}>
+                <SelectTrigger><SelectValue placeholder="Select a user" /></SelectTrigger>
+                <SelectContent>
+                  {profiles.map(p => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.full_name} ({p.email})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Email Address</Label>
+              <Input value={emailAddress} onChange={e => setEmailAddress(e.target.value)} placeholder="user@domain.org" />
+            </div>
+            <div className="space-y-1.5">
+              <Label>App Password</Label>
+              <div className="relative">
+                <Input
+                  type={showPw ? "text" : "password"}
+                  value={appPassword}
+                  onChange={e => setAppPassword(e.target.value)}
+                  placeholder={editingAccount ? "Leave blank to keep existing" : "Enter app password"}
+                  className="pr-9"
+                />
+                <button
+                  type="button"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground"
+                  onClick={() => setShowPw(!showPw)}
+                >
+                  {showPw ? <EyeOff size={14} /> : <Eye size={14} />}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* IMAP / Incoming */}
-      <div>
-        <h4 className="text-sm font-semibold text-foreground mb-3">Incoming (IMAP)</h4>
-        <div className="grid sm:grid-cols-2 gap-4">
-          <div className="space-y-1.5">
-            <Label>IMAP Host</Label>
-            <Input value={imapHost} onChange={(e) => setImapHost(e.target.value)} placeholder="imappro.zoho.eu" />
-          </div>
-          <div className="space-y-1.5">
-            <Label>IMAP Port</Label>
-            <Input value={imapPort} onChange={(e) => setImapPort(e.target.value)} placeholder="993" type="number" />
-          </div>
-          <div className="sm:col-span-2 flex items-center gap-3">
-            <Switch checked={sslEnabled} onCheckedChange={setSslEnabled} />
-            <Label className="cursor-pointer">Require SSL</Label>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex gap-2">
-        <Button onClick={handleSave}>Save Config</Button>
-        <Button variant="outline" onClick={handleTest}>Test Connection</Button>
-      </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setModalOpen(false)}>Cancel</Button>
+            <Button onClick={handleSave} disabled={saving || !selectedUserId || !emailAddress.trim()}>
+              {saving ? "Saving…" : "Save"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
