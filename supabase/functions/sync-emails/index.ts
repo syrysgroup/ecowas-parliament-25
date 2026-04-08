@@ -62,9 +62,14 @@ async function resolveZohoAccountId(serviceClient: any, acct: any, token: string
   const match = accounts.find((a: any) =>
     (a.primaryEmailAddress ?? "").toLowerCase() === acct.email_address.toLowerCase() ||
     (a.mailboxAddress ?? "").toLowerCase() === acct.email_address.toLowerCase()
-  ) ?? accounts[0]; // fall back to first account if email doesn't match exactly
+  );
 
-  if (!match) throw new Error(`No Zoho account found. Accounts returned: ${JSON.stringify(accountsData)}`);
+  if (!match) {
+    const visible = accounts.map((a: any) => a.primaryEmailAddress ?? a.mailboxAddress).join(", ");
+    throw new Error(
+      `No Zoho mailbox matches "${acct.email_address}". Accounts on this token: [${visible || "none"}]`
+    );
+  }
 
   const zohoAccountId = String(match.accountId);
   await serviceClient.from("email_accounts").update({ zoho_account_id: zohoAccountId }).eq("id", acct.id);
