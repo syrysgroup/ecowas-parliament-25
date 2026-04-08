@@ -201,6 +201,17 @@ function EditUserDialog({ target, isSuperAdmin, onClose, onSaved }: {
   const [emailCfg, setEmailCfg] = useState<UserEmailSettings>(EMPTY_EMAIL_SETTINGS);
   const [loadingEmail, setLoadingEmail] = useState(isSuperAdmin);
   const [showPass, setShowPass] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState<{ valid: boolean; error?: string } | null>(null);
+
+  // Load global SMTP settings to auto-fill host/port
+  const { data: globalSmtp } = useQuery({
+    queryKey: ["site-settings-smtp"],
+    queryFn: async () => {
+      const { data } = await (supabase as any).from("site_settings").select("value").eq("key", "smtp").single();
+      return (data?.value as Record<string, any>) ?? {};
+    },
+  });
 
   useEffect(() => {
     setLoadingProfile(true);
@@ -229,6 +240,44 @@ function EditUserDialog({ target, isSuperAdmin, onClose, onSaved }: {
         setLoadingEmail(false);
       });
   }, [target.id, isSuperAdmin]);
+
+  // Auto-fill from global settings
+  useEffect(() => {
+    if (globalSmtp && !loadingEmail) {
+      setEmailCfg(c => ({
+        ...c,
+        smtp_host: globalSmtp.host ?? c.smtp_host || "smtppro.zoho.eu",
+        smtp_port: Number(globalSmtp.port ?? c.smtp_port || 465),
+        imap_host: globalSmtp.imap_host ?? c.imap_host || "imappro.zoho.eu",
+        imap_port: Number(globalSmtp.imap_port ?? c.imap_port || 993),
+      }));
+    }
+  }, [globalSmtp, loadingEmail]);
+
+  const handleTestConnection = async () => {
+    if (!emailCfg.smtp_user || !emailCfg.smtp_password) return;
+    setTesting(true);
+    setTestResult(null);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await supabase.functions.invoke("validate-email-credentials", {
+        body: { email: emailCfg.smtp_user, password: emailCfg.smtp_password, target_user_id: target.id },
+        headers: { Authorization: `Bearer ${session?.access_token}` },
+      });
+      const result = res.data as { valid: boolean; error?: string };
+      setTestResult(result);
+      if (result.valid) {
+        toast({ title: "Connection successful", description: `${emailCfg.smtp_user} authenticated` });
+      } else {
+        toast({ title: "Connection failed", description: result.error ?? "Unknown error", variant: "destructive" });
+      }
+    } catch (err: any) {
+      setTestResult({ valid: false, error: err.message });
+      toast({ title: "Test failed", description: err.message, variant: "destructive" });
+    } finally {
+      setTesting(false);
+    }
+  };
 
   const handleAvatarUpload = async (file: File) => {
     setUploading(true);
@@ -317,15 +366,12 @@ function EditUserDialog({ target, isSuperAdmin, onClose, onSaved }: {
           {isSuperAdmin && !loadingEmail && (
             <div className="space-y-3 border-t border-crm-border pt-3">
               <p className="text-[11px] font-semibold text-amber-400 uppercase tracking-wider">Email Credentials</p>
-              <div className="grid grid-cols-3 gap-2">
-                <div className="col-span-2 space-y-1"><Label className="text-[11px] text-crm-text-dim">SMTP Host</Label>
-                  <Input value={emailCfg.smtp_host} onChange={e => setEmailCfg(c => ({ ...c, smtp_host: e.target.value }))} className="bg-crm-surface border-crm-border text-crm-text text-xs h-8" /></div>
-                <div className="space-y-1"><Label className="text-[11px] text-crm-text-dim">Port</Label>
-                  <Input type="number" value={emailCfg.smtp_port} onChange={e => setEmailCfg(c => ({ ...c, smtp_port: Number(e.target.value) }))} className="bg-crm-surface border-crm-border text-crm-text text-xs h-8" /></div>
-              </div>
-              <div className="space-y-1"><Label className="text-[11px] text-crm-text-dim">SMTP User</Label>
-                <Input value={emailCfg.smtp_user} onChange={e => setEmailCfg(c => ({ ...c, smtp_user: e.target.value }))} className="bg-crm-surface border-crm-border text-crm-text text-xs h-8" /></div>
-              <div className="space-y-1"><Label className="text-[11px] text-crm-text-dim">SMTP Password</Label>
+              <p className="text-[10px] text-crm-text-dim">
+                Server settings (SMTP/IMAP host &amp; port) are auto-configured from global email settings.
+              </p>
+              <div className="space-y-1"><Label className="text-[11px] text-crm-text-dim">Email Address (SMTP User)</Label>
+                <Input value={emailCfg.smtp_user} onChange={e => setEmailCfg(c => ({ ...c, smtp_user: e.target.value }))} placeholder="user@domain.com" className="bg-crm-surface border-crm-border text-crm-text text-xs h-8" /></div>
+              <div className="space-y-1"><Label className="text-[11px] text-crm-text-dim">Password</Label>
                 <div className="relative">
                   <Input type={showPass ? "text" : "password"} value={emailCfg.smtp_password}
                     onChange={e => setEmailCfg(c => ({ ...c, smtp_password: e.target.value }))} className="bg-crm-surface border-crm-border text-crm-text text-xs h-8 pr-8" />
@@ -335,12 +381,18 @@ function EditUserDialog({ target, isSuperAdmin, onClose, onSaved }: {
                   </button>
                 </div>
               </div>
-              <div className="grid grid-cols-3 gap-2">
-                <div className="col-span-2 space-y-1"><Label className="text-[11px] text-crm-text-dim">IMAP Host</Label>
-                  <Input value={emailCfg.imap_host} onChange={e => setEmailCfg(c => ({ ...c, imap_host: e.target.value }))} className="bg-crm-surface border-crm-border text-crm-text text-xs h-8" /></div>
-                <div className="space-y-1"><Label className="text-[11px] text-crm-text-dim">Port</Label>
-                  <Input type="number" value={emailCfg.imap_port} onChange={e => setEmailCfg(c => ({ ...c, imap_port: Number(e.target.value) }))} className="bg-crm-surface border-crm-border text-crm-text text-xs h-8" /></div>
-              </div>
+              {testResult && (
+                <div className={`flex items-center gap-2 text-[11px] px-3 py-2 rounded-lg border ${testResult.valid ? "bg-emerald-950/50 border-emerald-800 text-emerald-400" : "bg-red-950/50 border-red-800 text-red-400"}`}>
+                  {testResult.valid ? <CheckCircle2 size={13} /> : <AlertTriangle size={13} />}
+                  {testResult.valid ? "Connection verified" : testResult.error}
+                </div>
+              )}
+              <Button type="button" size="sm" variant="outline" onClick={handleTestConnection}
+                disabled={testing || !emailCfg.smtp_user || !emailCfg.smtp_password}
+                className="border-crm-border text-crm-text-muted text-xs gap-1.5">
+                {testing ? <Loader2 size={12} className="animate-spin" /> : <Mail size={12} />}
+                {testing ? "Testing…" : "Test Connection"}
+              </Button>
             </div>
           )}
         </div>

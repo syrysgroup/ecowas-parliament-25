@@ -19,13 +19,14 @@ const DEFAULT_AVATAR = "/images/logo/logo.png";
 
 // ─── Profile Banner ───────────────────────────────────────────────────────────
 function ProfileBanner({
-  avatarUrl, fullName, title, country, joinDate, uploading, onUpload,
+  avatarUrl, fullName, title, country, joinDate, email, uploading, onUpload,
 }: {
   avatarUrl: string;
   fullName: string;
   title: string;
   country: string;
   joinDate: string;
+  email: string;
   uploading: boolean;
   onUpload: (f: File) => void;
 }) {
@@ -34,9 +35,9 @@ function ProfileBanner({
 
   return (
     <div className="relative">
-      <div className="h-32 rounded-t-xl bg-gradient-to-r from-emerald-900 via-emerald-800 to-teal-900" />
-      <div className="px-6 pb-4 pt-0 -mt-10 flex flex-col sm:flex-row items-center sm:items-end gap-4">
-        <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-xl bg-crm-card border-4 border-crm-card overflow-hidden shadow-xl flex-shrink-0">
+      <div className="h-36 rounded-t-xl bg-gradient-to-r from-emerald-900 via-emerald-800 to-teal-900" />
+      <div className="px-6 pb-5 pt-0 -mt-12 flex flex-col sm:flex-row items-center sm:items-end gap-4">
+        <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-xl bg-crm-card border-4 border-crm-card overflow-hidden shadow-xl flex-shrink-0">
           <img src={displayAvatar} alt="" className="w-full h-full object-cover" loading="lazy" />
           <button
             type="button"
@@ -49,9 +50,15 @@ function ProfileBanner({
         </div>
         <input ref={fileRef} type="file" accept="image/*" className="hidden"
           onChange={e => e.target.files?.[0] && onUpload(e.target.files[0])} />
-        <div className="text-center sm:text-left pb-1">
-          <h2 className="text-lg font-bold text-crm-text">{fullName || "Your Name"}</h2>
-          <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mt-1 text-[11px] text-crm-text-muted">
+        <div className="text-center sm:text-left pb-1 flex-1 min-w-0">
+          <h2 className="text-xl font-bold text-crm-text">{fullName || "Your Name"}</h2>
+          {email && (
+            <p className="text-[12px] text-crm-text-muted mt-0.5 flex items-center gap-1.5 justify-center sm:justify-start">
+              <Mail size={12} className="text-emerald-400 flex-shrink-0" />
+              <span className="break-all">{email}</span>
+            </p>
+          )}
+          <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mt-1.5 text-[11px] text-crm-text-muted">
             {title && <span className="flex items-center gap-1"><Briefcase size={11} /> {title}</span>}
             {country && <span className="flex items-center gap-1"><MapPin size={11} /> {country}</span>}
             {joinDate && <span className="flex items-center gap-1"><Calendar size={11} /> Joined {format(parseISO(joinDate), "MMM yyyy")}</span>}
@@ -273,7 +280,7 @@ export default function ProfileModule() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-0">
+    <div className="max-w-4xl mx-auto space-y-4">
       <div className="bg-crm-card border border-crm-border rounded-xl overflow-hidden">
         <ProfileBanner
           avatarUrl={avatarUrl}
@@ -281,6 +288,7 @@ export default function ProfileModule() {
           title={title}
           country={country}
           joinDate={joinDate}
+          email={user?.email ?? ""}
           uploading={uploading}
           onUpload={handleAvatarUpload}
         />

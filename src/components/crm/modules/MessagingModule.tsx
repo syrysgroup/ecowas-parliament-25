@@ -267,9 +267,19 @@ export default function MessagingModule() {
     queryFn: async () => {
       if (!view) return [];
       if (view.type === "channel") {
-        const { data } = await (supabase as any).from("channel_messages")
-          .select("*, sender:profiles!channel_messages_sender_id_fkey(full_name, email, avatar_url)")
+        const { data: rawMsgs } = await (supabase as any).from("channel_messages")
+          .select("*")
           .eq("channel_id", view.id).is("deleted_at", null).order("sent_at", { ascending: true }).limit(100);
+        if (rawMsgs?.length) {
+          const senderIds = [...new Set(rawMsgs.map((m: any) => m.sender_id))];
+          const { data: profiles } = await (supabase as any).from("profiles")
+            .select("id, full_name, email, avatar_url").in("id", senderIds);
+          const profileMap = new Map((profiles ?? []).map((p: any) => [p.id, p]));
+          for (const m of rawMsgs) {
+            m.sender = profileMap.get(m.sender_id) ?? { full_name: "Unknown", email: "" };
+          }
+        }
+        const data = rawMsgs;
         return data ?? [];
       } else {
         const { data } = await (supabase as any).from("direct_messages")
