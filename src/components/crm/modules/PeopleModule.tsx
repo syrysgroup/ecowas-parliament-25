@@ -246,10 +246,10 @@ function EditUserDialog({ target, isSuperAdmin, onClose, onSaved }: {
     if (globalSmtp && !loadingEmail) {
       setEmailCfg(c => ({
         ...c,
-        smtp_host: globalSmtp.host ?? c.smtp_host || "smtppro.zoho.eu",
-        smtp_port: Number(globalSmtp.port ?? c.smtp_port || 465),
-        imap_host: globalSmtp.imap_host ?? c.imap_host || "imappro.zoho.eu",
-        imap_port: Number(globalSmtp.imap_port ?? c.imap_port || 993),
+        smtp_host: (globalSmtp.host ?? c.smtp_host) || "smtppro.zoho.eu",
+        smtp_port: Number((globalSmtp.port ?? c.smtp_port) || 465),
+        imap_host: (globalSmtp.imap_host ?? c.imap_host) || "imappro.zoho.eu",
+        imap_port: Number((globalSmtp.imap_port ?? c.imap_port) || 993),
       }));
     }
   }, [globalSmtp, loadingEmail]);
