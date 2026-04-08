@@ -89,11 +89,32 @@ Deno.serve(async (req) => {
 
     const serviceClient = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
-    // Get user's email account
+    // Determine which user's mailbox to sync (admins can pass target_user_id)
+    let body: any = {};
+    try { body = await req.clone().json(); } catch { /* no body or not JSON */ }
+    const requestedUserId: string = body?.target_user_id ?? user.id;
+
+    let effectiveUserId = user.id;
+    if (requestedUserId !== user.id) {
+      const { data: roleCheck } = await serviceClient
+        .from("user_roles")
+        .select("id")
+        .eq("user_id", user.id)
+        .in("role", ["super_admin", "admin"])
+        .maybeSingle();
+      if (!roleCheck) {
+        return new Response(JSON.stringify({ error: "Only admins can sync another user's mailbox" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      effectiveUserId = requestedUserId;
+    }
+
+    // Get the target user's email account
     const { data: acct } = await serviceClient
       .from("email_accounts")
       .select("id, email_address, zoho_account_id")
-      .eq("user_id", user.id)
+      .eq("user_id", effectiveUserId)
       .eq("is_active", true)
       .single();
 

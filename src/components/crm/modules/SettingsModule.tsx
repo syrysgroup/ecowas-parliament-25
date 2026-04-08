@@ -4,6 +4,7 @@ import {
   Settings, Mail, Bell, Shield, Save, Eye, EyeOff,
   CheckCircle2, AlertTriangle, Loader2, User, Lock, Globe,
 } from "lucide-react";
+import EmailConfigSettings from "@/views/admin/settings/EmailConfigSettings";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -15,7 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import ImageUploadOrUrl from "@/components/shared/ImageUploadOrUrl";
 import { LOGO_RECOMMENDED, FAVICON_RECOMMENDED } from "@/lib/constants";
 
-type SettingsTab = "email" | "notifications" | "security" | "permissions" | "site_settings";
+type SettingsTab = "email" | "email-accounts" | "notifications" | "security" | "permissions" | "site_settings";
 
 function Section({ title, icon: Icon, children }: {
   title: string; icon: React.ElementType; children: React.ReactNode;
@@ -718,18 +719,22 @@ function SiteSettingsPanel() {
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 export default function SettingsModule() {
-  const { isSuperAdmin } = useAuthContext();
+  const { isSuperAdmin, isAdmin } = useAuthContext();
   const [tab, setTab] = useState<SettingsTab>("notifications");
 
-  const tabs: { id: SettingsTab; label: string; icon: React.ElementType; superAdminOnly?: boolean }[] = [
+  const tabs: { id: SettingsTab; label: string; icon: React.ElementType; superAdminOnly?: boolean; adminOnly?: boolean }[] = [
     { id: "notifications", label: "Notifications", icon: Bell },
     { id: "security", label: "Security", icon: Shield },
+    { id: "email-accounts", label: "Email Accounts", icon: Mail, adminOnly: true },
     { id: "email", label: "Email Config", icon: Mail, superAdminOnly: true },
     { id: "permissions", label: "Permissions", icon: Lock, superAdminOnly: true },
     { id: "site_settings", label: "Site Settings", icon: Globe, superAdminOnly: true },
   ];
 
-  const visibleTabs = tabs.filter(t => !t.superAdminOnly || isSuperAdmin);
+  const visibleTabs = tabs.filter(t =>
+    (!t.superAdminOnly || isSuperAdmin) &&
+    (!t.adminOnly || isAdmin)
+  );
 
   return (
     <div className="space-y-5 max-w-4xl">
@@ -756,12 +761,16 @@ export default function SettingsModule() {
             {t.superAdminOnly && (
               <span className="text-[8px] font-mono text-amber-400 bg-amber-950 border border-amber-800 rounded px-1">SA</span>
             )}
+            {t.adminOnly && !t.superAdminOnly && (
+              <span className="text-[8px] font-mono text-emerald-400 bg-emerald-950 border border-emerald-800 rounded px-1">A</span>
+            )}
           </button>
         ))}
       </div>
 
       {tab === "notifications" && <NotificationSettings />}
       {tab === "security" && <SecuritySettings />}
+      {tab === "email-accounts" && isAdmin && <EmailConfigSettings />}
       {tab === "email" && isSuperAdmin && <EmailSettings />}
       {tab === "permissions" && isSuperAdmin && <PermissionManager />}
       {tab === "site_settings" && isSuperAdmin && <SiteSettingsPanel />}

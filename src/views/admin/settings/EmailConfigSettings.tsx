@@ -32,9 +32,8 @@ interface ProfileOption {
 }
 
 const EmailConfigSettings = () => {
-  const { roles } = useAuthContext();
+  const { isAdmin } = useAuthContext();
   const qc = useQueryClient();
-  const isSuperAdmin = roles.includes("super_admin");
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState<EmailAccountRow | null>(null);
@@ -69,7 +68,7 @@ const EmailConfigSettings = () => {
         profile: profileMap[a.user_id] ?? null,
       }));
     },
-    enabled: isSuperAdmin,
+    enabled: isAdmin,
   });
 
   // Profiles for dropdown
@@ -82,10 +81,10 @@ const EmailConfigSettings = () => {
         .order("full_name");
       return data ?? [];
     },
-    enabled: isSuperAdmin,
+    enabled: isAdmin,
   });
 
-  if (!isSuperAdmin) return null;
+  if (!isAdmin) return null;
 
   const openAdd = () => {
     setEditingAccount(null);
@@ -156,16 +155,15 @@ const EmailConfigSettings = () => {
   const handleTestSync = async (acct: EmailAccountRow) => {
     setSyncingId(acct.id);
     try {
-      // We need to invoke sync-emails on behalf of the account user
-      // Using the service role key via an edge function call
       const { data: { session } } = await supabase.auth.getSession();
       const { data, error } = await supabase.functions.invoke("sync-emails", {
+        body: { target_user_id: acct.user_id },
         headers: { Authorization: `Bearer ${session?.access_token}` },
       });
       if (error) throw new Error(error.message);
       if (data?.error) throw new Error(data.error);
       const count = data?.newEmailCount ?? 0;
-      toast.success(`Sync complete: ${count} new email(s)`);
+      toast.success(count > 0 ? `${count} new email(s) synced` : "Inbox is up to date");
       qc.invalidateQueries({ queryKey: ["admin-email-accounts"] });
     } catch (err: any) {
       toast.error(`Sync failed: ${err.message}`);
