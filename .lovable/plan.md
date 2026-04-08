@@ -1,134 +1,97 @@
 
 
-# Plan: Fix Remaining Bugs, Redesign Profile & Chat, Add Translations
+# Plan: Zoho Org-Level Email Integration + Chat Online Status
 
-This plan addresses all outstanding issues: email sync, 404 errors, avatar defaults, profile redesign, chat improvements, branding settings, and CRM translations.
+## Overview
+Two main workstreams: (1) migrate all Zoho Mail API calls from personal-level to org-level endpoints, add admin email management panel, and improve sync feedback; (2) add online/offline presence tracking to the messaging module.
 
 ---
 
-## Part 1: Database Migration — Fix `tasks` FK
+## Part A: Zoho Org-Level Email Fix
 
-The `tasks.assignee_id` references `auth.users(id)` but the query joins to `profiles!assignee_id`. PostgREST can't resolve this because there's no FK from `tasks` to `profiles`.
+### A1. Database Migration
+Add two columns to `email_accounts`:
+- `app_password text` (nullable)
+- `last_synced_at timestamptz` (nullable)
 
-**Fix:** Drop the existing FK and re-add it pointing to `profiles(id)`.
+Add a new `user_presence` table for online status (see Part B).
 
+### A2. Update `supabase/functions/sync-emails/index.ts`
+- Replace `resolveZohoAccountId` to use org-level API: `https://mail.zoho.eu/api/organization/${ZOHO_ORG_ID}/accounts`
+- Change folders URL to org-level: `/api/organization/${orgId}/accounts/${accountId}/folders`
+- Change messages URL to org-level: `/api/organization/${orgId}/accounts/${accountId}/messages/view?...`
+- Remove the fallback re-resolution block (lines 116-125)
+- Add `last_synced_at` update after successful sync
+
+### A3. Update `supabase/functions/send-email/index.ts`
+- Replace `resolveZohoAccountId` with same org-level version
+- Change send URL to org-level: `/api/organization/${orgId}/accounts/${accountId}/messages`
+
+### A4. Update `supabase/functions/fetch-email-body/index.ts`
+- Change content URL to org-level: `/api/organization/${orgId}/accounts/${accountId}/messages/${messageId}/content`
+
+### A5. Replace `EmailConfigSettings.tsx`
+Replace the SMTP/IMAP config form with a superadmin-only Email Accounts management panel:
+- Table showing all email accounts with profile info, status badges, sync timestamps
+- "Add Email Account" button with modal (user dropdown, email, app password)
+- Per-row: Edit, Test Sync, Activate/Deactivate buttons
+- Loading skeletons and empty state
+- Only visible to `super_admin` role users
+
+### A6. Improve sync feedback in `EmailInboxModule.tsx`
+- Show success toast with email count ("3 new email(s) received" or "Inbox is up to date")
+- Show destructive toast on errors
+- Ensure `setSyncing(false)` in finally block
+- Only invalidate queries on success
+
+---
+
+## Part B: Chat Online/Offline Status
+
+### B1. Database Migration — `user_presence` table
 ```sql
-ALTER TABLE public.tasks DROP CONSTRAINT tasks_assignee_id_fkey;
-ALTER TABLE public.tasks ADD CONSTRAINT tasks_assignee_id_fkey
-  FOREIGN KEY (assignee_id) REFERENCES public.profiles(id) ON DELETE SET NULL;
+CREATE TABLE public.user_presence (
+  user_id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  last_seen_at timestamptz NOT NULL DEFAULT now(),
+  is_online boolean NOT NULL DEFAULT false
+);
+ALTER TABLE public.user_presence ENABLE ROW LEVEL SECURITY;
+-- All authenticated users can read presence
+-- Users can only upsert their own row
 ```
 
-The `user_notification_prefs` table already exists — that 404 is likely a stale cache or deploy issue.
+### B2. Presence Heartbeat Logic
+Add a custom hook `usePresence` that:
+- On mount (when user is logged in): upserts `user_presence` with `is_online = true`
+- Sends a heartbeat every 60 seconds updating `last_seen_at`
+- On unmount / beforeunload: sets `is_online = false`
+- Integrate this hook in the main app layout or auth context
+
+### B3. Update MessagingModule
+- Fetch `user_presence` data for all contacts
+- Show green dot (online) or red/gray dot (offline) next to each contact avatar in:
+  - DM conversations list (left sidebar)
+  - Contacts list (left sidebar)
+  - Chat header (when viewing a DM)
+- Consider users "online" if `is_online = true` AND `last_seen_at` is within last 2 minutes
+- Replace the hardcoded "Online" text in chat header (line 524) with actual status
 
 ---
 
-## Part 2: Fix Email Edge Functions (4 bugs)
+## Files Modified
+1. `supabase/functions/sync-emails/index.ts` — org-level API URLs
+2. `supabase/functions/send-email/index.ts` — org-level API URLs
+3. `supabase/functions/fetch-email-body/index.ts` — org-level content URL
+4. `src/views/admin/settings/EmailConfigSettings.tsx` — full rewrite to admin panel
+5. `src/components/crm/modules/EmailInboxModule.tsx` — sync feedback improvement
+6. `src/components/crm/modules/MessagingModule.tsx` — online/offline indicators
+7. `src/hooks/usePresence.ts` — new heartbeat hook
+8. `src/App.tsx` or auth context — integrate presence hook
+9. Database migration — `email_accounts` columns + `user_presence` table
 
-All four edge functions need updates and redeployment:
-
-### 2a. `send-email/index.ts`
-Already has the correct `/api/accounts` resolver. However, add a **probe-and-revalidate** step (like sync-emails does) where if the cached `zoho_account_id` fails a `/folders` probe, clear it and re-resolve. Currently send-email trusts the cache blindly if present.
-
-### 2b. `sync-emails/index.ts`
-The resolver currently trusts `acct.zoho_account_id` without probing first (line 47: `if (acct.zoho_account_id) return acct.zoho_account_id`). The main loop already handles re-resolve on folder fetch failure (lines 116-124), so this is partially covered but the resolver itself should probe first for robustness.
-
-### 2c. `update-email/index.ts`
-Already uses the correct `PUT /api/accounts/{accountId}/messages/{messageId}` endpoint and correct field names (`mode`, `isflagged`). No changes needed — just needs redeployment.
-
-### 2d. `fetch-email-body/index.ts`
-Already has the `zoho_message_id` null guard. No changes needed — just needs redeployment.
-
-**Action:** Redeploy all 4 functions to ensure latest code is live.
-
----
-
-## Part 3: Default Avatar — Parliament 25 Logo
-
-Audit all components using avatar images. Currently `DEFAULT_AVATAR = "/images/logo/logo.png"`. Ensure every avatar fallback uses this constant:
-- `ProfileModule.tsx` — already uses it
-- `MessagingModule.tsx` — already uses it
-- `CRMSidebar.tsx` — check and fix
-- `CRMLayout.tsx` — check and fix
-- `Navbar.tsx` — check and fix
-- `PeopleCard.tsx`, `TeamModule.tsx` — check and fix
-
----
-
-## Part 4: Profile Redesign
-
-Current profile has a banner + tabs but user reports "glitchy" design. Redesign with:
-- **Banner:** Clean gradient, larger avatar, prominent name/email/roles display
-- **Overview tab:** Stats cards (tasks completed, messages, connections), bio, social links all visible
-- **Details tab:** Full form with all fields including DOB, phone, social URLs
-- **Settings tab:** Notification prefs, privacy toggles
-- Fix overflow issues and ensure full responsiveness
-- Show email address prominently in the banner area (already partially done)
-
----
-
-## Part 5: Chat Improvements
-
-### 5a. Profile from Avatar/Three-dot menu
-- Avatar click → open `ProfileViewDialog`
-- Add "View Profile" option to the `MoreVertical` dropdown
-- Display users by `full_name` not email throughout chat
-
-### 5b. Delivery/Read Status + Timestamps
-- Show timestamps on every message bubble
-- Single check = sent, double check = delivered (`delivered_at` exists), blue double check = read (`read_at` exists)
-- Use existing DB columns
-
-### 5c. Collapsible/Searchable Contacts
-- Add a toggle button to collapse the contacts sidebar
-- Add search input at top to filter contacts by name
-
-### 5d. Multilingual (deferred)
-- Note in UI that browser input methods support multilingual typing
-- Full translation API integration is a separate future feature
-
----
-
-## Part 6: Branding Settings — Logo/Favicon Guidance
-
-In `BrandingSettings.tsx`:
-- Show recommended sizes inline: Logo 180×60px (retina 360×120px), Favicon 32×32px
-- Add URL input option alongside file upload
-- Connect to `global_settings` table so uploaded logo/favicon appears on public site
-
----
-
-## Part 7: URL Option for Image Uploads
-
-The `ImageUploadOrUrl` component already exists. Ensure it's used in:
-- Event cover images (EventsManagerModule)
-- News article covers (NewsEditorModule)
-- Partner logos (StakeholdersModule)
-- Sponsor logos (SponsorsManagerModule)
-- Media kit items (MediaKitModule)
-
----
-
-## Part 8: Full CRM Translation
-
-Audit all ~20 CRM module files for hardcoded English strings. Add translation keys to `en.ts`, `fr.ts`, `pt.ts`. Priority modules:
-- EmailInboxModule, MessagingModule, ProfileModule, SettingsModule
-- TaskBoardModule, CalendarModule, DashboardModule
-- All sidebar labels in CRMSidebar
-
----
-
-## Technical Summary
-
-| Action | Files |
-|--------|-------|
-| Migration: fix tasks FK | 1 SQL migration |
-| Edge functions: redeploy | 4 functions (send-email, sync-emails, update-email, fetch-email-body) |
-| Avatar audit | ~6 component files |
-| Profile redesign | ProfileModule.tsx |
-| Chat improvements | MessagingModule.tsx |
-| Branding settings | BrandingSettings.tsx |
-| ImageUploadOrUrl adoption | ~5 module files |
-| Translations | en.ts, fr.ts, pt.ts + ~20 module files |
-
-**Estimated scope:** 1 migration, 4 edge function redeployments, ~30 files modified.
+## Files NOT Modified
+- Authentication/session logic
+- Supabase secrets or env vars
+- Other edge functions (validate-email-credentials, create-email-account, etc.)
+- Any UI outside email module, EmailConfigSettings, and MessagingModule
 
