@@ -492,8 +492,9 @@ export default function MessagingModule() {
                 onClick={() => setView({ type: "dm", peerId: dm.peer_id, peerName: dm.peer_name })}
                 className={`w-full flex items-center gap-3 px-4 py-2.5 hover:bg-crm-surface transition-colors text-left
                   ${view?.type === "dm" && view.peerId === dm.peer_id ? "bg-crm-surface" : ""}`}>
-                <div className="w-8 h-8 rounded-full overflow-hidden border border-crm-border flex-shrink-0">
+                <div className="relative w-8 h-8 rounded-full overflow-hidden border border-crm-border flex-shrink-0">
                   <img src={dm.peer_avatar || DEFAULT_AVATAR} alt="" className="w-full h-full object-cover" />
+                  <span className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-crm-card ${isUserOnline(presenceMap[dm.peer_id]) ? "bg-emerald-500" : "bg-muted-foreground/40"}`} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
