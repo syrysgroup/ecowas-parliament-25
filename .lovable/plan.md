@@ -1,137 +1,134 @@
 
 
-# Implementation Plan
+# Plan: Fix Remaining Bugs, Redesign Profile & Chat, Add Translations
 
-This is a large, multi-part request covering email fixes, CRM improvements, chat enhancements, profile redesign, translations, and more. Here's the plan organized by priority.
-
----
-
-## Part 1: Fix Email Sync and Functionality (Critical)
-
-**Current state:** The edge functions (`send-email`, `sync-emails`, `update-email`, `fetch-email-body`) already have the bug fixes applied in code. The `EmailInboxModule` correctly queries Supabase. The issue is likely that the edge functions need redeployment, or the `sync-emails` function is failing silently.
-
-**Actions:**
-- Redeploy all four email edge functions: `sync-emails`, `send-email`, `update-email`, `fetch-email-body`
-- Check edge function logs after deployment to verify sync works
-- Verify the email account exists in `email_accounts` table for the logged-in user
+This plan addresses all outstanding issues: email sync, 404 errors, avatar defaults, profile redesign, chat improvements, branding settings, and CRM translations.
 
 ---
 
-## Part 2: Fix 404 Errors (Missing Tables)
+## Part 1: Database Migration — Fix `tasks` FK
 
-**`user_notification_prefs` (404):** Table doesn't exist. Create migration:
+The `tasks.assignee_id` references `auth.users(id)` but the query joins to `profiles!assignee_id`. PostgREST can't resolve this because there's no FK from `tasks` to `profiles`.
+
+**Fix:** Drop the existing FK and re-add it pointing to `profiles(id)`.
+
 ```sql
-CREATE TABLE public.user_notification_prefs (
-  user_id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  notify_new_message boolean NOT NULL DEFAULT true,
-  notify_task_assigned boolean NOT NULL DEFAULT true,
-  notify_event_reminder boolean NOT NULL DEFAULT true,
-  notify_system_updates boolean NOT NULL DEFAULT true,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now()
-);
-ALTER TABLE public.user_notification_prefs ENABLE ROW LEVEL SECURITY;
--- Users can read/write own prefs
-CREATE POLICY "Users manage own prefs" ON public.user_notification_prefs
-  FOR ALL TO authenticated USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
+ALTER TABLE public.tasks DROP CONSTRAINT tasks_assignee_id_fkey;
+ALTER TABLE public.tasks ADD CONSTRAINT tasks_assignee_id_fkey
+  FOREIGN KEY (assignee_id) REFERENCES public.profiles(id) ON DELETE SET NULL;
 ```
 
-**`tasks` table (400 on join):** The tasks table likely exists but the `assignee_id` foreign key relationship to `profiles` isn't set up, causing the `!assignee_id` join hint to fail. Fix by adding the FK if missing, or adjusting the query.
+The `user_notification_prefs` table already exists — that 404 is likely a stale cache or deploy issue.
+
+---
+
+## Part 2: Fix Email Edge Functions (4 bugs)
+
+All four edge functions need updates and redeployment:
+
+### 2a. `send-email/index.ts`
+Already has the correct `/api/accounts` resolver. However, add a **probe-and-revalidate** step (like sync-emails does) where if the cached `zoho_account_id` fails a `/folders` probe, clear it and re-resolve. Currently send-email trusts the cache blindly if present.
+
+### 2b. `sync-emails/index.ts`
+The resolver currently trusts `acct.zoho_account_id` without probing first (line 47: `if (acct.zoho_account_id) return acct.zoho_account_id`). The main loop already handles re-resolve on folder fetch failure (lines 116-124), so this is partially covered but the resolver itself should probe first for robustness.
+
+### 2c. `update-email/index.ts`
+Already uses the correct `PUT /api/accounts/{accountId}/messages/{messageId}` endpoint and correct field names (`mode`, `isflagged`). No changes needed — just needs redeployment.
+
+### 2d. `fetch-email-body/index.ts`
+Already has the `zoho_message_id` null guard. No changes needed — just needs redeployment.
+
+**Action:** Redeploy all 4 functions to ensure latest code is live.
 
 ---
 
 ## Part 3: Default Avatar — Parliament 25 Logo
 
-**Current:** `DEFAULT_AVATAR` in `src/lib/constants.ts` points to `/images/logo/logo.png`.
-
-**Action:** Ensure this file exists and is the Parliament 25 logo. Audit all avatar usages across the project to confirm they use `DEFAULT_AVATAR` from constants. Files to check/update:
-- `ProfileModule.tsx` (already uses it)
-- `MessagingModule.tsx` (already uses it)
-- `CRMSidebar.tsx`, `CRMLayout.tsx`, navbar, team cards, etc.
+Audit all components using avatar images. Currently `DEFAULT_AVATAR = "/images/logo/logo.png"`. Ensure every avatar fallback uses this constant:
+- `ProfileModule.tsx` — already uses it
+- `MessagingModule.tsx` — already uses it
+- `CRMSidebar.tsx` — check and fix
+- `CRMLayout.tsx` — check and fix
+- `Navbar.tsx` — check and fix
+- `PeopleCard.tsx`, `TeamModule.tsx` — check and fix
 
 ---
 
-## Part 4: Profile Redesign (All-Inclusive)
+## Part 4: Profile Redesign
 
-**Current:** Profile has a banner, about card, stats, and edit form in tabs. Already fairly complete but user reports glitchy design.
-
-**Improvements:**
-- Fix layout overflow/visibility issues in the banner and form sections
-- Ensure email address is prominently visible (already partially done)
-- Make the profile fully responsive with proper spacing
-- Add missing fields display: date of birth formatted, all social links visible
-- Improve the "Overview Stats" section with real data queries (tasks done, connections, etc.)
-- Clean up tab styling and ensure consistent CRM theme
+Current profile has a banner + tabs but user reports "glitchy" design. Redesign with:
+- **Banner:** Clean gradient, larger avatar, prominent name/email/roles display
+- **Overview tab:** Stats cards (tasks completed, messages, connections), bio, social links all visible
+- **Details tab:** Full form with all fields including DOB, phone, social URLs
+- **Settings tab:** Notification prefs, privacy toggles
+- Fix overflow issues and ensure full responsiveness
+- Show email address prominently in the banner area (already partially done)
 
 ---
 
 ## Part 5: Chat Improvements
 
-### 5a. User Profile from Avatar/Three-Dot Menu
-**Current:** `ProfileViewDialog` already exists in `MessagingModule.tsx` and shows name, email, phone, country, org, LinkedIn, Twitter.
+### 5a. Profile from Avatar/Three-dot menu
+- Avatar click → open `ProfileViewDialog`
+- Add "View Profile" option to the `MoreVertical` dropdown
+- Display users by `full_name` not email throughout chat
 
-**Improvements:**
-- Ensure clicking avatar opens profile dialog
-- Add profile view option to the three-dot (`MoreVertical`) menu
-- Display users by full name (first + last), not email
-
-### 5b. Delivery/Read Status and Timestamps
-- Add delivered/read indicators (checkmarks) to messages — single check for sent, double check for delivered, blue double check for read
-- Show timestamps on each message
-- Use the existing `delivered_at`, `read_at` columns on `direct_messages` and `channel_messages`
+### 5b. Delivery/Read Status + Timestamps
+- Show timestamps on every message bubble
+- Single check = sent, double check = delivered (`delivered_at` exists), blue double check = read (`read_at` exists)
+- Use existing DB columns
 
 ### 5c. Collapsible/Searchable Contacts
-- Make the contacts sidebar collapsible
-- Add search input to filter contacts by name
+- Add a toggle button to collapse the contacts sidebar
+- Add search input at top to filter contacts by name
 
-### 5d. Multilingual Text Input
-- This is a complex feature (real-time translation). Suggest using browser's built-in input methods for now, and potentially integrating a translation API later.
-
----
-
-## Part 6: Full CRM Translation (3 Languages)
-
-**Current:** Translation system exists with `en.ts`, `fr.ts`, `pt.ts` using a `useTranslation` hook.
-
-**Action:** Audit all CRM modules for hardcoded English strings and add translation keys. This is a large effort spanning ~20+ module files. Key files:
-- All modules in `src/components/crm/modules/`
-- `CRMSidebar.tsx`, `CRMLayout.tsx`
-- Add missing keys to `fr.ts` and `pt.ts`
+### 5d. Multilingual (deferred)
+- Note in UI that browser input methods support multilingual typing
+- Full translation API integration is a separate future feature
 
 ---
 
-## Part 7: Logo/Favicon Setup in Settings
+## Part 6: Branding Settings — Logo/Favicon Guidance
 
-**Current:** `LOGO_RECOMMENDED` and `FAVICON_RECOMMENDED` constants exist with size guidance.
-
-**Action:**
-- In CRM Settings (BrandingSettings), display recommended sizes: Logo 180×60px (retina 360×120px), Favicon 32×32px (Apple Touch 180×180px)
-- Connect upload to `global_settings` table so uploaded logo/favicon reflect on the public website
+In `BrandingSettings.tsx`:
+- Show recommended sizes inline: Logo 180×60px (retina 360×120px), Favicon 32×32px
 - Add URL input option alongside file upload
+- Connect to `global_settings` table so uploaded logo/favicon appears on public site
 
 ---
 
-## Part 8: URL Option for All Image Uploads
+## Part 7: URL Option for Image Uploads
 
-**Action:** Create a reusable `ImageUploadOrUrl` component (file already exists at `src/components/shared/ImageUploadOrUrl.tsx`). Ensure it's used in:
-- Profile avatar (already done)
-- Event cover images, news article covers, partner logos, sponsor logos, media kit items
-- Any other upload fields
+The `ImageUploadOrUrl` component already exists. Ensure it's used in:
+- Event cover images (EventsManagerModule)
+- News article covers (NewsEditorModule)
+- Partner logos (StakeholdersModule)
+- Sponsor logos (SponsorsManagerModule)
+- Media kit items (MediaKitModule)
 
 ---
 
-## Technical Details
+## Part 8: Full CRM Translation
 
-**Files to create/modify:**
-- 1 new migration for `user_notification_prefs` table (+ potentially fix `tasks` FK)
-- 4 edge functions to redeploy (no code changes needed — already fixed)
-- `src/lib/constants.ts` — verify DEFAULT_AVATAR path
-- `src/components/crm/modules/ProfileModule.tsx` — redesign
-- `src/components/crm/modules/MessagingModule.tsx` — chat improvements
-- `src/components/crm/modules/SettingsModule.tsx` — logo/favicon guidance
-- `src/lib/translations/fr.ts`, `src/lib/translations/pt.ts` — CRM translations
-- Multiple CRM module files for translation key usage
+Audit all ~20 CRM module files for hardcoded English strings. Add translation keys to `en.ts`, `fr.ts`, `pt.ts`. Priority modules:
+- EmailInboxModule, MessagingModule, ProfileModule, SettingsModule
+- TaskBoardModule, CalendarModule, DashboardModule
+- All sidebar labels in CRMSidebar
 
-**Estimated scope:** ~15-20 files modified, 1 migration, 4 edge function redeployments.
+---
+
+## Technical Summary
+
+| Action | Files |
+|--------|-------|
+| Migration: fix tasks FK | 1 SQL migration |
+| Edge functions: redeploy | 4 functions (send-email, sync-emails, update-email, fetch-email-body) |
+| Avatar audit | ~6 component files |
+| Profile redesign | ProfileModule.tsx |
+| Chat improvements | MessagingModule.tsx |
+| Branding settings | BrandingSettings.tsx |
+| ImageUploadOrUrl adoption | ~5 module files |
+| Translations | en.ts, fr.ts, pt.ts + ~20 module files |
+
+**Estimated scope:** 1 migration, 4 edge function redeployments, ~30 files modified.
 
