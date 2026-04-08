@@ -7,13 +7,15 @@ import { CRM_ROLE_META } from "../crmRoles";
 import { format, parseISO } from "date-fns";
 import {
   Camera, Shield, Globe, Loader2, User, MapPin, Calendar,
-  Briefcase, Check, Star, Users, Link2, Heart,
+  Briefcase, Check, Star, Users, Link2, Heart, Mail,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+
+const DEFAULT_AVATAR = "/images/logo/logo.png";
 
 // ─── Profile Banner ───────────────────────────────────────────────────────────
 function ProfileBanner({
@@ -28,22 +30,14 @@ function ProfileBanner({
   onUpload: (f: File) => void;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
-  const initials = fullName.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase() || "?";
+  const displayAvatar = avatarUrl || DEFAULT_AVATAR;
 
   return (
     <div className="relative">
-      {/* Banner gradient */}
       <div className="h-32 rounded-t-xl bg-gradient-to-r from-emerald-900 via-emerald-800 to-teal-900" />
-      {/* Avatar overlay */}
-      <div className="absolute left-6 -bottom-12 flex items-end gap-5">
-        <div className="relative w-24 h-24 rounded-xl bg-crm-card border-4 border-crm-card overflow-hidden shadow-xl flex-shrink-0">
-          {avatarUrl ? (
-            <img src={avatarUrl} alt="" className="w-full h-full object-cover" loading="lazy" />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-crm-border">
-              <span className="text-2xl font-bold text-emerald-400 uppercase">{initials}</span>
-            </div>
-          )}
+      <div className="px-6 pb-4 pt-0 -mt-10 flex flex-col sm:flex-row items-center sm:items-end gap-4">
+        <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-xl bg-crm-card border-4 border-crm-card overflow-hidden shadow-xl flex-shrink-0">
+          <img src={displayAvatar} alt="" className="w-full h-full object-cover" loading="lazy" />
           <button
             type="button"
             onClick={() => fileRef.current?.click()}
@@ -55,24 +49,22 @@ function ProfileBanner({
         </div>
         <input ref={fileRef} type="file" accept="image/*" className="hidden"
           onChange={e => e.target.files?.[0] && onUpload(e.target.files[0])} />
-        <div className="pb-1 hidden sm:block">
+        <div className="text-center sm:text-left pb-1">
           <h2 className="text-lg font-bold text-crm-text">{fullName || "Your Name"}</h2>
-          <div className="flex items-center gap-3 mt-1 text-[11px] text-crm-text-muted">
+          <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mt-1 text-[11px] text-crm-text-muted">
             {title && <span className="flex items-center gap-1"><Briefcase size={11} /> {title}</span>}
             {country && <span className="flex items-center gap-1"><MapPin size={11} /> {country}</span>}
             {joinDate && <span className="flex items-center gap-1"><Calendar size={11} /> Joined {format(parseISO(joinDate), "MMM yyyy")}</span>}
           </div>
         </div>
       </div>
-      {/* Spacer for avatar overflow */}
-      <div className="h-14" />
     </div>
   );
 }
 
 // ─── About Card ───────────────────────────────────────────────────────────────
-function AboutCard({ fullName, title, organisation, country, bio, roles }: {
-  fullName: string; title: string; organisation: string; country: string; bio: string; roles: string[];
+function AboutCard({ fullName, title, organisation, country, bio, email, roles }: {
+  fullName: string; title: string; organisation: string; country: string; bio: string; email: string; roles: string[];
 }) {
   return (
     <div className="bg-crm-card border border-crm-border rounded-xl p-5 space-y-4">
@@ -82,6 +74,12 @@ function AboutCard({ fullName, title, organisation, country, bio, roles }: {
           <div className="flex items-center gap-3">
             <User size={14} className="text-crm-text-dim flex-shrink-0" />
             <div><span className="text-crm-text-muted">Full Name:</span> <span className="text-crm-text font-medium">{fullName}</span></div>
+          </div>
+        )}
+        {email && (
+          <div className="flex items-center gap-3">
+            <Mail size={14} className="text-crm-text-dim flex-shrink-0" />
+            <div><span className="text-crm-text-muted">Email:</span> <span className="text-crm-text font-medium break-all">{email}</span></div>
           </div>
         )}
         {title && (
@@ -133,20 +131,20 @@ function OverviewCard() {
   return (
     <div className="bg-crm-card border border-crm-border rounded-xl p-5 space-y-4">
       <h3 className="text-[13px] font-semibold text-crm-text">Overview</h3>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-4">
         {[
           { icon: Check, label: "Tasks Done", val: "—" },
           { icon: Users, label: "Connections", val: "—" },
           { icon: Star, label: "Projects", val: "—" },
           { icon: Heart, label: "Events", val: "—" },
         ].map(s => (
-          <div key={s.label} className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-crm-surface flex items-center justify-center">
-              <s.icon size={14} className="text-emerald-400" />
+          <div key={s.label} className="flex items-center gap-3 p-2 rounded-lg bg-crm-surface">
+            <div className="w-9 h-9 rounded-lg bg-emerald-950/50 border border-emerald-800/30 flex items-center justify-center">
+              <s.icon size={15} className="text-emerald-400" />
             </div>
             <div>
-              <p className="text-[13px] font-bold text-crm-text">{s.val}</p>
-              <p className="text-[10px] text-crm-text-muted">{s.label}</p>
+              <p className="text-[14px] font-bold text-crm-text leading-none">{s.val}</p>
+              <p className="text-[10px] text-crm-text-muted mt-0.5">{s.label}</p>
             </div>
           </div>
         ))}
@@ -175,7 +173,6 @@ export default function ProfileModule() {
 
   const [tab, setTab] = useState<"profile" | "security">("profile");
 
-  // Password
   const [newPw, setNewPw] = useState("");
   const [confirmPw, setConfirmPw] = useState("");
   const [pwSending, setPwSending] = useState(false);
@@ -277,7 +274,6 @@ export default function ProfileModule() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-0">
-      {/* Banner */}
       <div className="bg-crm-card border border-crm-border rounded-xl overflow-hidden">
         <ProfileBanner
           avatarUrl={avatarUrl}
@@ -289,7 +285,6 @@ export default function ProfileModule() {
           onUpload={handleAvatarUpload}
         />
 
-        {/* Tabs */}
         <div className="flex gap-1 px-6 border-t border-crm-border">
           {(["profile", "security"] as const).map(t => (
             <button key={t} onClick={() => setTab(t)}
@@ -304,10 +299,8 @@ export default function ProfileModule() {
         </div>
       </div>
 
-      {/* Tab content */}
       {tab === "profile" && (
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 mt-4">
-          {/* Left column */}
           <div className="lg:col-span-2 space-y-4">
             <AboutCard
               fullName={fullName}
@@ -315,12 +308,12 @@ export default function ProfileModule() {
               organisation={organisation}
               country={country}
               bio={bio}
+              email={user?.email ?? ""}
               roles={roles}
             />
             <OverviewCard />
           </div>
 
-          {/* Right column — edit form */}
           <div className="lg:col-span-3 space-y-4">
             <div className="bg-crm-card border border-crm-border rounded-xl p-5 space-y-4">
               <h3 className="text-[13px] font-semibold text-crm-text">Edit Profile</h3>

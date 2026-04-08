@@ -216,8 +216,8 @@ function EmailSettings() {
           </div>
         </Section>
 
-        <Section title="Server Configuration" icon={Settings}>
-          {isSuperAdmin ? (
+        {isSuperAdmin && (
+          <Section title="Server Configuration" icon={Settings}>
             <div className="space-y-2">
               <div className="grid grid-cols-2 gap-2">
                 <Field label="SMTP Host">
@@ -240,28 +240,21 @@ function EmailSettings() {
                   <p className="text-[10px] text-crm-text-dim">{sslEnabled ? "SSL enabled (port 465 / STARTTLS on 587)" : "SSL disabled"}</p>
                 </div>
               </div>
-              <div className="pt-2 border-t border-crm-border">
+              <div className="pt-2 border-t border-crm-border flex gap-2">
                 <Button size="sm" onClick={handleServerSave} disabled={serverSaving}
                   className="bg-emerald-700 hover:bg-emerald-600 text-white text-xs gap-1.5">
                   {serverSaving ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
                   {serverSaving ? "Saving…" : "Save Server Config"}
                 </Button>
+                <Button size="sm" variant="outline" onClick={handleTestConnection} disabled={testing}
+                  className="text-xs gap-1.5 border-crm-border text-crm-text-secondary">
+                  {testing ? <Loader2 size={12} className="animate-spin" /> : <AlertTriangle size={12} />}
+                  Test Connection
+                </Button>
               </div>
             </div>
-          ) : (
-            <div className="space-y-2">
-              <Field label="SMTP Host"><Input value={smtpHost || "—"} readOnly className={readOnlyCls} /></Field>
-              <Field label="SMTP Port"><Input value={smtpPort} readOnly className={readOnlyCls} /></Field>
-              <Field label="IMAP Host"><Input value={imapHost || "—"} readOnly className={readOnlyCls} /></Field>
-              <Field label="IMAP Port"><Input value={imapPort} readOnly className={readOnlyCls} /></Field>
-              <div className="flex items-center gap-2 pt-1">
-                <div className={`w-2 h-2 rounded-full ${sslEnabled ? "bg-emerald-400" : "bg-crm-text-dim"}`} />
-                <p className="text-[10px] text-crm-text-dim">SSL {sslEnabled ? "enabled" : "disabled"}</p>
-              </div>
-              <p className="text-[10px] text-crm-text-faint pt-1">Only super admins can modify server configuration.</p>
-            </div>
-          )}
-        </Section>
+          </Section>
+        )}
       </div>
     </div>
   );

@@ -6,35 +6,93 @@ import { useToast } from "@/hooks/use-toast";
 import { format, parseISO } from "date-fns";
 import {
   Send, MessageSquare, Search, Phone, Video, MoreVertical,
-  CheckSquare, Plus,
+  Plus, X, User, MapPin, Briefcase, Mail,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+const DEFAULT_AVATAR = "/images/logo/logo.png";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-interface ProfileRow { id: string; full_name: string; email: string; avatar_url?: string | null; }
+interface ProfileRow { id: string; full_name: string; email: string; avatar_url?: string | null; title?: string | null; country?: string | null; bio?: string | null; }
 
-interface ChannelMessage {
-  id: string; channel_id: string; sender_id: string; body: string;
-  sent_at: string; deleted_at: string | null; task_id: string | null;
-  sender?: { full_name: string; email: string };
-}
-interface DirectMessage {
-  id: string; sender_id: string; recipient_id: string; body: string;
-  sent_at: string; deleted_at: string | null;
-  sender?: { full_name: string; email: string };
-}
 interface Channel {
   id: string; name: string; description: string | null;
   type: "public" | "private"; created_by: string; is_archived: boolean;
 }
 interface DmConversation {
-  peer_id: string; peer_name: string; last_message: string; last_at: string;
+  peer_id: string; peer_name: string; peer_avatar?: string | null; last_message: string; last_at: string;
 }
 type ActiveView = { type: "channel"; id: string } | { type: "dm"; peerId: string; peerName: string };
+
+// ─── Profile View Dialog ──────────────────────────────────────────────────────
+function ProfileViewDialog({ open, onClose, profileId }: { open: boolean; onClose: () => void; profileId: string | null }) {
+  const { data: profile, isLoading } = useQuery({
+    queryKey: ["view-profile", profileId],
+    queryFn: async () => {
+      if (!profileId) return null;
+      const { data } = await (supabase as any).from("profiles")
+        .select("id, full_name, email, avatar_url, title, country, bio, organisation")
+        .eq("id", profileId).single();
+      return data;
+    },
+    enabled: !!profileId && open,
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="bg-crm-card border-crm-border text-crm-text max-w-sm">
+        <DialogHeader>
+          <DialogTitle className="text-sm font-semibold text-crm-text">User Profile</DialogTitle>
+        </DialogHeader>
+        {isLoading ? (
+          <div className="flex items-center justify-center h-32">
+            <div className="w-5 h-5 border-2 border-emerald-700 border-t-emerald-400 rounded-full animate-spin" />
+          </div>
+        ) : profile ? (
+          <div className="flex flex-col items-center gap-4 py-2">
+            <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-crm-border">
+              <img src={profile.avatar_url || DEFAULT_AVATAR} alt="" className="w-full h-full object-cover" />
+            </div>
+            <div className="text-center space-y-1">
+              <p className="text-[14px] font-semibold text-crm-text">{profile.full_name}</p>
+              {profile.title && <p className="text-[11px] text-crm-text-muted flex items-center justify-center gap-1"><Briefcase size={11} /> {profile.title}</p>}
+            </div>
+            <div className="w-full space-y-2 text-[12px]">
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-crm-surface">
+                <Mail size={13} className="text-crm-text-dim" />
+                <span className="text-crm-text break-all">{profile.email}</span>
+              </div>
+              {profile.country && (
+                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-crm-surface">
+                  <MapPin size={13} className="text-crm-text-dim" />
+                  <span className="text-crm-text">{profile.country}</span>
+                </div>
+              )}
+              {profile.organisation && (
+                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-crm-surface">
+                  <Briefcase size={13} className="text-crm-text-dim" />
+                  <span className="text-crm-text">{profile.organisation}</span>
+                </div>
+              )}
+              {profile.bio && (
+                <p className="text-[11px] text-crm-text-secondary leading-relaxed px-1 pt-1">{profile.bio}</p>
+              )}
+            </div>
+          </div>
+        ) : (
+          <p className="text-[12px] text-crm-text-muted text-center py-8">Profile not found</p>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 // ─── Create Channel Dialog ────────────────────────────────────────────────────
 function CreateChannelDialog({ open, onClose, onCreated }: {
@@ -108,16 +166,15 @@ function CreateChannelDialog({ open, onClose, onCreated }: {
 }
 
 // ─── Message Bubble ───────────────────────────────────────────────────────────
-function MessageBubble({ body, senderName, time, isOwn, avatarUrl }: {
-  body: string; senderName: string; time: string; isOwn: boolean; avatarUrl?: string | null;
+function MessageBubble({ body, senderName, time, isOwn, avatarUrl, onAvatarClick }: {
+  body: string; senderName: string; time: string; isOwn: boolean; avatarUrl?: string | null; onAvatarClick?: () => void;
 }) {
-  const initials = senderName.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase();
+  const displayAvatar = avatarUrl || DEFAULT_AVATAR;
   return (
     <div className={`flex gap-2.5 mb-3 ${isOwn ? "flex-row-reverse" : ""}`}>
-      <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-[10px] font-bold uppercase overflow-hidden
-        ${isOwn ? "bg-emerald-950 text-emerald-400 border border-emerald-800" : "bg-crm-border text-crm-text-muted"}`}>
-        {avatarUrl ? <img src={avatarUrl} className="w-full h-full object-cover" /> : initials}
-      </div>
+      <button type="button" onClick={onAvatarClick} className="w-8 h-8 rounded-full flex-shrink-0 overflow-hidden border border-crm-border hover:ring-2 hover:ring-emerald-600 transition-all">
+        <img src={displayAvatar} alt="" className="w-full h-full object-cover" />
+      </button>
       <div className={`max-w-[70%] ${isOwn ? "items-end" : "items-start"} flex flex-col`}>
         <div className={`px-3 py-2 rounded-xl text-[12.5px] leading-relaxed
           ${isOwn
@@ -144,8 +201,9 @@ export default function MessagingModule() {
   const [sending, setSending] = useState(false);
   const [showCreateChannel, setShowCreateChannel] = useState(false);
   const [search, setSearch] = useState("");
+  const [viewProfileId, setViewProfileId] = useState<string | null>(null);
 
-  // ── Channels ────────────────────────────────────────────────────────────
+  // ── Channels
   const { data: channels = [] } = useQuery<Channel[]>({
     queryKey: ["channels"],
     queryFn: async () => {
@@ -155,56 +213,79 @@ export default function MessagingModule() {
     },
   });
 
-  // ── DM conversations ───────────────────────────────────────────────────
+  // ── DM conversations
   const { data: dmConversations = [] } = useQuery<DmConversation[]>({
     queryKey: ["dm-conversations", user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
-      const { data: sent } = await (supabase as any).from("direct_messages")
-        .select("recipient_id, body, sent_at, recipient:profiles!direct_messages_recipient_id_fkey(full_name)")
-        .eq("sender_id", user.id).is("deleted_at", null).order("sent_at", { ascending: false });
-      const { data: received } = await (supabase as any).from("direct_messages")
-        .select("sender_id, body, sent_at, sender:profiles!direct_messages_sender_id_fkey(full_name)")
-        .eq("recipient_id", user.id).is("deleted_at", null).order("sent_at", { ascending: false });
+      const { data: msgs } = await (supabase as any).from("direct_messages")
+        .select("sender_id, recipient_id, body, sent_at")
+        .or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`)
+        .is("deleted_at", null)
+        .order("sent_at", { ascending: false })
+        .limit(200);
+      if (!msgs?.length) return [];
+
+      const peerIds = new Set<string>();
       const map = new Map<string, DmConversation>();
-      for (const m of [...(sent ?? []), ...(received ?? [])]) {
-        const peerId = m.recipient_id ?? m.sender_id;
-        const peerName = m.recipient?.full_name ?? m.sender?.full_name ?? "Unknown";
-        if (!map.has(peerId) || new Date(m.sent_at) > new Date(map.get(peerId)!.last_at)) {
-          map.set(peerId, { peer_id: peerId, peer_name: peerName, last_message: m.body, last_at: m.sent_at });
+      for (const m of msgs) {
+        const peerId = m.sender_id === user.id ? m.recipient_id : m.sender_id;
+        peerIds.add(peerId);
+        if (!map.has(peerId)) {
+          map.set(peerId, { peer_id: peerId, peer_name: "", last_message: m.body, last_at: m.sent_at });
         }
       }
+
+      if (peerIds.size > 0) {
+        const { data: profiles } = await (supabase as any).from("profiles")
+          .select("id, full_name, avatar_url").in("id", Array.from(peerIds));
+        for (const p of (profiles ?? [])) {
+          const dm = map.get(p.id);
+          if (dm) { dm.peer_name = p.full_name; dm.peer_avatar = p.avatar_url; }
+        }
+      }
+
       return Array.from(map.values()).sort((a, b) => new Date(b.last_at).getTime() - new Date(a.last_at).getTime());
     },
     enabled: !!user?.id,
   });
 
-  // ── Contacts ────────────────────────────────────────────────────────────
+  // ── Contacts
   const { data: contacts = [] } = useQuery<ProfileRow[]>({
     queryKey: ["chat-contacts"],
     queryFn: async () => {
       const { data } = await (supabase as any).from("profiles")
-        .select("id, full_name, email, avatar_url").order("full_name");
+        .select("id, full_name, email, avatar_url, title, country").order("full_name");
       return (data ?? []).filter((p: ProfileRow) => p.id !== user?.id);
     },
     enabled: !!user?.id,
   });
 
-  // ── Active messages ─────────────────────────────────────────────────────
+  // ── Active messages
   const { data: messages = [] } = useQuery({
     queryKey: ["chat-messages", view?.type, view?.type === "channel" ? view.id : view?.type === "dm" ? view.peerId : null],
     queryFn: async () => {
       if (!view) return [];
       if (view.type === "channel") {
         const { data } = await (supabase as any).from("channel_messages")
-          .select("*, sender:profiles!channel_messages_sender_id_fkey(full_name, email)")
+          .select("*, sender:profiles!channel_messages_sender_id_fkey(full_name, email, avatar_url)")
           .eq("channel_id", view.id).is("deleted_at", null).order("sent_at", { ascending: true }).limit(100);
         return data ?? [];
       } else {
         const { data } = await (supabase as any).from("direct_messages")
-          .select("*, sender:profiles!direct_messages_sender_id_fkey(full_name, email)")
+          .select("*")
           .or(`and(sender_id.eq.${user!.id},recipient_id.eq.${view.peerId}),and(sender_id.eq.${view.peerId},recipient_id.eq.${user!.id})`)
           .is("deleted_at", null).order("sent_at", { ascending: true }).limit(100);
+        // Enrich with sender profiles
+        if (data?.length) {
+          const senderIds = [...new Set(data.map((m: any) => m.sender_id))];
+          const { data: profiles } = await (supabase as any).from("profiles")
+            .select("id, full_name, email, avatar_url").in("id", senderIds);
+          const profileMap = new Map((profiles ?? []).map((p: any) => [p.id, p]));
+          for (const m of data) {
+            m.sender = profileMap.get(m.sender_id) ?? { full_name: "Unknown", email: "" };
+          }
+        }
         return data ?? [];
       }
     },
@@ -221,14 +302,16 @@ export default function MessagingModule() {
     setSending(true);
     try {
       if (view.type === "channel") {
-        await (supabase as any).from("channel_messages").insert({
+        const { error } = await (supabase as any).from("channel_messages").insert({
           channel_id: view.id, sender_id: user.id, body: body.trim(),
         });
+        if (error) throw error;
         qc.invalidateQueries({ queryKey: ["chat-messages", "channel", view.id] });
       } else {
-        await (supabase as any).from("direct_messages").insert({
+        const { error } = await (supabase as any).from("direct_messages").insert({
           sender_id: user.id, recipient_id: view.peerId, body: body.trim(),
         });
+        if (error) throw error;
         qc.invalidateQueries({ queryKey: ["chat-messages", "dm", view.peerId] });
         qc.invalidateQueries({ queryKey: ["dm-conversations"] });
       }
@@ -248,15 +331,16 @@ export default function MessagingModule() {
     ? `# ${channels.find(c => c.id === view.id)?.name ?? "channel"}`
     : view?.type === "dm" ? view.peerName : "";
 
+  const activePeerId = view?.type === "dm" ? view.peerId : null;
+
   return (
     <div className="flex h-[calc(100vh-140px)] bg-crm-card border border-crm-border rounded-xl overflow-hidden">
       {/* Left Sidebar */}
       <div className="w-72 border-r border-crm-border flex flex-col flex-shrink-0">
-        {/* Current user header */}
         <div className="p-4 border-b border-crm-border">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-9 h-9 rounded-full bg-emerald-950 border border-emerald-800 flex items-center justify-center text-emerald-400 text-[11px] font-bold">
-              {user?.email?.charAt(0).toUpperCase()}
+            <div className="w-9 h-9 rounded-full overflow-hidden border border-emerald-800">
+              <img src={DEFAULT_AVATAR} alt="" className="w-full h-full object-cover" />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-[12px] font-semibold text-crm-text truncate">Chat</p>
@@ -273,12 +357,10 @@ export default function MessagingModule() {
           </div>
         </div>
 
-        {/* Chats section */}
         <div className="flex-1 overflow-y-auto">
           <div className="px-4 py-2">
-            <p className="text-[10px] font-semibold text-crm-text-dim uppercase tracking-wider">Chats</p>
+            <p className="text-[10px] font-semibold text-crm-text-dim uppercase tracking-wider">Channels</p>
           </div>
-          {/* Channels as chats */}
           {channels.filter(c => !search || c.name.includes(search.toLowerCase())).map(ch => (
             <button key={ch.id}
               onClick={() => setView({ type: "channel", id: ch.id })}
@@ -293,14 +375,17 @@ export default function MessagingModule() {
               </div>
             </button>
           ))}
-          {/* DM conversations */}
+
+          <div className="px-4 py-2 mt-1">
+            <p className="text-[10px] font-semibold text-crm-text-dim uppercase tracking-wider">Direct Messages</p>
+          </div>
           {dmConversations.filter(c => !search || c.peer_name.toLowerCase().includes(search.toLowerCase())).map(dm => (
             <button key={dm.peer_id}
               onClick={() => setView({ type: "dm", peerId: dm.peer_id, peerName: dm.peer_name })}
               className={`w-full flex items-center gap-3 px-4 py-2.5 hover:bg-crm-surface transition-colors text-left
                 ${view?.type === "dm" && view.peerId === dm.peer_id ? "bg-crm-surface" : ""}`}>
-              <div className="w-8 h-8 rounded-full bg-crm-border flex items-center justify-center text-crm-text-muted text-[10px] font-bold uppercase">
-                {dm.peer_name.split(" ").map(n => n[0]).slice(0, 2).join("")}
+              <div className="w-8 h-8 rounded-full overflow-hidden border border-crm-border flex-shrink-0">
+                <img src={dm.peer_avatar || DEFAULT_AVATAR} alt="" className="w-full h-full object-cover" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between">
@@ -312,27 +397,23 @@ export default function MessagingModule() {
             </button>
           ))}
 
-          {/* Contacts */}
-          <div className="px-4 py-2 mt-2">
+          <div className="px-4 py-2 mt-1">
             <p className="text-[10px] font-semibold text-crm-text-dim uppercase tracking-wider">Contacts</p>
           </div>
-          {filteredContacts.map(c => {
-            const initials = c.full_name.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase();
-            return (
-              <button key={c.id}
-                onClick={() => setView({ type: "dm", peerId: c.id, peerName: c.full_name })}
-                className={`w-full flex items-center gap-3 px-4 py-2 hover:bg-crm-surface transition-colors text-left
-                  ${view?.type === "dm" && view.peerId === c.id ? "bg-crm-surface" : ""}`}>
-                <div className="w-8 h-8 rounded-full bg-crm-border flex items-center justify-center text-crm-text-muted text-[10px] font-bold uppercase overflow-hidden">
-                  {c.avatar_url ? <img src={c.avatar_url} className="w-full h-full object-cover" /> : initials}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[11px] font-medium text-crm-text truncate">{c.full_name}</p>
-                  <p className="text-[10px] text-crm-text-faint truncate">{c.email}</p>
-                </div>
-              </button>
-            );
-          })}
+          {filteredContacts.map(c => (
+            <button key={c.id}
+              onClick={() => setView({ type: "dm", peerId: c.id, peerName: c.full_name })}
+              className={`w-full flex items-center gap-3 px-4 py-2 hover:bg-crm-surface transition-colors text-left
+                ${view?.type === "dm" && view.peerId === c.id ? "bg-crm-surface" : ""}`}>
+              <div className="w-8 h-8 rounded-full overflow-hidden border border-crm-border flex-shrink-0">
+                <img src={c.avatar_url || DEFAULT_AVATAR} alt="" className="w-full h-full object-cover" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px] font-medium text-crm-text truncate">{c.full_name}</p>
+                <p className="text-[10px] text-crm-text-faint truncate">{c.email}</p>
+              </div>
+            </button>
+          ))}
         </div>
       </div>
 
@@ -355,20 +436,39 @@ export default function MessagingModule() {
             {/* Chat header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-crm-border">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-crm-border flex items-center justify-center text-crm-text-muted text-[10px] font-bold uppercase">
-                  {view.type === "channel" ? "#" : activeLabel.split(" ").map(n => n[0]).slice(0, 2).join("")}
-                </div>
+                <button type="button" onClick={() => activePeerId && setViewProfileId(activePeerId)}
+                  className="w-9 h-9 rounded-full overflow-hidden border border-crm-border hover:ring-2 hover:ring-emerald-600 transition-all">
+                  {view.type === "channel" ? (
+                    <div className="w-full h-full bg-crm-border flex items-center justify-center text-crm-text-muted text-[10px] font-bold">#</div>
+                  ) : (
+                    <img src={contacts.find(c => c.id === activePeerId)?.avatar_url || DEFAULT_AVATAR} alt="" className="w-full h-full object-cover" />
+                  )}
+                </button>
                 <div>
                   <p className="text-[13px] font-semibold text-crm-text">{activeLabel}</p>
                   <p className="text-[10px] text-emerald-400">Online</p>
                 </div>
               </div>
               <div className="flex items-center gap-1">
-                {[Phone, Video, Search, MoreVertical].map((Icon, i) => (
+                {[Phone, Video, Search].map((Icon, i) => (
                   <button key={i} className="p-2 text-crm-text-dim hover:text-crm-text-secondary transition-colors rounded">
                     <Icon size={15} />
                   </button>
                 ))}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="p-2 text-crm-text-dim hover:text-crm-text-secondary transition-colors rounded">
+                      <MoreVertical size={15} />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="bg-crm-card border-crm-border text-crm-text" align="end">
+                    {activePeerId && (
+                      <DropdownMenuItem onClick={() => setViewProfileId(activePeerId)} className="text-xs gap-2 cursor-pointer">
+                        <User size={13} /> View Profile
+                      </DropdownMenuItem>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
 
@@ -378,9 +478,11 @@ export default function MessagingModule() {
                 <MessageBubble
                   key={msg.id}
                   body={msg.body}
-                  senderName={msg.sender?.full_name || msg.sender?.email?.split("@")[0] || "Unknown"}
+                  senderName={msg.sender?.full_name || "Unknown"}
                   time={format(parseISO(msg.sent_at), "h:mm a")}
                   isOwn={msg.sender_id === user?.id}
+                  avatarUrl={msg.sender?.avatar_url}
+                  onAvatarClick={() => setViewProfileId(msg.sender_id)}
                 />
               ))}
               <div ref={messagesEndRef} />
@@ -403,11 +505,16 @@ export default function MessagingModule() {
         )}
       </div>
 
-      {/* Create channel dialog */}
+      {/* Dialogs */}
       <CreateChannelDialog
         open={showCreateChannel}
         onClose={() => setShowCreateChannel(false)}
         onCreated={(ch) => setView({ type: "channel", id: ch.id })}
+      />
+      <ProfileViewDialog
+        open={!!viewProfileId}
+        onClose={() => setViewProfileId(null)}
+        profileId={viewProfileId}
       />
     </div>
   );
