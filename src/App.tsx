@@ -6,7 +6,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { I18nProvider } from "@/lib/i18n";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { AuthProvider, useAuthContext } from "@/contexts/AuthContext";
+import { usePresence } from "@/hooks/usePresence";
 import { GlobalSettingsProvider } from "@/contexts/GlobalSettingsContext";
 import ProtectedRoute from "@/components/admin/ProtectedRoute";
 
