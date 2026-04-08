@@ -2014,6 +2014,36 @@ export type Database = {
           },
         ]
       }
+      user_notification_prefs: {
+        Row: {
+          created_at: string
+          notify_event_reminder: boolean
+          notify_new_message: boolean
+          notify_system_updates: boolean
+          notify_task_assigned: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          notify_event_reminder?: boolean
+          notify_new_message?: boolean
+          notify_system_updates?: boolean
+          notify_task_assigned?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          notify_event_reminder?: boolean
+          notify_new_message?: boolean
+          notify_system_updates?: boolean
+          notify_task_assigned?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
