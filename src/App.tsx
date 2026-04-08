@@ -6,7 +6,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { I18nProvider } from "@/lib/i18n";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { AuthProvider, useAuthContext } from "@/contexts/AuthContext";
+import { usePresence } from "@/hooks/usePresence";
 import { GlobalSettingsProvider } from "@/contexts/GlobalSettingsContext";
 import ProtectedRoute from "@/components/admin/ProtectedRoute";
 
@@ -71,6 +72,12 @@ function ScrollToTop() {
   return null;
 }
 
+function PresenceTracker() {
+  const { user } = useAuthContext();
+  usePresence(user?.id);
+  return null;
+}
+
 const App = () => (
   <ThemeProvider attribute="class" defaultTheme="system" enableSystem storageKey="ecowas-theme">
   <QueryClientProvider client={queryClient}>
@@ -82,6 +89,7 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <ScrollToTop />
+            <PresenceTracker />
             <Routes>
               {/* Public pages */}
               <Route path="/"                   element={<Index />}          />

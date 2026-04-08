@@ -695,29 +695,35 @@ export type Database = {
       }
       email_accounts: {
         Row: {
+          app_password: string | null
           created_at: string
           display_name: string | null
           email_address: string
           id: string
           is_active: boolean
+          last_synced_at: string | null
           user_id: string
           zoho_account_id: string | null
         }
         Insert: {
+          app_password?: string | null
           created_at?: string
           display_name?: string | null
           email_address: string
           id?: string
           is_active?: boolean
+          last_synced_at?: string | null
           user_id: string
           zoho_account_id?: string | null
         }
         Update: {
+          app_password?: string | null
           created_at?: string
           display_name?: string | null
           email_address?: string
           id?: string
           is_active?: boolean
+          last_synced_at?: string | null
           user_id?: string
           zoho_account_id?: string | null
         }
@@ -2040,6 +2046,24 @@ export type Database = {
           notify_system_updates?: boolean
           notify_task_assigned?: boolean
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_presence: {
+        Row: {
+          is_online: boolean
+          last_seen_at: string
+          user_id: string
+        }
+        Insert: {
+          is_online?: boolean
+          last_seen_at?: string
+          user_id: string
+        }
+        Update: {
+          is_online?: boolean
+          last_seen_at?: string
           user_id?: string
         }
         Relationships: []

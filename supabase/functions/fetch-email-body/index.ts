@@ -52,7 +52,6 @@ Deno.serve(async (req) => {
 
     const serviceClient = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
-    // Look up the email row
     const { data: emailRow, error: emailErr } = await serviceClient
       .from("emails")
       .select("id, zoho_message_id, account_id, body_html")
@@ -65,21 +64,18 @@ Deno.serve(async (req) => {
       });
     }
 
-    // If body already fetched, return it directly
     if (emailRow.body_html) {
       return new Response(JSON.stringify({ body_html: emailRow.body_html }), {
         status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Guard: locally-composed emails have no zoho_message_id
     if (!emailRow.zoho_message_id) {
       return new Response(JSON.stringify({ body_html: emailRow.body_html || "" }), {
         status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Look up the Zoho account ID
     const { data: acct } = await serviceClient
       .from("email_accounts")
       .select("zoho_account_id, user_id")
@@ -92,7 +88,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Verify the requesting user owns this account
     if (acct.user_id !== user.id) {
       return new Response(JSON.stringify({ error: "Forbidden" }), {
         status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -100,10 +95,11 @@ Deno.serve(async (req) => {
     }
 
     const token = await getZohoToken();
+    const orgId = Deno.env.get("ZOHO_ORG_ID")!;
 
-    // Fetch the full message body from Zoho
+    // Fetch the full message body from Zoho using org-level API
     const contentRes = await fetch(
-      `https://mail.zoho.eu/api/accounts/${acct.zoho_account_id}/messages/${emailRow.zoho_message_id}/content`,
+      `https://mail.zoho.eu/api/organization/${orgId}/accounts/${acct.zoho_account_id}/messages/${emailRow.zoho_message_id}/content`,
       { headers: { Authorization: `Zoho-oauthtoken ${token}` } }
     );
 
@@ -113,10 +109,8 @@ Deno.serve(async (req) => {
     }
 
     const contentData = await contentRes.json();
-    // Zoho returns body in data.content (HTML) or data.body
     const body_html: string = contentData?.data?.content ?? contentData?.data?.body ?? "";
 
-    // Persist so subsequent opens are instant
     if (body_html) {
       await serviceClient
         .from("emails")

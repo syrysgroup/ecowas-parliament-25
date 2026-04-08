@@ -38,7 +38,6 @@ async function getZohoToken(): Promise<string> {
   }
 
   _cachedToken = data.access_token as string;
-  // Zoho tokens live 1 hour; refresh 2 min early
   _tokenExpiresAt = Date.now() + ((data.expires_in ?? 3600) - 120) * 1000;
   return _cachedToken;
 }
@@ -46,15 +45,14 @@ async function getZohoToken(): Promise<string> {
 async function resolveZohoAccountId(serviceClient: any, acct: any, token: string): Promise<string> {
   if (acct.zoho_account_id) return acct.zoho_account_id;
 
-  // Use the authenticated user's own account list — this returns the correct accountId
-  // for all subsequent Zoho Mail API calls (/api/accounts/{accountId}/...)
-  const accountsRes = await fetch("https://mail.zoho.eu/api/accounts", {
+  const orgId = Deno.env.get("ZOHO_ORG_ID")!;
+  const res = await fetch(`https://mail.zoho.eu/api/organization/${orgId}/accounts`, {
     headers: { Authorization: `Zoho-oauthtoken ${token}` },
   });
-  const accountsData = await accountsRes.json();
-  const accounts: any[] = Array.isArray(accountsData?.data) ? accountsData.data : [];
+  const data = await res.json();
+  const accounts: any[] = Array.isArray(data?.data) ? data.data : [];
 
-  console.log("Zoho accounts returned:", JSON.stringify(accounts.map((a: any) => ({
+  console.log("Org accounts:", JSON.stringify(accounts.map((a: any) => ({
     accountId: a.accountId,
     email: a.primaryEmailAddress ?? a.mailboxAddress,
   }))));
@@ -66,13 +64,11 @@ async function resolveZohoAccountId(serviceClient: any, acct: any, token: string
 
   if (!match) {
     const visible = accounts.map((a: any) => a.primaryEmailAddress ?? a.mailboxAddress).join(", ");
-    throw new Error(
-      `No Zoho mailbox matches "${acct.email_address}". Accounts on this token: [${visible || "none"}]`
-    );
+    throw new Error(`No Zoho mailbox matches "${acct.email_address}". Org accounts: [${visible || "none"}]`);
   }
 
   const zohoAccountId = String(match.accountId);
-  await serviceClient.from("email_accounts").update({ zoho_account_id: zohoAccountId }).eq("id", acct.id);
+  await serviceClient.from("email_accounts").update({ zoho_account_id: zohoAccountId, last_synced_at: new Date().toISOString() }).eq("id", acct.id);
   return zohoAccountId;
 }
 
@@ -104,25 +100,14 @@ Deno.serve(async (req) => {
     if (!acct) return new Response(JSON.stringify({ newEmailCount: 0, message: "No active email account" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
     const token = await getZohoToken();
-    let zohoAccountId = await resolveZohoAccountId(serviceClient, acct, token);
+    const zohoAccountId = await resolveZohoAccountId(serviceClient, acct, token);
+    const orgId = Deno.env.get("ZOHO_ORG_ID")!;
 
-    // Fetch the actual folder list from Zoho to get folder IDs
-    let foldersRes = await fetch(`https://mail.zoho.eu/api/accounts/${zohoAccountId}/folders`, {
+    // Fetch the actual folder list from Zoho using org-level API
+    const foldersRes = await fetch(`https://mail.zoho.eu/api/organization/${orgId}/accounts/${zohoAccountId}/folders`, {
       headers: { Authorization: `Zoho-oauthtoken ${token}` },
     });
-    let foldersData = await foldersRes.json();
-
-    // If stored account ID is rejected by Zoho, clear it and re-resolve once
-    if (!foldersRes.ok || foldersData?.status?.code === 404) {
-      console.warn("Stored zoho_account_id invalid, re-resolving:", zohoAccountId);
-      await serviceClient.from("email_accounts").update({ zoho_account_id: null }).eq("id", acct.id);
-      acct.zoho_account_id = null;
-      zohoAccountId = await resolveZohoAccountId(serviceClient, acct, token);
-      foldersRes = await fetch(`https://mail.zoho.eu/api/accounts/${zohoAccountId}/folders`, {
-        headers: { Authorization: `Zoho-oauthtoken ${token}` },
-      });
-      foldersData = await foldersRes.json();
-    }
+    const foldersData = await foldersRes.json();
 
     const zohoFolders = Array.isArray(foldersData?.data) ? foldersData.data : [];
 
@@ -133,7 +118,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Bug 8: Batch-fetch all known message IDs upfront (one query instead of N+1)
+    // Batch-fetch all known message IDs upfront
     const { data: existingRows } = await serviceClient
       .from("emails")
       .select("zoho_message_id")
@@ -141,26 +126,23 @@ Deno.serve(async (req) => {
     const seenIds = new Set((existingRows ?? []).map((r: any) => r.zoho_message_id));
 
     let newEmailCount = 0;
-    // Sync all Zoho folders (not just system ones) so custom folders appear in the UI
     const allFolders: { folderName: string; folderId: string }[] = zohoFolders.map((zf: any) => ({
       folderName: (zf.folderName ?? "").toLowerCase(),
       folderId: String(zf.folderId),
     }));
 
     for (const { folderName, folderId: zohoFolderId } of allFolders) {
-      // Skip duplicates that might appear (Zoho can return sub-folders)
       if (!zohoFolderId) continue;
-      // Map known system folder names to canonical DB names
       const dbFolder =
         folderName === "inbox" ? "inbox" :
         folderName === "sent" || folderName === "sentmail" || folderName === "sent mail" ? "sent" :
         folderName === "drafts" || folderName === "draft" ? "drafts" :
         folderName === "spam" || folderName === "junk" ? "spam" :
         folderName === "trash" ? "trash" :
-        folderName; // custom folders use their Zoho name as-is
+        folderName;
 
       const mailRes = await fetch(
-        `https://mail.zoho.eu/api/accounts/${zohoAccountId}/messages/view?folderId=${zohoFolderId}&limit=50&sortorder=desc`,
+        `https://mail.zoho.eu/api/organization/${orgId}/accounts/${zohoAccountId}/messages/view?folderId=${zohoFolderId}&limit=50&sortorder=desc`,
         { headers: { Authorization: `Zoho-oauthtoken ${token}` } }
       );
 
@@ -170,8 +152,6 @@ Deno.serve(async (req) => {
 
       for (const msg of messages) {
         const msgId = String(msg.messageId);
-
-        // Bug 8: check in-memory Set instead of per-message DB query
         if (seenIds.has(msgId)) continue;
         seenIds.add(msgId);
 
@@ -180,14 +160,11 @@ Deno.serve(async (req) => {
           zoho_message_id: msgId,
           from_address: msg.fromAddress || "",
           from_name: msg.sender || "",
-          // Bug 7: address fields may be arrays of objects
           to_address: flatAddr(msg.toAddress),
           cc_address: flatAddr(msg.ccAddress),
           subject: msg.subject || "(No subject)",
-          // Bug 3: message-list endpoint doesn't return body; fetch-email-body handles this on demand
           body_html: "",
           body_text: msg.summary || "",
-          // Bug 6: Zoho may return "true"/"false" strings instead of booleans
           is_read: msg.isRead === true || msg.isRead === "true",
           is_starred: msg.isFlagged === true || msg.isFlagged === "true",
           folder: dbFolder,
@@ -197,6 +174,9 @@ Deno.serve(async (req) => {
         newEmailCount++;
       }
     }
+
+    // Update last_synced_at
+    await serviceClient.from("email_accounts").update({ last_synced_at: new Date().toISOString() }).eq("id", acct.id);
 
     return new Response(JSON.stringify({ success: true, newEmailCount }), {
       status: 200,

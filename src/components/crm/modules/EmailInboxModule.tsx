@@ -760,6 +760,10 @@ export default function EmailInboxModule() {
         });
         return;
       }
+      const count = data?.newEmailCount ?? 0;
+      toast({
+        title: count > 0 ? `${count} new email(s) received` : "Inbox is up to date",
+      });
       qc.invalidateQueries({ queryKey: ["emails"], refetchType: "all" });
       qc.invalidateQueries({ queryKey: ["email-unread-counts"], refetchType: "all" });
       qc.invalidateQueries({ queryKey: ["email-inbox-unread"], refetchType: "all" });

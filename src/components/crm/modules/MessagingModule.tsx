@@ -241,6 +241,39 @@ function MessageBubble({ body, senderName, time, isOwn, avatarUrl, readAt, deliv
   );
 }
 
+// ─── Presence Hook ────────────────────────────────────────────────────────────
+function usePresenceData() {
+  const { data: presenceMap = {} } = useQuery<Record<string, { is_online: boolean; last_seen_at: string }>>({
+    queryKey: ["user-presence"],
+    queryFn: async () => {
+      const { data } = await (supabase as any).from("user_presence").select("user_id, is_online, last_seen_at");
+      const map: Record<string, { is_online: boolean; last_seen_at: string }> = {};
+      for (const row of (data ?? [])) {
+        map[row.user_id] = { is_online: row.is_online, last_seen_at: row.last_seen_at };
+      }
+      return map;
+    },
+    refetchInterval: 30_000,
+  });
+  return presenceMap;
+}
+
+function isUserOnline(presence: { is_online: boolean; last_seen_at: string } | undefined): boolean {
+  if (!presence) return false;
+  if (!presence.is_online) return false;
+  const twoMinAgo = Date.now() - 2 * 60 * 1000;
+  return new Date(presence.last_seen_at).getTime() > twoMinAgo;
+}
+
+function PresenceDot({ online, size = 8 }: { online: boolean; size?: number }) {
+  return (
+    <span
+      className={`inline-block rounded-full flex-shrink-0 ${online ? "bg-emerald-500" : "bg-muted-foreground/40"}`}
+      style={{ width: size, height: size }}
+    />
+  );
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 export default function MessagingModule() {
   const { user } = useAuthContext();
@@ -248,6 +281,7 @@ export default function MessagingModule() {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const presenceMap = usePresenceData();
 
   const [view, setView] = useState<ActiveView | null>(null);
   const [body, setBody] = useState("");
@@ -458,8 +492,9 @@ export default function MessagingModule() {
                 onClick={() => setView({ type: "dm", peerId: dm.peer_id, peerName: dm.peer_name })}
                 className={`w-full flex items-center gap-3 px-4 py-2.5 hover:bg-crm-surface transition-colors text-left
                   ${view?.type === "dm" && view.peerId === dm.peer_id ? "bg-crm-surface" : ""}`}>
-                <div className="w-8 h-8 rounded-full overflow-hidden border border-crm-border flex-shrink-0">
+                <div className="relative w-8 h-8 rounded-full overflow-hidden border border-crm-border flex-shrink-0">
                   <img src={dm.peer_avatar || DEFAULT_AVATAR} alt="" className="w-full h-full object-cover" />
+                  <span className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-crm-card ${isUserOnline(presenceMap[dm.peer_id]) ? "bg-emerald-500" : "bg-muted-foreground/40"}`} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
@@ -479,8 +514,9 @@ export default function MessagingModule() {
                 onClick={() => setView({ type: "dm", peerId: c.id, peerName: c.full_name })}
                 className={`w-full flex items-center gap-3 px-4 py-2 hover:bg-crm-surface transition-colors text-left
                   ${view?.type === "dm" && view.peerId === c.id ? "bg-crm-surface" : ""}`}>
-                <div className="w-8 h-8 rounded-full overflow-hidden border border-crm-border flex-shrink-0">
+                <div className="relative w-8 h-8 rounded-full overflow-hidden border border-crm-border flex-shrink-0">
                   <img src={c.avatar_url || DEFAULT_AVATAR} alt="" className="w-full h-full object-cover" />
+                  <span className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-crm-card ${isUserOnline(presenceMap[c.id]) ? "bg-emerald-500" : "bg-muted-foreground/40"}`} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-[11px] font-medium text-crm-text truncate">{c.full_name}</p>
@@ -521,7 +557,15 @@ export default function MessagingModule() {
                 </button>
                 <div>
                   <p className="text-[13px] font-semibold text-crm-text">{activeLabel}</p>
-                  <p className="text-[10px] text-emerald-400">{t("crm.chat.online")}</p>
+                  {view.type === "dm" && (
+                    <p className={`text-[10px] flex items-center gap-1 ${isUserOnline(presenceMap[view.peerId]) ? "text-emerald-400" : "text-crm-text-faint"}`}>
+                      <PresenceDot online={isUserOnline(presenceMap[view.peerId])} size={6} />
+                      {isUserOnline(presenceMap[view.peerId]) ? t("crm.chat.online") : "Offline"}
+                    </p>
+                  )}
+                  {view.type === "channel" && (
+                    <p className="text-[10px] text-crm-text-faint">{t("crm.chat.channel")}</p>
+                  )}
                 </div>
               </div>
               <div className="flex items-center gap-1">
