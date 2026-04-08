@@ -260,6 +260,121 @@ export type Database = {
         }
         Relationships: []
       }
+      channel_members: {
+        Row: {
+          channel_id: string
+          id: string
+          joined_at: string
+          user_id: string
+        }
+        Insert: {
+          channel_id: string
+          id?: string
+          joined_at?: string
+          user_id: string
+        }
+        Update: {
+          channel_id?: string
+          id?: string
+          joined_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "channel_members_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      channel_messages: {
+        Row: {
+          body: string
+          channel_id: string
+          deleted_at: string | null
+          id: string
+          sender_id: string
+          sent_at: string
+        }
+        Insert: {
+          body: string
+          channel_id: string
+          deleted_at?: string | null
+          id?: string
+          sender_id: string
+          sent_at?: string
+        }
+        Update: {
+          body?: string
+          channel_id?: string
+          deleted_at?: string | null
+          id?: string
+          sender_id?: string
+          sent_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "channel_messages_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "channel_messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "channel_messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "public_nominee_leaderboard"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "channel_messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "public_representatives"
+            referencedColumns: ["profile_id"]
+          },
+        ]
+      }
+      channels: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          is_archived: boolean
+          name: string
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          is_archived?: boolean
+          name: string
+          type?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          is_archived?: boolean
+          name?: string
+          type?: string
+        }
+        Relationships: []
+      }
       chat_messages: {
         Row: {
           body: string
@@ -1258,9 +1373,11 @@ export type Database = {
           lead_name: string | null
           lead_role: string | null
           logo_url: string | null
+          long_description: string[] | null
           name: string
           partner_type: string
           slug: string
+          social_links: Json | null
           sort_order: number
           updated_at: string
           website: string | null
@@ -1274,9 +1391,11 @@ export type Database = {
           lead_name?: string | null
           lead_role?: string | null
           logo_url?: string | null
+          long_description?: string[] | null
           name: string
           partner_type?: string
           slug: string
+          social_links?: Json | null
           sort_order?: number
           updated_at?: string
           website?: string | null
@@ -1290,9 +1409,11 @@ export type Database = {
           lead_name?: string | null
           lead_role?: string | null
           logo_url?: string | null
+          long_description?: string[] | null
           name?: string
           partner_type?: string
           slug?: string
+          social_links?: Json | null
           sort_order?: number
           updated_at?: string
           website?: string | null
@@ -1645,10 +1766,13 @@ export type Database = {
       }
       sponsors: {
         Row: {
+          about: string | null
+          acronym: string | null
           created_at: string
           description: string | null
           email: string | null
           id: string
+          is_ecowas_sponsor: boolean | null
           is_published: boolean
           logo_url: string | null
           name: string
@@ -1660,10 +1784,13 @@ export type Database = {
           website: string | null
         }
         Insert: {
+          about?: string | null
+          acronym?: string | null
           created_at?: string
           description?: string | null
           email?: string | null
           id?: string
+          is_ecowas_sponsor?: boolean | null
           is_published?: boolean
           logo_url?: string | null
           name: string
@@ -1675,10 +1802,13 @@ export type Database = {
           website?: string | null
         }
         Update: {
+          about?: string | null
+          acronym?: string | null
           created_at?: string
           description?: string | null
           email?: string | null
           id?: string
+          is_ecowas_sponsor?: boolean | null
           is_published?: boolean
           logo_url?: string | null
           name?: string
