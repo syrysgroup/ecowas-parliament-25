@@ -17,7 +17,6 @@ interface EmailAccountRow {
   id: string;
   user_id: string;
   email_address: string;
-  display_name: string | null;
   is_active: boolean;
   zoho_account_id: string | null;
   last_synced_at: string | null;
@@ -32,7 +31,7 @@ interface ProfileOption {
 }
 
 const EmailConfigSettings = () => {
-  const { isAdmin } = useAuthContext();
+  const { isSuperAdmin } = useAuthContext();
   const qc = useQueryClient();
 
   const [modalOpen, setModalOpen] = useState(false);
@@ -50,7 +49,7 @@ const EmailConfigSettings = () => {
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("email_accounts")
-        .select("id, user_id, email_address, display_name, is_active, zoho_account_id, last_synced_at, app_password")
+        .select("id, user_id, email_address, is_active, zoho_account_id, last_synced_at, app_password")
         .order("created_at", { ascending: false });
       if (error) throw error;
       // Fetch profiles for all user_ids
@@ -68,7 +67,7 @@ const EmailConfigSettings = () => {
         profile: profileMap[a.user_id] ?? null,
       }));
     },
-    enabled: isAdmin,
+    enabled: isSuperAdmin,
   });
 
   // Profiles for dropdown
@@ -81,10 +80,10 @@ const EmailConfigSettings = () => {
         .order("full_name");
       return data ?? [];
     },
-    enabled: isAdmin,
+    enabled: isSuperAdmin,
   });
 
-  if (!isAdmin) return null;
+  if (!isSuperAdmin) return null;
 
   const openAdd = () => {
     setEditingAccount(null);

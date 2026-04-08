@@ -725,7 +725,7 @@ export default function SettingsModule() {
   const tabs: { id: SettingsTab; label: string; icon: React.ElementType; superAdminOnly?: boolean; adminOnly?: boolean }[] = [
     { id: "notifications", label: "Notifications", icon: Bell },
     { id: "security", label: "Security", icon: Shield },
-    { id: "email-accounts", label: "Email Accounts", icon: Mail, adminOnly: true },
+    { id: "email-accounts", label: "Email Accounts", icon: Mail, superAdminOnly: true },
     { id: "email", label: "Email Config", icon: Mail, superAdminOnly: true },
     { id: "permissions", label: "Permissions", icon: Lock, superAdminOnly: true },
     { id: "site_settings", label: "Site Settings", icon: Globe, superAdminOnly: true },
@@ -770,7 +770,7 @@ export default function SettingsModule() {
 
       {tab === "notifications" && <NotificationSettings />}
       {tab === "security" && <SecuritySettings />}
-      {tab === "email-accounts" && isAdmin && <EmailConfigSettings />}
+      {tab === "email-accounts" && isSuperAdmin && <EmailConfigSettings />}
       {tab === "email" && isSuperAdmin && <EmailSettings />}
       {tab === "permissions" && isSuperAdmin && <PermissionManager />}
       {tab === "site_settings" && isSuperAdmin && <SiteSettingsPanel />}

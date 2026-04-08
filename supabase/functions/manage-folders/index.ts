@@ -69,14 +69,16 @@ Deno.serve(async (req) => {
     // Resolve account ID — if stored ID is invalid, clear and re-resolve
     let zohoAccountId = acct.zoho_account_id;
     if (!zohoAccountId) {
-      const accountsRes = await fetch("https://mail.zoho.eu/api/accounts", {
+      const orgId = Deno.env.get("ZOHO_ORG_ID")!;
+      const accountsRes = await fetch(`https://mail.zoho.eu/api/organization/${orgId}/accounts`, {
         headers: { Authorization: `Zoho-oauthtoken ${token}` },
       });
       const accountsData = await accountsRes.json();
       const accounts: any[] = Array.isArray(accountsData?.data) ? accountsData.data : [];
       const match = accounts.find((a: any) =>
-        (a.primaryEmailAddress ?? "").toLowerCase() === (acct.email_address ?? "").toLowerCase()
-      ) ?? accounts[0];
+        (a.primaryEmailAddress ?? "").toLowerCase() === (acct.email_address ?? "").toLowerCase() ||
+        (a.mailboxAddress ?? "").toLowerCase() === (acct.email_address ?? "").toLowerCase()
+      );
       if (!match) {
         return new Response(JSON.stringify({ error: "Could not resolve Zoho account ID.", detail: JSON.stringify(accountsData) }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -87,7 +89,7 @@ Deno.serve(async (req) => {
     }
 
     if (action === "list") {
-      const res = await fetch(`https://mail.zoho.eu/api/accounts/${zohoAccountId}/folders`, {
+      const res = await fetch(`https://mail.zoho.eu/api/organization/${Deno.env.get("ZOHO_ORG_ID")}/accounts/${zohoAccountId}/folders`, {
         headers: { Authorization: `Zoho-oauthtoken ${token}` },
       });
       if (!res.ok) throw new Error(`Zoho folders fetch failed (${res.status})`);
@@ -111,7 +113,7 @@ Deno.serve(async (req) => {
       if (SYSTEM_FOLDERS.has(folder_name.trim().toLowerCase())) {
         return new Response(JSON.stringify({ error: "Cannot create a folder with a reserved name" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
-      const res = await fetch(`https://mail.zoho.eu/api/accounts/${zohoAccountId}/folders`, {
+      const res = await fetch(`https://mail.zoho.eu/api/organization/${Deno.env.get("ZOHO_ORG_ID")}/accounts/${zohoAccountId}/folders`, {
         method: "POST",
         headers: { Authorization: `Zoho-oauthtoken ${token}`, "Content-Type": "application/json" },
         body: JSON.stringify({ folderName: folder_name.trim() }),
@@ -131,7 +133,7 @@ Deno.serve(async (req) => {
         return new Response(JSON.stringify({ error: "folder_id is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
       // Fetch folders to verify it's not a system folder
-      const listRes = await fetch(`https://mail.zoho.eu/api/accounts/${zohoAccountId}/folders`, {
+      const listRes = await fetch(`https://mail.zoho.eu/api/organization/${Deno.env.get("ZOHO_ORG_ID")}/accounts/${zohoAccountId}/folders`, {
         headers: { Authorization: `Zoho-oauthtoken ${token}` },
       });
       const listData = await listRes.json();
@@ -142,7 +144,7 @@ Deno.serve(async (req) => {
       if (SYSTEM_FOLDERS.has((target.folderName ?? "").toLowerCase())) {
         return new Response(JSON.stringify({ error: "Cannot delete system folders" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
-      const res = await fetch(`https://mail.zoho.eu/api/accounts/${zohoAccountId}/folders/${folder_id}`, {
+      const res = await fetch(`https://mail.zoho.eu/api/organization/${Deno.env.get("ZOHO_ORG_ID")}/accounts/${zohoAccountId}/folders/${folder_id}`, {
         method: "DELETE",
         headers: { Authorization: `Zoho-oauthtoken ${token}` },
       });
