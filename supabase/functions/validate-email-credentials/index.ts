@@ -106,8 +106,8 @@ Deno.serve(async (req) => {
     const sslEnabled: boolean = globalConfig.ssl_enabled !== false;
 
     const body = await req.json().catch(() => ({}));
-    const { email: bodyEmail, password: bodyPassword, checkStored, target_user_id } = body as {
-      email?: string; password?: string; checkStored?: boolean; target_user_id?: string;
+    const { email: bodyEmail, password: bodyPassword, checkStored, validate_stored, target_user_id } = body as {
+      email?: string; password?: string; checkStored?: boolean; validate_stored?: boolean; target_user_id?: string;
     };
 
     // Determine the target user (super admin can set email for another user)
@@ -126,6 +126,32 @@ Deno.serve(async (req) => {
         });
       }
       targetUserId = target_user_id;
+    }
+
+    // New mode: validate stored app_password from email_accounts for the target user
+    if (validate_stored) {
+      const { data: acct } = await serviceClient
+        .from("email_accounts")
+        .select("email_address, app_password")
+        .eq("user_id", targetUserId)
+        .maybeSingle();
+
+      if (!acct?.app_password) {
+        return new Response(JSON.stringify({ valid: false, error: "No app password stored for this account" }), {
+          status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const result = await validateImapCredentials(imapHost, imapPort, sslEnabled, acct.email_address, acct.app_password);
+
+      await serviceClient
+        .from("email_accounts")
+        .update({ imap_valid: result.valid, imap_validated_at: new Date().toISOString() })
+        .eq("user_id", targetUserId);
+
+      return new Response(JSON.stringify(result), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     let emailToValidate: string;

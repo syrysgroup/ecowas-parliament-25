@@ -10,7 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Eye, EyeOff, Plus, Pencil, RefreshCw, Lock, CheckCircle, Clock, Mail } from "lucide-react";
+import { Eye, EyeOff, Plus, Pencil, RefreshCw, Lock, CheckCircle, Clock, Mail, XCircle, Loader2, Wifi } from "lucide-react";
 import { format, parseISO } from "date-fns";
 
 interface EmailAccountRow {
@@ -21,6 +21,8 @@ interface EmailAccountRow {
   zoho_account_id: string | null;
   last_synced_at: string | null;
   app_password: string | null;
+  imap_valid: boolean | null;
+  imap_validated_at: string | null;
   profile?: { full_name: string; email: string } | null;
 }
 
@@ -42,6 +44,7 @@ const EmailConfigSettings = () => {
   const [showPw, setShowPw] = useState(false);
   const [saving, setSaving] = useState(false);
   const [syncingId, setSyncingId] = useState<string | null>(null);
+  const [validatingId, setValidatingId] = useState<string | null>(null);
 
   // Fetch all email accounts with profiles
   const { data: accounts = [], isLoading } = useQuery<EmailAccountRow[]>({
@@ -49,7 +52,7 @@ const EmailConfigSettings = () => {
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("email_accounts")
-        .select("id, user_id, email_address, is_active, zoho_account_id, last_synced_at, app_password")
+        .select("id, user_id, email_address, is_active, zoho_account_id, last_synced_at, app_password, imap_valid, imap_validated_at")
         .order("created_at", { ascending: false });
       if (error) throw error;
       // Fetch profiles for all user_ids
@@ -151,6 +154,32 @@ const EmailConfigSettings = () => {
     }
   };
 
+  const handleValidateConnection = async (acct: EmailAccountRow) => {
+    if (!acct.app_password) {
+      toast.error("No app password saved — edit the account and add one first");
+      return;
+    }
+    setValidatingId(acct.id);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const { data, error } = await supabase.functions.invoke("validate-email-credentials", {
+        body: { validate_stored: true, target_user_id: acct.user_id },
+        headers: { Authorization: `Bearer ${session?.access_token}` },
+      });
+      if (error) throw new Error(error.message);
+      if (data?.valid) {
+        toast.success("IMAP connection verified successfully");
+      } else {
+        toast.error(`Connection failed: ${data?.error ?? "Unknown error"}`);
+      }
+      qc.invalidateQueries({ queryKey: ["admin-email-accounts"] });
+    } catch (err: any) {
+      toast.error(`Validation error: ${err.message}`);
+    } finally {
+      setValidatingId(null);
+    }
+  };
+
   const handleTestSync = async (acct: EmailAccountRow) => {
     setSyncingId(acct.id);
     try {
@@ -218,7 +247,8 @@ const EmailConfigSettings = () => {
                 <th className="px-4 py-3 font-medium">Status</th>
                 <th className="px-4 py-3 font-medium">Zoho</th>
                 <th className="px-4 py-3 font-medium">Last Synced</th>
-                <th className="px-4 py-3 font-medium">Password</th>
+                <th className="px-4 py-3 font-medium">IMAP</th>
+                <th className="px-4 py-3 font-medium">Validated</th>
                 <th className="px-4 py-3 font-medium text-right">Actions</th>
               </tr>
             </thead>
@@ -254,16 +284,44 @@ const EmailConfigSettings = () => {
                     {acct.last_synced_at ? format(parseISO(acct.last_synced_at), "d MMM yyyy, h:mm a") : "Never"}
                   </td>
                   <td className="px-4 py-3">
-                    {acct.app_password ? (
-                      <Lock size={14} className="text-muted-foreground" />
+                    {acct.imap_valid === true ? (
+                      <span className="inline-flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400">
+                        <CheckCircle size={12} /> Connected
+                      </span>
+                    ) : acct.imap_valid === false ? (
+                      <span className="inline-flex items-center gap-1 text-xs text-destructive">
+                        <XCircle size={12} /> Failed
+                      </span>
+                    ) : acct.app_password ? (
+                      <span className="inline-flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400">
+                        <Lock size={12} /> Not tested
+                      </span>
                     ) : (
-                      <span className="text-xs text-muted-foreground">—</span>
+                      <span className="text-xs text-muted-foreground">No password</span>
                     )}
+                  </td>
+                  <td className="px-4 py-3 text-xs text-muted-foreground">
+                    {acct.imap_validated_at
+                      ? format(parseISO(acct.imap_validated_at), "d MMM, h:mm a")
+                      : "—"}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-1">
                       <Button size="sm" variant="ghost" onClick={() => openEdit(acct)} className="h-7 px-2">
                         <Pencil size={13} />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleValidateConnection(acct)}
+                        disabled={validatingId === acct.id || !acct.app_password}
+                        title="Test IMAP connection"
+                        className="h-7 px-2"
+                      >
+                        {validatingId === acct.id
+                          ? <Loader2 size={13} className="animate-spin" />
+                          : <Wifi size={13} />
+                        }
                       </Button>
                       <Button size="sm" variant="ghost" onClick={() => handleTestSync(acct)}
                         disabled={syncingId === acct.id} className="h-7 px-2">
