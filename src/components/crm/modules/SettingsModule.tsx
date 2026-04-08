@@ -12,6 +12,8 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
+import ImageUploadOrUrl from "@/components/shared/ImageUploadOrUrl";
+import { LOGO_RECOMMENDED, FAVICON_RECOMMENDED } from "@/lib/constants";
 
 type SettingsTab = "email" | "notifications" | "security" | "permissions" | "site_settings";
 
@@ -652,7 +654,6 @@ function SiteSettingsPanel() {
       title: "General", icon: Globe,
       fields: [
         { key: "site_name", label: "Site Name" },
-        { key: "site_logo_url", label: "Site Logo URL" },
         { key: "contact_email", label: "Contact Email" },
       ],
     },
@@ -676,6 +677,28 @@ function SiteSettingsPanel() {
 
   return (
     <div className="space-y-4">
+      {/* Logo & Favicon */}
+      <Section title="Branding" icon={Globe}>
+        <Field label={`Site Logo — recommended ${LOGO_RECOMMENDED.display}`}>
+          <ImageUploadOrUrl
+            value={values["site_logo_url"] || ""}
+            onChange={url => update("site_logo_url", url)}
+            bucket="public"
+            pathPrefix="branding/logo/"
+            previewClassName="h-12 w-auto object-contain rounded border border-crm-border p-1 bg-crm-surface"
+          />
+        </Field>
+        <Field label={`Favicon URL — recommended ${FAVICON_RECOMMENDED.size}×${FAVICON_RECOMMENDED.size}px`}>
+          <ImageUploadOrUrl
+            value={values["site_favicon_url"] || ""}
+            onChange={url => update("site_favicon_url", url)}
+            bucket="public"
+            pathPrefix="branding/favicon/"
+            previewClassName="h-8 w-8 object-contain rounded border border-crm-border p-0.5 bg-crm-surface"
+          />
+        </Field>
+      </Section>
+
       {groups.map(group => (
         <Section key={group.title} title={group.title} icon={group.icon}>
           {group.fields.map(field => (

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -143,6 +143,23 @@ export default function ProfileModule() {
   const [newPw, setNewPw] = useState("");
   const [confirmPw, setConfirmPw] = useState("");
   const [pwSending, setPwSending] = useState(false);
+
+  const { data: stats } = useQuery({
+    queryKey: ["profile-stats", user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const [tasksRes, msgsRes, eventsRes] = await Promise.all([
+        (supabase as any).from("tasks").select("id", { count: "exact", head: true }).eq("assignee_id", user!.id).eq("status", "done"),
+        (supabase as any).from("crm_messages").select("id", { count: "exact", head: true }).or(`from_user_id.eq.${user!.id},to_user_id.eq.${user!.id}`),
+        (supabase as any).from("crm_calendar_events").select("id", { count: "exact", head: true }).eq("created_by", user!.id),
+      ]);
+      return {
+        tasksDone: tasksRes.count ?? 0,
+        connections: msgsRes.count ?? 0,
+        events: eventsRes.count ?? 0,
+      };
+    },
+  });
 
   useEffect(() => {
     if (!user?.id) return;
@@ -313,10 +330,10 @@ export default function ProfileModule() {
                 <h3 className="text-[13px] font-semibold text-crm-text">{t("crm.profile.overview")}</h3>
                 <div className="grid grid-cols-2 gap-3">
                   {[
-                    { icon: Check, label: t("crm.profile.tasksDone"), val: "—" },
-                    { icon: Users, label: t("crm.profile.connections"), val: "—" },
+                    { icon: Check, label: t("crm.profile.tasksDone"), val: stats ? String(stats.tasksDone) : "—" },
+                    { icon: Users, label: t("crm.profile.connections"), val: stats ? String(stats.connections) : "—" },
                     { icon: Star, label: t("crm.profile.projects"), val: "—" },
-                    { icon: Heart, label: t("crm.profile.events"), val: "—" },
+                    { icon: Heart, label: t("crm.profile.events"), val: stats ? String(stats.events) : "—" },
                   ].map(s => (
                     <div key={s.label} className="flex items-center gap-2.5 p-2 rounded-lg bg-crm-surface">
                       <div className="w-8 h-8 rounded-lg bg-emerald-950/50 border border-emerald-800/30 flex items-center justify-center">
