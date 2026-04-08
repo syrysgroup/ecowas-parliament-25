@@ -1,93 +1,102 @@
 
 
-# Fix CRM Sponsors, Partners, Chat, Email Config, Profile & Avatars
+# Comprehensive CRM Enhancement Plan
 
-## Root Causes Identified
-
-1. **Sponsors INSERT/UPDATE fail silently**: The code sends columns `acronym`, `about`, `is_ecowas_sponsor` but these columns do NOT exist in the `sponsors` table. Supabase silently ignores the insert/update when unknown columns are sent, resulting in no error shown but no data saved.
-
-2. **Partners INSERT/UPDATE fail silently**: Same issue -- code sends `long_description` (text[]) and `social_links` (jsonb) but these columns don't exist in the `partners` table.
-
-3. **Chat completely broken**: The `channels`, `channel_members`, and `channel_messages` tables do not exist in the database. The MessagingModule queries these tables, causing all channel operations to fail. Only `direct_messages` and `chat_messages` tables exist.
-
-4. **"No bucket found" for logo uploads**: The `branding` bucket exists and has upload policies, but the policies may restrict to specific admin roles. Need to verify the exact USING/WITH CHECK expressions match the current user's role.
-
-5. **Email config shows SMTP/IMAP host/port to per-user setup**: The EmailConfigTab in SuperAdminModule exposes server fields that should auto-populate from global settings.
-
-6. **Profile design glitchy + missing email**: The ProfileModule layout needs polish; email is in the About card but may not be visible due to layout issues.
-
-7. **Default avatar**: Currently `/images/logo/logo.png` -- should be the Parliament 25 logo consistently.
+This is a large set of interconnected improvements spanning profile redesign, chat enhancements, multilingual CRM support, avatar standardization, and upload improvements. Here's the breakdown:
 
 ---
 
-## Part 1: Database Migration -- Add Missing Columns + Chat Tables
+## 1. Standardize Default Avatar to Parliament 25 Logo
 
-**New migration** to:
+**What changes**: Replace all `DEFAULT_AVATAR = "/images/logo/logo.png"` references across the project with the Parliament 25 logo asset (`/assets/parliament-25-logo.png`). Create a shared constant (e.g. `src/lib/constants.ts`) so every component imports the same default.
 
-- Add missing columns to `sponsors`: `acronym text`, `about text`, `is_ecowas_sponsor boolean DEFAULT false`
-- Add missing columns to `partners`: `long_description text[]`, `social_links jsonb DEFAULT '{}'`
-- Create `channels` table (id, name, description, type, created_by, is_archived, created_at)
-- Create `channel_members` table (id, channel_id, user_id, joined_at)
-- Create `channel_messages` table (id, channel_id, sender_id, body, sent_at, deleted_at)
-- Add RLS policies for all three chat tables (CRM staff can read/write, users see their own messages)
-- Add storage upload policy for `branding` bucket if missing for `super_admin`
+**Files affected**: `MessagingModule.tsx`, `ProfileModule.tsx`, `CRMSidebar.tsx`, `Team.tsx`, and any other component displaying user avatars.
 
 ---
 
-## Part 2: Fix SponsorsManagerModule
+## 2. Redesign CRM Profile Module
 
-- No code changes needed for sponsor/partner dialogs -- the column additions will make existing code work
-- Verify the `sort_order` default and `updated_at` handling
+**What changes**: Completely redesign `ProfileModule.tsx` into a comprehensive, polished profile page with:
+- **Header banner** with avatar, name, email, role badges, and join date (fix current glitchy layout)
+- **Contact Details section**: email (visible), phone number, organisation, country, date of birth, social links
+- **General Info section**: full name, title, bio
+- **Tabbed layout**: Profile, Contact, Security, Activity
+- **Avatar upload with URL option**: users can either upload a file OR paste an image URL
+- Phone number field requires a **migration** to add `phone` column to `profiles` table
 
----
-
-## Part 3: Email Config -- Hide Server Fields for Per-User Setup
-
-**File**: `src/components/crm/modules/SuperAdminModule.tsx` (EmailConfigTab)
-
-- The global email config (SMTP host, port, IMAP host, port, SSL) is set by the super admin once
-- When setting up per-user email credentials (via validate-email-credentials), the SMTP/IMAP host/port should auto-fill from the saved `smtp` site_settings and not be editable by the user
-- Add a "Test Connection" button that calls `validate-email-credentials` edge function to verify the configuration before saving
-
----
-
-## Part 4: Chat Module Fix
-
-**File**: `src/components/crm/modules/MessagingModule.tsx`
-
-- With the new `channels`, `channel_members`, `channel_messages` tables created, the existing code should work
-- Fix the foreign key reference in the channel_messages query (`profiles!channel_messages_sender_id_fkey`) -- will need to ensure the FK exists or adjust the query to use a manual join
-- Add profile view dialog when clicking avatar or three-dot menu (already partially implemented -- verify it works)
+**Database migration needed**:
+```sql
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS phone text;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS linkedin_url text;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS twitter_url text;
+```
 
 ---
 
-## Part 5: Profile Module Polish
+## 3. Chat Module Enhancements
 
-**File**: `src/components/crm/modules/ProfileModule.tsx`
+**What changes** to `MessagingModule.tsx`:
 
-- Ensure email address is prominently visible in the banner area (not just in the About card)
-- Fix layout spacing issues (the `space-y-0` on the wrapper causes elements to overlap)
-- Improve the Overview card with actual data queries instead of placeholder dashes
+- **User profile from avatar/three-dots**: Already partially working — ensure clicking avatar or "View Profile" in the MoreVertical dropdown opens an enhanced profile dialog showing full name, title, organisation, country, phone, email, bio, and social links
+- **Display by name, not email**: Contacts sidebar already shows `full_name` — ensure DM conversations and message bubbles always show first+last name (already largely done, just clean up fallback logic)
+- **Message status indicators**: Add delivered (single check), read (double check), and timestamp display beneath each message bubble
+- **Collapsible contacts list**: Wrap Channels, Direct Messages, and Contacts sections in collapsible accordion sections with search filtering
+- **Multilingual text input**: Add a translate button in the message input area that auto-translates typed text. This would use a translation API or browser-based approach
+
+**Note**: Read receipts require a DB migration to add `read_at` and `delivered_at` columns to `direct_messages` and `channel_messages`.
+
+**Database migration**:
+```sql
+ALTER TABLE public.direct_messages ADD COLUMN IF NOT EXISTS read_at timestamptz;
+ALTER TABLE public.direct_messages ADD COLUMN IF NOT EXISTS delivered_at timestamptz DEFAULT now();
+ALTER TABLE public.channel_messages ADD COLUMN IF NOT EXISTS read_at timestamptz;
+ALTER TABLE public.channel_messages ADD COLUMN IF NOT EXISTS delivered_at timestamptz DEFAULT now();
+```
 
 ---
 
-## Part 6: Default Avatar
+## 4. Full CRM Multilingual Support (EN/FR/PT)
 
-- Update `DEFAULT_AVATAR` constant across all modules to use `/images/logo/logo.png` (the Parliament 25 logo) -- this is already the case but verify the image file exists and renders correctly
-- Ensure the avatar fallback is consistent in ProfileModule, MessagingModule, PeopleModule
+**What changes**: The CRM currently has no i18n integration — all labels are hardcoded in English.
+
+- Add ~200+ CRM translation keys to `en.ts`, `fr.ts`, `pt.ts` covering all sidebar labels, module titles, form labels, buttons, and status messages
+- Import `useTranslation` into CRM modules and replace hardcoded strings with `t("crm.key")` calls
+- Add a language switcher to the CRM sidebar or header
+- This is a **large effort** spanning every CRM module — will be done progressively starting with the sidebar, profile, and messaging modules
+
+---
+
+## 5. Logo & Favicon Setup with Connected Uploads
+
+**Suggested sizes**:
+- **Logo**: 180×60px (displayed) / provide 360×120px for retina. PNG or SVG.
+- **Favicon**: 32×32px `.ico` or `.png`, plus 180×180px Apple touch icon, and 192×192px + 512×512px for PWA manifest.
+
+**What changes**: In the CRM Settings (BrandingSettings), connect the logo/favicon upload so:
+- Uploaded logo updates `global_settings` table and is immediately reflected in the Navbar/Footer
+- Uploaded favicon updates `index.html` dynamically (or via a settings-driven approach)
+- Add URL input option alongside file upload for both logo and favicon
+
+---
+
+## 6. URL Option for All Image Uploads
+
+**What changes**: Across all CRM modules that have image uploads (sponsors, team members, news, events, media library, profile avatars), add an alternative "Paste URL" input field alongside the file upload button. This avoids duplicating images already hosted elsewhere.
+
+**Pattern**: A shared `ImageUploadOrUrl` component that provides both a file upload button and a URL text input, returning the final URL.
 
 ---
 
 ## Technical Summary
 
-| Task | Type | Files |
-|------|------|-------|
-| Add sponsor columns (acronym, about, is_ecowas_sponsor) | Migration | DB |
-| Add partner columns (long_description, social_links) | Migration | DB |
-| Create channels/channel_members/channel_messages + RLS | Migration | DB |
-| Fix branding storage policy if needed | Migration | DB |
-| Hide SMTP/IMAP fields in per-user email setup + add test connection | Code | SuperAdminModule.tsx |
-| Polish profile layout, show email prominently | Code | ProfileModule.tsx |
-| Fix chat foreign key query | Code | MessagingModule.tsx |
-| Consistent default avatar | Code | Multiple modules |
+| Item | Files | DB Migration |
+|------|-------|-------------|
+| Default avatar constant | New `constants.ts` + ~5 files | No |
+| Profile redesign | `ProfileModule.tsx` | Yes (phone, social links) |
+| Chat enhancements | `MessagingModule.tsx` | Yes (read_at, delivered_at) |
+| CRM i18n | All translation files + CRM modules | No |
+| Logo/favicon setup | `BrandingSettings.tsx`, `Navbar.tsx` | No |
+| URL option for uploads | New shared component + ~8 modules | No |
+
+This is a substantial body of work. Implementation will proceed in order of priority: avatar standardization and profile redesign first, then chat enhancements, then i18n, then upload improvements.
 
