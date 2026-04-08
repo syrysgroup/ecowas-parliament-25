@@ -8,9 +8,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Upload, Link2 } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "@/lib/i18n";
+import { LOGO_RECOMMENDED, FAVICON_RECOMMENDED } from "@/lib/constants";
 
 const BrandingSettings = () => {
   const { settings, updateSetting } = useGlobalSettings();
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const branding = settings.branding as { primary_color?: string; logo_url?: string; favicon_url?: string } ?? {};
   const appName = settings.app_name as string ?? "ECOWAS Parliament CRM";
@@ -41,16 +44,14 @@ const BrandingSettings = () => {
       if (type === "logo") {
         setLogoPreview(publicUrl);
         await updateSetting("branding", { ...branding, logo_url: publicUrl });
-        // Also update site_settings so Navbar picks it up
         await (supabase as any).from("site_settings").upsert({ key: "site_logo_url", value: JSON.stringify(publicUrl) }, { onConflict: "key" });
         qc.invalidateQueries({ queryKey: ["site-settings"] });
       } else {
         setFaviconPreview(publicUrl);
         await updateSetting("branding", { ...branding, favicon_url: publicUrl });
-        // Update favicon dynamically
         updateFaviconLink(publicUrl);
       }
-      toast.success(`${type === "logo" ? "Logo" : "Favicon"} updated`);
+      toast.success(`${type === "logo" ? t("crm.branding.logoUpdated") : "Favicon updated"}`);
     } catch (e: any) {
       toast.error(e.message ?? "Upload failed");
     } finally {
@@ -71,12 +72,11 @@ const BrandingSettings = () => {
   const handleSave = async () => {
     await updateSetting("app_name", name);
     await updateSetting("branding", { ...branding, primary_color: color, logo_url: logoPreview, favicon_url: faviconPreview });
-    // Sync to site_settings for Navbar
     await (supabase as any).from("site_settings").upsert({ key: "site_logo_url", value: JSON.stringify(logoPreview) }, { onConflict: "key" });
     await (supabase as any).from("site_settings").upsert({ key: "site_name", value: JSON.stringify(name) }, { onConflict: "key" });
     qc.invalidateQueries({ queryKey: ["site-settings"] });
     if (faviconPreview) updateFaviconLink(faviconPreview);
-    toast.success("Branding settings saved");
+    toast.success(t("crm.branding.saved"));
   };
 
   const ModeToggle = ({ mode, setMode }: { mode: "upload" | "url"; setMode: (m: "upload" | "url") => void }) => (
@@ -98,8 +98,11 @@ const BrandingSettings = () => {
         {/* Logo uploader */}
         <Card className="flex-1">
           <CardContent className="pt-5">
-            <p className="text-sm font-medium text-foreground mb-2">App Logo</p>
-            <p className="text-[10px] text-muted-foreground mb-3">Recommended: 360×120px (PNG/SVG). Max 2MB.</p>
+            <p className="text-sm font-medium text-foreground mb-1">{t("crm.branding.appLogo")}</p>
+            <p className="text-[10px] text-muted-foreground mb-1">{t("crm.branding.logoHint")}</p>
+            <p className="text-[9px] text-muted-foreground/70 mb-3">
+              Display: {LOGO_RECOMMENDED.display} · Upload at {LOGO_RECOMMENDED.width}×{LOGO_RECOMMENDED.height}px for retina
+            </p>
             <ModeToggle mode={logoMode} setMode={setLogoMode} />
             <div className="flex flex-col items-center gap-3">
               <img src={logoPreview} alt="Logo preview"
@@ -130,8 +133,11 @@ const BrandingSettings = () => {
         {/* Favicon uploader */}
         <Card className="flex-1">
           <CardContent className="pt-5">
-            <p className="text-sm font-medium text-foreground mb-2">Favicon</p>
-            <p className="text-[10px] text-muted-foreground mb-3">Recommended: 32×32px (PNG/ICO). Also provide 180×180 for Apple, 512×512 for PWA.</p>
+            <p className="text-sm font-medium text-foreground mb-1">{t("crm.branding.favicon")}</p>
+            <p className="text-[10px] text-muted-foreground mb-1">{t("crm.branding.faviconHint")}</p>
+            <p className="text-[9px] text-muted-foreground/70 mb-3">
+              Sizes: {FAVICON_RECOMMENDED.size}×{FAVICON_RECOMMENDED.size}px (browser) · {FAVICON_RECOMMENDED.apple}×{FAVICON_RECOMMENDED.apple}px (Apple) · {FAVICON_RECOMMENDED.pwa512}×{FAVICON_RECOMMENDED.pwa512}px (PWA)
+            </p>
             <ModeToggle mode={faviconMode} setMode={setFaviconMode} />
             <div className="flex flex-col items-center gap-3">
               {faviconPreview && (
@@ -165,7 +171,7 @@ const BrandingSettings = () => {
       {/* Preview */}
       <Card>
         <CardContent className="pt-5">
-          <p className="text-sm font-medium text-foreground mb-4">Live Preview</p>
+          <p className="text-sm font-medium text-foreground mb-4">{t("crm.branding.livePreview")}</p>
           <div className="rounded-lg border border-border p-4 flex items-center gap-3" style={{ borderColor: color }}>
             <img src={logoPreview} alt="Logo" className="h-8 w-auto object-contain" />
             <div>
@@ -184,11 +190,11 @@ const BrandingSettings = () => {
 
       <div className="grid sm:grid-cols-2 gap-4">
         <div className="space-y-1.5">
-          <Label>App Name</Label>
+          <Label>{t("crm.branding.appName")}</Label>
           <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="App Name" />
         </div>
         <div className="space-y-1.5">
-          <Label>Primary Brand Color</Label>
+          <Label>{t("crm.branding.primaryColor")}</Label>
           <div className="flex gap-2">
             <input type="color" value={color} onChange={(e) => setColor(e.target.value)}
               className="h-9 w-12 rounded border border-border cursor-pointer p-0.5" />
@@ -197,7 +203,7 @@ const BrandingSettings = () => {
         </div>
       </div>
 
-      <Button onClick={handleSave} className="w-fit">Save Branding</Button>
+      <Button onClick={handleSave} className="w-fit">{t("crm.branding.save")}</Button>
     </div>
   );
 };
