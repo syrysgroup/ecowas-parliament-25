@@ -72,6 +72,12 @@ function ScrollToTop() {
   return null;
 }
 
+function PresenceTracker() {
+  const { user } = useAuthContext();
+  usePresence(user?.id);
+  return null;
+}
+
 const App = () => (
   <ThemeProvider attribute="class" defaultTheme="system" enableSystem storageKey="ecowas-theme">
   <QueryClientProvider client={queryClient}>
@@ -83,6 +89,7 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <ScrollToTop />
+            <PresenceTracker />
             <Routes>
               {/* Public pages */}
               <Route path="/"                   element={<Index />}          />
