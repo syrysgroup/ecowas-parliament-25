@@ -1,119 +1,137 @@
 
 
-## Plan: CRM Improvements — Profile Redesign, Chat Enhancements, Translations, and Zoho Bug Fixes
+# Implementation Plan
 
-This plan covers 8 areas across ~15 files plus 4 edge function fixes.
-
----
-
-### 1. Default Avatar: Parliament 25 Logo Everywhere
-
-**Current state:** `DEFAULT_AVATAR` in `src/lib/constants.ts` is already set to `"/images/logo/logo.png"`. Need to verify this file exists in `public/images/logo/` and that all avatar references use `DEFAULT_AVATAR` consistently.
-
-**Changes:**
-- Verify `public/images/logo/logo.png` exists; if not, set path to the actual Parliament 25 logo file
-- Audit all avatar usages across components to ensure they fall back to `DEFAULT_AVATAR` (ProfileModule, MessagingModule, CRMSidebar, etc.)
+This is a large, multi-part request covering email fixes, CRM improvements, chat enhancements, profile redesign, translations, and more. Here's the plan organized by priority.
 
 ---
 
-### 2. Profile Module Redesign (All-Inclusive)
+## Part 1: Fix Email Sync and Functionality (Critical)
 
-Redesign `src/components/crm/modules/ProfileModule.tsx` with a cleaner, more comprehensive layout:
+**Current state:** The edge functions (`send-email`, `sync-emails`, `update-email`, `fetch-email-body`) already have the bug fixes applied in code. The `EmailInboxModule` correctly queries Supabase. The issue is likely that the edge functions need redeployment, or the `sync-emails` function is failing silently.
 
-- **Banner:** Keep gradient + avatar with upload/URL options; show email address prominently
-- **Tabs restructured:** Merge "Profile" and "Contact" into a single view with two-column layout:
-  - Left column: Read-only "About" card showing full name, email, phone, title, organisation, country, LinkedIn, Twitter, bio, date of birth, notification email
-  - Right column: Edit form with all fields including `notification_email`, `date_of_birth`, `phone`, social links
-- **Security tab:** Keep password change
-- **Visibility toggle:** Show on website switch
-- Fix any glitchy overflow/spacing issues with proper `overflow-hidden`, consistent padding, and responsive grid
+**Actions:**
+- Redeploy all four email edge functions: `sync-emails`, `send-email`, `update-email`, `fetch-email-body`
+- Check edge function logs after deployment to verify sync works
+- Verify the email account exists in `email_accounts` table for the logged-in user
 
 ---
 
-### 3. Chat Enhancements (MessagingModule)
+## Part 2: Fix 404 Errors (Missing Tables)
 
-**File:** `src/components/crm/modules/MessagingModule.tsx`
+**`user_notification_prefs` (404):** Table doesn't exist. Create migration:
+```sql
+CREATE TABLE public.user_notification_prefs (
+  user_id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  notify_new_message boolean NOT NULL DEFAULT true,
+  notify_task_assigned boolean NOT NULL DEFAULT true,
+  notify_event_reminder boolean NOT NULL DEFAULT true,
+  notify_system_updates boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+ALTER TABLE public.user_notification_prefs ENABLE ROW LEVEL SECURITY;
+-- Users can read/write own prefs
+CREATE POLICY "Users manage own prefs" ON public.user_notification_prefs
+  FOR ALL TO authenticated USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+```
 
-- **Avatar/3-dot menu → View Profile:** Already has `ProfileViewDialog` and `onAvatarClick`. Ensure the three-dot `DropdownMenu` on messages includes "View Profile" option that opens the dialog.
-- **Display names not emails:** Already using `full_name` from profiles. Verify `peer_name` in DM conversations falls back to `full_name`, not email.
-- **Delivered/Read indicators:** Already implemented with `Check`/`CheckCheck` icons. Ensure timestamps are shown in locale-aware format.
-- **Collapsible/searchable contacts:** Already has `CollapsibleSection` and search input. Verify contacts list is filterable by the search term.
-- **Multilingual chat:** This is complex machine translation — not feasible as auto-translate. Instead, ensure the chat UI itself is fully translated via i18n keys and that users can type in any language (Unicode support is already there).
-
----
-
-### 4. Branding: Logo & Favicon Size Guidance in UI
-
-**File:** `src/views/admin/settings/BrandingSettings.tsx`
-
-- Add recommended size hints next to upload fields using `LOGO_RECOMMENDED` and `FAVICON_RECOMMENDED` from constants
-- Ensure uploaded logo propagates to Navbar via `site_settings` (already wired)
-- Ensure favicon updates dynamically (already has `updateFavicon` logic)
-- Add URL input option alongside upload (already partially implemented with `logoMode`/`faviconMode`)
-
----
-
-### 5. ImageUploadOrUrl Everywhere
-
-**File:** `src/components/shared/ImageUploadOrUrl.tsx` — already exists.
-
-Audit and replace raw file inputs with `ImageUploadOrUrl` in:
-- `SponsorsManagerModule` (sponsor/partner logos)
-- `EventsManagerModule` (cover images)
-- `NewsEditorModule` (cover images)
-- `MediaKitModule` / `MediaLibraryModule`
-
-This is a large sweep — prioritize the most-used editors first.
+**`tasks` table (400 on join):** The tasks table likely exists but the `assignee_id` foreign key relationship to `profiles` isn't set up, causing the `!assignee_id` join hint to fail. Fix by adding the FK if missing, or adjusting the query.
 
 ---
 
-### 6. Full CRM Translation (3 Languages)
+## Part 3: Default Avatar — Parliament 25 Logo
 
-**Files:** `src/lib/translations/en.ts`, `fr.ts`, `pt.ts`
+**Current:** `DEFAULT_AVATAR` in `src/lib/constants.ts` points to `/images/logo/logo.png`.
 
-Add missing CRM translation keys for all modules. The CRM already uses `t()` in many places but likely has gaps. Key areas:
-- All SuperAdmin tabs and labels
-- All Chat/Messaging labels
-- All Profile labels
-- Email module labels
-- Settings labels
-- Common action words (save, cancel, delete, create, edit, etc.)
-
-This is the largest single task — hundreds of new keys across 3 files.
+**Action:** Ensure this file exists and is the Parliament 25 logo. Audit all avatar usages across the project to confirm they use `DEFAULT_AVATAR` from constants. Files to check/update:
+- `ProfileModule.tsx` (already uses it)
+- `MessagingModule.tsx` (already uses it)
+- `CRMSidebar.tsx`, `CRMLayout.tsx`, navbar, team cards, etc.
 
 ---
 
-### 7. Four Zoho Edge Function Bug Fixes
+## Part 4: Profile Redesign (All-Inclusive)
 
-#### Bug 1: `send-email` — Wrong resolver (critical)
-**File:** `supabase/functions/send-email/index.ts`
-Replace `resolveZohoAccountId` to use `/api/accounts` (user-level) instead of `/api/organization/{orgId}/accounts`. Add cached ID validation with a probe request. Remove `?? match.zuid` fallback.
+**Current:** Profile has a banner, about card, stats, and edit form in tabs. Already fairly complete but user reports glitchy design.
 
-#### Bug 2: `sync-emails` — Silent wrong-mailbox fallback
-**File:** `supabase/functions/sync-emails/index.ts` line 65
-Remove `?? accounts[0]` fallback. Throw with list of visible accounts if no match found.
-
-#### Bug 3: `update-email` — Wrong Zoho API endpoint
-**File:** `supabase/functions/update-email/index.ts`
-Replace `/updatemessage` with `PUT /api/accounts/{accountId}/messages/{messageId}`. Fix field names: `isread` → `mode: "markAsRead"/"markAsUnread"`, `flagid` → `isflagged: "true"/"false"`, move action needs `mode: "move"`.
-
-#### Bug 4: `fetch-email-body` — Null zoho_message_id crash
-**File:** `supabase/functions/fetch-email-body/index.ts`
-Add guard: if `zoho_message_id` is null, return existing `body_html` (or empty string) immediately instead of making a nonsensical API call.
-
-All 4 functions must be redeployed after changes.
+**Improvements:**
+- Fix layout overflow/visibility issues in the banner and form sections
+- Ensure email address is prominently visible (already partially done)
+- Make the profile fully responsive with proper spacing
+- Add missing fields display: date of birth formatted, all social links visible
+- Improve the "Overview Stats" section with real data queries (tasks done, connections, etc.)
+- Clean up tab styling and ensure consistent CRM theme
 
 ---
 
-### 8. Summary of Files
+## Part 5: Chat Improvements
 
-| Area | Files Modified |
-|------|---------------|
-| Default avatar | `src/lib/constants.ts` (verify), audit ~5 components |
-| Profile redesign | `src/components/crm/modules/ProfileModule.tsx` |
-| Chat enhancements | `src/components/crm/modules/MessagingModule.tsx` |
-| Branding sizes | `src/views/admin/settings/BrandingSettings.tsx` |
-| ImageUploadOrUrl | Multiple CRM module files |
-| Translations | `src/lib/translations/en.ts`, `fr.ts`, `pt.ts` |
-| Zoho fixes | 4 edge functions in `supabase/functions/` |
+### 5a. User Profile from Avatar/Three-Dot Menu
+**Current:** `ProfileViewDialog` already exists in `MessagingModule.tsx` and shows name, email, phone, country, org, LinkedIn, Twitter.
+
+**Improvements:**
+- Ensure clicking avatar opens profile dialog
+- Add profile view option to the three-dot (`MoreVertical`) menu
+- Display users by full name (first + last), not email
+
+### 5b. Delivery/Read Status and Timestamps
+- Add delivered/read indicators (checkmarks) to messages — single check for sent, double check for delivered, blue double check for read
+- Show timestamps on each message
+- Use the existing `delivered_at`, `read_at` columns on `direct_messages` and `channel_messages`
+
+### 5c. Collapsible/Searchable Contacts
+- Make the contacts sidebar collapsible
+- Add search input to filter contacts by name
+
+### 5d. Multilingual Text Input
+- This is a complex feature (real-time translation). Suggest using browser's built-in input methods for now, and potentially integrating a translation API later.
+
+---
+
+## Part 6: Full CRM Translation (3 Languages)
+
+**Current:** Translation system exists with `en.ts`, `fr.ts`, `pt.ts` using a `useTranslation` hook.
+
+**Action:** Audit all CRM modules for hardcoded English strings and add translation keys. This is a large effort spanning ~20+ module files. Key files:
+- All modules in `src/components/crm/modules/`
+- `CRMSidebar.tsx`, `CRMLayout.tsx`
+- Add missing keys to `fr.ts` and `pt.ts`
+
+---
+
+## Part 7: Logo/Favicon Setup in Settings
+
+**Current:** `LOGO_RECOMMENDED` and `FAVICON_RECOMMENDED` constants exist with size guidance.
+
+**Action:**
+- In CRM Settings (BrandingSettings), display recommended sizes: Logo 180×60px (retina 360×120px), Favicon 32×32px (Apple Touch 180×180px)
+- Connect upload to `global_settings` table so uploaded logo/favicon reflect on the public website
+- Add URL input option alongside file upload
+
+---
+
+## Part 8: URL Option for All Image Uploads
+
+**Action:** Create a reusable `ImageUploadOrUrl` component (file already exists at `src/components/shared/ImageUploadOrUrl.tsx`). Ensure it's used in:
+- Profile avatar (already done)
+- Event cover images, news article covers, partner logos, sponsor logos, media kit items
+- Any other upload fields
+
+---
+
+## Technical Details
+
+**Files to create/modify:**
+- 1 new migration for `user_notification_prefs` table (+ potentially fix `tasks` FK)
+- 4 edge functions to redeploy (no code changes needed — already fixed)
+- `src/lib/constants.ts` — verify DEFAULT_AVATAR path
+- `src/components/crm/modules/ProfileModule.tsx` — redesign
+- `src/components/crm/modules/MessagingModule.tsx` — chat improvements
+- `src/components/crm/modules/SettingsModule.tsx` — logo/favicon guidance
+- `src/lib/translations/fr.ts`, `src/lib/translations/pt.ts` — CRM translations
+- Multiple CRM module files for translation key usage
+
+**Estimated scope:** ~15-20 files modified, 1 migration, 4 edge function redeployments.
 
