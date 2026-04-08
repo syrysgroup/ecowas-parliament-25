@@ -118,9 +118,9 @@ function useNotifications() {
       const evtRes = await (supabase as any)
         .from("crm_calendar_events")
         .select("id, title, start_time, created_by")
+        .or(`created_by.eq.${user!.id},is_global.eq.true`)
         .gte("start_time", nowTs.toISOString())
         .lte("start_time", todayEnd.toISOString())
-        .eq("created_by", user!.id)
         .order("start_time", { ascending: true })
         .limit(3);
 

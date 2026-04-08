@@ -66,6 +66,7 @@ function EventFormSheet({
   const [allDay, setAllDay] = useState(event?.all_day ?? false);
   const [colour, setColour] = useState(event?.colour ?? "green");
   const [url, setUrl] = useState(event?.url ?? "");
+  const [isGlobal, setIsGlobal] = useState(event?.is_global ?? false);
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
@@ -79,6 +80,7 @@ function EventFormSheet({
         end_time: endTime || null,
         all_day: allDay,
         colour,
+        is_global: isGlobal,
       };
       if (isEdit) {
         await (supabase as any).from("crm_calendar_events").update(payload).eq("id", event.id);
@@ -153,6 +155,17 @@ function EventFormSheet({
               className="bg-crm-surface border-crm-border text-crm-text text-sm resize-none" />
           </div>
 
+          <div className="flex items-center gap-2 pt-1">
+            <Checkbox
+              id="is_global"
+              checked={isGlobal}
+              onCheckedChange={(v) => setIsGlobal(!!v)}
+            />
+            <Label htmlFor="is_global" className="cursor-pointer text-sm">
+              Add to all users' calendars
+            </Label>
+          </div>
+
           <div className="flex gap-2 pt-2">
             <Button size="sm" onClick={handleSave} disabled={!title.trim() || !startTime || saving}
               className="bg-emerald-700 hover:bg-emerald-600 text-white text-xs flex-1">
@@ -207,7 +220,7 @@ function MiniCalendar({ currentDate, onDateChange }: { currentDate: Date; onDate
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 export default function CalendarModule() {
-  const { roles } = useAuthContext();
+  const { roles, user } = useAuthContext();
   const qc = useQueryClient();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -231,6 +244,7 @@ export default function CalendarModule() {
       const { data } = await (supabase as any)
         .from("crm_calendar_events")
         .select("*")
+        .or(`created_by.eq.${user!.id},is_global.eq.true`)
         .gte("start_time", monthStart.toISOString())
         .lte("start_time", monthEnd.toISOString())
         .order("start_time", { ascending: true });

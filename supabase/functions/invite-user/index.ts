@@ -91,6 +91,7 @@ Deno.serve(async (req) => {
       email,
       role,
       invited_by: userId,
+      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
       ...(metadata ? { metadata } : {}),
     });
 

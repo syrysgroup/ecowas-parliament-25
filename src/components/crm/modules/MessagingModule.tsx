@@ -9,7 +9,7 @@ import { DEFAULT_AVATAR } from "@/lib/constants";
 import {
   Send, MessageSquare, Search, Phone as PhoneIcon, Video, MoreVertical,
   Plus, User, MapPin, Briefcase, Mail, ChevronDown, ChevronRight,
-  Check, CheckCheck, Linkedin, Twitter, Phone,
+  Check, Linkedin, Twitter, Phone,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -228,11 +228,20 @@ function MessageBubble({ body, senderName, time, isOwn, avatarUrl, readAt, deliv
           <span className="text-[9px] text-crm-text-faint">{time}</span>
           {isOwn && (
             readAt ? (
-              <CheckCheck size={12} className="text-emerald-400" />
+              // Double blue tick — seen
+              <span className="flex">
+                <Check size={11} className="text-blue-400 -mr-1.5" strokeWidth={2.5} />
+                <Check size={11} className="text-blue-400" strokeWidth={2.5} />
+              </span>
             ) : deliveredAt ? (
-              <CheckCheck size={12} className="text-crm-text-faint" />
+              // Double grey tick — delivered
+              <span className="flex">
+                <Check size={11} className="text-crm-text-faint -mr-1.5" strokeWidth={2.5} />
+                <Check size={11} className="text-crm-text-faint" strokeWidth={2.5} />
+              </span>
             ) : (
-              <Check size={12} className="text-crm-text-faint" />
+              // Single grey tick — sent, not delivered
+              <Check size={11} className="text-crm-text-faint" strokeWidth={2.5} />
             )
           )}
         </div>
@@ -256,6 +265,16 @@ function usePresenceData() {
     refetchInterval: 30_000,
   });
   return presenceMap;
+}
+
+function formatLastSeen(lastSeenAt: string): string {
+  const d = new Date(lastSeenAt);
+  const now = new Date();
+  const isToday = d.toDateString() === now.toDateString();
+  const timeStr = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  return isToday
+    ? `Last seen today at ${timeStr}`
+    : `Last seen ${d.toLocaleDateString([], { weekday: "short" })} at ${timeStr}`;
 }
 
 function isUserOnline(presence: { is_online: boolean; last_seen_at: string } | undefined): boolean {
@@ -388,14 +407,24 @@ export default function MessagingModule() {
     refetchInterval: 5000,
   });
 
-  // Mark messages as read when viewing DM
+  // Mark messages as delivered and read when viewing DM
   useEffect(() => {
     if (view?.type === "dm" && user?.id && messages.length > 0) {
+      const now = new Date().toISOString();
+
+      const undelivered = messages.filter((m: any) => m.recipient_id === user.id && !m.delivered_at);
+      if (undelivered.length > 0) {
+        const ids = undelivered.map((m: any) => m.id);
+        (supabase as any).from("direct_messages")
+          .update({ delivered_at: now })
+          .in("id", ids);
+      }
+
       const unread = messages.filter((m: any) => m.recipient_id === user.id && !m.read_at);
       if (unread.length > 0) {
         const ids = unread.map((m: any) => m.id);
         (supabase as any).from("direct_messages")
-          .update({ read_at: new Date().toISOString() })
+          .update({ read_at: now })
           .in("id", ids)
           .then(() => {
             qc.invalidateQueries({ queryKey: ["chat-messages", "dm", view.peerId] });
@@ -560,7 +589,11 @@ export default function MessagingModule() {
                   {view.type === "dm" && (
                     <p className={`text-[10px] flex items-center gap-1 ${isUserOnline(presenceMap[view.peerId]) ? "text-emerald-400" : "text-crm-text-faint"}`}>
                       <PresenceDot online={isUserOnline(presenceMap[view.peerId])} size={6} />
-                      {isUserOnline(presenceMap[view.peerId]) ? t("crm.chat.online") : "Offline"}
+                      {isUserOnline(presenceMap[view.peerId])
+                        ? t("crm.chat.online")
+                        : presenceMap[view.peerId]?.last_seen_at
+                          ? formatLastSeen(presenceMap[view.peerId].last_seen_at)
+                          : "Offline"}
                     </p>
                   )}
                   {view.type === "channel" && (

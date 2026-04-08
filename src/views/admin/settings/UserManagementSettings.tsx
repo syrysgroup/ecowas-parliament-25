@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
-  KeyRound, Trash2, UserPlus, Mail, X, Loader2, AlertOctagon, Eye, EyeOff,
+  KeyRound, Trash2, UserPlus, Mail, X, Loader2, AlertOctagon, Eye, EyeOff, RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuthContext as useAuth } from "@/contexts/AuthContext";
@@ -31,6 +31,8 @@ type Invitation = {
   role: string;
   created_at: string;
   accepted_at: string | null;
+  expires_at: string | null;
+  resent_at: string | null;
 };
 
 const APP_ROLES = ["admin", "moderator", "super_admin", "sponsor", "media"];
@@ -90,7 +92,7 @@ const UserManagementSettings = () => {
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("invitations")
-        .select("id, email, role, created_at, accepted_at")
+        .select("id, email, role, created_at, accepted_at, expires_at, resent_at")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data as Invitation[];
@@ -98,6 +100,9 @@ const UserManagementSettings = () => {
   });
 
   const pendingInvites = invitations.filter(i => !i.accepted_at);
+
+  const isExpired = (inv: Invitation) =>
+    !inv.accepted_at && !!inv.expires_at && new Date(inv.expires_at) < new Date();
 
   // Mutations
   const updateRole = useMutation({
@@ -162,12 +167,35 @@ const UserManagementSettings = () => {
   // Delete invitations
   const deleteInvitations = async (ids: string[]) => {
     if (!confirm(`Delete ${ids.length} invitation(s)?`)) return;
-    for (const id of ids) {
-      await (supabase as any).from("invitations").delete().eq("id", id);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const { data, error } = await supabase.functions.invoke("delete-invite", {
+        body: { invitation_ids: ids },
+        headers: { Authorization: `Bearer ${session?.access_token}` },
+      });
+      if (error || data?.error) throw new Error(error?.message ?? data?.error);
+      setSelectedInvites(new Set());
+      qc.invalidateQueries({ queryKey: ["admin-invitations"] });
+      toast.success(`${ids.length} invitation(s) deleted`);
+    } catch (e: any) {
+      toast.error(e.message);
     }
-    setSelectedInvites(new Set());
-    qc.invalidateQueries({ queryKey: ["admin-invitations"] });
-    toast.success(`${ids.length} invitation(s) deleted`);
+  };
+
+  // Resend invitation
+  const resendInvite = async (id: string) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const { data, error } = await supabase.functions.invoke("resend-invite", {
+        body: { invitation_id: id },
+        headers: { Authorization: `Bearer ${session?.access_token}` },
+      });
+      if (error || data?.error) throw new Error(error?.message ?? data?.error);
+      toast.success("Invitation resent successfully");
+      qc.invalidateQueries({ queryKey: ["admin-invitations"] });
+    } catch (e: any) {
+      toast.error(e.message);
+    }
   };
 
   // Bulk invite
@@ -425,43 +453,61 @@ const UserManagementSettings = () => {
                 ) : invitations.length === 0 ? (
                   <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">No invitations</td></tr>
                 ) : (
-                  invitations.map(inv => (
-                    <tr key={inv.id} className="border-t border-border hover:bg-muted/20 transition-colors">
-                      <td className="px-3 py-3">
-                        <Checkbox
-                          checked={selectedInvites.has(inv.id)}
-                          onCheckedChange={() => toggleInviteSelect(inv.id)}
-                          disabled={!!inv.accepted_at}
-                        />
-                      </td>
-                      <td className="px-4 py-3 text-foreground">{inv.email}</td>
-                      <td className="px-4 py-3">
-                        <Badge variant="outline" className="text-xs">{inv.role}</Badge>
-                      </td>
-                      <td className="px-4 py-3 text-xs text-muted-foreground">
-                        {new Date(inv.created_at).toLocaleDateString()}
-                      </td>
-                      <td className="px-4 py-3">
-                        {inv.accepted_at ? (
-                          <Badge className="bg-emerald-500/15 text-emerald-600 border-0 text-xs">Accepted</Badge>
-                        ) : (
-                          <Badge className="bg-amber-500/15 text-amber-600 border-0 text-xs">Pending</Badge>
-                        )}
-                      </td>
-                      <td className="px-4 py-3">
-                        {!inv.accepted_at && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 text-xs text-destructive hover:text-destructive"
-                            onClick={() => deleteInvitations([inv.id])}
-                          >
-                            <Trash2 size={12} />
-                          </Button>
-                        )}
-                      </td>
-                    </tr>
-                  ))
+                  invitations.map(inv => {
+                    const expired = isExpired(inv);
+                    return (
+                      <tr key={inv.id} className="border-t border-border hover:bg-muted/20 transition-colors">
+                        <td className="px-3 py-3">
+                          <Checkbox
+                            checked={selectedInvites.has(inv.id)}
+                            onCheckedChange={() => toggleInviteSelect(inv.id)}
+                            disabled={!!inv.accepted_at}
+                          />
+                        </td>
+                        <td className="px-4 py-3 text-foreground">{inv.email}</td>
+                        <td className="px-4 py-3">
+                          <Badge variant="outline" className="text-xs">{inv.role}</Badge>
+                        </td>
+                        <td className="px-4 py-3 text-xs text-muted-foreground">
+                          {new Date(inv.created_at).toLocaleDateString()}
+                        </td>
+                        <td className="px-4 py-3">
+                          {inv.accepted_at ? (
+                            <Badge className="bg-emerald-500/15 text-emerald-600 border-0 text-xs">Accepted</Badge>
+                          ) : expired ? (
+                            <Badge className="bg-destructive/15 text-destructive border-0 text-xs">Expired</Badge>
+                          ) : (
+                            <Badge className="bg-amber-500/15 text-amber-600 border-0 text-xs">Invite Sent</Badge>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          {inv.accepted_at ? null : (
+                            <div className="flex items-center gap-1">
+                              {expired && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 text-xs"
+                                  onClick={() => resendInvite(inv.id)}
+                                  title="Resend Invite"
+                                >
+                                  <RefreshCw size={12} className="mr-1" /> Resend
+                                </Button>
+                              )}
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 text-xs text-destructive hover:text-destructive"
+                                onClick={() => deleteInvitations([inv.id])}
+                              >
+                                <Trash2 size={12} />
+                              </Button>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>
