@@ -557,7 +557,15 @@ export default function MessagingModule() {
                 </button>
                 <div>
                   <p className="text-[13px] font-semibold text-crm-text">{activeLabel}</p>
-                  <p className="text-[10px] text-emerald-400">{t("crm.chat.online")}</p>
+                  {view.type === "dm" && (
+                    <p className={`text-[10px] flex items-center gap-1 ${isUserOnline(presenceMap[view.peerId]) ? "text-emerald-400" : "text-crm-text-faint"}`}>
+                      <PresenceDot online={isUserOnline(presenceMap[view.peerId])} size={6} />
+                      {isUserOnline(presenceMap[view.peerId]) ? t("crm.chat.online") : "Offline"}
+                    </p>
+                  )}
+                  {view.type === "channel" && (
+                    <p className="text-[10px] text-crm-text-faint">{t("crm.chat.channel")}</p>
+                  )}
                 </div>
               </div>
               <div className="flex items-center gap-1">
