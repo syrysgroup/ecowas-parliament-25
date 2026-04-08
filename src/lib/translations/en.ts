@@ -1326,6 +1326,10 @@ export const en: Record<string, string> = {
   "crm.profile.updatePassword": "Update Password",
   "crm.profile.passwordMismatch": "Passwords do not match",
   "crm.profile.passwordUpdated": "Password updated",
+  "crm.profile.notificationEmail": "Notification Email",
+  "crm.profile.notifEmailPlaceholder": "alerts@example.com",
+  "crm.profile.dateOfBirth": "Date of Birth",
+  "crm.profile.socialLinks": "Social Links",
 
   // ─── CRM Chat ─────────────────────────────────────────────────────
   "crm.chat.title": "Chat",

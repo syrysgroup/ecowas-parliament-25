@@ -56,7 +56,6 @@ Deno.serve(async (req) => {
 
     const serviceClient = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
-    // Look up email + verify ownership via email_accounts join
     const { data: emailRow } = await serviceClient
       .from("emails")
       .select("id, zoho_message_id, account_id, folder, is_read, is_starred")
@@ -79,25 +78,29 @@ Deno.serve(async (req) => {
 
     const zohoMessageId = emailRow.zoho_message_id;
     const zohoAccountId = acct.zoho_account_id;
-
-    // For actions that require Zoho, get a token
     const needsZoho = zohoMessageId && zohoAccountId;
     let token: string | null = null;
     if (needsZoho) {
       token = await getZohoToken();
     }
 
-    // ── Helper: call Zoho updatemessage ──────────────────────────────────────
+    // ── Helper: call Zoho PUT /messages/{id} ────────────────────────────────
     async function zohoUpdate(payload: Record<string, string>) {
       if (!needsZoho || !token) return;
-      const res = await fetch(`https://mail.zoho.eu/api/accounts/${zohoAccountId}/updatemessage`, {
-        method: "PUT",
-        headers: { Authorization: `Zoho-oauthtoken ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ messageId: zohoMessageId, ...payload }),
-      });
+      const res = await fetch(
+        `https://mail.zoho.eu/api/accounts/${zohoAccountId}/messages/${zohoMessageId}`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Zoho-oauthtoken ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        }
+      );
       if (!res.ok) {
         const body = await res.text();
-        throw new Error(`Zoho updatemessage failed (${res.status}): ${body}`);
+        throw new Error(`Zoho message update failed (${res.status}): ${body}`);
       }
     }
 
@@ -116,34 +119,34 @@ Deno.serve(async (req) => {
     // ── Dispatch ─────────────────────────────────────────────────────────────
     switch (action) {
       case "mark_read": {
-        await zohoUpdate({ isread: "true" });
+        await zohoUpdate({ mode: "markAsRead" });
         await serviceClient.from("emails").update({ is_read: true }).eq("id", email_id);
         break;
       }
       case "mark_unread": {
-        await zohoUpdate({ isread: "false" });
+        await zohoUpdate({ mode: "markAsUnread" });
         await serviceClient.from("emails").update({ is_read: false }).eq("id", email_id);
         break;
       }
       case "star": {
-        await zohoUpdate({ flagid: "1" });
+        await zohoUpdate({ isflagged: "true" });
         await serviceClient.from("emails").update({ is_starred: true }).eq("id", email_id);
         break;
       }
       case "unstar": {
-        await zohoUpdate({ flagid: "0" });
+        await zohoUpdate({ isflagged: "false" });
         await serviceClient.from("emails").update({ is_starred: false }).eq("id", email_id);
         break;
       }
       case "move": {
-        await zohoUpdate({ folderId: folder_id! });
+        await zohoUpdate({ mode: "move", folderId: folder_id! });
         await serviceClient.from("emails").update({ folder: folder_name ?? folder_id }).eq("id", email_id);
         break;
       }
       case "trash": {
         if (needsZoho && token) {
           const trashFolderId = await getTrashFolderId();
-          await zohoUpdate({ folderId: trashFolderId });
+          await zohoUpdate({ mode: "move", folderId: trashFolderId });
         }
         await serviceClient.from("emails").update({ folder: "trash" }).eq("id", email_id);
         break;

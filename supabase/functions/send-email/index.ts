@@ -34,35 +34,45 @@ async function getZohoToken(): Promise<string> {
 }
 
 async function resolveZohoAccountId(serviceClient: any, acct: any, token: string): Promise<string> {
-  if (acct.zoho_account_id) return acct.zoho_account_id;
-
-  const orgId = Deno.env.get("ZOHO_ORG_ID");
-  if (!orgId) throw new Error("ZOHO_ORG_ID secret not configured");
-
-  const accountsRes = await fetch(`https://mail.zoho.eu/api/organization/${orgId}/accounts`, {
-    headers: { Authorization: `Zoho-oauthtoken ${token}` },
-  });
-
-  if (!accountsRes.ok) {
-    const errText = await accountsRes.text();
-    console.error("Zoho org accounts lookup failed:", accountsRes.status, errText);
-    throw new Error(`Failed to look up Zoho accounts (HTTP ${accountsRes.status})`);
+  // Validate cached ID before trusting it
+  if (acct.zoho_account_id) {
+    const probe = await fetch(
+      `https://mail.zoho.eu/api/accounts/${acct.zoho_account_id}/folders`,
+      { headers: { Authorization: `Zoho-oauthtoken ${token}` } }
+    );
+    if (probe.ok) return acct.zoho_account_id as string;
+    console.warn("send-email: cached zoho_account_id invalid, re-resolving:", acct.zoho_account_id);
+    await serviceClient.from("email_accounts")
+      .update({ zoho_account_id: null }).eq("id", acct.id);
   }
 
-  const accountsData = await accountsRes.json();
-  const accounts = accountsData?.data ?? [];
+  // Use /api/accounts (user-level) — same as sync-emails
+  const accountsRes = await fetch("https://mail.zoho.eu/api/accounts", {
+    headers: { Authorization: `Zoho-oauthtoken ${token}` },
+  });
+  if (!accountsRes.ok) {
+    throw new Error(`Zoho accounts lookup failed (HTTP ${accountsRes.status})`);
+  }
+  const { data: accounts = [] } = await accountsRes.json();
 
   const match = accounts.find((a: any) =>
-    a.primaryEmailAddress?.toLowerCase() === acct.email_address.toLowerCase() ||
+    (a.primaryEmailAddress ?? "").toLowerCase() === acct.email_address.toLowerCase() ||
     (a.mailboxAddress ?? "").toLowerCase() === acct.email_address.toLowerCase()
   );
 
   if (!match) {
-    throw new Error(`No Zoho mail account found for "${acct.email_address}". Ensure this email exists in your Zoho organisation.`);
+    const visible = accounts.map((a: any) => a.primaryEmailAddress).join(", ");
+    throw new Error(
+      `No Zoho mailbox for "${acct.email_address}". Visible: [${visible || "none"}]`
+    );
+  }
+  if (!match.accountId) {
+    throw new Error(`Zoho returned no accountId for "${acct.email_address}": ${JSON.stringify(match)}`);
   }
 
-  const zohoAccountId = String(match.accountId ?? match.zuid);
-  await serviceClient.from("email_accounts").update({ zoho_account_id: zohoAccountId }).eq("id", acct.id);
+  const zohoAccountId = String(match.accountId);
+  await serviceClient.from("email_accounts")
+    .update({ zoho_account_id: zohoAccountId }).eq("id", acct.id);
   return zohoAccountId;
 }
 

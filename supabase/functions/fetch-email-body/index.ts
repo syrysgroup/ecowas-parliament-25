@@ -72,6 +72,13 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Guard: locally-composed emails have no zoho_message_id
+    if (!emailRow.zoho_message_id) {
+      return new Response(JSON.stringify({ body_html: emailRow.body_html || "" }), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // Look up the Zoho account ID
     const { data: acct } = await serviceClient
       .from("email_accounts")
