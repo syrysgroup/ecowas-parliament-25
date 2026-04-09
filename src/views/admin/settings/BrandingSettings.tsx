@@ -35,10 +35,35 @@ const BrandingSettings = () => {
     const setLoading = type === "logo" ? setUploading : setFaviconUploading;
     setLoading(true);
     try {
+      // Verify user is authenticated before uploading
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("You must be logged in to upload files. Please refresh and try again.");
+        return;
+      }
+
       const ext = file.name.split(".").pop();
       const path = `${type}s/app-${type}-${Date.now()}.${ext}`;
-      const { error } = await supabase.storage.from("branding").upload(path, file, { upsert: true });
-      if (error) throw error;
+
+      // Attempt upload with explicit content type
+      const { error } = await supabase.storage
+        .from("branding")
+        .upload(path, file, {
+          upsert: true,
+          contentType: file.type,
+        });
+
+      if (error) {
+        if (error.message?.includes("Bucket not found") || error.message?.includes("not found")) {
+          toast.error("Storage bucket 'branding' not found. Please contact your administrator to verify storage configuration.");
+        } else if (error.message?.includes("row-level security") || error.message?.includes("policy")) {
+          toast.error("Permission denied. Ensure your account has admin or super_admin privileges.");
+        } else {
+          throw error;
+        }
+        return;
+      }
+
       const { data: { publicUrl } } = supabase.storage.from("branding").getPublicUrl(path);
 
       if (type === "logo") {
@@ -55,6 +80,7 @@ const BrandingSettings = () => {
       }
       toast.success(`${type === "logo" ? t("crm.branding.logoUpdated") : "Favicon updated"}`);
     } catch (e: any) {
+      console.error("Upload error:", e);
       toast.error(e.message ?? "Upload failed");
     } finally {
       setLoading(false);
