@@ -8,6 +8,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { I18nProvider } from "@/lib/i18n";
 import { AuthProvider, useAuthContext } from "@/contexts/AuthContext";
 import { usePresence } from "@/hooks/usePresence";
+import { useFavicon } from "@/hooks/useFavicon";
 import { GlobalSettingsProvider } from "@/contexts/GlobalSettingsContext";
 import ProtectedRoute from "@/components/admin/ProtectedRoute";
 
@@ -75,6 +76,7 @@ function ScrollToTop() {
 function PresenceTracker() {
   const { user } = useAuthContext();
   usePresence(user?.id);
+  useFavicon();
   return null;
 }
 
