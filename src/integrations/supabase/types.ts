@@ -737,21 +737,21 @@ export type Database = {
           {
             foreignKeyName: "email_accounts_user_id_fkey"
             columns: ["user_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "email_accounts_user_id_fkey"
             columns: ["user_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "public_nominee_leaderboard"
             referencedColumns: ["profile_id"]
           },
           {
             foreignKeyName: "email_accounts_user_id_fkey"
             columns: ["user_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "public_representatives"
             referencedColumns: ["profile_id"]
           },

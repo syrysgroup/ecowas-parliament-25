@@ -10,7 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Eye, EyeOff, Plus, Pencil, RefreshCw, Lock, CheckCircle, Clock, Mail, XCircle, Loader2, Wifi } from "lucide-react";
+import { Eye, EyeOff, Plus, Pencil, RefreshCw, Lock, CheckCircle, Mail, Loader2, Wifi } from "lucide-react";
 import { format, parseISO } from "date-fns";
 
 interface EmailAccountRow {
@@ -18,7 +18,6 @@ interface EmailAccountRow {
   user_id: string;
   email_address: string;
   is_active: boolean;
-  zoho_account_id: string | null;
   last_synced_at: string | null;
   app_password: string | null;
   imap_valid: boolean | null;
@@ -31,6 +30,22 @@ interface ProfileOption {
   full_name: string;
   email: string;
 }
+
+/** Small coloured dot with label */
+const SignalLight = ({ color, label, title }: { color: "green" | "red" | "gray"; label: string; title: string }) => {
+  const bg =
+    color === "green"
+      ? "bg-emerald-500"
+      : color === "red"
+      ? "bg-red-500"
+      : "bg-muted-foreground/30";
+  return (
+    <span title={title} className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
+      <span className={`w-2 h-2 rounded-full ${bg} shrink-0`} />
+      {label}
+    </span>
+  );
+};
 
 const EmailConfigSettings = () => {
   const { isSuperAdmin } = useAuthContext();
@@ -46,16 +61,14 @@ const EmailConfigSettings = () => {
   const [syncingId, setSyncingId] = useState<string | null>(null);
   const [validatingId, setValidatingId] = useState<string | null>(null);
 
-  // Fetch all email accounts with profiles
   const { data: accounts = [], isLoading } = useQuery<EmailAccountRow[]>({
     queryKey: ["admin-email-accounts"],
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("email_accounts")
-        .select("id, user_id, email_address, is_active, zoho_account_id, last_synced_at, app_password, imap_valid, imap_validated_at")
+        .select("id, user_id, email_address, is_active, last_synced_at, app_password, imap_valid, imap_validated_at")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      // Fetch profiles for all user_ids
       const userIds = [...new Set((data ?? []).map((a: any) => a.user_id))];
       let profileMap: Record<string, ProfileOption> = {};
       if (userIds.length > 0) {
@@ -65,22 +78,15 @@ const EmailConfigSettings = () => {
           .in("id", userIds);
         for (const p of (profiles ?? [])) profileMap[p.id] = p;
       }
-      return (data ?? []).map((a: any) => ({
-        ...a,
-        profile: profileMap[a.user_id] ?? null,
-      }));
+      return (data ?? []).map((a: any) => ({ ...a, profile: profileMap[a.user_id] ?? null }));
     },
     enabled: isSuperAdmin,
   });
 
-  // Profiles for dropdown
   const { data: profiles = [] } = useQuery<ProfileOption[]>({
     queryKey: ["all-profiles-for-email"],
     queryFn: async () => {
-      const { data } = await (supabase as any)
-        .from("profiles")
-        .select("id, full_name, email")
-        .order("full_name");
+      const { data } = await (supabase as any).from("profiles").select("id, full_name, email").order("full_name");
       return data ?? [];
     },
     enabled: isSuperAdmin,
@@ -198,6 +204,17 @@ const EmailConfigSettings = () => {
     }
   };
 
+  /** Derive signal colour */
+  const inColor = (acct: EmailAccountRow): "green" | "red" | "gray" =>
+    acct.imap_valid === true ? "green" : acct.imap_valid === false ? "red" : "gray";
+  const outColor = (acct: EmailAccountRow): "green" | "red" | "gray" =>
+    acct.imap_valid === true && acct.is_active ? "green" : acct.imap_valid === false ? "red" : "gray";
+
+  const inTitle = (acct: EmailAccountRow) =>
+    acct.imap_valid === true ? "Incoming (IMAP) verified" : acct.imap_valid === false ? "IMAP validation failed" : "Not yet tested";
+  const outTitle = (acct: EmailAccountRow) =>
+    acct.imap_valid === true && acct.is_active ? "Outgoing (SMTP) ready" : acct.imap_valid === false ? "SMTP unavailable — IMAP failed" : "Not yet tested";
+
   if (isLoading) {
     return (
       <div className="space-y-4 max-w-4xl">
@@ -234,10 +251,10 @@ const EmailConfigSettings = () => {
               <tr className="text-left text-muted-foreground text-xs">
                 <th className="px-4 py-3 font-medium">User</th>
                 <th className="px-4 py-3 font-medium">Email</th>
+                <th className="px-4 py-3 font-medium">Password</th>
                 <th className="px-4 py-3 font-medium">Status</th>
-                <th className="px-4 py-3 font-medium">Zoho</th>
-                <th className="px-4 py-3 font-medium">Last Synced</th>
-                <th className="px-4 py-3 font-medium">IMAP</th>
+                <th className="px-4 py-3 font-medium text-center">IN</th>
+                <th className="px-4 py-3 font-medium text-center">OUT</th>
                 <th className="px-4 py-3 font-medium">Validated</th>
                 <th className="px-4 py-3 font-medium text-right">Actions</th>
               </tr>
@@ -250,6 +267,15 @@ const EmailConfigSettings = () => {
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">{acct.email_address}</td>
                   <td className="px-4 py-3">
+                    {acct.app_password ? (
+                      <span className="inline-flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400">
+                        <Lock size={12} /> Saved
+                      </span>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">Not set</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
                     <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full ${
                       acct.is_active
                         ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
@@ -259,36 +285,11 @@ const EmailConfigSettings = () => {
                       {acct.is_active ? "Active" : "Inactive"}
                     </span>
                   </td>
-                  <td className="px-4 py-3">
-                    {acct.zoho_account_id ? (
-                      <span className="inline-flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400">
-                        <CheckCircle size={12} /> Resolved
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400">
-                        <Clock size={12} /> Pending
-                      </span>
-                    )}
+                  <td className="px-4 py-3 text-center">
+                    <SignalLight color={inColor(acct)} label="IN" title={inTitle(acct)} />
                   </td>
-                  <td className="px-4 py-3 text-xs text-muted-foreground">
-                    {acct.last_synced_at ? format(parseISO(acct.last_synced_at), "d MMM yyyy, h:mm a") : "Never"}
-                  </td>
-                  <td className="px-4 py-3">
-                    {acct.imap_valid === true ? (
-                      <span className="inline-flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400">
-                        <CheckCircle size={12} /> Connected
-                      </span>
-                    ) : acct.imap_valid === false ? (
-                      <span className="inline-flex items-center gap-1 text-xs text-destructive">
-                        <XCircle size={12} /> Failed
-                      </span>
-                    ) : acct.app_password ? (
-                      <span className="inline-flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400">
-                        <Lock size={12} /> Not tested
-                      </span>
-                    ) : (
-                      <span className="text-xs text-muted-foreground">No password</span>
-                    )}
+                  <td className="px-4 py-3 text-center">
+                    <SignalLight color={outColor(acct)} label="OUT" title={outTitle(acct)} />
                   </td>
                   <td className="px-4 py-3 text-xs text-muted-foreground">
                     {acct.imap_validated_at
