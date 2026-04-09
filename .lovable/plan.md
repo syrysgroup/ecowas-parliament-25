@@ -1,48 +1,47 @@
 
 
-## Plan: Email Save Refactor, Migration, and Favicon Fix
+## Plan: Fix Email Accounts Save + Add Incoming/Outgoing Status Lights
 
-### 1. Update `handleSave` in EmailConfigSettings.tsx
-Replace the `handleSave` function to call the `save-email-password` edge function instead of direct DB writes. The new function uses `supabase.functions.invoke("save-email-password", ...)` as provided.
+### Problem 1: Save fails — missing unique constraint on `user_id`
+The `save-email-password` edge function uses `upsert(..., { onConflict: "user_id" })`, but there is no unique index on `email_accounts.user_id`. This causes the upsert to fail silently or error out.
 
-**File:** `src/views/admin/settings/EmailConfigSettings.tsx` (lines ~96-119)
+**Fix:** Add a unique constraint on `email_accounts.user_id` via migration.
 
-### 2. Create `save-email-password` Edge Function
-A new edge function is needed since it doesn't exist yet. It will:
-- Validate the caller is a super_admin (JWT check)
-- Accept `target_user_id`, `email_address`, and optional `app_password`
-- Upsert into `email_accounts` table using the service role key
-- Encrypt/store the app_password securely
+### Problem 2: UI references `zoho_account_id` but column doesn't exist
+The `EmailAccountRow` interface and table column reference `zoho_account_id`, but this column was removed from the schema. This causes query errors or null values.
 
-**File:** `supabase/functions/save-email-password/index.ts`
+**Fix:** Remove `zoho_account_id` from the query and interface. Remove the "Zoho" column from the table.
 
-### 3. Database Migration
-A single migration to add the tasks FK constraint. The `is_global` column on `crm_calendar_events` already exists, so we skip that. The calendar RLS policy update is still needed.
+### Problem 3: Add validation status + incoming/outgoing indicator lights
+Add two colored indicator dots per row:
+- **Incoming (IMAP):** Green if `imap_valid === true` and recently synced, red if failed, amber if untested
+- **Outgoing (SMTP):** Green if last send succeeded (we can derive this from IMAP valid + active status since they share the same Zoho credentials)
 
-```sql
--- Tasks FK to profiles
-ALTER TABLE public.tasks
-  ADD CONSTRAINT tasks_assignee_id_fkey
-  FOREIGN KEY (assignee_id) REFERENCES public.profiles(id) ON DELETE SET NULL;
+Replace the current separate IMAP/Validated columns with a cleaner consolidated row showing:
+- Password status (stored or not)
+- IMAP validation status with timestamp
+- Two signal lights: **IN** (incoming/IMAP) and **OUT** (outgoing/SMTP)
 
--- Update calendar RLS
-DROP POLICY IF EXISTS "CRM staff can view calendar events" ON public.crm_calendar_events;
-CREATE POLICY "CRM staff can view calendar events"
-  ON public.crm_calendar_events FOR SELECT TO authenticated
-  USING (created_by = auth.uid() OR is_global = true OR public.is_crm_staff(auth.uid()));
-```
+### Changes
 
-### 4. Fix Favicon Upload "No Bucket Found" Error
-The `branding` bucket exists and is public with correct RLS policies for super_admin/admin. The error is likely caused by the Supabase client not sending proper auth headers. The fix: ensure the upload path in `BrandingSettings.tsx` handles the error more gracefully and checks authentication state before uploading.
-
-However, since the bucket and policies are correctly configured, the most likely cause is the user's session not having the `super_admin` role recognized by the `has_role` function at the storage policy level. We should verify the upload works by adding a session check and providing a clearer error message. If the issue persists, we can add an `authenticated` fallback policy scoped to admins.
+| File | Change |
+|---|---|
+| Migration | Add `UNIQUE` constraint on `email_accounts.user_id` |
+| `save-email-password/index.ts` | Already correct, just needs the DB constraint |
+| `EmailConfigSettings.tsx` | Remove `zoho_account_id` references; add incoming/outgoing status lights; consolidate validation display |
 
 ### Technical Details
 
-| Change | File(s) |
-|---|---|
-| Replace `handleSave` | `src/views/admin/settings/EmailConfigSettings.tsx` |
-| New edge function | `supabase/functions/save-email-password/index.ts` |
-| DB migration | 1 migration file (tasks FK + calendar RLS) |
-| Favicon fix | `src/views/admin/settings/BrandingSettings.tsx` — add auth check before upload |
+**Migration SQL:**
+```sql
+ALTER TABLE public.email_accounts
+  ADD CONSTRAINT email_accounts_user_id_key UNIQUE (user_id);
+```
+
+**UI Status Lights:**
+Each row will show two small colored dots labeled "IN" and "OUT":
+- IN (green): `imap_valid === true`; (red): `imap_valid === false`; (gray): untested
+- OUT (green): `is_active && imap_valid === true` (same credentials); (red): `imap_valid === false`; (gray): untested
+
+The table columns will be: User | Email | Password | Status | IN | OUT | Validated | Actions
 
