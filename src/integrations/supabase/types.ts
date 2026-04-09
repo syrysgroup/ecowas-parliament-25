@@ -699,7 +699,6 @@ export type Database = {
       email_accounts: {
         Row: {
           app_password: string | null
-          app_password_secret_id: string | null
           created_at: string
           display_name: string | null
           email_address: string
@@ -712,7 +711,6 @@ export type Database = {
         }
         Insert: {
           app_password?: string | null
-          app_password_secret_id?: string | null
           created_at?: string
           display_name?: string | null
           email_address: string
@@ -725,7 +723,6 @@ export type Database = {
         }
         Update: {
           app_password?: string | null
-          app_password_secret_id?: string | null
           created_at?: string
           display_name?: string | null
           email_address?: string
@@ -763,7 +760,7 @@ export type Database = {
       emails: {
         Row: {
           account_id: string
-          body_html: string
+          body_html: string | null
           body_text: string
           cc_address: string | null
           folder: string
@@ -781,7 +778,7 @@ export type Database = {
         }
         Insert: {
           account_id: string
-          body_html?: string
+          body_html?: string | null
           body_text?: string
           cc_address?: string | null
           folder?: string
@@ -799,7 +796,7 @@ export type Database = {
         }
         Update: {
           account_id?: string
-          body_html?: string
+          body_html?: string | null
           body_text?: string
           cc_address?: string | null
           folder?: string
