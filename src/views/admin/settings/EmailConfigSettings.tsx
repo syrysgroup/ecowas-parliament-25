@@ -110,27 +110,17 @@ const EmailConfigSettings = () => {
     if (!selectedUserId || !emailAddress.trim()) return;
     setSaving(true);
     try {
-      const payload: Record<string, any> = {
-        user_id: selectedUserId,
-        email_address: emailAddress.trim(),
-        is_active: true,
-      };
-      if (appPassword) payload.app_password = appPassword;
-
-      if (editingAccount) {
-        const { error } = await (supabase as any)
-          .from("email_accounts")
-          .update(payload)
-          .eq("id", editingAccount.id);
-        if (error) throw error;
-        toast.success("Email account updated");
-      } else {
-        const { error } = await (supabase as any)
-          .from("email_accounts")
-          .upsert(payload, { onConflict: "user_id" });
-        if (error) throw error;
-        toast.success("Email account added");
-      }
+      const { data: { session } } = await supabase.auth.getSession();
+      const { data, error } = await supabase.functions.invoke("save-email-password", {
+        body: {
+          target_user_id: selectedUserId,
+          email_address: emailAddress.trim(),
+          app_password: appPassword || undefined,
+        },
+        headers: { Authorization: `Bearer ${session?.access_token}` },
+      });
+      if (error || data?.error) throw new Error(error?.message ?? data?.error);
+      toast.success(editingAccount ? "Email account updated" : "Email account added");
       qc.invalidateQueries({ queryKey: ["admin-email-accounts"] });
       setModalOpen(false);
     } catch (err: any) {

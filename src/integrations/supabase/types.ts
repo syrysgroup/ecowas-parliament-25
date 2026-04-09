@@ -527,6 +527,7 @@ export type Database = {
           description: string | null
           end_time: string | null
           id: string
+          is_global: boolean
           start_time: string
           title: string
         }
@@ -538,6 +539,7 @@ export type Database = {
           description?: string | null
           end_time?: string | null
           id?: string
+          is_global?: boolean
           start_time: string
           title: string
         }
@@ -549,6 +551,7 @@ export type Database = {
           description?: string | null
           end_time?: string | null
           id?: string
+          is_global?: boolean
           start_time?: string
           title?: string
         }
@@ -696,6 +699,7 @@ export type Database = {
       email_accounts: {
         Row: {
           app_password: string | null
+          app_password_secret_id: string | null
           created_at: string
           display_name: string | null
           email_address: string
@@ -705,10 +709,10 @@ export type Database = {
           is_active: boolean
           last_synced_at: string | null
           user_id: string
-          zoho_account_id: string | null
         }
         Insert: {
           app_password?: string | null
+          app_password_secret_id?: string | null
           created_at?: string
           display_name?: string | null
           email_address: string
@@ -718,10 +722,10 @@ export type Database = {
           is_active?: boolean
           last_synced_at?: string | null
           user_id: string
-          zoho_account_id?: string | null
         }
         Update: {
           app_password?: string | null
+          app_password_secret_id?: string | null
           created_at?: string
           display_name?: string | null
           email_address?: string
@@ -731,7 +735,6 @@ export type Database = {
           is_active?: boolean
           last_synced_at?: string | null
           user_id?: string
-          zoho_account_id?: string | null
         }
         Relationships: [
           {
