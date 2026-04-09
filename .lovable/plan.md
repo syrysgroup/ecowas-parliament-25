@@ -1,97 +1,48 @@
 
 
-# Plan: Zoho Org-Level Email Integration + Chat Online Status
+## Plan: Email Save Refactor, Migration, and Favicon Fix
 
-## Overview
-Two main workstreams: (1) migrate all Zoho Mail API calls from personal-level to org-level endpoints, add admin email management panel, and improve sync feedback; (2) add online/offline presence tracking to the messaging module.
+### 1. Update `handleSave` in EmailConfigSettings.tsx
+Replace the `handleSave` function to call the `save-email-password` edge function instead of direct DB writes. The new function uses `supabase.functions.invoke("save-email-password", ...)` as provided.
 
----
+**File:** `src/views/admin/settings/EmailConfigSettings.tsx` (lines ~96-119)
 
-## Part A: Zoho Org-Level Email Fix
+### 2. Create `save-email-password` Edge Function
+A new edge function is needed since it doesn't exist yet. It will:
+- Validate the caller is a super_admin (JWT check)
+- Accept `target_user_id`, `email_address`, and optional `app_password`
+- Upsert into `email_accounts` table using the service role key
+- Encrypt/store the app_password securely
 
-### A1. Database Migration
-Add two columns to `email_accounts`:
-- `app_password text` (nullable)
-- `last_synced_at timestamptz` (nullable)
+**File:** `supabase/functions/save-email-password/index.ts`
 
-Add a new `user_presence` table for online status (see Part B).
+### 3. Database Migration
+A single migration to add the tasks FK constraint. The `is_global` column on `crm_calendar_events` already exists, so we skip that. The calendar RLS policy update is still needed.
 
-### A2. Update `supabase/functions/sync-emails/index.ts`
-- Replace `resolveZohoAccountId` to use org-level API: `https://mail.zoho.eu/api/organization/${ZOHO_ORG_ID}/accounts`
-- Change folders URL to org-level: `/api/organization/${orgId}/accounts/${accountId}/folders`
-- Change messages URL to org-level: `/api/organization/${orgId}/accounts/${accountId}/messages/view?...`
-- Remove the fallback re-resolution block (lines 116-125)
-- Add `last_synced_at` update after successful sync
-
-### A3. Update `supabase/functions/send-email/index.ts`
-- Replace `resolveZohoAccountId` with same org-level version
-- Change send URL to org-level: `/api/organization/${orgId}/accounts/${accountId}/messages`
-
-### A4. Update `supabase/functions/fetch-email-body/index.ts`
-- Change content URL to org-level: `/api/organization/${orgId}/accounts/${accountId}/messages/${messageId}/content`
-
-### A5. Replace `EmailConfigSettings.tsx`
-Replace the SMTP/IMAP config form with a superadmin-only Email Accounts management panel:
-- Table showing all email accounts with profile info, status badges, sync timestamps
-- "Add Email Account" button with modal (user dropdown, email, app password)
-- Per-row: Edit, Test Sync, Activate/Deactivate buttons
-- Loading skeletons and empty state
-- Only visible to `super_admin` role users
-
-### A6. Improve sync feedback in `EmailInboxModule.tsx`
-- Show success toast with email count ("3 new email(s) received" or "Inbox is up to date")
-- Show destructive toast on errors
-- Ensure `setSyncing(false)` in finally block
-- Only invalidate queries on success
-
----
-
-## Part B: Chat Online/Offline Status
-
-### B1. Database Migration — `user_presence` table
 ```sql
-CREATE TABLE public.user_presence (
-  user_id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  last_seen_at timestamptz NOT NULL DEFAULT now(),
-  is_online boolean NOT NULL DEFAULT false
-);
-ALTER TABLE public.user_presence ENABLE ROW LEVEL SECURITY;
--- All authenticated users can read presence
--- Users can only upsert their own row
+-- Tasks FK to profiles
+ALTER TABLE public.tasks
+  ADD CONSTRAINT tasks_assignee_id_fkey
+  FOREIGN KEY (assignee_id) REFERENCES public.profiles(id) ON DELETE SET NULL;
+
+-- Update calendar RLS
+DROP POLICY IF EXISTS "CRM staff can view calendar events" ON public.crm_calendar_events;
+CREATE POLICY "CRM staff can view calendar events"
+  ON public.crm_calendar_events FOR SELECT TO authenticated
+  USING (created_by = auth.uid() OR is_global = true OR public.is_crm_staff(auth.uid()));
 ```
 
-### B2. Presence Heartbeat Logic
-Add a custom hook `usePresence` that:
-- On mount (when user is logged in): upserts `user_presence` with `is_online = true`
-- Sends a heartbeat every 60 seconds updating `last_seen_at`
-- On unmount / beforeunload: sets `is_online = false`
-- Integrate this hook in the main app layout or auth context
+### 4. Fix Favicon Upload "No Bucket Found" Error
+The `branding` bucket exists and is public with correct RLS policies for super_admin/admin. The error is likely caused by the Supabase client not sending proper auth headers. The fix: ensure the upload path in `BrandingSettings.tsx` handles the error more gracefully and checks authentication state before uploading.
 
-### B3. Update MessagingModule
-- Fetch `user_presence` data for all contacts
-- Show green dot (online) or red/gray dot (offline) next to each contact avatar in:
-  - DM conversations list (left sidebar)
-  - Contacts list (left sidebar)
-  - Chat header (when viewing a DM)
-- Consider users "online" if `is_online = true` AND `last_seen_at` is within last 2 minutes
-- Replace the hardcoded "Online" text in chat header (line 524) with actual status
+However, since the bucket and policies are correctly configured, the most likely cause is the user's session not having the `super_admin` role recognized by the `has_role` function at the storage policy level. We should verify the upload works by adding a session check and providing a clearer error message. If the issue persists, we can add an `authenticated` fallback policy scoped to admins.
 
----
+### Technical Details
 
-## Files Modified
-1. `supabase/functions/sync-emails/index.ts` — org-level API URLs
-2. `supabase/functions/send-email/index.ts` — org-level API URLs
-3. `supabase/functions/fetch-email-body/index.ts` — org-level content URL
-4. `src/views/admin/settings/EmailConfigSettings.tsx` — full rewrite to admin panel
-5. `src/components/crm/modules/EmailInboxModule.tsx` — sync feedback improvement
-6. `src/components/crm/modules/MessagingModule.tsx` — online/offline indicators
-7. `src/hooks/usePresence.ts` — new heartbeat hook
-8. `src/App.tsx` or auth context — integrate presence hook
-9. Database migration — `email_accounts` columns + `user_presence` table
-
-## Files NOT Modified
-- Authentication/session logic
-- Supabase secrets or env vars
-- Other edge functions (validate-email-credentials, create-email-account, etc.)
-- Any UI outside email module, EmailConfigSettings, and MessagingModule
+| Change | File(s) |
+|---|---|
+| Replace `handleSave` | `src/views/admin/settings/EmailConfigSettings.tsx` |
+| New edge function | `supabase/functions/save-email-password/index.ts` |
+| DB migration | 1 migration file (tasks FK + calendar RLS) |
+| Favicon fix | `src/views/admin/settings/BrandingSettings.tsx` — add auth check before upload |
 
