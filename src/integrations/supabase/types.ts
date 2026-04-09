@@ -700,6 +700,8 @@ export type Database = {
           display_name: string | null
           email_address: string
           id: string
+          imap_valid: boolean | null
+          imap_validated_at: string | null
           is_active: boolean
           last_synced_at: string | null
           user_id: string
@@ -711,6 +713,8 @@ export type Database = {
           display_name?: string | null
           email_address: string
           id?: string
+          imap_valid?: boolean | null
+          imap_validated_at?: string | null
           is_active?: boolean
           last_synced_at?: string | null
           user_id: string
@@ -722,6 +726,8 @@ export type Database = {
           display_name?: string | null
           email_address?: string
           id?: string
+          imap_valid?: boolean | null
+          imap_validated_at?: string | null
           is_active?: boolean
           last_synced_at?: string | null
           user_id?: string
@@ -955,8 +961,11 @@ export type Database = {
           accepted_at: string | null
           created_at: string
           email: string
+          expires_at: string
           id: string
           invited_by: string
+          metadata: Json | null
+          resent_at: string | null
           role: Database["public"]["Enums"]["app_role"]
           token: string
         }
@@ -964,8 +973,11 @@ export type Database = {
           accepted_at?: string | null
           created_at?: string
           email: string
+          expires_at?: string
           id?: string
           invited_by: string
+          metadata?: Json | null
+          resent_at?: string | null
           role: Database["public"]["Enums"]["app_role"]
           token?: string
         }
@@ -973,8 +985,11 @@ export type Database = {
           accepted_at?: string | null
           created_at?: string
           email?: string
+          expires_at?: string
           id?: string
           invited_by?: string
+          metadata?: Json | null
+          resent_at?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           token?: string
         }
