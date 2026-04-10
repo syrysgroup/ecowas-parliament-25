@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthContext";
@@ -18,6 +18,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+
+const EmailSignaturePanel = lazy(() => import("./EmailSignaturePanel"));
 
 // ─── Profile Banner ───────────────────────────────────────────────────────────
 function ProfileBanner({
@@ -298,6 +300,9 @@ export default function ProfileModule() {
           </TabsTrigger>
           <TabsTrigger value="security" className="text-xs data-[state=active]:bg-emerald-950 data-[state=active]:text-emerald-400 rounded-lg px-4 py-2">
             {t("crm.profile.tabSecurity")}
+          </TabsTrigger>
+          <TabsTrigger value="signature" className="text-xs data-[state=active]:bg-emerald-950 data-[state=active]:text-emerald-400 rounded-lg px-4 py-2">
+            Signature
           </TabsTrigger>
         </TabsList>
 

@@ -596,15 +596,20 @@ function EmailDetailPanel({ email, onBack, onReply, onForward, onStar, onTrash, 
             Reply to {email.from_name || email.from_address}
           </h6>
           <div className="px-5 pb-4">
-            <div className="flex items-center gap-0.5 pb-3 border-b border-crm-border mb-3">
-              {[Bold, Italic, Underline, ListOrdered, List, Link, Image].map((Icon, i) => (
-                <button key={i} className="p-1.5 rounded hover:bg-crm-surface text-crm-text-muted transition-colors">
-                  <Icon size={15} />
-                </button>
-              ))}
-            </div>
-            <div className="min-h-[80px] text-[13px] text-crm-text-faint italic">
-              Click to write your reply…
+            <div
+              onClick={() => onReply(email)}
+              className="cursor-pointer hover:bg-crm-surface/50 rounded-lg transition-colors"
+            >
+              <div className="flex items-center gap-0.5 pb-3 border-b border-crm-border mb-3">
+                {[Bold, Italic, Underline, ListOrdered, List, Link, Image].map((Icon, i) => (
+                  <button key={i} className="p-1.5 rounded hover:bg-crm-surface text-crm-text-muted transition-colors">
+                    <Icon size={15} />
+                  </button>
+                ))}
+              </div>
+              <div className="min-h-[80px] text-[13px] text-crm-text-faint italic">
+                Click to write your reply…
+              </div>
             </div>
             <div className="flex items-center justify-end gap-3 mt-4">
               <button
