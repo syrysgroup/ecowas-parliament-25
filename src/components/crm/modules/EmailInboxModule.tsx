@@ -820,9 +820,39 @@ export default function EmailInboxModule() {
   useEffect(() => {
     if (!account) return;
     syncEmails();
-    syncInterval.current = setInterval(syncEmails, 5 * 60 * 1000);
+    syncInterval.current = setInterval(syncEmails, 2 * 60 * 1000);
     return () => { if (syncInterval.current) clearInterval(syncInterval.current); };
   }, [account?.id]);
+
+  // ── Realtime subscription for instant new email notifications ──────────────
+  useEffect(() => {
+    if (!account?.id) return;
+    const channel = supabase
+      .channel(`new-emails-${account.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "emails",
+          filter: `account_id=eq.${account.id}`,
+        },
+        (payload) => {
+          const newEmail = payload.new as any;
+          // Skip sent emails the user just composed
+          if (newEmail.folder === "sent") return;
+          toast({
+            title: "New email received",
+            description: `From: ${newEmail.from_name || newEmail.from_address || "Unknown sender"}`,
+          });
+          qc.invalidateQueries({ queryKey: ["emails", account.id] });
+          qc.invalidateQueries({ queryKey: ["email-unread-counts", account.id] });
+          qc.invalidateQueries({ queryKey: ["email-inbox-unread", account.id] });
+        }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [account?.id, qc, toast]);
 
   const markRead = useMutation({
     mutationFn: async (emailId: string) => { await invokeUpdateEmail("mark_read", emailId); },
