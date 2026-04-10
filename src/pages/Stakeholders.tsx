@@ -120,7 +120,7 @@ const Stakeholders = () => {
                 )}
                 <div className="p-4">
                   <Badge className="mb-3 bg-primary/90 text-primary-foreground border-0">{t("speaker.badge")}</Badge>
-                  <h3 className="text-xl font-black text-card-foreground">{speaker.name}</h3>
+                  <h3 className="text-base font-black text-card-foreground">{speaker.name}</h3>
                   <p className="mt-1 text-sm text-muted-foreground">{speaker.title}</p>
                 </div>
               </article>
@@ -128,7 +128,7 @@ const Stakeholders = () => {
           ) : null}
 
           {otherLeaders.length > 0 && (
-            <div className="grid gap-6 md:grid-cols-3">
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
               {otherLeaders.map((person, index) => (
                 <AnimatedSection key={person.id} delay={index * 60}>
                   <article className="overflow-hidden rounded-3xl border border-primary/20 bg-card shadow-sm w-full">
@@ -136,19 +136,19 @@ const Stakeholders = () => {
                       <img
                         src={person.image_url}
                         alt={person.name}
-                        className="w-full aspect-[4/3] object-cover object-top"
+                        className="w-full aspect-square object-cover object-top"
                         loading="lazy"
                         width={400}
-                        height={300}
+                        height={400}
                         decoding="async"
                       />
                     ) : (
-                      <div className="w-full aspect-[4/3] bg-muted flex items-center justify-center">
+                      <div className="w-full aspect-square bg-muted flex items-center justify-center">
                         <span className="text-4xl font-black text-muted-foreground">{person.name.charAt(0) || "?"}</span>
                       </div>
                     )}
-                    <div className="p-5">
-                      <h3 className="text-xl font-black text-card-foreground">{person.name}</h3>
+                    <div className="p-4">
+                      <h3 className="text-base font-black text-card-foreground">{person.name}</h3>
                       <p className="mt-1 text-sm text-muted-foreground">{person.title}</p>
                     </div>
                   </article>
@@ -166,19 +166,19 @@ const Stakeholders = () => {
             <AnimatedSection className="mb-8">
               <h2 className="text-2xl font-black text-foreground">{t("stakeholders.teamSection")}</h2>
             </AnimatedSection>
-            <div className="grid gap-6 md:grid-cols-3">
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
               {teamProfiles.map((person, index) => (
                 <AnimatedSection key={person.id} delay={index * 60}>
                   <article className="overflow-hidden rounded-3xl border border-primary/20 bg-card shadow-sm w-full">
                     {person.image_url ? (
-                      <img src={person.image_url} alt={person.name} className="w-full aspect-[4/3] object-cover object-top" loading="lazy" width={400} height={300} decoding="async" />
+                      <img src={person.image_url} alt={person.name} className="w-full aspect-square object-cover object-top" loading="lazy" width={400} height={400} decoding="async" />
                     ) : (
-                      <div className="w-full aspect-[4/3] bg-muted flex items-center justify-center">
+                      <div className="w-full aspect-square bg-muted flex items-center justify-center">
                         <span className="text-4xl font-black text-muted-foreground">{person.name.charAt(0) || "?"}</span>
                       </div>
                     )}
-                    <div className="p-5">
-                      <h3 className="text-xl font-black text-card-foreground">{person.name}</h3>
+                    <div className="p-4">
+                      <h3 className="text-base font-black text-card-foreground">{person.name}</h3>
                       <p className="mt-1 text-sm text-muted-foreground">{person.title}</p>
                     </div>
                   </article>
@@ -196,19 +196,19 @@ const Stakeholders = () => {
             <AnimatedSection className="mb-8">
               <h2 className="text-2xl font-black text-foreground">{t("stakeholders.advisorySection")}</h2>
             </AnimatedSection>
-            <div className="grid gap-6 md:grid-cols-3">
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
               {advisoryProfiles.map((person, index) => (
                 <AnimatedSection key={person.id} delay={index * 60}>
                   <article className="overflow-hidden rounded-3xl border border-primary/20 bg-card shadow-sm w-full">
                     {person.image_url ? (
-                      <img src={person.image_url} alt={person.name} className="w-full aspect-[4/3] object-cover object-top" loading="lazy" width={400} height={300} decoding="async" />
+                      <img src={person.image_url} alt={person.name} className="w-full aspect-square object-cover object-top" loading="lazy" width={400} height={400} decoding="async" />
                     ) : (
-                      <div className="w-full aspect-[4/3] bg-muted flex items-center justify-center">
+                      <div className="w-full aspect-square bg-muted flex items-center justify-center">
                         <span className="text-4xl font-black text-muted-foreground">{person.name.charAt(0) || "?"}</span>
                       </div>
                     )}
-                    <div className="p-5">
-                      <h3 className="text-xl font-black text-card-foreground">{person.name}</h3>
+                    <div className="p-4">
+                      <h3 className="text-base font-black text-card-foreground">{person.name}</h3>
                       <p className="mt-1 text-sm text-muted-foreground">{person.title}</p>
                     </div>
                   </article>
@@ -238,10 +238,10 @@ const Stakeholders = () => {
                         <img
                           src={partner.lead_image_url}
                           alt={partner.lead_name || partner.name}
-                          className="w-full aspect-[4/3] object-cover object-top"
+                          className="w-full aspect-square object-cover object-top"
                           loading="lazy"
                           width={400}
-                          height={300}
+                          height={400}
                           decoding="async"
                         />
                       )}
@@ -256,7 +256,7 @@ const Stakeholders = () => {
                           />
                         )}
                         <div>
-                          <h3 className="text-xl font-black text-card-foreground">{partner.name}</h3>
+                          <h3 className="text-base font-black text-card-foreground">{partner.name}</h3>
                           {partner.lead_name && (
                             <p className="text-sm text-primary">{partner.lead_name}{partner.lead_role ? ` — ${partner.lead_role}` : ""}</p>
                           )}
@@ -289,7 +289,7 @@ const Stakeholders = () => {
                 <AnimatedSection key={partner.id} delay={index * 70}>
                   <Link to={`/partners/${partner.slug}`} className="block h-full">
                     <article className="overflow-hidden rounded-3xl border border-ecowas-blue/20 bg-card shadow-sm p-6 hover:border-ecowas-blue/40 transition-all hover:shadow-lg h-full flex flex-col">
-                      <h3 className="text-xl font-black text-card-foreground">{partner.name}</h3>
+                      <h3 className="text-base font-black text-card-foreground">{partner.name}</h3>
                       {partner.description && (
                         <p className="text-sm text-muted-foreground leading-relaxed flex-1 mt-3">{partner.description}</p>
                       )}

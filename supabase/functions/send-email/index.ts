@@ -7,6 +7,7 @@ const corsHeaders = {
 
 const SMTP_HOST = "smtppro.zoho.eu";
 const SMTP_PORT = 465;
+const LOGO_URL = "https://xahuyraommtfopnxrjvz.supabase.co/storage/v1/object/public/branding/logos/sing.png";
 
 function flatAddresses(val: unknown): string[] {
   if (!val) return [];
@@ -14,33 +15,11 @@ function flatAddresses(val: unknown): string[] {
   return String(val).split(",").map(s => s.trim()).filter(Boolean);
 }
 
-// ── Build HTML signature block ────────────────────────────────────────────────
-// ── Fetch logo at runtime and embed as base64 ─────────────────────────────────
-async function getLogoBase64(): Promise<string> {
-  try {
-    const res = await fetch(
-      "https://xahuyraommtfopnxrjvz.supabase.co/storage/v1/object/public/branding/logos/sing.png",
-      { signal: AbortSignal.timeout(5000) }
-    );
-    if (!res.ok) return "";
-    const buf = await res.arrayBuffer();
-    const bytes = new Uint8Array(buf);
-    let binary = "";
-    const chunk = 8192;
-    for (let i = 0; i < bytes.length; i += chunk) {
-      binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
-    }
-    return `data:image/png;base64,${btoa(binary)}`;
-  } catch { return ""; }
-}
-
-function buildSignatureHtml(sig: Record<string, any> | null, logoDataUrl = ""): string {
+// ── Build HTML signature block (uses a public URL — no base64 embedding) ──────
+function buildSignatureHtml(sig: Record<string, any> | null): string {
   if (!sig) return "";
-  const logoTag = logoDataUrl
-    ? `<br><img src="${logoDataUrl}" alt="ECOWAS Parliament" style="height:70px;display:block;margin-top:8px" />`
-    : "";
   return `
-<div style="font-family:Arial,sans-serif;font-size:13px;color:#222;margin-top:16px;padding-top:12px;border-top:2px solid #006633">
+<div style="font-family:Arial,sans-serif;font-size:13px;color:#222;margin-top:20px;padding-top:12px;border-top:2px solid #006633">
   <strong style="font-size:14px;color:#111">${sig.title ? sig.title + " " : ""}${sig.full_name ?? ""}</strong><br>
   <span style="color:#006633;font-weight:600">ECOWAS Parliament Initiatives</span><br>
   ${sig.department ? `${sig.department}<br>` : ""}
@@ -48,37 +27,28 @@ function buildSignatureHtml(sig: Record<string, any> | null, logoDataUrl = ""): 
   ${sig.email ? `Email: <a href="mailto:${sig.email}" style="color:#006633;text-decoration:none">${sig.email}</a><br>` : ""}
   ${sig.website ? `Website: <a href="https://${sig.website.replace(/^https?:\/\//, "")}" style="color:#006633;text-decoration:none">${sig.website.replace(/^https?:\/\//, "")}</a><br>` : ""}
   ${sig.tagline ? `<br><em style="color:#006633">${sig.tagline}</em>` : ""}
-  ${logoTag}
+  <br><img src="${LOGO_URL}" alt="ECOWAS Parliament Initiatives" style="height:70px;display:block;margin-top:8px" />
 </div>`.trim();
 }
 
-
-// ── Compose full email body ───────────────────────────────────────────────────
-// Layout:
-//   [user composed content]
-//   [signature]
-//   [quoted reply block — if replying]
+// ── Compose full email body wrapped in proper HTML ────────────────────────────
 function composeEmailBody(opts: {
   bodyHtml: string;
   signatureHtml: string;
   quotedHtml?: string;
   quotedFrom?: string;
   quotedDate?: string;
-  quotedSubject?: string;
 }): string {
-  const parts: string[] = [];
+  const bodyParts: string[] = [];
 
-  // 1. User's written content
-  parts.push(opts.bodyHtml || "<br>");
+  bodyParts.push(opts.bodyHtml || "<br>");
 
-  // 2. Signature — always after the composed content, before any quote
   if (opts.signatureHtml) {
-    parts.push(opts.signatureHtml);
+    bodyParts.push(opts.signatureHtml);
   }
 
-  // 3. Quoted reply block — standard email reply style
   if (opts.quotedHtml) {
-    parts.push(`
+    bodyParts.push(`
 <br>
 <div style="border-left:3px solid #ccc;padding-left:12px;margin-top:16px;color:#555;font-family:Arial,sans-serif;font-size:13px">
   <div style="color:#888;font-size:12px;margin-bottom:8px">
@@ -88,18 +58,26 @@ function composeEmailBody(opts: {
 </div>`);
   }
 
-  return parts.join("\n");
+  // Always wrap in full HTML document so external email clients can parse/reply correctly
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"></head>
+<body style="font-family:Arial,sans-serif;font-size:14px;color:#222;margin:0;padding:16px">
+${bodyParts.join("\n")}
+</body>
+</html>`;
 }
 
 // ── Quoted-printable encoder ──────────────────────────────────────────────────
 function encodeQP(input: string): string {
   let result = "";
   let lineLen = 0;
+
   for (let i = 0; i < input.length; i++) {
     const ch = input[i];
     const code = input.charCodeAt(i);
-    let encoded: string;
 
+    // CRLF — pass through as-is, reset line counter
     if (ch === "\r" && input[i + 1] === "\n") {
       result += "\r\n"; lineLen = 0; i++; continue;
     }
@@ -107,14 +85,21 @@ function encodeQP(input: string): string {
       result += "\r\n"; lineLen = 0; continue;
     }
 
-    if ((code >= 33 && code <= 126 && ch !== "=") || ch === " " || ch === "\t") {
+    let encoded: string;
+    // Printable ASCII (excluding =) and safe whitespace can be literal
+    if (code >= 33 && code <= 126 && ch !== "=") {
+      encoded = ch;
+    } else if ((ch === " " || ch === "\t") && i + 1 < input.length && input[i + 1] !== "\n" && input[i + 1] !== "\r") {
+      // Space/tab safe to keep UNLESS at end of line (must encode those)
       encoded = ch;
     } else {
       encoded = `=${code.toString(16).toUpperCase().padStart(2, "0")}`;
     }
 
+    // Soft line break if adding this would exceed 75 chars
     if (lineLen + encoded.length > 75) {
-      result += "=\r\n"; lineLen = 0;
+      result += "=\r\n";
+      lineLen = 0;
     }
     result += encoded;
     lineLen += encoded.length;
@@ -142,7 +127,8 @@ function buildMimeMessage(opts: {
   lines.push(`From: ${opts.from}`);
   lines.push(`To: ${opts.to.join(", ")}`);
   if (opts.cc.length > 0) lines.push(`Cc: ${opts.cc.join(", ")}`);
-  if (opts.replyTo) lines.push(`Reply-To: ${opts.replyTo}`);
+  // Always set Reply-To to the sender so recipients can reply correctly
+  lines.push(`Reply-To: ${opts.replyTo ?? opts.from}`);
   if (opts.inReplyToMsgId) lines.push(`In-Reply-To: ${opts.inReplyToMsgId}`);
   lines.push(`Subject: ${opts.subject}`);
   lines.push(`Date: ${opts.date}`);
@@ -161,6 +147,7 @@ function buildMimeMessage(opts: {
     lines.push(`Content-Transfer-Encoding: quoted-printable`);
     lines.push(``);
     lines.push(encodeQP(opts.htmlBody));
+    lines.push(``); // blank line before next boundary
 
     // Attachment parts
     for (const att of opts.attachments!) {
@@ -173,6 +160,7 @@ function buildMimeMessage(opts: {
       for (let i = 0; i < b64.length; i += 76) {
         lines.push(b64.slice(i, i + 76));
       }
+      lines.push(``);
     }
 
     lines.push(`--${boundary}--`);
@@ -244,13 +232,12 @@ async function smtpSend(
     const dataStart = await read();
     if (!dataStart.startsWith("354")) throw new Error(`DATA failed: ${dataStart.trim()}`);
 
-    // SMTP dot-stuffing: lines starting with "." must be escaped to ".."
+    // SMTP dot-stuffing: lines starting with "." must be escaped
     const stuffed = mimeMessage
       .split("\r\n")
       .map(line => line.startsWith(".") ? "." + line : line)
       .join("\r\n");
 
-    // Write in chunks to handle large attachments
     const msgBytes = enc.encode(stuffed + "\r\n.\r\n");
     const chunkSize = 65536;
     for (let i = 0; i < msgBytes.length; i += chunkSize) {
@@ -290,9 +277,9 @@ Deno.serve(async (req) => {
 
     const {
       to, cc, bcc, subject, bodyHtml,
-      replyToId, attachments,
-      // quotedHtml passed from frontend when replying
-      quotedHtml, quotedFrom, quotedDate, quotedSubject,
+      replyToId,
+      attachments,
+      quotedHtml, quotedFrom, quotedDate,
     } = await req.json();
 
     if (!to || !subject) {
@@ -319,7 +306,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Fetch user signature
+    // Fetch user signature (server-side always builds the HTML sig — client sends plain body only)
     const { data: sig } = await serviceClient
       .from("email_signatures")
       .select("*")
@@ -327,11 +314,9 @@ Deno.serve(async (req) => {
       .eq("is_active", true)
       .maybeSingle();
 
-    // Fetch logo as base64 so it renders in all email clients
-    const logoDataUrl = sig ? await getLogoBase64() : "";
-    const signatureHtml = buildSignatureHtml(sig, logoDataUrl);
+    const signatureHtml = buildSignatureHtml(sig);
 
-    // Fetch reply-to message details if replying
+    // Resolve reply-to details
     let replyToAddr: string | undefined;
     let inReplyToMsgId: string | undefined;
     let resolvedQuotedHtml = quotedHtml;
@@ -347,11 +332,7 @@ Deno.serve(async (req) => {
       if (orig) {
         replyToAddr = orig.from_address;
         inReplyToMsgId = orig.zoho_message_id ?? undefined;
-
-        // Build quoted block if not passed from frontend
-        if (!resolvedQuotedHtml && orig.body_html) {
-          resolvedQuotedHtml = orig.body_html;
-        }
+        if (!resolvedQuotedHtml && orig.body_html) resolvedQuotedHtml = orig.body_html;
         if (!resolvedQuotedFrom) {
           resolvedQuotedFrom = orig.from_name
             ? `${orig.from_name} &lt;${orig.from_address}&gt;`
@@ -366,22 +347,20 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Compose full body: user content + signature + quoted block
     const finalBody = composeEmailBody({
       bodyHtml: bodyHtml ?? "",
       signatureHtml,
       quotedHtml: resolvedQuotedHtml,
       quotedFrom: resolvedQuotedFrom,
       quotedDate: resolvedQuotedDate,
-      quotedSubject,
     });
 
-    const toList = flatAddresses(to);
-    const ccList = flatAddresses(cc);
+    const toList  = flatAddresses(to);
+    const ccList  = flatAddresses(cc);
     const bccList = flatAddresses(bcc);
 
     const msgId = `<${Date.now()}.${Math.random().toString(36).slice(2)}@ecowasparliamentinitiatives.org>`;
-    const date = new Date().toUTCString();
+    const date  = new Date().toUTCString();
 
     const mimeMessage = buildMimeMessage({
       from: acct.email_address,
@@ -389,7 +368,7 @@ Deno.serve(async (req) => {
       cc: ccList,
       subject,
       htmlBody: finalBody,
-      replyTo: replyToAddr,
+      replyTo: replyToAddr ?? acct.email_address,
       inReplyToMsgId,
       attachments: Array.isArray(attachments) && attachments.length > 0 ? attachments : undefined,
       msgId,
@@ -398,8 +377,7 @@ Deno.serve(async (req) => {
 
     await smtpSend(acct.email_address, acct.app_password, toList, ccList, bccList, mimeMessage);
 
-    // Save to DB as sent — if the DB insert fails, log it but still return 200
-    // because the email was already sent successfully via SMTP
+    // Save to DB — DB failure must not cause a 500 after successful SMTP send
     try {
       await serviceClient.from("emails").insert({
         account_id: acct.id,
@@ -418,7 +396,6 @@ Deno.serve(async (req) => {
         sent_at: new Date().toISOString(),
       });
     } catch (dbErr: any) {
-      // Email was sent — don't fail the request over a DB issue
       console.error("send-email: DB insert failed (email was already sent via SMTP):", dbErr);
     }
 

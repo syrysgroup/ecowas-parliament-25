@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthContext";
@@ -7,7 +7,7 @@ import type { AppRole } from "@/contexts/AuthContext";
 import { CRM_ROLE_META } from "../crmRoles";
 import {
   Send, Trash2, CheckCircle2, Clock, UserPlus, RefreshCw, X,
-  Eye, Pencil, UserMinus, EyeOff, AlertTriangle, Camera, Globe, Plus, ExternalLink,
+  Eye, Pencil, UserMinus, EyeOff, AlertTriangle, Globe, Plus, ExternalLink,
   Users, UserCheck, Mail, Shield, Loader2, Copy, Check,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
@@ -19,6 +19,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import ImageUploadOrUrl from "@/components/shared/ImageUploadOrUrl";
 
 interface UserWithRoles {
   id: string; email: string; full_name: string; country: string;
@@ -188,7 +189,6 @@ function EditUserDialog({ target, isSuperAdmin, onClose, onSaved }: {
 }) {
   const { toast } = useToast();
   const qc = useQueryClient();
-  const fileRef = useRef<HTMLInputElement>(null);
   const [fullName, setFullName] = useState(target.full_name);
   const [country, setCountry] = useState(target.country);
   const [title, setTitle] = useState("");
@@ -197,7 +197,6 @@ function EditUserDialog({ target, isSuperAdmin, onClose, onSaved }: {
   const [avatarUrl, setAvatarUrl] = useState("");
   const [showOnWebsite, setShowOnWebsite] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(true);
 
   const [emailCfg, setEmailCfg] = useState<UserEmailSettings>(EMPTY_EMAIL_SETTINGS);
@@ -281,21 +280,6 @@ function EditUserDialog({ target, isSuperAdmin, onClose, onSaved }: {
     }
   };
 
-  const handleAvatarUpload = async (file: File) => {
-    setUploading(true);
-    try {
-      const ext = file.name.split(".").pop();
-      const path = `${target.id}.${ext}`;
-      await supabase.storage.from("team-avatars").remove([path]);
-      const { error } = await supabase.storage.from("team-avatars").upload(path, file, { upsert: true });
-      if (error) throw error;
-      const { data: { publicUrl } } = supabase.storage.from("team-avatars").getPublicUrl(path);
-      setAvatarUrl(publicUrl);
-    } catch (err: any) {
-      toast({ title: "Upload failed", description: err.message, variant: "destructive" });
-    } finally { setUploading(false); }
-  };
-
   const handleSave = async () => {
     setSaving(true);
     try {
@@ -323,8 +307,6 @@ function EditUserDialog({ target, isSuperAdmin, onClose, onSaved }: {
     } finally { setSaving(false); }
   };
 
-  const initials = fullName.split(" ").map((n: string) => n[0]).slice(0, 2).join("").toUpperCase() || "?";
-
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="bg-crm-card border-crm-border text-crm-text max-w-lg max-h-[85vh] overflow-y-auto">
@@ -333,19 +315,14 @@ function EditUserDialog({ target, isSuperAdmin, onClose, onSaved }: {
         </DialogHeader>
         <div className="space-y-4 py-1">
           {/* Avatar */}
-          <div className="flex items-center gap-4">
-            <div className="relative w-16 h-16 rounded-full bg-crm-border flex items-center justify-center overflow-hidden flex-shrink-0">
-              {avatarUrl ? <img src={avatarUrl} alt="" className="w-full h-full object-cover" /> :
-                <span className="text-xl font-bold text-emerald-400 uppercase">{initials}</span>}
-              <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading}
-                className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                <Camera size={16} className="text-white" />
-              </button>
-            </div>
-            <input ref={fileRef} type="file" accept="image/*" className="hidden"
-              onChange={e => e.target.files?.[0] && handleAvatarUpload(e.target.files[0])} />
-            <p className="text-[10px] text-crm-text-dim">{uploading ? "Uploading…" : "Click to upload"}</p>
-          </div>
+          <ImageUploadOrUrl
+            label="Profile Photo"
+            value={avatarUrl}
+            onChange={setAvatarUrl}
+            bucket="team-avatars"
+            pathPrefix={`${target.id}_`}
+            previewClassName="w-16 h-16 object-cover rounded-full border border-crm-border"
+          />
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1"><Label className="text-[11px] text-crm-text-dim">Full Name</Label>
@@ -427,7 +404,6 @@ function TeamMemberDialog({ open, onClose, member }: {
 }) {
   const { toast } = useToast();
   const qc = useQueryClient();
-  const fileRef = useRef<HTMLInputElement>(null);
   const isEdit = !!member;
 
   const [fullName, setFullName] = useState(member?.full_name ?? "");
@@ -438,22 +414,7 @@ function TeamMemberDialog({ open, onClose, member }: {
   const [displayOrder, setDisplayOrder] = useState(member?.display_order?.toString() ?? "0");
   const [isActive, setIsActive] = useState(member?.is_active ?? true);
   const [category, setCategory] = useState(member?.category ?? "implementing_team");
-  const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
-
-  const handleUpload = async (file: File) => {
-    setUploading(true);
-    try {
-      const ext = file.name.split(".").pop();
-      const path = `team-members/${crypto.randomUUID()}.${ext}`;
-      const { error } = await supabase.storage.from("team-avatars").upload(path, file, { upsert: true });
-      if (error) throw error;
-      const { data: { publicUrl } } = supabase.storage.from("team-avatars").getPublicUrl(path);
-      setAvatarUrl(publicUrl);
-    } catch (err: any) {
-      toast({ title: "Upload failed", description: err.message, variant: "destructive" });
-    } finally { setUploading(false); }
-  };
 
   const handleSave = async () => {
     if (!fullName.trim()) return;
@@ -480,8 +441,6 @@ function TeamMemberDialog({ open, onClose, member }: {
     } finally { setSaving(false); }
   };
 
-  const initials = fullName.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase() || "?";
-
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="bg-crm-card border-crm-border text-crm-text max-w-md max-h-[85vh] overflow-y-auto">
@@ -489,19 +448,14 @@ function TeamMemberDialog({ open, onClose, member }: {
           <DialogTitle className="text-sm font-semibold text-crm-text">{isEdit ? "Edit" : "Add"} Team Member</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-1">
-          <div className="flex items-center gap-4">
-            <div className="relative w-16 h-16 rounded-full bg-crm-border flex items-center justify-center overflow-hidden flex-shrink-0">
-              {avatarUrl ? <img src={avatarUrl} alt="" className="w-full h-full object-cover" /> :
-                <span className="text-xl font-bold text-emerald-400 uppercase">{initials}</span>}
-              <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading}
-                className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                <Camera size={16} className="text-white" />
-              </button>
-            </div>
-            <input ref={fileRef} type="file" accept="image/*" className="hidden"
-              onChange={e => e.target.files?.[0] && handleUpload(e.target.files[0])} />
-            <p className="text-[10px] text-crm-text-dim">{uploading ? "Uploading…" : "Click avatar to upload"}</p>
-          </div>
+          <ImageUploadOrUrl
+            label="Photo"
+            value={avatarUrl}
+            onChange={setAvatarUrl}
+            bucket="team-avatars"
+            pathPrefix="team-members/"
+            previewClassName="w-16 h-16 object-cover rounded-full border border-crm-border"
+          />
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2 space-y-1.5">
               <Label className="text-[11px] text-crm-text-muted">Full Name *</Label>

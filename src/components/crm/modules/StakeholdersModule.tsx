@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Pencil, Trash2, Image as ImageIcon, ExternalLink } from "lucide-react";
+import { Plus, Pencil, Trash2, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import ImageUploadOrUrl from "@/components/shared/ImageUploadOrUrl";
 
 interface StakeholderRow {
   id: string;
@@ -27,7 +28,6 @@ const CATEGORIES = ["leadership", "team", "advisory"];
 function StakeholderDialog({ open, onClose, stakeholder }: { open: boolean; onClose: () => void; stakeholder?: StakeholderRow }) {
   const qc = useQueryClient();
   const { toast } = useToast();
-  const fileRef = useRef<HTMLInputElement>(null);
   const isEdit = !!stakeholder;
 
   const [name, setName] = useState(stakeholder?.name ?? "");
@@ -36,23 +36,6 @@ function StakeholderDialog({ open, onClose, stakeholder }: { open: boolean; onCl
   const [category, setCategory] = useState(stakeholder?.category ?? "leadership");
   const [displayOrder, setDisplayOrder] = useState(stakeholder?.display_order?.toString() ?? "0");
   const [isActive, setIsActive] = useState(stakeholder?.is_active ?? true);
-  const [uploading, setUploading] = useState(false);
-
-  const handleUpload = async (file: File) => {
-    setUploading(true);
-    try {
-      const ext = file.name.split(".").pop();
-      const path = `stakeholders/${crypto.randomUUID()}.${ext}`;
-      const { error } = await supabase.storage.from("team-avatars").upload(path, file, { upsert: true });
-      if (error) throw error;
-      const { data: { publicUrl } } = supabase.storage.from("team-avatars").getPublicUrl(path);
-      setImageUrl(publicUrl);
-    } catch (err: any) {
-      toast({ title: "Upload failed", description: err.message, variant: "destructive" });
-    } finally {
-      setUploading(false);
-    }
-  };
 
   const save = useMutation({
     mutationFn: async () => {
@@ -90,21 +73,14 @@ function StakeholderDialog({ open, onClose, stakeholder }: { open: boolean; onCl
         </DialogHeader>
         <div className="space-y-3 py-1">
           {/* Photo */}
-          <div className="space-y-2">
-            <Label className="text-[11px] text-crm-text-dim">Photo</Label>
-            {imageUrl && (
-              <img src={imageUrl} alt="" className="h-20 w-16 object-cover rounded-lg border border-crm-border" loading="lazy" decoding="async" />
-            )}
-            <input ref={fileRef} type="file" accept="image/*" className="hidden"
-              onChange={e => e.target.files?.[0] && handleUpload(e.target.files[0])} />
-            <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()} disabled={uploading}
-              className="border-crm-border text-crm-text-muted text-xs gap-1">
-              <ImageIcon size={12} /> {uploading ? "Uploading…" : "Upload Photo"}
-            </Button>
-            <p className="text-[10px] text-crm-text-dim">Or paste a URL:</p>
-            <Input value={imageUrl} onChange={e => setImageUrl(e.target.value)}
-              placeholder="https://…" className="bg-crm-surface border-crm-border text-crm-text text-xs h-8" />
-          </div>
+          <ImageUploadOrUrl
+            label="Photo"
+            value={imageUrl}
+            onChange={setImageUrl}
+            bucket="team-avatars"
+            pathPrefix="stakeholders/"
+            previewClassName="h-20 w-16 object-cover rounded-lg border border-crm-border"
+          />
 
           <div className="space-y-1">
             <Label className="text-[11px] text-crm-text-dim">Full Name *</Label>

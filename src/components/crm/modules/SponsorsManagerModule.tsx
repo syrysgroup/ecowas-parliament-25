@@ -3,11 +3,12 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthContext";
 import {
-  Plus, Pencil, Trash2, Eye, EyeOff, ExternalLink, Image, Users, Search, ChevronDown,
+  Plus, Pencil, Trash2, Eye, EyeOff, ExternalLink, Users, Search, ChevronDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import ImageUploadOrUrl from "@/components/shared/ImageUploadOrUrl";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -112,7 +113,6 @@ function ProgrammeSelect({ selected, onChange }: { selected: string[]; onChange:
 // ─── Sponsor Dialog ───────────────────────────────────────────────────────────
 function SponsorDialog({ open, onClose, sponsor }: { open: boolean; onClose: () => void; sponsor?: SponsorRow }) {
   const qc = useQueryClient();
-  const fileRef = useRef<HTMLInputElement>(null);
   const isEdit = !!sponsor;
   const [name, setName] = useState(sponsor?.name ?? "");
   const [logoUrl, setLogoUrl] = useState(sponsor?.logo_url ?? "");
@@ -126,17 +126,6 @@ function SponsorDialog({ open, onClose, sponsor }: { open: boolean; onClose: () 
   const [isEcowas, setIsEcowas] = useState(sponsor?.is_ecowas_sponsor ?? false);
   const [isPublished, setIsPublished] = useState(sponsor?.is_published ?? false);
   const [sortOrder, setSortOrder] = useState(sponsor?.sort_order?.toString() ?? "0");
-  const [uploading, setUploading] = useState(false);
-
-  const handleUpload = async (file: File) => {
-    setUploading(true);
-    try {
-      const path = `${crypto.randomUUID()}.${file.name.split(".").pop()}`;
-      await supabase.storage.from("sponsor-logos").upload(path, file);
-      const { data: { publicUrl } } = supabase.storage.from("sponsor-logos").getPublicUrl(path);
-      setLogoUrl(publicUrl);
-    } finally { setUploading(false); }
-  };
 
   const save = useMutation({
     mutationFn: async () => {
@@ -180,13 +169,14 @@ function SponsorDialog({ open, onClose, sponsor }: { open: boolean; onClose: () 
         </DialogHeader>
         <div className="space-y-3 py-1">
           {/* Logo */}
-          <div className="space-y-2">
-            <Label className="text-[11px] text-crm-text-dim">Logo</Label>
-            {logoUrl && <img src={logoUrl} alt="" className="h-16 w-auto rounded border border-crm-border" loading="lazy" decoding="async" />}
-            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={e => e.target.files?.[0] && handleUpload(e.target.files[0])} />
-            <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()} disabled={uploading}
-              className="border-crm-border text-crm-text-muted text-xs gap-1"><Image size={12} /> {uploading ? "Uploading…" : "Upload Logo"}</Button>
-          </div>
+          <ImageUploadOrUrl
+            label="Logo"
+            value={logoUrl}
+            onChange={setLogoUrl}
+            bucket="sponsor-logos"
+            pathPrefix=""
+            previewClassName="h-16 w-auto object-contain rounded border border-crm-border"
+          />
 
           {/* Name (full width) */}
           <div className="space-y-1">
@@ -286,8 +276,6 @@ function SponsorDialog({ open, onClose, sponsor }: { open: boolean; onClose: () 
 // ─── Partner Dialog ───────────────────────────────────────────────────────────
 function PartnerDialog({ open, onClose, partner }: { open: boolean; onClose: () => void; partner?: PartnerRow }) {
   const qc = useQueryClient();
-  const fileRef = useRef<HTMLInputElement>(null);
-  const leadImageRef = useRef<HTMLInputElement>(null);
   const isEdit = !!partner;
   const [name, setName] = useState(partner?.name ?? "");
   const [logoUrl, setLogoUrl] = useState(partner?.logo_url ?? "");
@@ -302,28 +290,6 @@ function PartnerDialog({ open, onClose, partner }: { open: boolean; onClose: () 
   const [linkedinUrl, setLinkedinUrl] = useState(partner?.social_links?.linkedin ?? "");
   const [facebookUrl, setFacebookUrl] = useState(partner?.social_links?.facebook ?? "");
   const [isPublished, setIsPublished] = useState(partner?.is_published ?? false);
-  const [uploading, setUploading] = useState(false);
-  const [uploadingLead, setUploadingLead] = useState(false);
-
-  const handleUpload = async (file: File) => {
-    setUploading(true);
-    try {
-      const path = `partners/${crypto.randomUUID()}.${file.name.split(".").pop()}`;
-      await supabase.storage.from("sponsor-logos").upload(path, file);
-      const { data: { publicUrl } } = supabase.storage.from("sponsor-logos").getPublicUrl(path);
-      setLogoUrl(publicUrl);
-    } finally { setUploading(false); }
-  };
-
-  const handleLeadUpload = async (file: File) => {
-    setUploadingLead(true);
-    try {
-      const path = `partner-leads/${crypto.randomUUID()}.${file.name.split(".").pop()}`;
-      await supabase.storage.from("sponsor-logos").upload(path, file);
-      const { data: { publicUrl } } = supabase.storage.from("sponsor-logos").getPublicUrl(path);
-      setLeadImageUrl(publicUrl);
-    } finally { setUploadingLead(false); }
-  };
 
   const save = useMutation({
     mutationFn: async () => {
@@ -372,13 +338,14 @@ function PartnerDialog({ open, onClose, partner }: { open: boolean; onClose: () 
           <DialogTitle className="text-sm font-semibold text-crm-text">{isEdit ? "Edit Partner" : "Add Partner"}</DialogTitle>
         </DialogHeader>
         <div className="space-y-3 py-1">
-          <div className="space-y-2">
-            <Label className="text-[11px] text-crm-text-dim">Logo</Label>
-            {logoUrl && <img src={logoUrl} alt="" className="h-16 w-auto rounded border border-crm-border" loading="lazy" decoding="async" />}
-            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={e => e.target.files?.[0] && handleUpload(e.target.files[0])} />
-            <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()} disabled={uploading}
-              className="border-crm-border text-crm-text-muted text-xs gap-1"><Image size={12} /> {uploading ? "Uploading…" : "Upload Logo"}</Button>
-          </div>
+          <ImageUploadOrUrl
+            label="Logo"
+            value={logoUrl}
+            onChange={setLogoUrl}
+            bucket="sponsor-logos"
+            pathPrefix="partners/"
+            previewClassName="h-16 w-auto object-contain rounded border border-crm-border"
+          />
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label className="text-[11px] text-crm-text-dim">Name *</Label>
@@ -409,13 +376,14 @@ function PartnerDialog({ open, onClose, partner }: { open: boolean; onClose: () 
                 className="bg-crm-surface border-crm-border text-crm-text text-xs h-8" />
             </div>
           </div>
-          <div className="space-y-2">
-            <Label className="text-[11px] text-crm-text-dim">Lead / Contact Photo</Label>
-            {leadImageUrl && <img src={leadImageUrl} alt="" className="h-16 w-16 object-cover rounded-full border border-crm-border" loading="lazy" decoding="async" />}
-            <input ref={leadImageRef} type="file" accept="image/*" className="hidden" onChange={e => e.target.files?.[0] && handleLeadUpload(e.target.files[0])} />
-            <Button type="button" variant="outline" size="sm" onClick={() => leadImageRef.current?.click()} disabled={uploadingLead}
-              className="border-crm-border text-crm-text-muted text-xs gap-1"><Image size={12} /> {uploadingLead ? "Uploading…" : "Upload Lead Photo"}</Button>
-          </div>
+          <ImageUploadOrUrl
+            label="Lead / Contact Photo"
+            value={leadImageUrl}
+            onChange={setLeadImageUrl}
+            bucket="sponsor-logos"
+            pathPrefix="partner-leads/"
+            previewClassName="h-16 w-16 object-cover rounded-full border border-crm-border"
+          />
           <div className="space-y-1">
             <Label className="text-[11px] text-crm-text-dim">Website</Label>
             <Input value={website} onChange={e => setWebsite(e.target.value)}
