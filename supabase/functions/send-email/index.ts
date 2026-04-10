@@ -45,7 +45,6 @@ async function resolveZohoAccountId(serviceClient: any, acct: any, token: string
   const orgId = Deno.env.get("ZOHO_ORG_ID")!;
 
   if (acct.zoho_account_id) {
-    // Validate cached ID with org endpoint
     const probe = await fetch(
       `https://mail.zoho.eu/api/organization/${orgId}/accounts/${acct.zoho_account_id}/folders`,
       { headers: { Authorization: `Zoho-oauthtoken ${token}` } }
@@ -77,6 +76,26 @@ async function resolveZohoAccountId(serviceClient: any, acct: any, token: string
   const zohoAccountId = String(match.accountId);
   await serviceClient.from("email_accounts").update({ zoho_account_id: zohoAccountId }).eq("id", acct.id);
   return zohoAccountId;
+}
+
+// ── Build signature HTML ──────────────────────────────────────────────────────
+function buildSignatureHtml(sig: Record<string, any> | null): string {
+  if (!sig) return "";
+  return `
+<div style="margin-top:20px;padding-top:16px;border-top:1px solid #ccc;font-family:Georgia,serif;font-size:13px;color:#333">
+  <p style="margin:0;font-weight:bold;font-size:14px;color:#1a3c34">${sig.title ? sig.title + " " : ""}${sig.full_name ?? ""}</p>
+  <p style="margin:2px 0 0;font-weight:bold;font-size:12px;color:#2e7d5b">ECOWAS Parliament Initiatives</p>
+  <div style="margin-top:8px;font-size:12px;line-height:1.8;color:#555">
+  ${sig.department ? `<p style="margin:0">${sig.department}</p>` : ""}
+  ${sig.mobile ? `<p style="margin:0">Mobile Number: ${sig.mobile}</p>` : ""}
+  ${sig.email ? `<p style="margin:0">Email: ${sig.email}</p>` : ""}
+  ${sig.website ? `<p style="margin:0">Website: ${sig.website.replace(/^https?:\/\//, "")}</p>` : ""}
+  </div>
+  ${sig.tagline ? `<p style="margin:10px 0 0;font-style:italic;font-size:11px;color:#888">${sig.tagline}</p>` : ""}
+  <div style="margin-top:10px">
+    <img src="https://xahuyraommtfopnxrjvz.supabase.co/storage/v1/object/public/branding/logos/sing.png" alt="EPI" style="height:50px" />
+  </div>
+</div>`.trim();
 }
 
 // ── Main handler ──────────────────────────────────────────────────────────────
@@ -123,16 +142,26 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Fetch user's active signature
+    const { data: sig } = await serviceClient
+      .from("email_signatures")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("is_active", true)
+      .maybeSingle();
+
+    const signatureHtml = buildSignatureHtml(sig);
+    const finalBodyHtml = (bodyHtml ?? "") + signatureHtml;
+
     const token = await getZohoToken();
     const zohoAccountId = await resolveZohoAccountId(serviceClient, acct, token);
     const orgId = Deno.env.get("ZOHO_ORG_ID")!;
 
-    // Build payload — toAddress MUST be array of {address} objects for org API
     const sendPayload: Record<string, any> = {
       fromAddress: acct.email_address,
       toAddress: normaliseAddresses(to),
       subject,
-      content: bodyHtml ?? "",
+      content: finalBodyHtml,
       mailFormat: "html",
     };
     if (cc) sendPayload.ccAddress = normaliseAddresses(cc);
@@ -174,7 +203,6 @@ Deno.serve(async (req) => {
 
     const messageId = sendData?.data?.messageId ?? null;
 
-    // Flatten to_address for DB storage
     const toFlat = normaliseAddresses(to).map((a) => a.address).join(", ");
     const ccFlat = cc ? normaliseAddresses(cc).map((a) => a.address).join(", ") : null;
 
@@ -185,7 +213,7 @@ Deno.serve(async (req) => {
       to_address: toFlat,
       cc_address: ccFlat,
       subject,
-      body_html: bodyHtml ?? "",
+      body_html: finalBodyHtml,
       is_read: true,
       folder: "sent",
       sent_at: new Date().toISOString(),
