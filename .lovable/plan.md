@@ -1,47 +1,87 @@
 
 
-## Plan: Fix Email Accounts Save + Add Incoming/Outgoing Status Lights
+## Plan: Email Signature Settings, Reply Fix, and Notification Email System
 
-### Problem 1: Save fails — missing unique constraint on `user_id`
-The `save-email-password` edge function uses `upsert(..., { onConflict: "user_id" })`, but there is no unique index on `email_accounts.user_id`. This causes the upsert to fail silently or error out.
+This is a multi-part implementation covering three features: (1) Email Signature settings panel, (2) Reply click fix in EmailInboxModule, and (3) Personal Notification Email with notification templates.
 
-**Fix:** Add a unique constraint on `email_accounts.user_id` via migration.
+---
 
-### Problem 2: UI references `zoho_account_id` but column doesn't exist
-The `EmailAccountRow` interface and table column reference `zoho_account_id`, but this column was removed from the schema. This causes query errors or null values.
+### 1. Email Signature Settings Panel
 
-**Fix:** Remove `zoho_account_id` from the query and interface. Remove the "Zoho" column from the table.
+**Location:** Add a new "Signature" tab in ProfileModule.tsx (visible to all CRM users)
 
-### Problem 3: Add validation status + incoming/outgoing indicator lights
-Add two colored indicator dots per row:
-- **Incoming (IMAP):** Green if `imap_valid === true` and recently synced, red if failed, amber if untested
-- **Outgoing (SMTP):** Green if last send succeeded (we can derive this from IMAP valid + active status since they share the same Zoho credentials)
+**Database:** `email_signatures` table already exists with the right columns. Need to add a unique constraint on `user_id` for upsert support.
 
-Replace the current separate IMAP/Validated columns with a cleaner consolidated row showing:
-- Password status (stored or not)
-- IMAP validation status with timestamp
-- Two signal lights: **IN** (incoming/IMAP) and **OUT** (outgoing/SMTP)
+**Migration:**
+```sql
+ALTER TABLE public.email_signatures
+  ADD CONSTRAINT email_signatures_user_id_key UNIQUE (user_id);
+```
 
-### Changes
+**New component:** `src/components/crm/modules/EmailSignaturePanel.tsx`
+- Form fields: Title (dropdown: Mr., Mrs., Ms., Dr., Prof., Hon., Engr., Barr.), First Name, Last Name, Position, Mobile Number, Active toggle
+- Fixed values: Organisation, Website, Tagline, Logo URL (not editable)
+- Email: read-only, fetched from `email_accounts` where `user_id = user.id` and `is_active = true`
+- On load: fetch existing signature, split `full_name` on first space into first/last name
+- On save: upsert into `email_signatures` with `onConflict: "user_id"`
+- Live preview card showing the exact signature layout with logo at bottom
+
+**ProfileModule.tsx:** Add a third tab "Signature" alongside "Profile" and "Security"
+
+### 2. Update `send-email` Edge Function
+
+Add a `buildSignatureHtml` function that fetches the user's active signature from `email_signatures` and appends it to the email body. Includes the logo image at the bottom matching the preview layout exactly.
+
+**File:** `supabase/functions/send-email/index.ts`
+- Before sending, query `email_signatures` for the user where `is_active = true`
+- Build HTML signature block and append to `bodyHtml`
+- Signature HTML includes: name, org, position, mobile, email, website, tagline, logo
+
+### 3. Fix Reply "Click to write your reply"
+
+**File:** `src/components/crm/modules/EmailInboxModule.tsx` (lines ~594-619)
+
+The reply card area currently shows a static "Click to write your reply..." text but the entire area isn't clickable — only the Reply button triggers compose.
+
+**Fix:**
+- Make the entire reply card area (the placeholder text div) clickable with an `onClick` handler that calls `onReply(email)`
+- Add `cursor-pointer` styling to the clickable area
+- The ComposeModal already handles reply mode correctly (pre-fills To, Subject with "Re:" prefix, includes quoted text)
+
+### 4. Notification Email System
+
+**Database migration:** Add a `notification_email` column check — already exists on `profiles` table.
+
+**New edge function:** `supabase/functions/send-notification/index.ts`
+- Accepts: `user_id`, `type` (new_email, new_task, upcoming_event, invitation_accepted), `payload` (details)
+- Looks up user's `notification_email` from profiles and their notification preferences from `user_notification_prefs`
+- If the preference for that type is enabled and notification_email is set, sends a templated email via Zoho from a do-not-reply address
+- Templates for each notification type with consistent branding
+
+**Notification types and templates:**
+- **New Email:** "You have a new email from {sender} — {subject}"
+- **New Task:** "A new task has been assigned to you — {task_title}"
+- **Upcoming Event:** "Reminder: {event_title} starts in 24 hours"
+- **Invitation Accepted:** "{user_name} has accepted your invitation"
+
+**Integration points** (called from existing edge functions or via DB triggers):
+- `send-email/sync-emails`: trigger notification when new email arrives
+- Task assignment: trigger on task insert/update
+- Event reminder: scheduled function or cron
+- Invitation: trigger from `handle_invitation_role` or invite-user function
+
+For now, we'll create the edge function and integrate it into `sync-emails` for the "new email" notification. Other triggers can be added incrementally.
+
+---
+
+### Files Changed
 
 | File | Change |
 |---|---|
-| Migration | Add `UNIQUE` constraint on `email_accounts.user_id` |
-| `save-email-password/index.ts` | Already correct, just needs the DB constraint |
-| `EmailConfigSettings.tsx` | Remove `zoho_account_id` references; add incoming/outgoing status lights; consolidate validation display |
-
-### Technical Details
-
-**Migration SQL:**
-```sql
-ALTER TABLE public.email_accounts
-  ADD CONSTRAINT email_accounts_user_id_key UNIQUE (user_id);
-```
-
-**UI Status Lights:**
-Each row will show two small colored dots labeled "IN" and "OUT":
-- IN (green): `imap_valid === true`; (red): `imap_valid === false`; (gray): untested
-- OUT (green): `is_active && imap_valid === true` (same credentials); (red): `imap_valid === false`; (gray): untested
-
-The table columns will be: User | Email | Password | Status | IN | OUT | Validated | Actions
+| Migration | Add `UNIQUE` on `email_signatures.user_id` |
+| `src/components/crm/modules/EmailSignaturePanel.tsx` | New — signature form + live preview |
+| `src/components/crm/modules/ProfileModule.tsx` | Add "Signature" tab |
+| `supabase/functions/send-email/index.ts` | Add `buildSignatureHtml`, append to outgoing emails |
+| `src/components/crm/modules/EmailInboxModule.tsx` | Make reply placeholder clickable |
+| `supabase/functions/send-notification/index.ts` | New — notification email dispatcher with templates |
 
