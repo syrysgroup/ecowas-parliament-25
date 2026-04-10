@@ -8,20 +8,22 @@ const corsHeaders = {
 const IMAP_HOST = "imappro.zoho.eu";
 const IMAP_PORT = 993;
 
+// ── IMAP client ───────────────────────────────────────────────────────────────
 class Imap {
   private conn!: Deno.TlsConn;
   private enc = new TextEncoder();
-  private dec = new TextDecoder();
+  private dec = new TextDecoder("latin1"); // latin1 preserves raw bytes 1:1
   private t = 0;
 
   async connect(user: string, pass: string) {
     this.conn = await Deno.connectTls({ hostname: IMAP_HOST, port: IMAP_PORT });
-    const b = new Uint8Array(4096); await this.conn.read(b);
+    const b = new Uint8Array(4096);
+    await this.conn.read(b);
     const r = await this.cmd(`LOGIN "${esc(user)}" "${esc(pass)}"`);
     if (!isOk(r)) throw new Error("IMAP login failed: " + lastLine(r));
   }
 
-  async cmd(c: string, limitMB = 8): Promise<string> {
+  async cmd(c: string, limitMB = 10): Promise<string> {
     const tag = `T${++this.t}`;
     await this.conn.write(this.enc.encode(`${tag} ${c}\r\n`));
     const re = new RegExp(`^${tag} (OK|NO|BAD)`, "m");
@@ -32,7 +34,7 @@ class Imap {
       try {
         n = await Promise.race([
           this.conn.read(b) as Promise<number | null>,
-          new Promise<null>((_, j) => setTimeout(() => j(new Error("timeout")), 25000)),
+          new Promise<null>((_, j) => setTimeout(() => j(new Error("timeout")), 30000)),
         ]);
       } catch { break; }
       if (!n) break;
@@ -56,139 +58,153 @@ function parseUid(id: string) {
   return i < 0 ? null : { folder: id.substring(0, i), uid: id.substring(i + 1) };
 }
 
-// ── Strip IMAP fetch wrapper, return raw RFC822 message ───────────────────────
+// ── Extract raw RFC822 from IMAP FETCH response ────────────────────────────
 function extractRfc822(raw: string): string {
-  // The IMAP response looks like: * N FETCH (BODY[] {SIZE}\r\nCONTENT\r\n)
+  // IMAP FETCH literal: * N FETCH (... BODY[] {size}\r\n<content>\r\n)
   const litMatch = raw.match(/\{\d+\}\r?\n([\s\S]*)/);
   let content = litMatch ? litMatch[1] : raw;
-  // Strip trailing tagged response line
-  const tagIdx = content.search(/\nT\d+ (OK|NO|BAD)/);
+  // Strip tagged response line e.g. "T3 OK UID FETCH completed"
+  const tagIdx = content.search(/\r?\nT\d+ (OK|NO|BAD)/);
   if (tagIdx > 0) content = content.substring(0, tagIdx);
   // Strip trailing FETCH closing paren
-  content = content.replace(/\)\s*$/, "").trim();
+  content = content.replace(/\r?\n\)\s*$/, "").replace(/\)\s*$/, "");
   return content;
 }
 
-// ── Strip RFC822 top-level headers, return just the body ─────────────────────
-function stripRfc822Headers(rfc822: string): { headers: string; body: string } {
-  const sep = rfc822.includes("\r\n\r\n") ? "\r\n\r\n" : "\n\n";
-  const idx = rfc822.indexOf(sep);
-  if (idx < 0) return { headers: "", body: rfc822 };
-  return {
-    headers: rfc822.substring(0, idx),
-    body: rfc822.substring(idx + sep.length),
-  };
+// ── Unfold RFC2822 folded header lines ─────────────────────────────────────
+function unfold(s: string): string {
+  return s.replace(/\r?\n[ \t]+/g, " ");
 }
 
-// ── Charset-aware content decoder ────────────────────────────────────────────
-function decodeContent(body: string, encoding: string, charset = "utf-8"): string {
-  const enc = encoding.toLowerCase().replace(/\s/g, "");
-  const safeCharset = charset.toLowerCase().replace(/\s/g, "") || "utf-8";
+// ── Split a MIME section into headers and body ──────────────────────────────
+function splitHeadersBody(text: string): { headers: string; body: string } {
+  const crlfIdx = text.indexOf("\r\n\r\n");
+  const lfIdx   = text.indexOf("\n\n");
+  let idx: number;
+  let sepLen: number;
 
-  try {
-    if (enc === "base64") {
+  if (crlfIdx >= 0 && (lfIdx < 0 || crlfIdx <= lfIdx)) {
+    idx = crlfIdx; sepLen = 4;
+  } else if (lfIdx >= 0) {
+    idx = lfIdx; sepLen = 2;
+  } else {
+    return { headers: text, body: "" };
+  }
+  return { headers: text.substring(0, idx), body: text.substring(idx + sepLen) };
+}
+
+// ── Get value of a single header from a header block ───────────────────────
+function getHeader(headers: string, name: string): string {
+  const u = unfold(headers);
+  const re = new RegExp(`(?:^|\r?\n)${name}\\s*:\\s*([^\r\n]*)`, "i");
+  const m = u.match(re);
+  return m ? m[1].trim() : "";
+}
+
+// ── Get a parameter from a header value (e.g. charset from Content-Type) ───
+function getParam(headerVal: string, param: string): string {
+  const u = unfold(headerVal);
+  const re = new RegExp(`(?:^|;)\\s*${param}\\s*=\\s*(?:"([^"]+)"|([^;\\s]+))`, "i");
+  const m = u.match(re);
+  return m ? (m[1] ?? m[2] ?? "").trim() : "";
+}
+
+// ── Decode quoted-printable ────────────────────────────────────────────────
+function decodeQP(input: string): string {
+  return input
+    .replace(/=\r?\n/g, "")                                          // soft line breaks
+    .replace(/=([0-9A-Fa-f]{2})/g, (_, h) => String.fromCharCode(parseInt(h, 16)));
+}
+
+// ── Decode a part body given transfer encoding + charset ───────────────────
+function decodePart(body: string, transferEncoding: string, charset: string): string {
+  const enc = transferEncoding.toLowerCase().replace(/\s/g, "");
+  const cs  = (charset || "utf-8").toLowerCase().replace(/\s/g, "");
+
+  let bytes: Uint8Array;
+
+  if (enc === "base64") {
+    try {
       const clean = body.replace(/\s/g, "");
-      const bytes = Uint8Array.from(atob(clean), c => c.charCodeAt(0));
-      try { return new TextDecoder(safeCharset).decode(bytes); }
-      catch { return new TextDecoder("utf-8").decode(bytes); }
-    }
+      bytes = Uint8Array.from(atob(clean), c => c.charCodeAt(0));
+    } catch { return body; }
+  } else if (enc === "quoted-printable") {
+    const decoded = decodeQP(body);
+    // decoded is a latin1 string — convert to bytes for charset decoding
+    bytes = Uint8Array.from(decoded, c => c.charCodeAt(0));
+  } else {
+    // 7bit / 8bit / binary — treat as latin1 bytes
+    bytes = Uint8Array.from(body, c => c.charCodeAt(0));
+  }
 
-    if (enc === "quoted-printable") {
-      const decoded = body
-        .replace(/=\r?\n/g, "")
-        .replace(/=([0-9A-Fa-f]{2})/g, (_, h) => String.fromCharCode(parseInt(h, 16)));
-      const bytes = Uint8Array.from(decoded, c => c.charCodeAt(0));
-      try { return new TextDecoder(safeCharset).decode(bytes); }
-      catch { try { return new TextDecoder("utf-8").decode(bytes); } catch { return decoded; } }
-    }
-
-    if (safeCharset !== "utf-8" && safeCharset !== "us-ascii") {
-      try {
-        const bytes = Uint8Array.from(body, c => c.charCodeAt(0));
-        return new TextDecoder(safeCharset).decode(bytes);
-      } catch { /**/ }
-    }
-  } catch { /**/ }
-
-  return body;
+  // Now decode bytes with the right charset
+  const charsets = [cs, "utf-8", "iso-8859-1", "windows-1252"];
+  for (const tryCs of charsets) {
+    try { return new TextDecoder(tryCs).decode(bytes); } catch { /**/ }
+  }
+  return new TextDecoder("utf-8", { fatal: false }).decode(bytes);
 }
 
-function escapeRegex(s: string): string {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
+// ── Recursively parse MIME ─────────────────────────────────────────────────
+function parseMime(text: string): { html: string; plain: string } {
+  const { headers, body } = splitHeadersBody(text);
 
-// ── Parse MIME parts recursively ─────────────────────────────────────────────
-function parseMime(rfc822: string): { html: string; plain: string } {
-  let html = "";
+  const ctRaw    = getHeader(headers, "Content-Type");
+  const ctLow    = ctRaw.toLowerCase();
+  const xferEnc  = getHeader(headers, "Content-Transfer-Encoding").trim();
+  const charset  = getParam(ctRaw, "charset") || "utf-8";
+
+  let html  = "";
   let plain = "";
 
-  // Strip RFC822 top-level headers first
-  const { headers: topHeaders, body: topBody } = stripRfc822Headers(rfc822);
-  const fullHeaders = topHeaders.toLowerCase();
+  if (ctLow.startsWith("multipart/")) {
+    const boundary = getParam(ctRaw, "boundary");
+    if (!boundary) return { html: "", plain: "" };
 
-  // Get top-level content-type
-  const contentTypeMatch = fullHeaders.match(/content-type:\s*([^;\r\n]+)/i);
-  const contentType = contentTypeMatch ? contentTypeMatch[1].trim() : "text/plain";
+    // Escape boundary for regex use
+    const bEsc = boundary.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    // Split on CRLF/LF "--boundary" lines (with or without closing "--")
+    const delimRe = new RegExp(`(?:\r?\n)?--${bEsc}(?:--)?(?:\r?\n|$)`);
+    const parts = text.split(delimRe);
 
-  // Get top-level boundary for multipart
-  const boundaryMatch = (topHeaders + "\n" + topBody).match(/boundary="?([^"\r\n;]+)"?/i);
-
-  if (contentType.includes("multipart") && boundaryMatch) {
-    const boundary = boundaryMatch[1].trim();
-    // Use the full rfc822 for splitting since boundary info may span header/body
-    const parts = rfc822.split(new RegExp(`--${escapeRegex(boundary)}(?:--)?`));
-
-    for (const part of parts) {
-      if (!part.trim() || part.trim() === "--") continue;
-
-      const sepIdx = part.includes("\r\n\r\n")
-        ? part.indexOf("\r\n\r\n")
-        : part.indexOf("\n\n");
-      if (sepIdx < 0) continue;
-
-      const partHeaders = part.substring(0, sepIdx).toLowerCase();
-      const partBody = part.substring(sepIdx + (part.includes("\r\n\r\n") ? 4 : 2));
-
-      // Handle nested multipart (e.g. multipart/alternative inside multipart/mixed)
-      if (partHeaders.includes("multipart/")) {
-        const nested = parseMime(part);
-        if (nested.html && !html) html = nested.html;
-        if (nested.plain && !plain) plain = nested.plain;
-        continue;
-      }
-
-      const encoding = (partHeaders.match(/content-transfer-encoding:\s*(\S+)/) ?? [])[1] ?? "";
-      const charsetMatch = partHeaders.match(/charset="?([^";\s\r\n]+)"?/i);
-      const charset = charsetMatch ? charsetMatch[1].toLowerCase() : "utf-8";
-      const decoded = decodeContent(partBody.trim(), encoding, charset);
-
-      if (partHeaders.includes("text/html") && !html) html = decoded;
-      else if (partHeaders.includes("text/plain") && !plain) plain = decoded;
+    for (let i = 1; i < parts.length; i++) {   // index 0 = preamble before first boundary
+      const part = parts[i];
+      if (!part || part.trim() === "" || part.trim() === "--") continue;
+      const nested = parseMime(part);
+      if (nested.html  && !html)  html  = nested.html;
+      if (nested.plain && !plain) plain = nested.plain;
+      // For alternative: as soon as we have html we can stop (html preferred)
+      if (ctLow.startsWith("multipart/alternative") && html) break;
     }
-  } else {
-    // Not multipart — the body IS the content
-    const encoding = (fullHeaders.match(/content-transfer-encoding:\s*(\S+)/) ?? [])[1] ?? "";
-    const charsetMatch = fullHeaders.match(/charset="?([^";\s\r\n]+)"?/i);
-    const charset = charsetMatch ? charsetMatch[1].toLowerCase() : "utf-8";
-    const decoded = decodeContent(topBody.trim(), encoding, charset);
 
-    if (contentType.includes("text/html") || /<html|<div|<p |<br|<table/i.test(decoded)) {
+  } else if (ctLow.startsWith("text/html")) {
+    html = decodePart(body, xferEnc, charset);
+
+  } else if (ctLow.startsWith("text/plain")) {
+    plain = decodePart(body, xferEnc, charset);
+
+  } else if (!ctRaw) {
+    // No Content-Type — sniff the decoded content
+    const decoded = decodePart(body, xferEnc, charset);
+    if (/<html|<body|<div|<p>|<br|<table/i.test(decoded)) {
       html = decoded;
     } else {
       plain = decoded;
     }
   }
+  // Other parts (images, attachments) are intentionally skipped
 
   return { html, plain };
 }
 
+// ── Wrap plain text in a readable <pre> block ──────────────────────────────
 function plainToHtml(text: string): string {
   return `<pre style="white-space:pre-wrap;font-family:sans-serif;font-size:14px;line-height:1.6">${
     text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
   }</pre>`;
 }
 
-// ── Main handler ──────────────────────────────────────────────────────────────
+// ── Main handler ───────────────────────────────────────────────────────────
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -229,7 +245,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Already fetched and cached
+    // Non-empty body already cached — return it directly
     if (emailRow.body_html) {
       return new Response(JSON.stringify({ body_html: emailRow.body_html }), {
         status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -276,20 +292,18 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Fetch full RFC822 message
+    // Fetch full RFC822 message without marking it as read
     const bodyResp = await imap.cmd(`UID FETCH ${parsed.uid} (BODY.PEEK[])`, 16);
     await imap.close();
 
-    const rfc822 = extractRfc822(bodyResp);
+    const rfc822   = extractRfc822(bodyResp);
     const { html, plain } = parseMime(rfc822);
 
     let body_html = "";
-    if (html) {
-      body_html = html;
-    } else if (plain) {
-      body_html = plainToHtml(plain);
-    }
+    if (html)        body_html = html;
+    else if (plain)  body_html = plainToHtml(plain);
 
+    // Cache in DB so next open is instant
     if (body_html) {
       await serviceClient.from("emails").update({ body_html }).eq("id", email_id);
     }
