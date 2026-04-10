@@ -5,26 +5,76 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-let _cachedToken: string | null = null;
-let _tokenExpiresAt = 0;
+const IMAP_HOST = "imappro.zoho.eu";
+const IMAP_PORT = 993;
 
-async function getZohoToken(): Promise<string> {
-  if (_cachedToken && Date.now() < _tokenExpiresAt) return _cachedToken;
-  const res = await fetch("https://accounts.zoho.eu/oauth/v2/token", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      grant_type: "refresh_token",
-      client_id: Deno.env.get("ZOHO_CLIENT_ID")!,
-      client_secret: Deno.env.get("ZOHO_CLIENT_SECRET")!,
-      refresh_token: Deno.env.get("ZOHO_REFRESH_TOKEN")!,
-    }),
-  });
-  const data = await res.json();
-  if (!data.access_token) throw new Error(`Zoho token refresh failed: ${data.error ?? "no access_token"}`);
-  _cachedToken = data.access_token as string;
-  _tokenExpiresAt = Date.now() + ((data.expires_in ?? 3600) - 120) * 1000;
-  return _cachedToken;
+class Imap {
+  private conn!: Deno.TlsConn;
+  private enc = new TextEncoder();
+  private dec = new TextDecoder();
+  private t = 0;
+
+  async connect(user: string, pass: string) {
+    this.conn = await Deno.connectTls({ hostname: IMAP_HOST, port: IMAP_PORT });
+    const b = new Uint8Array(4096); await this.conn.read(b);
+    const r = await this.cmd(`LOGIN "${esc(user)}" "${esc(pass)}"`);
+    if (!isOk(r)) throw new Error("IMAP login failed: " + lastLine(r));
+  }
+
+  async cmd(c: string, limitMB = 2): Promise<string> {
+    const tag = `T${++this.t}`;
+    await this.conn.write(this.enc.encode(`${tag} ${c}\r\n`));
+    const re = new RegExp(`^${tag} (OK|NO|BAD)`, "m");
+    let r = "";
+    while (r.length < limitMB * 1024 * 1024) {
+      const b = new Uint8Array(32768);
+      let n: number | null = null;
+      try {
+        n = await Promise.race([
+          this.conn.read(b) as Promise<number | null>,
+          new Promise<null>((_, j) => setTimeout(() => j(new Error("timeout")), 20000)),
+        ]);
+      } catch { break; }
+      if (!n) break;
+      r += this.dec.decode(b.subarray(0, n));
+      if (re.test(r)) break;
+    }
+    return r;
+  }
+
+  async close() {
+    try { await this.conn.write(this.enc.encode(`T${++this.t} LOGOUT\r\n`)); } catch { /**/ }
+    try { this.conn.close(); } catch { /**/ }
+  }
+}
+
+function esc(s: string) { return s.replace(/\\/g, "\\\\").replace(/"/g, '\\"'); }
+function isOk(r: string) { return /\bOK\b/i.test(lastLine(r)); }
+function lastLine(r: string) { return r.trim().split("\n").pop() ?? ""; }
+function parseUid(id: string) {
+  const i = id.lastIndexOf(":");
+  return i < 0 ? null : { folder: id.substring(0, i), uid: id.substring(i + 1) };
+}
+
+async function findFolder(imap: Imap, name: string): Promise<string> {
+  const r = await imap.cmd('LIST "" "*"');
+  for (const m of r.matchAll(/\* LIST[^"]*"([^"]+)"/g)) {
+    if (m[1].toLowerCase() === name.toLowerCase()) return m[1];
+  }
+  // Common variations
+  const variations: Record<string, string[]> = {
+    trash: ["Trash", "Deleted", "Deleted Messages", "TRASH"],
+    sent: ["Sent", "Sent Mail", "SENT"],
+    drafts: ["Drafts", "Draft", "DRAFTS"],
+    spam: ["Spam", "Junk", "SPAM"],
+  };
+  const lower = name.toLowerCase();
+  if (variations[lower]) {
+    for (const v of variations[lower]) {
+      if (r.toLowerCase().includes(v.toLowerCase())) return v;
+    }
+  }
+  return name;
 }
 
 Deno.serve(async (req) => {
@@ -63,19 +113,12 @@ Deno.serve(async (req) => {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    if (action === "move" && !folder_id) {
-      return new Response(JSON.stringify({ error: "folder_id is required for move action" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
 
     const serviceClient = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
-    const { data: emailRow } = await serviceClient
-      .from("emails")
-      .select("id, zoho_message_id, account_id, folder, is_read, is_starred")
-      .eq("id", email_id)
-      .single();
+    const { data: emailRow } = await serviceClient.from("emails")
+      .select("id, zoho_message_id, account_id, folder")
+      .eq("id", email_id).single();
 
     if (!emailRow) {
       return new Response(JSON.stringify({ error: "Email not found" }), {
@@ -83,11 +126,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { data: acct } = await serviceClient
-      .from("email_accounts")
-      .select("id, zoho_account_id, user_id")
-      .eq("id", emailRow.account_id)
-      .single();
+    const { data: acct } = await serviceClient.from("email_accounts")
+      .select("email_address, app_password, user_id")
+      .eq("id", emailRow.account_id).single();
 
     if (!acct || acct.user_id !== user.id) {
       return new Response(JSON.stringify({ error: "Forbidden" }), {
@@ -95,96 +136,107 @@ Deno.serve(async (req) => {
       });
     }
 
-    const zohoMessageId = emailRow.zoho_message_id;
-    const zohoAccountId = acct.zoho_account_id;
-    const orgId = Deno.env.get("ZOHO_ORG_ID")!;
-    const needsZoho = !!zohoMessageId && !!zohoAccountId;
-    let token: string | null = null;
-    if (needsZoho) token = await getZohoToken();
+    const parsed = emailRow.zoho_message_id ? parseUid(emailRow.zoho_message_id) : null;
+    const canImap = !!(parsed && acct.app_password);
 
-    // ── Helper: PUT to Zoho org-level message endpoint ──────────────────────
-    async function zohoUpdate(payload: Record<string, string>) {
-      if (!needsZoho || !token) return;
-      const res = await fetch(
-        `https://mail.zoho.eu/api/organization/${orgId}/accounts/${zohoAccountId}/messages/${zohoMessageId}`,
-        {
-          method: "PUT",
-          headers: { Authorization: `Zoho-oauthtoken ${token}`, "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        }
-      );
-      if (!res.ok) {
-        const body = await res.text();
-        console.error(`Zoho message update failed (${res.status}): ${body}`);
-        // Non-fatal — DB state is still updated below
-      }
+    // DB-only fallback when no IMAP credentials or no UID
+    if (!canImap) {
+      if (action === "mark_read")   await serviceClient.from("emails").update({ is_read: true }).eq("id", email_id);
+      if (action === "mark_unread") await serviceClient.from("emails").update({ is_read: false }).eq("id", email_id);
+      if (action === "star")        await serviceClient.from("emails").update({ is_starred: true }).eq("id", email_id);
+      if (action === "unstar")      await serviceClient.from("emails").update({ is_starred: false }).eq("id", email_id);
+      if (action === "trash")       await serviceClient.from("emails").update({ folder: "trash" }).eq("id", email_id);
+      if (action === "delete")      await serviceClient.from("emails").delete().eq("id", email_id);
+      if (action === "move")        await serviceClient.from("emails").update({ folder: folder_name ?? folder_id ?? "inbox" }).eq("id", email_id);
+      return new Response(JSON.stringify({ success: true }), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
-    // ── Helper: get trash folder ID from org endpoint ───────────────────────
-    async function getTrashFolderId(): Promise<string> {
-      const res = await fetch(
-        `https://mail.zoho.eu/api/organization/${orgId}/accounts/${zohoAccountId}/folders`,
-        { headers: { Authorization: `Zoho-oauthtoken ${token}` } }
-      );
-      const data = await res.json();
-      const folders: any[] = data?.data ?? [];
-      const trash = folders.find((f: any) => (f.folderName ?? "").toLowerCase() === "trash");
-      if (!trash) throw new Error("Trash folder not found in Zoho");
-      return String(trash.folderId);
+    const imap = new Imap();
+    await imap.connect(acct.email_address, acct.app_password);
+
+    // Select the folder the message currently lives in
+    const selResp = await imap.cmd(`SELECT "${esc(parsed!.folder)}"`);
+    if (!isOk(selResp)) {
+      await imap.close();
+      // Folder may not exist — just update DB
+      if (action === "delete") await serviceClient.from("emails").delete().eq("id", email_id);
+      else if (action === "trash") await serviceClient.from("emails").update({ folder: "trash" }).eq("id", email_id);
+      return new Response(JSON.stringify({ success: true }), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
-    // ── Dispatch ─────────────────────────────────────────────────────────────
     switch (action) {
-      case "mark_read": {
-        await zohoUpdate({ mode: "markAsRead" });
+      case "mark_read":
+        await imap.cmd(`UID STORE ${parsed!.uid} +FLAGS (\\Seen)`);
         await serviceClient.from("emails").update({ is_read: true }).eq("id", email_id);
         break;
-      }
-      case "mark_unread": {
-        await zohoUpdate({ mode: "markAsUnread" });
+
+      case "mark_unread":
+        await imap.cmd(`UID STORE ${parsed!.uid} -FLAGS (\\Seen)`);
         await serviceClient.from("emails").update({ is_read: false }).eq("id", email_id);
         break;
-      }
-      case "star": {
-        await zohoUpdate({ isflagged: "true" });
+
+      case "star":
+        await imap.cmd(`UID STORE ${parsed!.uid} +FLAGS (\\Flagged)`);
         await serviceClient.from("emails").update({ is_starred: true }).eq("id", email_id);
         break;
-      }
-      case "unstar": {
-        await zohoUpdate({ isflagged: "false" });
+
+      case "unstar":
+        await imap.cmd(`UID STORE ${parsed!.uid} -FLAGS (\\Flagged)`);
         await serviceClient.from("emails").update({ is_starred: false }).eq("id", email_id);
         break;
-      }
+
       case "move": {
-        await zohoUpdate({ mode: "move", folderId: folder_id! });
-        await serviceClient.from("emails").update({ folder: folder_name ?? folder_id }).eq("id", email_id);
+        const dest = folder_name ?? folder_id ?? "INBOX";
+        const copyResp = await imap.cmd(`UID COPY ${parsed!.uid} "${esc(dest)}"`);
+        if (isOk(copyResp)) {
+          await imap.cmd(`UID STORE ${parsed!.uid} +FLAGS (\\Deleted)`);
+          await imap.cmd("EXPUNGE");
+        }
+        await serviceClient.from("emails").update({
+          folder: dest.toLowerCase(),
+          zoho_message_id: null,
+          body_html: null,
+        }).eq("id", email_id);
         break;
       }
+
       case "trash": {
-        if (needsZoho && token) {
-          const trashFolderId = await getTrashFolderId();
-          await zohoUpdate({ mode: "move", folderId: trashFolderId });
+        const trashFolder = await findFolder(imap, "Trash");
+        const copyResp = await imap.cmd(`UID COPY ${parsed!.uid} "${esc(trashFolder)}"`);
+        if (isOk(copyResp)) {
+          await imap.cmd(`UID STORE ${parsed!.uid} +FLAGS (\\Deleted)`);
+          await imap.cmd("EXPUNGE");
+          await serviceClient.from("emails").update({
+            folder: "trash",
+            zoho_message_id: null,
+            body_html: null,
+          }).eq("id", email_id);
+        } else {
+          // COPY failed (maybe already in trash) — just mark deleted
+          await imap.cmd(`UID STORE ${parsed!.uid} +FLAGS (\\Deleted)`);
+          await imap.cmd("EXPUNGE");
+          await serviceClient.from("emails").update({ folder: "trash" }).eq("id", email_id);
         }
-        await serviceClient.from("emails").update({ folder: "trash" }).eq("id", email_id);
         break;
       }
+
       case "delete": {
-        if (needsZoho && token) {
-          const res = await fetch(
-            `https://mail.zoho.eu/api/organization/${orgId}/accounts/${zohoAccountId}/messages/${zohoMessageId}`,
-            { method: "DELETE", headers: { Authorization: `Zoho-oauthtoken ${token}` } }
-          );
-          if (!res.ok) {
-            const body = await res.text();
-            console.error(`Zoho delete failed (${res.status}): ${body}`);
-            // Non-fatal — delete from DB regardless
-          }
-        }
+        // For emails already in trash — permanently delete via EXPUNGE
+        // For other folders — mark deleted and expunge
+        await imap.cmd(`UID STORE ${parsed!.uid} +FLAGS (\\Deleted)`);
+        const expResp = await imap.cmd("EXPUNGE");
+        console.log("EXPUNGE response:", expResp.substring(0, 200));
+        // Always delete from DB regardless of IMAP result
         await serviceClient.from("emails").delete().eq("id", email_id);
         break;
       }
     }
 
+    await imap.close();
     return new Response(JSON.stringify({ success: true }), {
       status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

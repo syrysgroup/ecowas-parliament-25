@@ -5,23 +5,62 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const SYSTEM_FOLDERS = new Set(["inbox", "sent", "sentmail", "drafts", "draft", "spam", "junk", "trash"]);
+const IMAP_HOST = "imappro.zoho.eu";
+const IMAP_PORT = 993;
+const SYSTEM_FOLDERS = new Set(["inbox", "sent", "sentmail", "sent mail", "drafts", "draft", "spam", "junk", "trash", "deleted messages", "deleted"]);
 
-async function getZohoToken(): Promise<string> {
-  const clientId = Deno.env.get("ZOHO_CLIENT_ID");
-  const clientSecret = Deno.env.get("ZOHO_CLIENT_SECRET");
-  const refreshToken = Deno.env.get("ZOHO_REFRESH_TOKEN");
-  if (!clientId || !clientSecret || !refreshToken) {
-    throw new Error("Zoho OAuth credentials not configured.");
+class Imap {
+  private conn!: Deno.TlsConn;
+  private enc = new TextEncoder();
+  private dec = new TextDecoder();
+  private t = 0;
+
+  async connect(user: string, pass: string) {
+    this.conn = await Deno.connectTls({ hostname: IMAP_HOST, port: IMAP_PORT });
+    const b = new Uint8Array(4096); await this.conn.read(b);
+    const r = await this.cmd(`LOGIN "${esc(user)}" "${esc(pass)}"`);
+    if (!isOk(r)) throw new Error("IMAP login failed: " + lastLine(r));
   }
-  const res = await fetch("https://accounts.zoho.eu/oauth/v2/token", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({ grant_type: "refresh_token", client_id: clientId, client_secret: clientSecret, refresh_token: refreshToken }),
-  });
-  const data = await res.json();
-  if (!data.access_token) throw new Error(`Zoho token refresh failed: ${data.error ?? "no access_token"}`);
-  return data.access_token as string;
+
+  async cmd(c: string, limitMB = 1): Promise<string> {
+    const tag = `T${++this.t}`;
+    await this.conn.write(this.enc.encode(`${tag} ${c}\r\n`));
+    const re = new RegExp(`^${tag} (OK|NO|BAD)`, "m");
+    let r = "";
+    while (r.length < limitMB * 1024 * 1024) {
+      const b = new Uint8Array(32768);
+      let n: number | null = null;
+      try {
+        n = await Promise.race([
+          this.conn.read(b) as Promise<number | null>,
+          new Promise<null>((_, j) => setTimeout(() => j(new Error("timeout")), 15000)),
+        ]);
+      } catch { break; }
+      if (!n) break;
+      r += this.dec.decode(b.subarray(0, n));
+      if (re.test(r)) break;
+    }
+    return r;
+  }
+
+  async close() {
+    try { await this.conn.write(this.enc.encode(`T${++this.t} LOGOUT\r\n`)); } catch { /**/ }
+    try { this.conn.close(); } catch { /**/ }
+  }
+}
+
+function esc(s: string) { return s.replace(/\\/g, "\\\\").replace(/"/g, '\\"'); }
+function isOk(r: string) { return /\bOK\b/i.test(lastLine(r)); }
+function lastLine(r: string) { return r.trim().split("\n").pop() ?? ""; }
+
+function dbFolderName(raw: string): string {
+  const n = raw.toLowerCase();
+  if (n === "inbox") return "inbox";
+  if (["sent", "sentmail", "sent mail"].includes(n)) return "sent";
+  if (["drafts", "draft"].includes(n)) return "drafts";
+  if (["spam", "junk"].includes(n)) return "spam";
+  if (["trash", "deleted messages", "deleted"].includes(n)) return "trash";
+  return n;
 }
 
 Deno.serve(async (req) => {
@@ -51,117 +90,80 @@ Deno.serve(async (req) => {
 
     const serviceClient = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
-    const { data: acct } = await serviceClient
-      .from("email_accounts")
-      .select("id, email_address, zoho_account_id")
-      .eq("user_id", user.id)
-      .eq("is_active", true)
-      .single();
+    const { data: acct } = await serviceClient.from("email_accounts")
+      .select("email_address, app_password")
+      .eq("user_id", user.id).eq("is_active", true).single();
 
     if (!acct) {
-      return new Response(JSON.stringify({ error: "No active email account found." }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return new Response(JSON.stringify({ error: "No active email account" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+    if (!acct.app_password) {
+      return new Response(JSON.stringify({ error: "No app password configured" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const token = await getZohoToken();
-
-    // Resolve account ID — if stored ID is invalid, clear and re-resolve
-    let zohoAccountId = acct.zoho_account_id;
-    if (!zohoAccountId) {
-      const orgId = Deno.env.get("ZOHO_ORG_ID")!;
-      const accountsRes = await fetch(`https://mail.zoho.eu/api/organization/${orgId}/accounts`, {
-        headers: { Authorization: `Zoho-oauthtoken ${token}` },
-      });
-      const accountsData = await accountsRes.json();
-      const accounts: any[] = Array.isArray(accountsData?.data) ? accountsData.data : [];
-      const match = accounts.find((a: any) =>
-        (a.primaryEmailAddress ?? "").toLowerCase() === (acct.email_address ?? "").toLowerCase() ||
-        (a.mailboxAddress ?? "").toLowerCase() === (acct.email_address ?? "").toLowerCase()
-      );
-      if (!match) {
-        return new Response(JSON.stringify({ error: "Could not resolve Zoho account ID.", detail: JSON.stringify(accountsData) }), {
-          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      zohoAccountId = String(match.accountId);
-      await serviceClient.from("email_accounts").update({ zoho_account_id: zohoAccountId }).eq("id", acct.id);
-    }
+    const imap = new Imap();
+    await imap.connect(acct.email_address, acct.app_password);
 
     if (action === "list") {
-      const res = await fetch(`https://mail.zoho.eu/api/organization/${Deno.env.get("ZOHO_ORG_ID")}/accounts/${zohoAccountId}/folders`, {
-        headers: { Authorization: `Zoho-oauthtoken ${token}` },
-      });
-      if (!res.ok) throw new Error(`Zoho folders fetch failed (${res.status})`);
-      const data = await res.json();
-      const folders = (data?.data ?? []).map((f: any) => ({
-        folderId: String(f.folderId),
-        folderName: f.folderName ?? "",
-        unreadCount: Number(f.unreadCount ?? 0),
-        messageCount: Number(f.messageCount ?? 0),
-        isSystemFolder: SYSTEM_FOLDERS.has((f.folderName ?? "").toLowerCase()),
-      }));
-      return new Response(JSON.stringify({ folders }), {
-        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      const r = await imap.cmd('LIST "" "*"');
+      await imap.close();
+      const folders: any[] = [];
+      const seen = new Set<string>();
+      for (const m of r.matchAll(/\* LIST\s*\(([^)]*)\)\s+"[^"]*"\s+"?([^"\r\n]+)"?/g)) {
+        if (/\\Noselect/i.test(m[1])) continue;
+        const name = m[2].trim().replace(/^"|"$/g, "");
+        if (seen.has(name.toLowerCase())) continue;
+        seen.add(name.toLowerCase());
+        folders.push({
+          folderId: name,
+          folderName: name,
+          dbFolder: dbFolderName(name),
+          isSystemFolder: SYSTEM_FOLDERS.has(name.toLowerCase()),
+        });
+      }
+      // Always ensure core folders are present
+      for (const [raw, db] of [["INBOX", "inbox"], ["Sent", "sent"], ["Drafts", "drafts"], ["Spam", "spam"], ["Trash", "trash"]]) {
+        if (!seen.has((raw as string).toLowerCase())) {
+          folders.unshift({ folderId: raw, folderName: raw, dbFolder: db, isSystemFolder: true });
+        }
+      }
+      return new Response(JSON.stringify({ folders }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     if (action === "create") {
       if (!folder_name?.trim()) {
+        await imap.close();
         return new Response(JSON.stringify({ error: "folder_name is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
       if (SYSTEM_FOLDERS.has(folder_name.trim().toLowerCase())) {
+        await imap.close();
         return new Response(JSON.stringify({ error: "Cannot create a folder with a reserved name" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
-      const res = await fetch(`https://mail.zoho.eu/api/organization/${Deno.env.get("ZOHO_ORG_ID")}/accounts/${zohoAccountId}/folders`, {
-        method: "POST",
-        headers: { Authorization: `Zoho-oauthtoken ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ folderName: folder_name.trim() }),
-      });
-      if (!res.ok) {
-        const body = await res.text();
-        throw new Error(`Zoho create folder failed (${res.status}): ${body}`);
-      }
-      const data = await res.json();
-      return new Response(JSON.stringify({ folder: data?.data ?? {} }), {
-        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      const r = await imap.cmd(`CREATE "${esc(folder_name.trim())}"`);
+      await imap.close();
+      if (!isOk(r)) throw new Error("Failed to create folder: " + lastLine(r));
+      return new Response(JSON.stringify({ success: true, folderName: folder_name.trim() }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     if (action === "delete") {
       if (!folder_id) {
+        await imap.close();
         return new Response(JSON.stringify({ error: "folder_id is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
-      // Fetch folders to verify it's not a system folder
-      const listRes = await fetch(`https://mail.zoho.eu/api/organization/${Deno.env.get("ZOHO_ORG_ID")}/accounts/${zohoAccountId}/folders`, {
-        headers: { Authorization: `Zoho-oauthtoken ${token}` },
-      });
-      const listData = await listRes.json();
-      const target = (listData?.data ?? []).find((f: any) => String(f.folderId) === folder_id);
-      if (!target) {
-        return new Response(JSON.stringify({ error: "Folder not found" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
-      if (SYSTEM_FOLDERS.has((target.folderName ?? "").toLowerCase())) {
+      if (SYSTEM_FOLDERS.has(folder_id.toLowerCase())) {
+        await imap.close();
         return new Response(JSON.stringify({ error: "Cannot delete system folders" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
-      const res = await fetch(`https://mail.zoho.eu/api/organization/${Deno.env.get("ZOHO_ORG_ID")}/accounts/${zohoAccountId}/folders/${folder_id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Zoho-oauthtoken ${token}` },
-      });
-      if (!res.ok) {
-        const body = await res.text();
-        throw new Error(`Zoho delete folder failed (${res.status}): ${body}`);
-      }
-      return new Response(JSON.stringify({ success: true }), {
-        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      const r = await imap.cmd(`DELETE "${esc(folder_id)}"`);
+      await imap.close();
+      if (!isOk(r)) throw new Error("Failed to delete folder: " + lastLine(r));
+      return new Response(JSON.stringify({ success: true }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
+    await imap.close();
     return new Response(JSON.stringify({ error: "Invalid action" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (err: any) {
     console.error("manage-folders error:", err);
-    return new Response(JSON.stringify({ error: err.message || "Internal server error" }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(JSON.stringify({ error: err.message || "Internal server error" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 });

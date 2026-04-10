@@ -1,83 +1,104 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
-  }
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const authHeader = req.headers.get("Authorization") ?? "";
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-
-    // Verify caller is super_admin
-    const userClient = createClient(supabaseUrl, anonKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
-    const { data: { user }, error: authErr } = await userClient.auth.getUser();
-    if (authErr || !user) {
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const adminClient = createClient(supabaseUrl, serviceRoleKey);
-    const { data: roleRow } = await adminClient
+    const anonClient = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: authHeader } } }
+    );
+    const { data: { user }, error: authErr } = await anonClient.auth.getUser();
+    if (authErr || !user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const serviceClient = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+
+    // Only super_admin can save passwords for other users
+    const { data: roleCheck } = await serviceClient
       .from("user_roles")
-      .select("role")
+      .select("id")
       .eq("user_id", user.id)
       .eq("role", "super_admin")
       .maybeSingle();
 
-    if (!roleRow) {
-      return new Response(JSON.stringify({ error: "Forbidden — super_admin only" }), {
-        status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+    if (!roleCheck) {
+      return new Response(JSON.stringify({ error: "Forbidden — super_admin required" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Parse & validate body
-    const { target_user_id, email_address, app_password } = await req.json();
+    const { target_user_id, email_address, app_password } = await req.json().catch(() => ({})) as {
+      target_user_id?: string;
+      email_address?: string;
+      app_password?: string;
+    };
+
     if (!target_user_id || !email_address) {
-      return new Response(JSON.stringify({ error: "target_user_id and email_address required" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      return new Response(JSON.stringify({ error: "target_user_id and email_address are required" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Upsert email account
-    const payload: Record<string, unknown> = {
+    const { data: existing } = await serviceClient
+      .from("email_accounts")
+      .select("id")
+      .eq("user_id", target_user_id)
+      .maybeSingle();
+
+    const payload: Record<string, any> = {
       user_id: target_user_id,
-      email_address,
+      email_address: email_address.trim().toLowerCase(),
       is_active: true,
     };
+    // Only update password if a new one was provided — blank means keep existing
     if (app_password) payload.app_password = app_password;
 
-    const { error: upsertErr } = await adminClient
-      .from("email_accounts")
-      .upsert(payload, { onConflict: "user_id" });
+    if (existing) {
+      const { error } = await serviceClient
+        .from("email_accounts")
+        .update(payload)
+        .eq("id", existing.id);
+      if (error) throw error;
+    } else {
+      const { error } = await serviceClient
+        .from("email_accounts")
+        .insert(payload);
+      if (error) throw error;
+    }
 
-    if (upsertErr) throw upsertErr;
-
-    // Also flag the profile
-    await adminClient
+    // Mark user as having an email account
+    await serviceClient
       .from("profiles")
       .update({ has_email_account: true })
       .eq("id", target_user_id);
 
-    return new Response(JSON.stringify({ ok: true }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    return new Response(JSON.stringify({ success: true }), {
+      status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-  } catch (e: any) {
-    return new Response(JSON.stringify({ error: e.message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+  } catch (err: any) {
+    console.error("save-email-password error:", err);
+    return new Response(JSON.stringify({ error: err.message || "Internal server error" }), {
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });
