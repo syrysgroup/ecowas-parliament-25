@@ -413,7 +413,7 @@ function EmailDetailPanel({ email, onBack, onReply, onForward, onStar, onTrash, 
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   useEffect(() => {
-    setBodyHtml(email.body_html);
+    setBodyHtml(email.body_html ?? "");
     if (email.body_html || !email.id) return;
     let cancelled = false;
     setFetchingBody(true);
@@ -423,7 +423,8 @@ function EmailDetailPanel({ email, onBack, onReply, onForward, onStar, onTrash, 
         headers: { Authorization: `Bearer ${session?.access_token}` },
       })
     ).then(({ data }) => {
-      if (!cancelled && data?.body_html) setBodyHtml(data.body_html);
+      // Always update state — even an empty result clears the loading state correctly
+      if (!cancelled) setBodyHtml(data?.body_html ?? "");
     }).finally(() => {
       if (!cancelled) setFetchingBody(false);
     });
@@ -907,9 +908,8 @@ export default function EmailInboxModule() {
     if (selectedIds.size === 0) return;
     setBulkOperating(true);
     try {
-      for (const id of Array.from(selectedIds)) {
-        await invokeUpdateEmail("trash", id);
-      }
+      const ids = Array.from(selectedIds);
+      await Promise.allSettled(ids.map(id => invokeUpdateEmail("trash", id)));
       setSelectedIds(new Set());
       qc.invalidateQueries({ queryKey: ["emails"] });
     } catch (err: any) {
@@ -923,12 +923,12 @@ export default function EmailInboxModule() {
     if (selectedIds.size === 0) return;
     setBulkOperating(true);
     try {
-      for (const id of Array.from(selectedIds)) {
-        await invokeUpdateEmail("mark_read", id);
-      }
+      const ids = Array.from(selectedIds);
+      await Promise.allSettled(ids.map(id => invokeUpdateEmail("mark_read", id)));
       setSelectedIds(new Set());
       qc.invalidateQueries({ queryKey: ["emails"] });
       qc.invalidateQueries({ queryKey: ["email-unread-counts"] });
+      qc.invalidateQueries({ queryKey: ["email-inbox-unread"] });
     } catch (err: any) {
       toast({ title: "Bulk mark read failed", description: err.message, variant: "destructive" });
     } finally {

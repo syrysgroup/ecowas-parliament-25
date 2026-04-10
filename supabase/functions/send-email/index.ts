@@ -398,23 +398,29 @@ Deno.serve(async (req) => {
 
     await smtpSend(acct.email_address, acct.app_password, toList, ccList, bccList, mimeMessage);
 
-    // Save to DB as sent — store final body with signature included
-    await serviceClient.from("emails").insert({
-      account_id: acct.id,
-      zoho_message_id: null,
-      from_address: acct.email_address,
-      from_name: "",
-      to_address: toList.join(", "),
-      cc_address: ccList.length ? ccList.join(", ") : null,
-      subject,
-      body_html: finalBody,
-      body_text: "",
-      is_read: true,
-      is_starred: false,
-      folder: "sent",
-      has_attachments: Array.isArray(attachments) && attachments.length > 0,
-      sent_at: new Date().toISOString(),
-    });
+    // Save to DB as sent — if the DB insert fails, log it but still return 200
+    // because the email was already sent successfully via SMTP
+    try {
+      await serviceClient.from("emails").insert({
+        account_id: acct.id,
+        zoho_message_id: null,
+        from_address: acct.email_address,
+        from_name: "",
+        to_address: toList.join(", "),
+        cc_address: ccList.length ? ccList.join(", ") : null,
+        subject,
+        body_html: finalBody,
+        body_text: "",
+        is_read: true,
+        is_starred: false,
+        folder: "sent",
+        has_attachments: Array.isArray(attachments) && attachments.length > 0,
+        sent_at: new Date().toISOString(),
+      });
+    } catch (dbErr: any) {
+      // Email was sent — don't fail the request over a DB issue
+      console.error("send-email: DB insert failed (email was already sent via SMTP):", dbErr);
+    }
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },

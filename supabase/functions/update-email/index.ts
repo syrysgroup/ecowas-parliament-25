@@ -216,10 +216,15 @@ Deno.serve(async (req) => {
             body_html: null,
           }).eq("id", email_id);
         } else {
-          // COPY failed (maybe already in trash) — just mark deleted
+          // COPY failed (maybe already in trash) — mark deleted and expunge
+          // Always null zoho_message_id so a later permanent-delete uses the DB-only path
           await imap.cmd(`UID STORE ${parsed!.uid} +FLAGS (\\Deleted)`);
           await imap.cmd("EXPUNGE");
-          await serviceClient.from("emails").update({ folder: "trash" }).eq("id", email_id);
+          await serviceClient.from("emails").update({
+            folder: "trash",
+            zoho_message_id: null,
+            body_html: null,
+          }).eq("id", email_id);
         }
         break;
       }

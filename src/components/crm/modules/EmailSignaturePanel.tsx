@@ -182,24 +182,41 @@ export default function EmailSignaturePanel() {
       <div className="space-y-2">
         <h3 className="text-[13px] font-semibold text-crm-text">Live Preview</h3>
         <div className="border border-crm-border rounded-xl p-5 bg-white">
-          <div style={{ fontFamily: "Georgia, serif", fontSize: 14, color: "#333" }}>
-            <p style={{ margin: 0, fontWeight: "bold", fontSize: 15, color: "#1a3c34" }}>
+          <div style={{ fontFamily: "Arial, sans-serif", fontSize: 13, color: "#222", paddingTop: 12, borderTop: "2px solid #006633" }}>
+            <strong style={{ fontSize: 14, color: "#111" }}>
               {previewName || "Your Name"}
-            </p>
-            <p style={{ margin: "2px 0 0", fontWeight: "bold", fontSize: 13, color: "#2e7d5b" }}>
+            </strong>
+            <br />
+            <span style={{ color: "#006633", fontWeight: 600 }}>
               {FIXED_ORG}
-            </p>
-            <div style={{ marginTop: 10, fontSize: 12, lineHeight: 1.8, color: "#555" }}>
-              {position && <p style={{ margin: 0 }}>{position}</p>}
-              {mobile && <p style={{ margin: 0 }}>Mobile Number: {mobile}</p>}
-              {previewEmail && <p style={{ margin: 0 }}>Email: {previewEmail}</p>}
-              <p style={{ margin: 0 }}>Website: {FIXED_WEBSITE}</p>
+            </span>
+            <br />
+            <div style={{ marginTop: 8, fontSize: 12, lineHeight: 1.8, color: "#555" }}>
+              {position && <div>{position}</div>}
+              {mobile && <div>Mobile Number: <strong>{mobile}</strong></div>}
+              {previewEmail && (
+                <div>
+                  Email:{" "}
+                  <a href={`mailto:${previewEmail}`} style={{ color: "#006633", textDecoration: "none" }}>
+                    {previewEmail}
+                  </a>
+                </div>
+              )}
+              <div>
+                Website:{" "}
+                <a href={`https://${FIXED_WEBSITE}`} style={{ color: "#006633", textDecoration: "none" }}>
+                  {FIXED_WEBSITE}
+                </a>
+              </div>
             </div>
-            <p style={{ margin: "12px 0 0", fontStyle: "italic", fontSize: 11, color: "#888" }}>
-              {FIXED_TAGLINE}
-            </p>
+            <br />
+            <em style={{ fontSize: 11, color: "#006633" }}>{FIXED_TAGLINE}</em>
             <div style={{ marginTop: 12 }}>
-              <img src={FIXED_LOGO} alt="ECOWAS Parliament Initiatives" style={{ height: 60 }} />
+              <img
+                src={FIXED_LOGO}
+                alt="ECOWAS Parliament Initiatives"
+                style={{ height: 70, display: "block" }}
+              />
             </div>
           </div>
         </div>
