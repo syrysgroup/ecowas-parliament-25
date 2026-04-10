@@ -450,6 +450,12 @@ export default function ProfileModule() {
             </div>
           </div>
         </TabsContent>
+
+        <TabsContent value="signature" className="mt-4">
+          <Suspense fallback={<div className="flex items-center justify-center h-48"><div className="w-6 h-6 border-2 border-emerald-700 border-t-emerald-400 rounded-full animate-spin" /></div>}>
+            <EmailSignaturePanel />
+          </Suspense>
+        </TabsContent>
       </Tabs>
     </div>
   );
