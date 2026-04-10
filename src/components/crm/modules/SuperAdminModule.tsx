@@ -140,6 +140,18 @@ function EmailConfigTab({ userId }: { userId?: string }) {
     },
   });
 
+  const { data: emailFormatData } = useQuery({
+    queryKey: ["site-settings-email-format"],
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("site_settings")
+        .select("value")
+        .eq("key", "email_format")
+        .maybeSingle();
+      return (data?.value as Record<string, any>) ?? {};
+    },
+  });
+
   const [host, setHost] = useState("");
   const [port, setPort] = useState("587");
   const [imapHost, setImapHost] = useState("");
@@ -151,6 +163,11 @@ function EmailConfigTab({ userId }: { userId?: string }) {
   const [fromEmail, setFromEmail] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  // Email format state
+  const [emailTemplate, setEmailTemplate] = useState("{firstname}.{lastname}");
+  const [emailDomain, setEmailDomain] = useState("ecowasparliamentinitiatives.org");
+  const [savingFormat, setSavingFormat] = useState(false);
 
   useEffect(() => {
     if (smtp && Object.keys(smtp).length > 0) {
@@ -164,6 +181,45 @@ function EmailConfigTab({ userId }: { userId?: string }) {
       setFromEmail(smtp.from_email ?? "noreply@ecowas.int");
     }
   }, [smtp]);
+
+  useEffect(() => {
+    if (emailFormatData && Object.keys(emailFormatData).length > 0) {
+      setEmailTemplate(emailFormatData.template ?? "{firstname}.{lastname}");
+      setEmailDomain(emailFormatData.domain ?? "ecowasparliamentinitiatives.org");
+    }
+  }, [emailFormatData]);
+
+  const generatePreview = (template: string, domain: string) => {
+    const preview = template
+      .replace(/{firstname}/g, "john")
+      .replace(/{lastname}/g, "doe")
+      .replace(/{firstinitial}/g, "j")
+      .replace(/{lastinitial}/g, "d")
+      .replace(/{userid}/g, "u001");
+    return `${preview}@${domain}`;
+  };
+
+  const handleSaveEmailFormat = async () => {
+    setSavingFormat(true);
+    try {
+      const value = { template: emailTemplate.trim(), domain: emailDomain.trim() };
+      const { data: existing } = await (supabase as any).from("site_settings").select("id").eq("key", "email_format").maybeSingle();
+      if (existing) {
+        await (supabase as any).from("site_settings")
+          .update({ value, updated_by: userId, updated_at: new Date().toISOString() })
+          .eq("key", "email_format");
+      } else {
+        await (supabase as any).from("site_settings")
+          .insert({ key: "email_format", value, updated_by: userId });
+      }
+      qc.invalidateQueries({ queryKey: ["site-settings-email-format"] });
+      toast({ title: "Email format saved" });
+    } catch (err: any) {
+      toast({ title: "Error saving format", description: err.message, variant: "destructive" });
+    } finally {
+      setSavingFormat(false);
+    }
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -296,6 +352,44 @@ function EmailConfigTab({ userId }: { userId?: string }) {
             className="text-[11px] gap-1.5 border-red-900 text-red-400 hover:bg-red-950 hover:text-red-300">
             <Trash2 size={12} />
             Delete Config
+          </Button>
+        </div>
+      </div>
+
+      {/* Email Address Format */}
+      <div className="bg-crm-card border border-crm-border rounded-xl p-5">
+        <h3 className="text-[13px] font-semibold text-crm-text flex items-center gap-2 mb-2">
+          <Mail size={14} /> Email Address Format
+        </h3>
+        <p className="text-[11px] text-crm-text-muted mb-4">
+          Define the standard format for generating CRM email addresses when creating new accounts.
+          Use placeholders: <span className="font-mono text-emerald-400">{"{"}</span><span className="font-mono text-emerald-400">firstname{"}"}</span>, <span className="font-mono text-emerald-400">{"{"}</span><span className="font-mono text-emerald-400">lastname{"}"}</span>, <span className="font-mono text-emerald-400">{"{"}</span><span className="font-mono text-emerald-400">firstinitial{"}"}</span>, <span className="font-mono text-emerald-400">{"{"}</span><span className="font-mono text-emerald-400">lastinitial{"}"}</span>, <span className="font-mono text-emerald-400">{"{"}</span><span className="font-mono text-emerald-400">userid{"}"}</span>
+        </p>
+        <div className="grid sm:grid-cols-2 gap-4 max-w-lg">
+          <div className="space-y-1.5">
+            <Label className="text-[11px] text-crm-text-muted">Username Template</Label>
+            <Input value={emailTemplate} onChange={e => setEmailTemplate(e.target.value)}
+              placeholder="{firstname}.{lastname}"
+              className="bg-crm-surface border-crm-border text-crm-text text-[12px] h-9 font-mono" />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-[11px] text-crm-text-muted">Domain</Label>
+            <Input value={emailDomain} onChange={e => setEmailDomain(e.target.value)}
+              placeholder="ecowasparliamentinitiatives.org"
+              className="bg-crm-surface border-crm-border text-crm-text text-[12px] h-9" />
+          </div>
+        </div>
+        {emailTemplate && emailDomain && (
+          <div className="mt-3 px-3 py-2 rounded-lg bg-crm-surface border border-crm-border inline-flex items-center gap-2">
+            <span className="text-[10px] text-crm-text-muted">Preview (John Doe):</span>
+            <span className="text-[12px] font-mono text-emerald-400">{generatePreview(emailTemplate, emailDomain)}</span>
+          </div>
+        )}
+        <div className="mt-4">
+          <Button size="sm" onClick={handleSaveEmailFormat} disabled={savingFormat}
+            className="text-[11px] gap-1.5">
+            {savingFormat ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle2 size={12} />}
+            {savingFormat ? "Saving…" : "Save Format"}
           </Button>
         </div>
       </div>

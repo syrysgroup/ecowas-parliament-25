@@ -5,7 +5,7 @@ import {
   Reply, Forward, Search, X, Paperclip, ChevronLeft, ChevronRight,
   Loader2, MailOpen, Mail, AlertOctagon, Folder,
   MoreVertical, Minus, Bold, Italic, Underline,
-  List, ListOrdered, Link, Image, Save,
+  List, ListOrdered, Link, Image, Save, CornerUpLeft, CornerUpRight,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthContext";
@@ -90,6 +90,7 @@ interface ComposeAttachment {
 }
 
 function ComposeModal({ account, replyTo, forwardOf, onClose, onSent }: ComposeProps) {
+  const { user } = useAuthContext();
   const { toast } = useToast();
   const [to, setTo] = useState(replyTo?.from_address ?? "");
   const [cc, setCc] = useState("");
@@ -102,17 +103,52 @@ function ComposeModal({ account, replyTo, forwardOf, onClose, onSent }: ComposeP
     if (forwardOf) return `Fwd: ${forwardOf.subject}`;
     return "";
   });
-  const [body, setBody] = useState(() => {
-    if (replyTo) return `\n\n---\nOn ${replyTo.sent_at ? format(parseISO(replyTo.sent_at), "d MMM yyyy") : ""}, ${replyTo.from_name || replyTo.from_address} wrote:\n${replyTo.body_text || ""}`;
-    if (forwardOf) return `\n\n---\nForwarded message:\nFrom: ${forwardOf.from_name || forwardOf.from_address}\nSubject: ${forwardOf.subject}\n\n${forwardOf.body_text || ""}`;
-    return "";
-  });
+  const [body, setBody] = useState("");
+  const [signatureText, setSignatureText] = useState("");
   const [sending, setSending] = useState(false);
   const [savingDraft, setSavingDraft] = useState(false);
   const [draftId, setDraftId] = useState<string | null>(null);
   const [zohoDraftId, setZohoDraftId] = useState<string | null>(null);
   const [attachments, setAttachments] = useState<ComposeAttachment[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Load signature and initialise body
+  useEffect(() => {
+    if (!user?.id) return;
+    (supabase as any)
+      .from("email_signatures")
+      .select("title, full_name, department, mobile, email, website, tagline, is_active")
+      .eq("user_id", user.id)
+      .maybeSingle()
+      .then(({ data }: any) => {
+        let sig = "";
+        if (data?.is_active) {
+          const name = [data.title, data.full_name].filter(Boolean).join(" ");
+          const lines = [
+            name,
+            "ECOWAS Parliament Initiatives",
+            data.department,
+            data.mobile ? `Mobile: ${data.mobile}` : "",
+            data.email ? `Email: ${data.email}` : "",
+            data.website ?? "www.ecowasparliamentinitiatives.org",
+            data.tagline ?? "",
+          ].filter(Boolean);
+          sig = "\n\n--\n" + lines.join("\n");
+        }
+        setSignatureText(sig);
+
+        // Build initial body with quoted content + signature
+        let initial = "";
+        if (replyTo) {
+          initial = `\n\n---\nOn ${replyTo.sent_at ? format(parseISO(replyTo.sent_at), "d MMM yyyy") : ""}, ${replyTo.from_name || replyTo.from_address} wrote:\n${replyTo.body_text || ""}`;
+        } else if (forwardOf) {
+          initial = `\n\n---\nForwarded message:\nFrom: ${forwardOf.from_name || forwardOf.from_address}\nSubject: ${forwardOf.subject}\n\n${forwardOf.body_text || ""}`;
+        }
+        // Place signature before quoted content so user types above it
+        setBody(sig + initial);
+      });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
@@ -151,6 +187,7 @@ function ComposeModal({ account, replyTo, forwardOf, onClose, onSent }: ComposeP
           bodyHtml: body.replace(/\n/g, "<br>"),
           replyToId: replyTo?.id,
           attachments: attachments.length > 0 ? attachments : undefined,
+          clientSignatureIncluded: !!signatureText,
         },
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -507,6 +544,22 @@ function EmailDetailPanel({ email, onBack, onReply, onForward, onStar, onTrash, 
           </div>
         </div>
         <div className="flex items-center gap-1">
+          <button
+            onClick={() => onReply(email)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-crm-border text-crm-text-muted hover:bg-crm-surface hover:text-crm-text text-[13px] transition-colors"
+            title="Reply"
+          >
+            <CornerUpLeft size={15} />
+            <span>Reply</span>
+          </button>
+          <button
+            onClick={() => onForward(email)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-crm-border text-crm-text-muted hover:bg-crm-surface hover:text-crm-text text-[13px] transition-colors"
+            title="Forward"
+          >
+            <CornerUpRight size={15} />
+            <span>Forward</span>
+          </button>
           <button onClick={onPrev} disabled={!hasPrev} className="p-2 rounded-full hover:bg-crm-surface text-crm-text-muted transition-colors disabled:opacity-30" title="Previous">
             <ChevronLeft size={18} />
           </button>
@@ -590,37 +643,22 @@ function EmailDetailPanel({ email, onBack, onReply, onForward, onStar, onTrash, 
           </div>
         </div>
 
-        {/* Reply card */}
-        <div className="border border-crm-border rounded-xl bg-crm-card shadow-sm mt-4">
-          <h6 className="px-5 py-3 text-[14px] font-normal text-crm-text">
-            Reply to {email.from_name || email.from_address}
-          </h6>
-          <div className="px-5 pb-4">
-            <div
-              onClick={() => onReply(email)}
-              className="cursor-pointer hover:bg-crm-surface/50 rounded-lg transition-colors"
-            >
-              <div className="flex items-center gap-0.5 pb-3 border-b border-crm-border mb-3">
-                {[Bold, Italic, Underline, ListOrdered, List, Link, Image].map((Icon, i) => (
-                  <button key={i} className="p-1.5 rounded hover:bg-crm-surface text-crm-text-muted transition-colors">
-                    <Icon size={15} />
-                  </button>
-                ))}
-              </div>
-              <div className="min-h-[80px] text-[13px] text-crm-text-faint italic">
-                Click to write your reply…
-              </div>
-            </div>
-            <div className="flex items-center justify-end gap-3 mt-4">
-              <button
-                onClick={() => onReply(email)}
-                className="flex items-center gap-2 px-5 py-2 rounded-lg bg-primary hover:bg-primary/90 text-white text-[13px] font-medium transition-colors"
-              >
-                <span>Reply</span>
-                <Send size={14} />
-              </button>
-            </div>
-          </div>
+        {/* Reply / Forward actions */}
+        <div className="flex items-center gap-3 mt-4">
+          <button
+            onClick={() => onReply(email)}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary hover:bg-primary/90 text-white text-[13px] font-medium transition-colors"
+          >
+            <CornerUpLeft size={15} />
+            <span>Reply</span>
+          </button>
+          <button
+            onClick={() => onForward(email)}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-lg border border-crm-border hover:bg-crm-surface text-crm-text-muted hover:text-crm-text text-[13px] font-medium transition-colors"
+          >
+            <CornerUpRight size={15} />
+            <span>Forward</span>
+          </button>
         </div>
       </div>
     </div>

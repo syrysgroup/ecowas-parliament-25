@@ -120,7 +120,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { to, cc, bcc, subject, bodyHtml, replyToId, attachments } = await req.json();
+    const { to, cc, bcc, subject, bodyHtml, replyToId, attachments, clientSignatureIncluded } = await req.json();
     if (!to || !subject) {
       return new Response(JSON.stringify({ error: "to and subject are required" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -142,16 +142,17 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Fetch user's active signature
-    const { data: sig } = await serviceClient
-      .from("email_signatures")
-      .select("*")
-      .eq("user_id", user.id)
-      .eq("is_active", true)
-      .maybeSingle();
-
-    const signatureHtml = buildSignatureHtml(sig);
-    const finalBodyHtml = (bodyHtml ?? "") + signatureHtml;
+    // Append signature server-side only if client hasn't already included it
+    let finalBodyHtml = bodyHtml ?? "";
+    if (!clientSignatureIncluded) {
+      const { data: sig } = await serviceClient
+        .from("email_signatures")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("is_active", true)
+        .maybeSingle();
+      finalBodyHtml = finalBodyHtml + buildSignatureHtml(sig);
+    }
 
     const token = await getZohoToken();
     const zohoAccountId = await resolveZohoAccountId(serviceClient, acct, token);
