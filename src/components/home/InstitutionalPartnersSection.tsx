@@ -1,6 +1,6 @@
 import AnimatedSection from "@/components/shared/AnimatedSection";
 import { Link } from "react-router-dom";
-import { Building2, ExternalLink } from "lucide-react";
+import { ArrowRight, Building2 } from "lucide-react";
 import { useTranslation } from "@/lib/i18n";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,7 +29,7 @@ const InstitutionalPartnersSection = () => {
   return (
     <section className="py-20 bg-background border-t border-border">
       <div className="container">
-        <AnimatedSection className="text-center mb-12">
+        <AnimatedSection className="text-center mb-14">
           <span className="inline-flex items-center gap-2 rounded-full bg-ecowas-blue/10 border border-ecowas-blue/20 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-ecowas-blue mb-4">
             {t("instPartners.badge")}
           </span>
@@ -39,29 +39,35 @@ const InstitutionalPartnersSection = () => {
           <p className="mt-3 text-muted-foreground max-w-xl mx-auto">{t("instPartners.subtitle")}</p>
         </AnimatedSection>
 
-        <div className="grid md:grid-cols-2 gap-5 max-w-4xl mx-auto">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5 max-w-5xl mx-auto">
           {institutionalPartners.map((partner, i) => (
-            <AnimatedSection key={partner.id} delay={i * 100}>
-              <div className="bg-card border border-border rounded-2xl p-6 hover:border-ecowas-blue/30 transition-all hover:shadow-lg group h-full flex flex-col">
-                <div className="flex items-start gap-4 mb-4">
+            <AnimatedSection key={partner.id} delay={i * 80}>
+              <Link
+                to={`/partners/${partner.slug}`}
+                className="group flex flex-col items-center gap-4 p-6 rounded-2xl bg-card border border-border hover:border-ecowas-blue/40 hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+              >
+                <div className="w-full h-24 flex items-center justify-center bg-muted/40 rounded-xl overflow-hidden group-hover:bg-ecowas-blue/5 transition-colors duration-300 p-3">
                   {partner.logo_url ? (
-                    <img src={partner.logo_url} alt={partner.name} className="h-12 w-12 object-contain rounded-xl bg-muted p-1 shrink-0" loading="lazy" />
+                    <img
+                      src={partner.logo_url}
+                      alt={partner.name}
+                      className="max-w-full max-h-full object-contain transition-transform duration-300 group-hover:scale-105"
+                      loading="lazy"
+                    />
                   ) : (
-                    <div className="p-3 rounded-xl bg-ecowas-blue/10 text-ecowas-blue shrink-0">
-                      <Building2 className="h-5 w-5" />
-                    </div>
+                    <Building2 className="h-10 w-10 text-ecowas-blue/40" />
                   )}
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-base font-bold text-card-foreground">{partner.name}</h3>
-                  </div>
                 </div>
-                {partner.description && (
-                  <p className="text-sm text-muted-foreground leading-relaxed mb-4 flex-1">{partner.description}</p>
-                )}
-                <Link to={`/partners/${partner.slug}`} className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:text-primary/80 transition-colors">
-                  {t("common.learnMore")} <ExternalLink className="h-3 w-3" />
-                </Link>
-              </div>
+                <div className="text-center flex-1">
+                  <p className="font-bold text-sm text-card-foreground leading-tight">{partner.name}</p>
+                  {partner.description && (
+                    <p className="text-[11px] text-muted-foreground mt-1 line-clamp-2 leading-relaxed">{partner.description}</p>
+                  )}
+                </div>
+                <span className="flex items-center gap-1 text-[11px] font-semibold text-ecowas-blue opacity-0 group-hover:opacity-100 transition-opacity">
+                  {t("common.learnMore")} <ArrowRight className="h-3 w-3" />
+                </span>
+              </Link>
             </AnimatedSection>
           ))}
         </div>

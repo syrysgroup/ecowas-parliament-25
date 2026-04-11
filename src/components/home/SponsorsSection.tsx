@@ -125,44 +125,63 @@ const SponsorsSection = () => {
                       <div className="flex-1 h-px bg-border" />
                     </div>
 
-                    <div className={`grid gap-4 ${
-                      tierGroup.tier === "presenting" ? "grid-cols-1" :
-                      tierGroup.tier === "gold" ? "grid-cols-1 md:grid-cols-2" :
-                      "grid-cols-1 sm:grid-cols-2 md:grid-cols-3"
+                    <div className={`grid gap-6 ${
+                      tierGroup.tier === "presenting" ? "grid-cols-1 sm:grid-cols-2" :
+                      tierGroup.tier === "gold" ? "grid-cols-2 md:grid-cols-3" :
+                      "grid-cols-2 sm:grid-cols-3 md:grid-cols-4"
                     }`}>
                       {tierGroup.sponsors.map((sponsor: any, sIdx: number) => (
                         <Link
                           key={sponsor.id}
                           to={`/sponsors/${sponsor.slug}`}
-                          className={`group relative rounded-2xl border p-5 transition-all duration-500 hover:-translate-y-1 hover:shadow-lg cursor-pointer block ${
-                            tierGroup.tier === "presenting"
-                              ? "border-primary/30 bg-gradient-to-br from-primary/5 via-card to-accent/5 shadow-md"
-                              : tierGroup.tier === "gold"
-                                ? "border-accent/30 bg-card hover:border-accent/50"
-                                : "border-border bg-card/70 hover:border-primary/20"
-                          }`}
+                          className="group flex flex-col items-center gap-3 p-5 rounded-2xl border border-border bg-card hover:border-primary/40 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer"
                           style={{
-                            animationDelay: `${(tierIdx * 150) + (sIdx * 100)}ms`,
+                            animationDelay: `${(tierIdx * 150) + (sIdx * 80)}ms`,
                             animation: "fade-in 0.5s ease-out both",
                           }}
                         >
-                          <div className={`w-24 h-24 rounded-xl flex items-center justify-center mb-3 transition-transform duration-300 group-hover:scale-110 overflow-hidden ${
-                            tierGroup.tier === "presenting" ? "bg-primary/15" :
-                            tierGroup.tier === "gold" ? "bg-accent/15" : "bg-muted"
+                          {/* Logo — large, bold, centred */}
+                          <div className={`w-full flex items-center justify-center rounded-xl overflow-hidden transition-transform duration-300 group-hover:scale-105 ${
+                            tierGroup.tier === "presenting" ? "h-32 bg-primary/5 p-4" :
+                            tierGroup.tier === "gold" ? "h-24 bg-amber-50/50 dark:bg-amber-950/20 p-3" :
+                            "h-20 bg-muted/50 p-3"
                           }`}>
-                            <img
-                              src={sponsor.logo_url || parliament25Logo}
-                              alt={sponsor.name}
-                              className="w-20 h-20 object-contain"
-                            />
+                            {sponsor.logo_url ? (
+                              <img
+                                src={sponsor.logo_url}
+                                alt={sponsor.name}
+                                className="max-w-full max-h-full object-contain"
+                                loading="lazy"
+                              />
+                            ) : (
+                              <span className={`font-black text-muted-foreground/40 ${
+                                tierGroup.tier === "presenting" ? "text-5xl" :
+                                tierGroup.tier === "gold" ? "text-4xl" : "text-3xl"
+                              }`}>
+                                {sponsor.name.charAt(0)}
+                              </span>
+                            )}
                           </div>
-                          <h4 className="font-bold text-card-foreground">{sponsor.name}</h4>
-                          {sponsor.description && (
-                            <div className="mt-3 pt-3 border-t border-border/60">
-                              <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">{sponsor.description}</p>
-                            </div>
-                          )}
-                          <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+
+                          {/* Name below logo */}
+                          <div className="text-center">
+                            <p className={`font-bold text-card-foreground leading-tight ${
+                              tierGroup.tier === "presenting" ? "text-base" :
+                              tierGroup.tier === "gold" ? "text-sm" : "text-xs"
+                            }`}>
+                              {sponsor.name}
+                            </p>
+                            {sponsor.description && tierGroup.tier === "presenting" && (
+                              <p className="text-[11px] text-muted-foreground mt-1 line-clamp-2 leading-relaxed">
+                                {sponsor.description}
+                              </p>
+                            )}
+                          </div>
+
+                          {/* Hover arrow */}
+                          <span className="text-[10px] font-semibold text-primary opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                            View Profile →
+                          </span>
                         </Link>
                       ))}
                     </div>

@@ -1,6 +1,6 @@
 import AnimatedSection from "@/components/shared/AnimatedSection";
 import { Link } from "react-router-dom";
-import { ExternalLink, Building2 } from "lucide-react";
+import { ArrowRight, Building2 } from "lucide-react";
 import { useTranslation } from "@/lib/i18n";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,7 +29,7 @@ const ImplementingPartnersSection = () => {
   return (
     <section className="py-20 bg-muted/20 border-t border-border">
       <div className="container">
-        <AnimatedSection className="text-center mb-12">
+        <AnimatedSection className="text-center mb-14">
           <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 border border-primary/20 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-primary mb-4">
             {t("implPartners.badge")}
           </span>
@@ -39,43 +39,36 @@ const ImplementingPartnersSection = () => {
           <p className="mt-3 text-muted-foreground max-w-xl mx-auto">{t("implPartners.subtitle")}</p>
         </AnimatedSection>
 
-        <div className="grid md:grid-cols-3 gap-5 max-w-5xl mx-auto">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5 max-w-5xl mx-auto">
           {partners.map((partner, i) => (
-            <AnimatedSection key={partner.id} delay={i * 100}>
-              <Link to={`/partners/${partner.slug}`} className="block h-full">
-                <div className="bg-card border border-border rounded-2xl p-6 hover:border-primary/30 transition-all hover:shadow-lg group h-full">
-                  <div className="flex flex-col items-start gap-4">
-                    {partner.logo_url ? (
-                      <img src={partner.logo_url} alt={partner.name} className="h-10 w-auto object-contain" loading="lazy" />
-                    ) : (
-                      <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                        <Building2 className="h-5 w-5 text-primary" />
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-base font-bold text-card-foreground">{partner.name}</h3>
-                      {partner.lead_role && (
-                        <span className="inline-block text-[10px] font-bold uppercase tracking-wider text-primary bg-primary/10 px-2 py-0.5 rounded-full mt-1 mb-2">
-                          {partner.lead_role}
-                        </span>
-                      )}
-                      {partner.description && (
-                        <p className="text-sm text-muted-foreground leading-relaxed mb-3">{partner.description}</p>
-                      )}
-                      <div className="flex items-center justify-between">
-                        {partner.lead_name && (
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-wider">{t("implPartners.lead")}</span>
-                            <span className="text-xs font-semibold text-foreground/80">{partner.lead_name}</span>
-                          </div>
-                        )}
-                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary opacity-0 group-hover:opacity-100 transition-opacity">
-                          {t("implPartners.learnMore")} <ExternalLink className="h-3 w-3" />
-                        </span>
-                      </div>
-                    </div>
-                  </div>
+            <AnimatedSection key={partner.id} delay={i * 80}>
+              <Link
+                to={`/partners/${partner.slug}`}
+                className="group flex flex-col items-center gap-4 p-6 rounded-2xl bg-card border border-border hover:border-primary/40 hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+              >
+                <div className="w-full h-24 flex items-center justify-center bg-muted/40 rounded-xl overflow-hidden group-hover:bg-primary/5 transition-colors duration-300 p-3">
+                  {partner.logo_url ? (
+                    <img
+                      src={partner.logo_url}
+                      alt={partner.name}
+                      className="max-w-full max-h-full object-contain transition-transform duration-300 group-hover:scale-105"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <Building2 className="h-10 w-10 text-primary/40" />
+                  )}
                 </div>
+                <div className="text-center flex-1">
+                  <p className="font-bold text-sm text-card-foreground leading-tight">{partner.name}</p>
+                  {partner.lead_role && (
+                    <span className="inline-block text-[10px] font-semibold uppercase tracking-wider text-primary bg-primary/10 px-2 py-0.5 rounded-full mt-1">
+                      {partner.lead_role}
+                    </span>
+                  )}
+                </div>
+                <span className="flex items-center gap-1 text-[11px] font-semibold text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                  Learn more <ArrowRight className="h-3 w-3" />
+                </span>
               </Link>
             </AnimatedSection>
           ))}

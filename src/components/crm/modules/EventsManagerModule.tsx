@@ -103,13 +103,54 @@ function EventDialog({ open, onClose, event }: { open: boolean; onClose: () => v
         external_links: externalLinks.filter(l => l.url.trim()),
         updated_at: new Date().toISOString(),
       };
+
       if (isEdit) {
         await (supabase as any).from("events").update(payload).eq("id", event.id);
+
+        // Sync title/date change to any matching global calendar event
+        await (supabase as any).from("crm_calendar_events")
+          .update({
+            title,
+            description: description || null,
+            start_time: date,
+            end_time: endDate || null,
+          })
+          .eq("is_global", true)
+          .eq("start_time", event.date ?? date)
+          .like("title", `%${event.title ?? title}%`);
+
       } else {
         await (supabase as any).from("events").insert(payload);
+
+        // Auto-add to the global CRM calendar so every user sees it immediately
+        if (isPublished) {
+          const { data: { user: authUser } } = await supabase.auth.getUser();
+          if (authUser) {
+            await (supabase as any).from("crm_calendar_events").insert({
+              title,
+              description: description
+                ? description
+                : location
+                  ? `📍 ${location}`
+                  : null,
+              start_time: date,
+              end_time: endDate || null,
+              all_day: true,
+              colour: "blue",
+              is_global: true,
+              created_by: authUser.id,
+            });
+          }
+        }
       }
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["events-manager"] }); toast("Event saved"); onClose(); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["events-manager"] });
+      qc.invalidateQueries({ queryKey: ["crm-calendar"] });
+      qc.invalidateQueries({ queryKey: ["crm-upcoming-events"] });
+      toast("Event saved");
+      onClose();
+    },
     onError: (err: any) => toast(err.message || "Failed to save"),
   });
 
