@@ -134,11 +134,29 @@
   }
 
   .bg-gradient-ecowas {
-    background: linear-gradient(135deg, hsl(var(--ecowas-green)), hsl(152 100% 18%));
+    background: linear-gradient(135deg, hsl(var(--ecowas-green)), hsl(145 63% 18%));
   }
 
   .bg-gradient-hero {
-    background: linear-gradient(160deg, hsl(152 100% 20%), hsl(150 80% 10%), hsl(150 60% 6%));
+    background: linear-gradient(160deg, hsl(145 63% 20%), hsl(145 60% 10%), hsl(145 50% 5%));
+  }
+
+  .glass-card {
+    @apply bg-card/80 backdrop-blur-xl border border-border/50;
+  }
+
+  .glass-header {
+    @apply backdrop-blur-xl border-b;
+    background: hsl(var(--crm-card) / 0.8);
+    border-color: hsl(var(--crm-border) / 0.6);
+  }
+
+  .crm-glow {
+    box-shadow: 0 0 20px -5px hsl(var(--ecowas-green) / 0.3);
+  }
+
+  .crm-glow-sm {
+    box-shadow: 0 0 10px -3px hsl(var(--ecowas-green) / 0.2);
   }
 }
 
