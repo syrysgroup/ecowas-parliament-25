@@ -94,8 +94,8 @@ const TIER_2_AND_SPONSOR: AppRole[] = [...ALL_STAFF, "sponsor"];
 export const MODULE_GROUPS: ModuleGroup[] = [
   "WORKSPACE",
   "COMMUNICATION",
-  "PEOPLE",
   "CONTENT",
+  "PEOPLE",
   "ANALYTICS & FINANCE",
   "MARKETING",
   "ADMINISTRATION",
