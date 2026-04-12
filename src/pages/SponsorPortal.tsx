@@ -7,26 +7,43 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CheckCircle2, Globe, Mail, TrendingUp, Users, Video } from "lucide-react";
+import {
+  CheckCircle2,
+  Globe,
+  Mail,
+  TrendingUp,
+  Users,
+  Video,
+} from "lucide-react";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-interface WhyPoint { title: string; desc: string; }
-interface Tier {
-  name: string; tagline: string; class: string; badgeClass: string;
-  featured: boolean; benefits: string[];
+// ─── Types ────────────────────────────────────────────────────────────────
+interface WhyPoint {
+  title: string;
+  desc: string;
 }
-interface Stat { value: string; label: string; }
+interface Tier {
+  name: string;
+  tagline: string;
+  class: string;
+  badgeClass: string;
+  featured: boolean;
+  benefits: string[];
+}
+interface Stat {
+  value: string;
+  label: string;
+}
 
-// ─── Fallbacks (used only until site_content is seeded) ──────────────────────
+// ─── Fallback stats ────────────────────────────────────────────────────────
 const DEFAULT_STATS: Stat[] = [
   { value: "400M+", label: "People in the ECOWAS bloc" },
-  { value: "12",    label: "Member states reached" },
-  { value: "40+",   label: "Events across 2026" },
-  { value: "2.4M",  label: "Combined programme audience (est.)" },
+  { value: "12", label: "Member states reached" },
+  { value: "40+", label: "Events across 2026" },
+  { value: "2.4M", label: "Combined programme audience (est.)" },
 ];
 
 export default function SponsorPortal() {
-  // Live sponsors from DB
+  // Sponsors
   const { data: currentSponsors = [] } = useQuery({
     queryKey: ["sponsors-public"],
     queryFn: async () => {
@@ -35,28 +52,43 @@ export default function SponsorPortal() {
         .select("id, name, slug, tier, logo_url")
         .eq("is_published", true)
         .order("sort_order");
-      return (data ?? []) as { id: string; name: string; slug: string; tier: string; logo_url: string | null }[];
+
+      return (data ?? []) as {
+        id: string;
+        name: string;
+        slug: string;
+        tier: string;
+        logo_url: string | null;
+      }[];
     },
   });
 
-  // Implementing partners from DB
+  // Implementing partners
   const { data: implementingPartners = [] } = useQuery({
     queryKey: ["partners-public", "implementing"],
     queryFn: async () => {
       const { data } = await (supabase as any)
         .from("partners")
-        .select("id, name, slug, logo_url, description, lead_name, lead_role")
+        .select(
+          "id, name, slug, logo_url, description, lead_name, lead_role"
+        )
         .eq("partner_type", "implementing")
         .eq("is_published", true)
         .order("sort_order");
+
       return (data ?? []) as {
-        id: string; name: string; slug: string; logo_url: string | null;
-        description: string | null; lead_name: string | null; lead_role: string | null;
+        id: string;
+        name: string;
+        slug: string;
+        logo_url: string | null;
+        description: string | null;
+        lead_name: string | null;
+        lead_role: string | null;
       }[];
     },
   });
 
-  // Impact stats from site_content
+  // Stats
   const { data: statsContent } = useQuery({
     queryKey: ["site-content", "sponsor_portal_stats"],
     queryFn: async () => {
@@ -65,77 +97,65 @@ export default function SponsorPortal() {
         .select("content")
         .eq("section_key", "sponsor_portal_stats")
         .maybeSingle();
+
       return data?.content as Record<string, string> | null;
     },
-    staleTime: 10 * 60 * 1000,
-  });
-
-  // Why sponsor points from site_content
-  const { data: whyContent, isLoading: whyLoading } = useQuery({
-    queryKey: ["site-content", "sponsor_portal_why"],
-    queryFn: async () => {
-      const { data } = await (supabase as any)
-        .from("site_content")
-        .select("content")
-        .eq("section_key", "sponsor_portal_why")
-        .maybeSingle();
-      return data?.content as { points?: WhyPoint[] } | null;
-    },
-    staleTime: 10 * 60 * 1000,
-  });
-
-  // Tiers from site_content
-  const { data: tiersContent, isLoading: tiersLoading } = useQuery({
-    queryKey: ["site-content", "sponsor_portal_tiers"],
-    queryFn: async () => {
-      const { data } = await (supabase as any)
-        .from("site_content")
-        .select("content")
-        .eq("section_key", "sponsor_portal_tiers")
-        .maybeSingle();
-      return data?.content as { tiers?: Tier[] } | null;
-    },
-    staleTime: 10 * 60 * 1000,
   });
 
   const stats: Stat[] = statsContent
     ? [
-        { value: statsContent.stat1_value ?? DEFAULT_STATS[0].value, label: statsContent.stat1_label ?? DEFAULT_STATS[0].label },
-        { value: statsContent.stat2_value ?? DEFAULT_STATS[1].value, label: statsContent.stat2_label ?? DEFAULT_STATS[1].label },
-        { value: statsContent.stat3_value ?? DEFAULT_STATS[2].value, label: statsContent.stat3_label ?? DEFAULT_STATS[2].label },
-        { value: statsContent.stat4_value ?? DEFAULT_STATS[3].value, label: statsContent.stat4_label ?? DEFAULT_STATS[3].label },
+        {
+          value: statsContent.stat1_value ?? DEFAULT_STATS[0].value,
+          label: statsContent.stat1_label ?? DEFAULT_STATS[0].label,
+        },
+        {
+          value: statsContent.stat2_value ?? DEFAULT_STATS[1].value,
+          label: statsContent.stat2_label ?? DEFAULT_STATS[1].label,
+        },
+        {
+          value: statsContent.stat3_value ?? DEFAULT_STATS[2].value,
+          label: statsContent.stat3_label ?? DEFAULT_STATS[2].label,
+        },
+        {
+          value: statsContent.stat4_value ?? DEFAULT_STATS[3].value,
+          label: statsContent.stat4_label ?? DEFAULT_STATS[3].label,
+        },
       ]
     : DEFAULT_STATS;
 
-  const whyPoints: WhyPoint[] = whyContent?.points ?? [];
-  const tiers: Tier[] = tiersContent?.tiers ?? [];
-
   const tierBadgeClass = (tier: string) => {
     const t = tier.toLowerCase();
-    if (t === "gold" || t === "platinum") return "bg-amber-100 text-amber-800";
+    if (t === "gold" || t === "platinum")
+      return "bg-amber-100 text-amber-800";
     if (t === "silver") return "bg-slate-100 text-slate-700";
     return "bg-orange-100 text-orange-700";
   };
 
   return (
     <Layout>
-      {/* Hero */}
+      {/* HERO */}
       <section className="bg-gradient-hero text-primary-foreground py-20">
         <div className="container">
           <AnimatedSection>
             <Badge className="bg-primary-foreground/10 text-primary-foreground border-primary-foreground/20 mb-3">
               Sponsor with us
             </Badge>
+
             <h1 className="text-4xl md:text-5xl font-black max-w-3xl">
               Partner with West Africa's Premier Parliamentary Anniversary
             </h1>
+
             <p className="mt-4 text-lg text-primary-foreground/70 max-w-2xl">
-              The ECOWAS Parliament 25th Anniversary Programme runs across all 12 member states throughout 2026 — 40+ events, 7 programme pillars, and a combined audience reach exceeding 2.4 million. Become part of history.
+              The ECOWAS Parliament 25th Anniversary Programme runs across all
+              12 member states throughout 2026 — 40+ events, 7 programme
+              pillars, and a combined audience reach exceeding 2.4 million.
             </p>
+
             <div className="flex flex-wrap gap-3 mt-6">
               <Button variant="secondary" size="lg" className="gap-2">
                 <Mail className="h-4 w-4" /> Express sponsorship interest
               </Button>
+
               <Button
                 variant="outline"
                 size="lg"
@@ -148,15 +168,19 @@ export default function SponsorPortal() {
         </div>
       </section>
 
-      {/* Impact stats */}
+      {/* IMPACT STATS */}
       <section className="py-12 border-b border-border bg-muted/30">
         <div className="container">
           <AnimatedSection>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              {stats.map(s => (
-                <div key={s.label} className="text-center">
-                  <p className="text-3xl md:text-4xl font-black text-primary">{s.value}</p>
-                  <p className="text-sm text-muted-foreground mt-1">{s.label}</p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+              {stats.map((s) => (
+                <div key={s.label}>
+                  <p className="text-3xl md:text-4xl font-black text-primary">
+                    {s.value}
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {s.label}
+                  </p>
                 </div>
               ))}
             </div>
@@ -164,250 +188,116 @@ export default function SponsorPortal() {
         </div>
       </section>
 
-      {/* Why sponsor */}
+      {/* CURRENT SPONSORS (COLOR LOGOS) */}
       <section className="py-16">
         <div className="container">
           <AnimatedSection className="text-center mb-10">
-            <h2 className="text-2xl md:text-3xl font-bold">Why partner with the 25th Anniversary Programme?</h2>
-            <p className="mt-3 text-muted-foreground max-w-xl mx-auto">
-              This is not a one-day gala. It is a year-long, multi-country programme that keeps your brand visible, relevant, and associated with West Africa's most important democratic institution.
-            </p>
-          </AnimatedSection>
-
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {whyLoading
-              ? Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-32 rounded-xl" />)
-              : whyPoints.map((p, i) => (
-                  <AnimatedSection key={p.title} delay={i * 60}>
-                    <Card className="h-full hover:shadow-md transition-shadow">
-                      <CardContent className="pt-5">
-                        <div className="flex gap-3">
-                          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                            <TrendingUp className="h-4 w-4 text-primary" />
-                          </div>
-                          <div>
-                            <h3 className="font-bold mb-1">{p.title}</h3>
-                            <p className="text-sm text-muted-foreground leading-relaxed">{p.desc}</p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </AnimatedSection>
-                ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Tier comparison */}
-      <section className="py-16 bg-muted/30 border-y border-border">
-        <div className="container">
-          <AnimatedSection className="text-center mb-10">
-            <h2 className="text-2xl md:text-3xl font-bold">Sponsorship tiers</h2>
-            <p className="mt-3 text-muted-foreground max-w-xl mx-auto">
-              Three tiers of partnership — each with full visibility tracking and a dedicated team contact.
-            </p>
-          </AnimatedSection>
-
-          <div className="grid md:grid-cols-3 gap-6">
-            {tiersLoading
-              ? Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-96 rounded-xl" />)
-              : tiers.map((tier, i) => (
-                  <AnimatedSection key={tier.name} delay={i * 80}>
-                    <Card className={`h-full border-2 ${tier.class} ${tier.featured ? "shadow-lg" : ""}`}>
-                      {tier.featured && (
-                        <div className="bg-primary text-primary-foreground text-xs font-bold text-center py-1.5 rounded-t-lg tracking-wide uppercase">
-                          Most popular
-                        </div>
-                      )}
-                      <CardHeader className="pb-3">
-                        <div className="flex items-center justify-between">
-                          <CardTitle className="text-xl font-black">{tier.name}</CardTitle>
-                          <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${tier.badgeClass}`}>
-                            {tier.name}
-                          </span>
-                        </div>
-                        <p className="text-sm text-muted-foreground">{tier.tagline}</p>
-                      </CardHeader>
-                      <CardContent>
-                        <ul className="space-y-2.5 mb-6">
-                          {tier.benefits.map(b => (
-                            <li key={b} className="flex items-start gap-2.5 text-sm">
-                              <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
-                              {b}
-                            </li>
-                          ))}
-                        </ul>
-                        <Button className="w-full gap-2" variant={tier.featured ? "default" : "outline"}>
-                          <Mail className="h-4 w-4" /> Enquire — {tier.name}
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  </AnimatedSection>
-                ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Current sponsors showcase */}
-      <section className="py-16">
-        <div className="container">
-          <AnimatedSection className="text-center mb-10">
-            <h2 className="text-2xl md:text-3xl font-bold">Current sponsors</h2>
-            <p className="mt-3 text-muted-foreground max-w-xl mx-auto">
-              Join these organisations already partnering with the ECOWAS Parliament 25th Anniversary Programme.
-            </p>
+            <h2 className="text-2xl md:text-3xl font-bold">
+              Current sponsors
+            </h2>
           </AnimatedSection>
 
           {currentSponsors.length > 0 && (
-            <div className="flex flex-wrap gap-3 justify-center mb-8">
-              {currentSponsors.map(s => (
-                <AnimatedSection key={s.id}>
+            <div className="flex flex-wrap gap-4 justify-center">
+              {currentSponsors.map((s, i) => (
+                <AnimatedSection key={s.id} delay={i * 50}>
                   <Link to={`/sponsors/${s.slug}`}>
-                    <div className="flex items-center gap-3 px-5 py-3 rounded-xl border border-border bg-card hover:shadow-md transition-all">
+                    <div className="flex items-center gap-3 px-5 py-4 rounded-xl border border-border bg-card hover:shadow-md transition-all">
+
+                      {/* COLOR LOGO */}
                       {s.logo_url && (
-                        <img
-                          src={s.logo_url}
-                          alt={s.name}
-                          className="h-6 w-auto object-contain"
-                          loading="lazy"
-                          decoding="async"
-                        />
+                        <div className="h-10 w-24 flex items-center justify-center">
+                          <img
+                            src={s.logo_url}
+                            alt={s.name}
+                            className="max-h-10 max-w-[120px] object-contain transition-all duration-300 group-hover:scale-105"
+                            loading="lazy"
+                            decoding="async"
+                          />
+                        </div>
                       )}
-                      <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${tierBadgeClass(s.tier)}`}>
-                        {s.tier.charAt(0).toUpperCase() + s.tier.slice(1)}
+
+                      <span
+                        className={`text-xs font-bold px-2 py-0.5 rounded-full ${tierBadgeClass(
+                          s.tier
+                        )}`}
+                      >
+                        {s.tier}
                       </span>
-                      <span className="text-sm font-medium text-card-foreground">{s.name}</span>
                     </div>
                   </Link>
                 </AnimatedSection>
               ))}
             </div>
           )}
-
-          {/* Implementing partners */}
-          {implementingPartners.length > 0 && (
-            <AnimatedSection className="mt-10">
-              <div className="text-center mb-6">
-                <Badge className="bg-primary/10 text-primary border-primary/20 mb-2">Programme Co-Organisers</Badge>
-                <h3 className="text-xl font-bold">Implementing Partners</h3>
-              </div>
-              <div className="grid md:grid-cols-3 gap-6">
-                {implementingPartners.map((p, i) => (
-                  <AnimatedSection key={p.id} delay={i * 100}>
-                    <Link to={`/partners/${p.slug}`} className="block">
-                      <div className="relative p-6 rounded-xl bg-card border-2 border-primary/20 shadow-sm hover:shadow-lg transition-all group">
-                        <Badge variant="outline" className="absolute top-3 right-3 text-[10px] border-primary/30 text-primary">
-                          Co-Organiser
-                        </Badge>
-                        {p.logo_url && (
-                          <img
-                            src={p.logo_url}
-                            alt={p.name}
-                            className="h-12 w-auto mb-4 group-hover:scale-105 transition-transform object-contain"
-                            loading="lazy"
-                            decoding="async"
-                          />
-                        )}
-                        <h4 className="font-bold text-card-foreground">{p.name}</h4>
-                        {p.lead_name && (
-                          <p className="text-sm text-primary font-medium mt-0.5">
-                            {p.lead_name}{p.lead_role && ` — ${p.lead_role}`}
-                          </p>
-                        )}
-                        {p.description && (
-                          <p className="text-sm text-muted-foreground mt-2 leading-relaxed">{p.description}</p>
-                        )}
-                      </div>
-                    </Link>
-                  </AnimatedSection>
-                ))}
-              </div>
-            </AnimatedSection>
-          )}
         </div>
       </section>
 
-      {/* Impact reporting preview */}
-      <section className="py-14 bg-muted/30 border-t border-border">
+      {/* IMPLEMENTING PARTNERS (CENTERED COLOR LOGOS) */}
+      <section className="py-16 bg-muted/30 border-t border-border">
         <div className="container">
-          <div className="grid md:grid-cols-2 gap-10 items-center">
-            <AnimatedSection>
-              <h2 className="text-2xl md:text-3xl font-bold mb-4">Full visibility — tracked and reported</h2>
-              <p className="text-muted-foreground mb-4 leading-relaxed">
-                Every sponsor receives a real-time dashboard showing exactly what their investment is delivering. No ambiguity. No end-of-year PDF guesswork. You see your reach as it grows.
-              </p>
-              <ul className="space-y-3">
-                {[
-                  { icon: Globe,        text: "Website logo impression tracking — updated monthly" },
-                  { icon: Users,        text: "Event attendance data for every sponsored event" },
-                  { icon: TrendingUp,   text: "Press mention tracking across regional media" },
-                  { icon: CheckCircle2, text: "Confirmation of all logo placements before publication" },
-                ].map(item => {
-                  const Icon = item.icon;
-                  return (
-                    <li key={item.text} className="flex items-start gap-3">
-                      <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <Icon className="h-3.5 w-3.5 text-primary" />
-                      </div>
-                      <span className="text-sm text-muted-foreground">{item.text}</span>
-                    </li>
-                  );
-                })}
-              </ul>
-            </AnimatedSection>
+          <AnimatedSection className="text-center mb-10">
+            <h2 className="text-2xl md:text-3xl font-bold">
+              Implementing Partners
+            </h2>
+          </AnimatedSection>
 
-            <AnimatedSection delay={100}>
-              <Card className="border-border shadow-md">
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-sm font-bold">Sample sponsor impact — Q1 2026</CardTitle>
-                    <Badge>Gold</Badge>
-                  </div>
-                  <p className="text-xs text-muted-foreground">Example metrics — your dashboard after go-live</p>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 gap-3 mb-4">
-                    {[
-                      { label: "Logo impressions", value: "47,200" },
-                      { label: "Events featured",  value: "12" },
-                      { label: "Press mentions",   value: "8" },
-                      { label: "vs projection",    value: "+31%" },
-                    ].map(m => (
-                      <div key={m.label} className="bg-muted/60 rounded-xl p-3 text-center">
-                        <p className="text-xl font-black text-primary">{m.value}</p>
-                        <p className="text-[11px] text-muted-foreground">{m.label}</p>
+          <div className="grid md:grid-cols-3 gap-6">
+            {implementingPartners.map((p, i) => (
+              <AnimatedSection key={p.id} delay={i * 80}>
+                <Link to={`/partners/${p.slug}`}>
+                  <div className="p-6 rounded-xl bg-card border border-border shadow-sm hover:shadow-lg transition-all text-center">
+
+                    {/* CENTERED COLOR LOGO */}
+                    {p.logo_url && (
+                      <div className="h-20 flex items-center justify-center mb-4">
+                        <img
+                          src={p.logo_url}
+                          alt={p.name}
+                          className="max-h-16 max-w-[200px] object-contain transition-all duration-300 group-hover:scale-105"
+                          loading="lazy"
+                          decoding="async"
+                        />
                       </div>
-                    ))}
+                    )}
+
+                    <h4 className="font-bold">{p.name}</h4>
+
+                    {p.lead_name && (
+                      <p className="text-sm text-primary mt-1">
+                        {p.lead_name}
+                        {p.lead_role && ` — ${p.lead_role}`}
+                      </p>
+                    )}
+
+                    {p.description && (
+                      <p className="text-sm text-muted-foreground mt-2">
+                        {p.description}
+                      </p>
+                    )}
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    Reports delivered monthly by your dedicated account manager. Quarterly touchpoint call included for all Gold + Silver sponsors.
-                  </p>
-                </CardContent>
-              </Card>
-            </AnimatedSection>
+                </Link>
+              </AnimatedSection>
+            ))}
           </div>
         </div>
       </section>
 
       {/* CTA */}
       <section className="py-16">
-        <div className="container max-w-2xl text-center">
+        <div className="container text-center max-w-2xl">
           <AnimatedSection>
-            <h2 className="text-3xl font-black mb-4">Ready to partner?</h2>
+            <h2 className="text-3xl font-black mb-4">
+              Ready to partner?
+            </h2>
+
             <p className="text-muted-foreground mb-6">
-              Contact our Sponsor Relations Manager to discuss the right tier for your organisation and receive a personalised visibility proposal.
+              Contact us to discuss sponsorship opportunities.
             </p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Button size="lg" className="gap-2">
-                <Mail className="h-5 w-5" /> sponsors@ecowasparliamentinitiatives.org
-              </Button>
-              <Button size="lg" variant="outline" className="gap-2">
-                <Video className="h-5 w-5" /> Book a 30-min briefing call
-              </Button>
-            </div>
-            <p className="text-sm text-muted-foreground mt-4">
-              Mariama Camara — Sponsor Relations Manager · Responds within 48 hours
-            </p>
+
+            <Button size="lg" className="gap-2">
+              <Mail className="h-5 w-5" /> Contact Sponsorship Team
+            </Button>
           </AnimatedSection>
         </div>
       </section>

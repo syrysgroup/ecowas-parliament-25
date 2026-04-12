@@ -19,7 +19,7 @@ const InstitutionalPartnersSection = () => {
   const { data: institutionalPartners = [] } = useQuery<PartnerRow[]>({
     queryKey: ["partners-public", "institutional"],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from("partners")
         .select("id, name, slug, description, logo_url")
         .eq("partner_type", "institutional")
@@ -55,23 +55,24 @@ const InstitutionalPartnersSection = () => {
           </p>
         </AnimatedSection>
 
-        {/* LOGO GRID ONLY */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-12 max-w-5xl mx-auto items-center justify-items-center">
+        {/* GRID (6 per row on large screens) */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-10 max-w-6xl mx-auto items-center justify-items-center">
 
           {institutionalPartners.map((partner, i) => (
-            <AnimatedSection key={partner.id} delay={i * 80}>
+            <AnimatedSection key={partner.id} delay={i * 70}>
               <Link
                 to={`/partners/${partner.slug}`}
                 className="group flex items-center justify-center"
               >
-                <div className="h-40 w-full flex items-center justify-center overflow-hidden">
+                {/* CENTERED LOGO */}
+                <div className="h-36 w-full flex items-center justify-center">
                   {partner.logo_url ? (
                     <img
                       src={partner.logo_url}
                       alt={`${partner.name} logo`}
                       className="
-                        max-h-36
-                        max-w-[320px]
+                        max-h-28
+                        max-w-[200px]
                         object-contain
 
                         grayscale
@@ -89,7 +90,7 @@ const InstitutionalPartnersSection = () => {
                       decoding="async"
                     />
                   ) : (
-                    <Building2 className="h-16 w-16 text-ecowas-blue/40 transition-transform duration-300 group-hover:scale-110" />
+                    <Building2 className="h-14 w-14 text-ecowas-blue/40 transition-transform duration-300 group-hover:scale-110" />
                   )}
                 </div>
               </Link>
