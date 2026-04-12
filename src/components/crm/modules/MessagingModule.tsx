@@ -308,6 +308,8 @@ export default function MessagingModule() {
   const [showCreateChannel, setShowCreateChannel] = useState(false);
   const [search, setSearch] = useState("");
   const [viewProfileId, setViewProfileId] = useState<string | null>(null);
+  // Mobile: show sidebar list or chat panel
+  const [mobileShowChat, setMobileShowChat] = useState(false);
 
   // ── Channels
   const { data: channels = [] } = useQuery<Channel[]>({
@@ -474,9 +476,12 @@ export default function MessagingModule() {
   const activePeerId = view?.type === "dm" ? view.peerId : null;
 
   return (
-    <div className="flex h-[calc(100vh-140px)] bg-crm-card border border-crm-border rounded-xl overflow-hidden">
-      {/* Left Sidebar */}
-      <div className="w-72 border-r border-crm-border flex flex-col flex-shrink-0">
+    <div className="flex h-[calc(100vh-140px)] md:h-[calc(100vh-140px)] bg-crm-card border border-crm-border rounded-xl overflow-hidden relative">
+      {/* Left Sidebar — hidden on mobile when chat open */}
+      <div className={`flex-shrink-0 border-r border-crm-border flex flex-col
+        w-full md:w-72 absolute md:relative inset-0 z-10 md:z-auto
+        ${mobileShowChat ? "hidden md:flex" : "flex"}
+      `} style={{ background: "hsl(var(--crm-card))" }}>
         <div className="p-4 border-b border-crm-border">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-9 h-9 rounded-full overflow-hidden border border-emerald-800">
@@ -502,7 +507,7 @@ export default function MessagingModule() {
           <CollapsibleSection title={t("crm.chat.channels")}>
             {channels.filter(c => !search || c.name.includes(search.toLowerCase())).map(ch => (
               <button key={ch.id}
-                onClick={() => setView({ type: "channel", id: ch.id })}
+                onClick={() => { setView({ type: "channel", id: ch.id }); setMobileShowChat(true); }}
                 className={`w-full flex items-center gap-3 px-4 py-2.5 hover:bg-crm-surface transition-colors text-left
                   ${view?.type === "channel" && view.id === ch.id ? "bg-crm-surface" : ""}`}>
                 <div className="w-8 h-8 rounded-full bg-crm-border flex items-center justify-center text-crm-text-muted text-[10px] font-bold">#</div>
@@ -518,7 +523,7 @@ export default function MessagingModule() {
           <CollapsibleSection title={t("crm.chat.directMessages")}>
             {dmConversations.filter(c => !search || c.peer_name.toLowerCase().includes(search.toLowerCase())).map(dm => (
               <button key={dm.peer_id}
-                onClick={() => setView({ type: "dm", peerId: dm.peer_id, peerName: dm.peer_name })}
+                onClick={() => { setView({ type: "dm", peerId: dm.peer_id, peerName: dm.peer_name }); setMobileShowChat(true); }}
                 className={`w-full flex items-center gap-3 px-4 py-2.5 hover:bg-crm-surface transition-colors text-left
                   ${view?.type === "dm" && view.peerId === dm.peer_id ? "bg-crm-surface" : ""}`}>
                 <div className="relative w-8 h-8 rounded-full overflow-hidden border border-crm-border flex-shrink-0">
@@ -540,7 +545,7 @@ export default function MessagingModule() {
           <CollapsibleSection title={t("crm.chat.contacts")} defaultOpen={false}>
             {filteredContacts.map(c => (
               <button key={c.id}
-                onClick={() => setView({ type: "dm", peerId: c.id, peerName: c.full_name })}
+                onClick={() => { setView({ type: "dm", peerId: c.id, peerName: c.full_name }); setMobileShowChat(true); }}
                 className={`w-full flex items-center gap-3 px-4 py-2 hover:bg-crm-surface transition-colors text-left
                   ${view?.type === "dm" && view.peerId === c.id ? "bg-crm-surface" : ""}`}>
                 <div className="relative w-8 h-8 rounded-full overflow-hidden border border-crm-border flex-shrink-0">
@@ -557,8 +562,11 @@ export default function MessagingModule() {
         </div>
       </div>
 
-      {/* Chat Area */}
-      <div className="flex-1 flex flex-col min-w-0">
+      {/* Chat Area — full screen on mobile */}
+      <div className={`flex-col min-w-0
+        w-full md:flex-1 absolute md:relative inset-0 z-20 md:z-auto
+        ${mobileShowChat ? "flex" : "hidden md:flex"}
+      `} style={{ background: "hsl(var(--crm-card))" }}>
         {!view ? (
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center space-y-3">
@@ -576,6 +584,16 @@ export default function MessagingModule() {
             {/* Chat header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-crm-border">
               <div className="flex items-center gap-3">
+                {/* Mobile back button */}
+                <button
+                  type="button"
+                  onClick={() => setMobileShowChat(false)}
+                  className="md:hidden p-1.5 -ml-1 text-crm-text-muted hover:text-crm-text transition-colors"
+                >
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                    <path d="M11 4L6 9l5 5" />
+                  </svg>
+                </button>
                 <button type="button" onClick={() => activePeerId && setViewProfileId(activePeerId)}
                   className="w-9 h-9 rounded-full overflow-hidden border border-crm-border hover:ring-2 hover:ring-emerald-600 transition-all">
                   {view.type === "channel" ? (
@@ -643,16 +661,29 @@ export default function MessagingModule() {
             </div>
 
             {/* Input */}
-            <div className="px-4 py-3 border-t border-crm-border">
-              <div className="flex gap-2">
-                <Input value={body} onChange={e => setBody(e.target.value)}
+            <div className="px-3 py-3 border-t border-crm-border safe-area-bottom">
+              <div className="flex gap-2 items-end">
+                <input
+                  value={body}
+                  onChange={e => setBody(e.target.value)}
                   onKeyDown={e => e.key === "Enter" && !e.shiftKey && handleSend()}
+                  onTouchStart={e => e.stopPropagation()}
                   placeholder={t("crm.chat.typeMessage")}
-                  className="bg-crm-surface border-crm-border text-crm-text text-sm flex-1" />
-                <Button size="sm" onClick={handleSend} disabled={!body.trim() || sending}
-                  className="bg-emerald-700 hover:bg-emerald-600 text-white">
-                  <Send size={14} />
-                </Button>
+                  className="flex-1 bg-crm-surface border border-crm-border text-crm-text text-[14px] rounded-xl px-4 py-3 outline-none focus:border-crm-accent placeholder-crm-text-faint"
+                  style={{ touchAction: "pan-y", WebkitUserSelect: "text", userSelect: "text" }}
+                />
+                <button
+                  onClick={handleSend}
+                  disabled={!body.trim() || sending}
+                  className="w-11 h-11 rounded-xl flex items-center justify-center bg-emerald-700 hover:bg-emerald-600 active:bg-emerald-800 text-white disabled:opacity-50 transition-colors shrink-0"
+                >
+                  {sending ? (
+                    <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                    </svg>
+                  ) : <Send size={16} />}
+                </button>
               </div>
             </div>
           </>

@@ -717,6 +717,8 @@ export default function EmailInboxModule() {
   const [forwardTarget, setForwardTarget] = useState<Email | null>(null);
   const [search, setSearch] = useState("");
   const [syncing, setSyncing] = useState(false);
+  // Mobile view: "list" | "detail"
+  const [mobileView, setMobileView] = useState<"list" | "detail">("list");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkOperating, setBulkOperating] = useState(false);
   const [showBulkMoveMenu, setShowBulkMoveMenu] = useState(false);
@@ -939,6 +941,7 @@ export default function EmailInboxModule() {
 
   const handleSelectEmail = (email: Email) => {
     setSelectedEmail(email);
+    setMobileView("detail");
     if (!email.is_read) markRead.mutate(email.id);
   };
 
@@ -1312,8 +1315,8 @@ export default function EmailInboxModule() {
 
   return (
     <div className="flex h-[calc(100vh-3.5rem)] -m-6 overflow-hidden rounded-xl border border-crm-border bg-crm-card shadow-sm">
-      {/* ── Sidebar ── */}
-      <div className="w-[220px] flex-shrink-0 border-r border-crm-border flex flex-col">
+      {/* ── Sidebar ── hidden on mobile always */}
+      <div className="hidden md:flex w-[220px] flex-shrink-0 border-r border-crm-border flex-col">
         {/* Compose button */}
         <div className="p-5 pb-2">
           <button
@@ -1454,11 +1457,15 @@ export default function EmailInboxModule() {
       </div>
 
       {/* ── Email List ── */}
-      <div className={`flex flex-col border-r border-crm-border ${selectedEmail ? "w-[340px] flex-shrink-0" : "flex-1"}`}>
+      {/* Email List — full width on mobile, fixed width on desktop when detail open */}
+      <div className={`flex flex-col border-r border-crm-border
+        ${selectedEmail ? "hidden md:flex md:w-[300px] lg:w-[340px] flex-shrink-0" : "flex-1"}
+        ${mobileView === "list" ? "flex" : "hidden md:flex"}
+      `}>
         {/* Search bar */}
-        <div className="px-5 pt-4 pb-2 flex items-center gap-3">
+        <div className="px-3 md:px-5 pt-3 md:pt-4 pb-2 flex items-center gap-2 md:gap-3">
           <div className="flex-1 flex items-center gap-2">
-            <Search size={18} className="text-crm-text-muted flex-shrink-0" />
+            <Search size={16} className="text-crm-text-muted flex-shrink-0" />
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
@@ -1623,12 +1630,14 @@ export default function EmailInboxModule() {
         </div>
       </div>
 
-      {/* ── Detail Panel ── */}
-      <div className="flex-1 overflow-hidden bg-crm">
+      {/* ── Detail Panel ── — full screen on mobile */}
+      <div className={`overflow-hidden bg-crm
+        ${mobileView === "detail" && selectedEmail ? "flex flex-col flex-1" : "hidden md:flex md:flex-col md:flex-1"}
+      `}>
         {selectedEmail ? (
           <EmailDetailPanel
             email={selectedEmail}
-            onBack={() => setSelectedEmail(null)}
+            onBack={() => { setSelectedEmail(null); setMobileView("list"); }}
             onReply={e => { setReplyTarget(e); setForwardTarget(null); setComposeOpen(true); }}
             onForward={e => { setForwardTarget(e); setReplyTarget(null); setComposeOpen(true); }}
             onStar={(id, starred) => toggleStar.mutate({ id, starred })}
