@@ -103,28 +103,56 @@ function ComposeModal({ account, replyTo, forwardOf, onClose, onSent }: ComposeP
     if (forwardOf) return `Fwd: ${forwardOf.subject}`;
     return "";
   });
-  // body is ONLY the user's message — no signature (server appends HTML sig)
-  const [body, setBody] = useState(() => {
-    if (replyTo) return "";   // cursor at top, quoted block added server-side
-    if (forwardOf) return ""; // same
-    return "";
-  });
+  const [body, setBody] = useState("");
+  const [signatureText, setSignatureText] = useState("");
   const [sending, setSending] = useState(false);
   const [savingDraft, setSavingDraft] = useState(false);
   const [draftId, setDraftId] = useState<string | null>(null);
   const [zohoDraftId, setZohoDraftId] = useState<string | null>(null);
   const [attachments, setAttachments] = useState<ComposeAttachment[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Focus textarea on open
+  // Load signature and initialise body
   useEffect(() => {
-    setTimeout(() => textareaRef.current?.focus(), 80);
-  }, []);
+    if (!user?.id) return;
+    (supabase as any)
+      .from("email_signatures")
+      .select("title, full_name, department, mobile, email, website, tagline, is_active")
+      .eq("user_id", user.id)
+      .maybeSingle()
+      .then(({ data }: any) => {
+        let sig = "";
+        if (data?.is_active) {
+          const name = [data.title, data.full_name].filter(Boolean).join(" ");
+          const lines = [
+            name,
+            "ECOWAS Parliament Initiatives",
+            data.department,
+            data.mobile ? `Mobile: ${data.mobile}` : "",
+            data.email ? `Email: ${data.email}` : "",
+            data.website ?? "www.ecowasparliamentinitiatives.org",
+            data.tagline ?? "",
+          ].filter(Boolean);
+          sig = "\n\n--\n" + lines.join("\n");
+        }
+        setSignatureText(sig);
+
+        // Build initial body with quoted content + signature
+        let initial = "";
+        if (replyTo) {
+          initial = `\n\n---\nOn ${replyTo.sent_at ? format(parseISO(replyTo.sent_at), "d MMM yyyy") : ""}, ${replyTo.from_name || replyTo.from_address} wrote:\n${replyTo.body_text || ""}`;
+        } else if (forwardOf) {
+          initial = `\n\n---\nForwarded message:\nFrom: ${forwardOf.from_name || forwardOf.from_address}\nSubject: ${forwardOf.subject}\n\n${forwardOf.body_text || ""}`;
+        }
+        // Place signature before quoted content so user types above it
+        setBody(sig + initial);
+      });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
-    const MAX_SIZE = 5 * 1024 * 1024;
+    const MAX_SIZE = 5 * 1024 * 1024; // 5MB
     files.forEach(file => {
       if (file.size > MAX_SIZE) {
         toast({ title: "File too large", description: `${file.name} exceeds 5MB limit`, variant: "destructive" });
@@ -132,11 +160,13 @@ function ComposeModal({ account, replyTo, forwardOf, onClose, onSent }: ComposeP
       }
       const reader = new FileReader();
       reader.onload = () => {
-        const base64 = (reader.result as string).split(",")[1] ?? "";
+        const dataUrl = reader.result as string;
+        const base64 = dataUrl.split(",")[1] ?? "";
         setAttachments(prev => [...prev, { name: file.name, base64, contentType: file.type || "application/octet-stream", size: file.size }]);
       };
       reader.readAsDataURL(file);
     });
+    // Reset so same file can be re-selected
     e.target.value = "";
   };
 
@@ -154,19 +184,16 @@ function ComposeModal({ account, replyTo, forwardOf, onClose, onSent }: ComposeP
           cc: cc || undefined,
           bcc: bcc || undefined,
           subject,
-          // Send only the plain user-typed body — server wraps in HTML + appends sig
           bodyHtml: body.replace(/\n/g, "<br>"),
           replyToId: replyTo?.id,
           attachments: attachments.length > 0 ? attachments : undefined,
-          // Pass quoted content for reply threading
-          quotedHtml: replyTo?.body_html || undefined,
-          quotedFrom: replyTo ? (replyTo.from_name ? `${replyTo.from_name} &lt;${replyTo.from_address}&gt;` : replyTo.from_address) : undefined,
-          quotedDate: replyTo?.sent_at ? format(parseISO(replyTo.sent_at), "d MMM yyyy, HH:mm") : undefined,
+          clientSignatureIncluded: !!signatureText,
         },
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.error) throw new Error(res.error.message);
       if (res.data?.error) throw new Error(res.data.error);
+      // If this was a draft, delete it from DB and Zoho
       if (draftId) {
         if (zohoDraftId) {
           await supabase.functions.invoke("update-email", {
@@ -205,6 +232,7 @@ function ComposeModal({ account, replyTo, forwardOf, onClose, onSent }: ComposeP
         is_read: true,
         sent_at: new Date().toISOString(),
       };
+
       let currentDraftId = draftId;
       if (currentDraftId) {
         const { error } = await (supabase as any).from("emails").update(row).eq("id", currentDraftId);
@@ -215,6 +243,8 @@ function ComposeModal({ account, replyTo, forwardOf, onClose, onSent }: ComposeP
         if (error) throw error;
         setDraftId(currentDraftId);
       }
+
+      // Sync draft to Zoho
       const draftRes = await supabase.functions.invoke("save-draft", {
         body: { to, cc: cc || undefined, subject: subject || "(No subject)", bodyHtml: body.replace(/\n/g, "<br>"), zoho_draft_message_id: zohoDraftId },
         headers: { Authorization: `Bearer ${token}` },
@@ -222,8 +252,10 @@ function ComposeModal({ account, replyTo, forwardOf, onClose, onSent }: ComposeP
       if (draftRes.data?.zoho_draft_message_id) {
         const newZohoId = draftRes.data.zoho_draft_message_id;
         setZohoDraftId(newZohoId);
+        // Backfill zoho_message_id on the DB row
         await (supabase as any).from("emails").update({ zoho_message_id: newZohoId }).eq("id", currentDraftId);
       }
+
       toast({ title: "Draft saved" });
     } catch (err: any) {
       toast({ title: "Failed to save draft", description: err.message, variant: "destructive" });
@@ -232,183 +264,169 @@ function ComposeModal({ account, replyTo, forwardOf, onClose, onSent }: ComposeP
     }
   };
 
-  // On mobile: full-screen modal. On desktop: bottom-right corner panel.
-  const fieldRow = "flex items-center gap-2 py-2.5 border-b border-crm-border";
-  const inputCls = "flex-1 bg-transparent text-[14px] text-crm-text outline-none placeholder-crm-text-faint min-w-0";
+  const title = replyTo ? "Reply" : forwardOf ? "Forward" : "Compose Mail";
+
+  // Shared fields markup (used in both mobile and desktop)
+  const fieldBlock = (
+    <div className="px-4 md:px-5 py-1">
+      <div className="flex items-center gap-2 py-2 border-b border-crm-border">
+        <label className="text-[13px] text-crm-text-muted font-medium w-8 shrink-0">To:</label>
+        <input
+          value={to} onChange={e => setTo(e.target.value)}
+          onTouchStart={e => e.stopPropagation()}
+          className="flex-1 bg-transparent text-[13px] text-crm-text outline-none placeholder-crm-text-faint min-w-0"
+          placeholder="recipient@example.com"
+          autoCapitalize="none" autoCorrect="off"
+        />
+        <div className="flex items-center gap-1 text-[13px] shrink-0">
+          <button type="button" onClick={() => setShowCc(v => !v)} className="text-crm-text-muted hover:text-crm-text">Cc</button>
+          <span className="text-crm-text-faint">|</span>
+          <button type="button" onClick={() => setShowBcc(v => !v)} className="text-crm-text-muted hover:text-crm-text">Bcc</button>
+        </div>
+      </div>
+      {showCc && (
+        <div className="flex items-center gap-2 py-2 border-b border-crm-border">
+          <label className="text-[13px] text-crm-text-muted font-medium w-8 shrink-0">Cc:</label>
+          <input value={cc} onChange={e => setCc(e.target.value)} onTouchStart={e => e.stopPropagation()}
+            className="flex-1 bg-transparent text-[13px] text-crm-text outline-none placeholder-crm-text-faint"
+            placeholder="someone@email.com" autoCapitalize="none" autoCorrect="off" />
+        </div>
+      )}
+      {showBcc && (
+        <div className="flex items-center gap-2 py-2 border-b border-crm-border">
+          <label className="text-[13px] text-crm-text-muted font-medium w-8 shrink-0">Bcc:</label>
+          <input value={bcc} onChange={e => setBcc(e.target.value)} onTouchStart={e => e.stopPropagation()}
+            className="flex-1 bg-transparent text-[13px] text-crm-text outline-none placeholder-crm-text-faint"
+            placeholder="someone@email.com" autoCapitalize="none" autoCorrect="off" />
+        </div>
+      )}
+      <div className="flex items-center gap-2 py-2 border-b border-crm-border">
+        <label className="text-[13px] text-crm-text-muted font-medium w-16 shrink-0">Subject:</label>
+        <input value={subject} onChange={e => setSubject(e.target.value)} onTouchStart={e => e.stopPropagation()}
+          className="flex-1 bg-transparent text-[13px] text-crm-text outline-none placeholder-crm-text-faint"
+          placeholder="Subject" />
+      </div>
+    </div>
+  );
+
+  const bodyBlock = (
+    <textarea
+      value={body}
+      onChange={e => setBody(e.target.value)}
+      onTouchStart={e => e.stopPropagation()}
+      className="w-full bg-transparent text-crm-text text-[13px] outline-none px-4 md:px-5 py-3 resize-none placeholder-crm-text-faint flex-1"
+      style={{ minHeight: 160, WebkitUserSelect: "text", userSelect: "text", touchAction: "pan-y" }}
+      placeholder="Write your message…"
+    />
+  );
+
+  const attachBlock = attachments.length > 0 ? (
+    <div className="flex flex-wrap gap-2 px-4 md:px-5 pb-2">
+      {attachments.map((a, i) => (
+        <div key={i} className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-crm-surface border border-crm-border text-[12px] text-crm-text-muted">
+          <FileText size={12} />
+          <span className="truncate max-w-[140px]">{a.name}</span>
+          <button onClick={() => removeAttachment(i)} className="hover:text-red-400"><X size={12} /></button>
+        </div>
+      ))}
+    </div>
+  ) : null;
+
+  const footerBlock = (
+    <div className="flex items-center justify-between gap-3 px-4 md:px-5 py-3 border-t border-crm-border shrink-0">
+      <button type="button" onClick={() => fileInputRef.current?.click()}
+        className="flex items-center gap-2 px-3 py-1.5 text-[13px] text-crm-text-muted hover:text-crm-text transition-colors">
+        <Paperclip size={14} /><span className="hidden sm:inline">Attachments</span>
+      </button>
+      <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFileSelect} />
+      <div className="flex items-center gap-2">
+        <button type="button" onClick={handleSaveDraft} disabled={savingDraft || (!to && !subject && !body.trim())}
+          className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg border border-crm-border text-crm-text-muted hover:text-crm-text text-[13px] transition-colors disabled:opacity-40">
+          {savingDraft ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+          <span>{savingDraft ? "Saving…" : "Draft"}</span>
+        </button>
+        <button type="button" onClick={handleSend} disabled={sending || !to.trim() || !subject.trim()}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary hover:bg-primary/90 text-white text-[13px] font-medium transition-colors disabled:opacity-50">
+          <span>{sending ? "Sending…" : "Send"}</span>
+          {sending ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+        </button>
+      </div>
+    </div>
+  );
 
   return (
     <>
-      {/* Mobile full-screen overlay */}
-      <div className="md:hidden fixed inset-0 z-50 bg-crm-card flex flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-crm-border bg-crm-surface flex-shrink-0">
-          <button onClick={onClose} className="p-2 -ml-2 text-crm-text-muted">
+      {/* ── MOBILE: Full-screen modal ── */}
+      <div
+        className="md:hidden fixed inset-0 z-[60] flex flex-col bg-crm-card"
+        style={{ WebkitOverflowScrolling: "touch" }}
+      >
+        {/* Mobile header */}
+        <div className="flex items-center gap-3 px-4 py-3 bg-crm-surface border-b border-crm-border shrink-0 safe-area-top">
+          <button type="button" onClick={onClose}
+            className="p-2 -ml-2 rounded-full text-crm-text-muted hover:bg-crm-border active:bg-crm-border transition-colors">
             <X size={20} />
           </button>
-          <h5 className="text-[15px] font-semibold text-crm-text">
-            {replyTo ? "Reply" : forwardOf ? "Forward" : "New Message"}
-          </h5>
-          <button
-            onClick={handleSend}
-            disabled={sending || !to.trim() || !subject.trim()}
-            className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-primary text-white text-[13px] font-medium disabled:opacity-50"
-          >
+          <h5 className="text-[15px] font-semibold text-crm-text flex-1">{title}</h5>
+          <button type="button" onClick={handleSend} disabled={sending || !to.trim() || !subject.trim()}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-primary hover:bg-primary/90 active:bg-primary/80 text-white text-[13px] font-semibold disabled:opacity-50 transition-colors">
             {sending ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
-            Send
+            {sending ? "Sending…" : "Send"}
           </button>
         </div>
 
-        {/* Fields */}
-        <div className="px-4 flex-shrink-0">
-          <div className={fieldRow}>
-            <span className="text-[13px] text-crm-text-muted w-14 flex-shrink-0">To</span>
-            <input value={to} onChange={e => setTo(e.target.value)} className={inputCls} placeholder="Recipients" autoCapitalize="none" autoCorrect="off" />
-            <button onClick={() => setShowCc(!showCc)} className="text-[12px] text-crm-text-muted px-1">Cc</button>
-          </div>
-          {showCc && (
-            <div className={fieldRow}>
-              <span className="text-[13px] text-crm-text-muted w-14 flex-shrink-0">Cc</span>
-              <input value={cc} onChange={e => setCc(e.target.value)} className={inputCls} placeholder="Cc" autoCapitalize="none" autoCorrect="off" />
-            </div>
-          )}
-          <div className={fieldRow}>
-            <span className="text-[13px] text-crm-text-muted w-14 flex-shrink-0">Subject</span>
-            <input value={subject} onChange={e => setSubject(e.target.value)} className={inputCls} placeholder="Subject" />
-          </div>
+        {/* Mobile fields */}
+        <div className="shrink-0">{fieldBlock}</div>
+
+        {/* Mobile body — flex-1 so keyboard pushes it up correctly */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {bodyBlock}
         </div>
 
-        {/* Body */}
-        <textarea
-          ref={textareaRef}
-          value={body}
-          onChange={e => setBody(e.target.value)}
-          className="flex-1 w-full bg-transparent text-crm-text text-[14px] outline-none px-4 py-3 resize-none placeholder-crm-text-faint"
-          placeholder="Write your message…"
-        />
+        {attachBlock}
 
-        {/* Attachments */}
-        {attachments.length > 0 && (
-          <div className="flex flex-wrap gap-2 px-4 pb-2">
-            {attachments.map((a, i) => (
-              <div key={i} className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-crm-surface border border-crm-border text-[12px] text-crm-text-muted">
-                <FileText size={12} />
-                <span className="truncate max-w-[140px]">{a.name}</span>
-                <button onClick={() => removeAttachment(i)}><X size={12} /></button>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Footer toolbar */}
-        <div className="flex items-center gap-2 px-4 py-3 border-t border-crm-border flex-shrink-0">
-          <button onClick={() => fileInputRef.current?.click()} className="p-2 text-crm-text-muted rounded-full hover:bg-crm-surface">
+        {/* Mobile footer toolbar */}
+        <div className="flex items-center gap-3 px-4 py-3 border-t border-crm-border bg-crm-surface shrink-0 safe-area-bottom">
+          <button type="button" onClick={() => fileInputRef.current?.click()}
+            className="p-2 rounded-full text-crm-text-muted hover:bg-crm-border transition-colors">
             <Paperclip size={20} />
           </button>
           <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFileSelect} />
-          <button onClick={handleSaveDraft} disabled={savingDraft} className="p-2 text-crm-text-muted rounded-full hover:bg-crm-surface">
+          <button type="button" onClick={handleSaveDraft} disabled={savingDraft || (!to && !subject && !body.trim())}
+            className="p-2 rounded-full text-crm-text-muted hover:bg-crm-border transition-colors disabled:opacity-40">
             {savingDraft ? <Loader2 size={20} className="animate-spin" /> : <Save size={20} />}
           </button>
         </div>
       </div>
 
-      {/* Desktop bottom-right panel */}
+      {/* ── DESKTOP: Bottom-right panel ── */}
       <div className="hidden md:flex fixed bottom-0 right-6 z-50 w-full max-w-[36rem] flex-col shadow-2xl rounded-t-xl overflow-hidden border border-crm-border bg-crm-card">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3 bg-crm-surface flex-shrink-0">
-          <h5 className="text-[15px] font-medium text-crm-text">
-            {replyTo ? "Reply" : forwardOf ? "Forward" : "Compose Mail"}
-          </h5>
+        <div className="flex items-center justify-between px-5 py-3 bg-crm-surface shrink-0">
+          <h5 className="text-[15px] font-medium text-crm-text">{title}</h5>
           <div className="flex items-center gap-1">
-            <button onClick={() => setMinimized(!minimized)} className="p-1.5 rounded-full hover:bg-crm-border text-crm-text-muted transition-colors">
+            <button type="button" onClick={() => setMinimized(!minimized)} className="p-1.5 rounded-full hover:bg-crm-border text-crm-text-muted transition-colors">
               <Minus size={16} />
             </button>
-            <button onClick={onClose} className="p-1.5 rounded-full hover:bg-crm-border text-crm-text-muted transition-colors">
+            <button type="button" onClick={onClose} className="p-1.5 rounded-full hover:bg-crm-border text-crm-text-muted transition-colors">
               <X size={16} />
             </button>
           </div>
         </div>
 
-        {!minimized && (
-          <>
-            {/* Fields */}
-            <div className="px-5 py-1">
-              <div className="flex items-center gap-2 py-2 border-b border-crm-border">
-                <label className="text-[13px] text-crm-text-muted font-medium w-8">To:</label>
-                <input value={to} onChange={e => setTo(e.target.value)}
-                  className="flex-1 bg-transparent text-[13px] text-crm-text outline-none placeholder-crm-text-faint"
-                  placeholder="recipient@example.com" />
-                <div className="flex items-center gap-1 text-[13px]">
-                  <button onClick={() => setShowCc(!showCc)} className="text-crm-text-muted hover:text-crm-text">Cc</button>
-                  <span className="text-crm-text-faint">|</span>
-                  <button onClick={() => setShowBcc(!showBcc)} className="text-crm-text-muted hover:text-crm-text">Bcc</button>
-                </div>
-              </div>
-              {showCc && (
-                <div className="flex items-center gap-2 py-2 border-b border-crm-border">
-                  <label className="text-[13px] text-crm-text-muted font-medium w-8">Cc:</label>
-                  <input value={cc} onChange={e => setCc(e.target.value)} className="flex-1 bg-transparent text-[13px] text-crm-text outline-none" placeholder="someone@email.com" />
-                </div>
-              )}
-              {showBcc && (
-                <div className="flex items-center gap-2 py-2 border-b border-crm-border">
-                  <label className="text-[13px] text-crm-text-muted font-medium w-8">Bcc:</label>
-                  <input value={bcc} onChange={e => setBcc(e.target.value)} className="flex-1 bg-transparent text-[13px] text-crm-text outline-none" placeholder="someone@email.com" />
-                </div>
-              )}
-              <div className="flex items-center gap-2 py-2 border-b border-crm-border">
-                <label className="text-[13px] text-crm-text-muted font-medium w-16">Subject:</label>
-                <input value={subject} onChange={e => setSubject(e.target.value)} className="flex-1 bg-transparent text-[13px] text-crm-text outline-none" placeholder="Subject" />
-              </div>
-            </div>
-
-            {/* Body — clean textarea, no pre-filled signature */}
-            <textarea
-              ref={textareaRef}
-              value={body}
-              onChange={e => setBody(e.target.value)}
-              className="w-full bg-transparent text-crm-text text-[13px] outline-none px-5 py-3 resize-none placeholder-crm-text-faint min-h-[160px]"
-              placeholder="Write your message…"
-            />
-
-            {/* Attachment chips */}
-            {attachments.length > 0 && (
-              <div className="flex flex-wrap gap-2 px-5 pb-2">
-                {attachments.map((a, i) => (
-                  <div key={i} className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-crm-surface border border-crm-border text-[12px] text-crm-text-muted">
-                    <FileText size={12} />
-                    <span className="truncate max-w-[140px]">{a.name}</span>
-                    <button onClick={() => removeAttachment(i)} className="hover:text-red-400"><X size={12} /></button>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Footer */}
-            <div className="flex items-center justify-between gap-3 px-5 py-3 border-t border-crm-border">
-              <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 px-3 py-1.5 text-[13px] text-crm-text-muted hover:text-crm-text transition-colors">
-                <Paperclip size={14} />
-                <span>Attachments</span>
-              </button>
-              <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFileSelect} />
-              <div className="flex items-center gap-2">
-                <button onClick={handleSaveDraft} disabled={savingDraft || (!to && !subject && !body.trim())}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-crm-border text-crm-text-muted hover:text-crm-text text-[13px] transition-colors disabled:opacity-40">
-                  {savingDraft ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                  <span>{savingDraft ? "Saving…" : "Save Draft"}</span>
-                </button>
-                <button onClick={handleSend} disabled={sending || !to.trim() || !subject.trim()}
-                  className="flex items-center gap-2 px-5 py-2 rounded-lg bg-primary hover:bg-primary/90 text-white text-[13px] font-medium transition-colors disabled:opacity-50">
-                  <span>{sending ? "Sending…" : "Send"}</span>
-                  {sending ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
-                </button>
-              </div>
-            </div>
-          </>
-        )}
+      {!minimized && (
+        <>
+          {fieldBlock}
+          {bodyBlock}
+          {attachBlock}
+          {footerBlock}
+        </>
+      )}
       </div>
     </>
   );
 }
+
 // ─── Email Detail Panel (Vuexy thread card layout) ────────────────────────────
 interface DetailPanelProps {
   email: Email;
@@ -435,7 +453,7 @@ function EmailDetailPanel({ email, onBack, onReply, onForward, onStar, onTrash, 
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   useEffect(() => {
-    setBodyHtml(email.body_html ?? "");
+    setBodyHtml(email.body_html);
     if (email.body_html || !email.id) return;
     let cancelled = false;
     setFetchingBody(true);
@@ -445,8 +463,7 @@ function EmailDetailPanel({ email, onBack, onReply, onForward, onStar, onTrash, 
         headers: { Authorization: `Bearer ${session?.access_token}` },
       })
     ).then(({ data }) => {
-      // Always update state — even an empty result clears the loading state correctly
-      if (!cancelled) setBodyHtml(data?.body_html ?? "");
+      if (!cancelled && data?.body_html) setBodyHtml(data.body_html);
     }).finally(() => {
       if (!cancelled) setFetchingBody(false);
     });
@@ -706,8 +723,6 @@ export default function EmailInboxModule() {
   const [newFolderInput, setNewFolderInput] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
   const [creatingFolder, setCreatingFolder] = useState(false);
-  // Mobile: sidebar drawer open/closed
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const syncInterval = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Load email account
@@ -932,8 +947,9 @@ export default function EmailInboxModule() {
     if (selectedIds.size === 0) return;
     setBulkOperating(true);
     try {
-      const ids = Array.from(selectedIds);
-      await Promise.allSettled(ids.map(id => invokeUpdateEmail("trash", id)));
+      for (const id of Array.from(selectedIds)) {
+        await invokeUpdateEmail("trash", id);
+      }
       setSelectedIds(new Set());
       qc.invalidateQueries({ queryKey: ["emails"] });
     } catch (err: any) {
@@ -947,12 +963,12 @@ export default function EmailInboxModule() {
     if (selectedIds.size === 0) return;
     setBulkOperating(true);
     try {
-      const ids = Array.from(selectedIds);
-      await Promise.allSettled(ids.map(id => invokeUpdateEmail("mark_read", id)));
+      for (const id of Array.from(selectedIds)) {
+        await invokeUpdateEmail("mark_read", id);
+      }
       setSelectedIds(new Set());
       qc.invalidateQueries({ queryKey: ["emails"] });
       qc.invalidateQueries({ queryKey: ["email-unread-counts"] });
-      qc.invalidateQueries({ queryKey: ["email-inbox-unread"] });
     } catch (err: any) {
       toast({ title: "Bulk mark read failed", description: err.message, variant: "destructive" });
     } finally {
@@ -1295,39 +1311,22 @@ export default function EmailInboxModule() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-3.5rem)] -m-6 overflow-hidden rounded-xl border border-crm-border bg-crm-card shadow-sm relative">
-
-      {/* ── Mobile sidebar backdrop ── */}
-      {mobileSidebarOpen && (
-        <div
-          className="md:hidden fixed inset-0 z-30 bg-black/50"
-          onClick={() => setMobileSidebarOpen(false)}
-        />
-      )}
-
+    <div className="flex h-[calc(100vh-3.5rem)] -m-6 overflow-hidden rounded-xl border border-crm-border bg-crm-card shadow-sm">
       {/* ── Sidebar ── */}
-      <div className={`
-        fixed md:static inset-y-0 left-0 z-40
-        w-[260px] md:w-[220px] flex-shrink-0
-        border-r border-crm-border flex flex-col
-        bg-crm-card transition-transform duration-200
-        ${mobileSidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
-      `}>
+      <div className="w-[220px] flex-shrink-0 border-r border-crm-border flex flex-col">
         {/* Compose button */}
-        <div className="p-4 md:p-5 pb-2 flex items-center gap-2">
+        <div className="p-5 pb-2">
           <button
-            onClick={() => { setReplyTarget(null); setForwardTarget(null); setComposeOpen(true); setMobileSidebarOpen(false); }}
-            className="flex-1 py-2.5 rounded-lg bg-primary hover:bg-primary/90 text-white text-[14px] font-medium transition-colors"
+            onClick={() => { setReplyTarget(null); setForwardTarget(null); setComposeOpen(true); }}
+            className="w-full py-2.5 rounded-lg bg-primary hover:bg-primary/90 text-white text-[14px] font-medium transition-colors"
           >
             Compose
-          </button>
-          <button className="md:hidden p-2 text-crm-text-muted" onClick={() => setMobileSidebarOpen(false)}>
-            <X size={18} />
           </button>
         </div>
 
         {/* Folder list */}
-        <nav className="flex-1 px-3 md:px-4 pt-3 pb-2 space-y-0.5 overflow-y-auto">
+        <nav className="flex-1 px-4 pt-4 pb-2 space-y-0.5 overflow-y-auto">
+          {/* System folders (always shown) */}
           {SYSTEM_FOLDERS.map(f => {
             const Icon = f.icon;
             const count = f.id === "starred" ? undefined : unreadMap[f.id];
@@ -1335,8 +1334,8 @@ export default function EmailInboxModule() {
             return (
               <button
                 key={f.id}
-                onClick={() => { setActiveFolder(f.id); setSelectedEmail(null); setSelectedIds(new Set()); setMobileSidebarOpen(false); }}
-                className={`w-full flex items-center justify-between px-3 py-2.5 md:py-2 rounded-lg text-left transition-colors ${
+                onClick={() => { setActiveFolder(f.id); setSelectedEmail(null); setSelectedIds(new Set()); }}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-left transition-colors ${
                   isActive
                     ? "bg-primary/10 text-primary font-medium"
                     : "text-crm-text-muted hover:text-crm-text hover:bg-crm-surface"
@@ -1359,7 +1358,7 @@ export default function EmailInboxModule() {
             );
           })}
 
-          {/* Custom folders */}
+          {/* Custom folders from Zoho */}
           {zohoFolders.filter(f => !f.isSystemFolder).length > 0 && (
             <div className="pt-3">
               <p className="text-[11px] font-medium uppercase text-crm-text-faint tracking-wider px-3 mb-1">Folders</p>
@@ -1368,8 +1367,8 @@ export default function EmailInboxModule() {
                 return (
                   <div key={f.folderId} className="group flex items-center">
                     <button
-                      onClick={() => { setActiveFolder(f.folderName); setSelectedEmail(null); setSelectedIds(new Set()); setMobileSidebarOpen(false); }}
-                      className={`flex-1 flex items-center justify-between px-3 py-2.5 md:py-2 rounded-lg text-left transition-colors ${
+                      onClick={() => { setActiveFolder(f.folderName); setSelectedEmail(null); setSelectedIds(new Set()); }}
+                      className={`flex-1 flex items-center justify-between px-3 py-2 rounded-lg text-left transition-colors ${
                         isActive ? "bg-primary/10 text-primary font-medium" : "text-crm-text-muted hover:text-crm-text hover:bg-crm-surface"
                       }`}
                     >
@@ -1427,8 +1426,9 @@ export default function EmailInboxModule() {
         </nav>
 
         {account && (
-          <div className="px-4 md:px-5 py-3 border-t border-crm-border space-y-2">
+          <div className="px-5 py-3 border-t border-crm-border space-y-2">
             <p className="text-[10px] text-crm-text-faint font-mono leading-tight break-all">{account.email_address}</p>
+            {/* Connection status indicator */}
             {(() => {
               const validated = sessionStorage.getItem(sessionValidatedKey) === "ok";
               if (validated) {
@@ -1440,7 +1440,10 @@ export default function EmailInboxModule() {
                 );
               }
               return (
-                <button onClick={() => { setReauthEmail(account.email_address); setReauthOpen(true); }} className="flex items-center gap-1.5 group">
+                <button
+                  onClick={() => { setReauthEmail(account.email_address); setReauthOpen(true); }}
+                  className="flex items-center gap-1.5 group"
+                >
                   <span className="w-2 h-2 rounded-full bg-amber-500" />
                   <span className="text-[10px] text-amber-400 font-medium group-hover:underline">Revalidate</span>
                 </button>
@@ -1451,30 +1454,11 @@ export default function EmailInboxModule() {
       </div>
 
       {/* ── Email List ── */}
-      <div className={`
-        flex flex-col border-r border-crm-border
-        ${selectedEmail ? "hidden md:flex md:w-[300px] lg:w-[340px] flex-shrink-0" : "flex-1"}
-      `}>
-        {/* Mobile top bar with hamburger */}
-        <div className="flex items-center gap-2 px-4 pt-4 pb-1 md:hidden">
-          <button onClick={() => setMobileSidebarOpen(true)} className="p-2 -ml-2 text-crm-text-muted">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M3 5h14M3 10h14M3 15h14" strokeLinecap="round"/>
-            </svg>
-          </button>
-          <span className="text-[15px] font-semibold text-crm-text capitalize flex-1">{activeFolder}</span>
-          <button
-            onClick={() => { setReplyTarget(null); setForwardTarget(null); setComposeOpen(true); }}
-            className="p-2 text-primary"
-          >
-            <Pencil size={20} />
-          </button>
-        </div>
-
+      <div className={`flex flex-col border-r border-crm-border ${selectedEmail ? "w-[340px] flex-shrink-0" : "flex-1"}`}>
         {/* Search bar */}
-        <div className="px-4 md:px-5 pt-2 md:pt-4 pb-2 flex items-center gap-3">
-          <div className="flex-1 flex items-center gap-2 bg-crm-surface rounded-xl px-3 py-2 md:bg-transparent md:rounded-none md:px-0 md:py-0">
-            <Search size={16} className="text-crm-text-muted flex-shrink-0" />
+        <div className="px-5 pt-4 pb-2 flex items-center gap-3">
+          <div className="flex-1 flex items-center gap-2">
+            <Search size={18} className="text-crm-text-muted flex-shrink-0" />
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
@@ -1495,24 +1479,40 @@ export default function EmailInboxModule() {
                 className="border-crm-border"
               />
             </div>
-            <button onClick={handleBulkTrash} disabled={selectedIds.size === 0 || bulkOperating}
-              className="p-2 rounded-full hover:bg-crm-surface text-crm-text-muted transition-colors disabled:opacity-40" title="Delete selected">
+            <button
+              onClick={handleBulkTrash}
+              disabled={selectedIds.size === 0 || bulkOperating}
+              className="p-2 rounded-full hover:bg-crm-surface text-crm-text-muted transition-colors disabled:opacity-40"
+              title="Delete selected"
+            >
               {bulkOperating ? <Loader2 size={18} className="animate-spin" /> : <Trash2 size={18} />}
             </button>
-            <button onClick={handleBulkMarkRead} disabled={selectedIds.size === 0 || bulkOperating}
-              className="p-2 rounded-full hover:bg-crm-surface text-crm-text-muted transition-colors disabled:opacity-40" title="Mark selected as read">
+            <button
+              onClick={handleBulkMarkRead}
+              disabled={selectedIds.size === 0 || bulkOperating}
+              className="p-2 rounded-full hover:bg-crm-surface text-crm-text-muted transition-colors disabled:opacity-40"
+              title="Mark selected as read"
+            >
               <MailOpen size={18} />
             </button>
+            {/* Bulk move to folder */}
             <div className="relative" onClick={e => e.stopPropagation()}>
-              <button onClick={() => setShowBulkMoveMenu(v => !v)} disabled={selectedIds.size === 0 || bulkOperating}
-                className="p-2 rounded-full hover:bg-crm-surface text-crm-text-muted transition-colors disabled:opacity-40" title="Move selected to folder">
+              <button
+                onClick={() => setShowBulkMoveMenu(v => !v)}
+                disabled={selectedIds.size === 0 || bulkOperating}
+                className="p-2 rounded-full hover:bg-crm-surface text-crm-text-muted transition-colors disabled:opacity-40"
+                title="Move selected to folder"
+              >
                 <Folder size={18} />
               </button>
               {showBulkMoveMenu && (
                 <div className="absolute left-0 top-full mt-1 z-50 w-44 bg-crm-card border border-crm-border rounded-lg shadow-xl py-1 max-h-56 overflow-y-auto">
                   {zohoFolders.map(f => (
-                    <button key={f.folderId} onClick={() => handleBulkMove(f.folderId, f.folderName)}
-                      className="w-full text-left px-3 py-2 text-[13px] text-crm-text hover:bg-crm-surface transition-colors">
+                    <button
+                      key={f.folderId}
+                      onClick={() => handleBulkMove(f.folderId, f.folderName)}
+                      className="w-full text-left px-3 py-2 text-[13px] text-crm-text hover:bg-crm-surface transition-colors"
+                    >
                       {f.folderName}
                     </button>
                   ))}
@@ -1520,10 +1520,16 @@ export default function EmailInboxModule() {
               )}
             </div>
           </div>
-          <button onClick={syncEmails} disabled={syncing}
-            className="p-2 rounded-full hover:bg-crm-surface text-crm-text-muted transition-colors" title="Refresh">
-            <RefreshCw size={18} className={syncing ? "animate-spin" : ""} />
-          </button>
+          <div className="flex items-center gap-0.5">
+            <button
+              onClick={syncEmails}
+              disabled={syncing}
+              className="p-2 rounded-full hover:bg-crm-surface text-crm-text-muted transition-colors"
+              title="Refresh"
+            >
+              <RefreshCw size={18} className={syncing ? "animate-spin" : ""} />
+            </button>
+          </div>
         </div>
         <hr className="border-crm-border" />
 
@@ -1549,46 +1555,66 @@ export default function EmailInboxModule() {
               return (
                 <div
                   key={email.id}
-                  className={`relative group flex items-center gap-2 px-3 py-3 border-b border-crm-border/50 cursor-pointer transition-colors hover:bg-crm-surface/60 ${
+                  className={`group flex items-center gap-2 px-3 py-3 border-b border-crm-border/50 cursor-pointer transition-colors hover:bg-crm-surface/60 ${
                     selectedEmail?.id === email.id ? "bg-crm-surface" : ""
                   } ${isUnread ? "bg-crm-card" : ""}`}
                 >
-                  <div className="flex-shrink-0 px-1 hidden md:block">
-                    <Checkbox checked={isChecked} onCheckedChange={() => toggleSelect(email.id)} className="border-crm-border" />
+                  {/* Checkbox */}
+                  <div className="flex-shrink-0 px-1">
+                    <Checkbox
+                      checked={isChecked}
+                      onCheckedChange={() => toggleSelect(email.id)}
+                      className="border-crm-border"
+                    />
                   </div>
+
+                  {/* Star */}
                   <button
                     onClick={(e) => { e.stopPropagation(); toggleStar.mutate({ id: email.id, starred: !email.is_starred }); }}
                     className={`flex-shrink-0 p-0.5 ${email.is_starred ? "text-amber-400" : "text-crm-text-faint hover:text-amber-400"} transition-colors`}
                   >
                     <Star size={16} fill={email.is_starred ? "currentColor" : "none"} />
                   </button>
-                  <div className={`w-9 h-9 rounded-full ${avatarColor} flex items-center justify-center text-white text-[11px] font-bold flex-shrink-0`}>
+
+                  {/* Avatar */}
+                  <div className={`w-8 h-8 rounded-full ${avatarColor} flex items-center justify-center text-white text-[11px] font-bold flex-shrink-0`}>
                     {initials}
                   </div>
+
+                  {/* Content */}
                   <div className="flex-1 min-w-0" onClick={() => handleSelectEmail(email)}>
-                    <div className="flex items-baseline gap-2 justify-between">
-                      <span className={`text-[13px] truncate max-w-[120px] md:max-w-[100px] ${isUnread ? "font-semibold text-crm-text" : "text-crm-text-muted"}`}>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-[13px] truncate ${isUnread ? "font-semibold text-crm-text" : "text-crm-text-muted"}`}>
                         {senderName}
                       </span>
-                      <small className="text-[11px] text-crm-text-muted whitespace-nowrap flex-shrink-0">
+                      <span className={`text-[13px] truncate flex-1 ${isUnread ? "text-crm-text-secondary" : "text-crm-text-dim"}`}>
+                        {email.subject}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Meta (time + label dot + hover actions) */}
+                  <div className="flex items-center gap-2 flex-shrink-0 relative">
+                    {/* Normal state: label dot + time */}
+                    <div className="flex items-center gap-2 group-hover:invisible">
+                      {email.has_attachments && <Paperclip size={13} className="text-crm-text-faint" />}
+                      <small className="text-[12px] text-crm-text-muted whitespace-nowrap">
                         {email.sent_at ? format(parseISO(email.sent_at), "h:mm a") : ""}
                       </small>
                     </div>
-                    <div className={`text-[12px] truncate mt-0.5 ${isUnread ? "text-crm-text-secondary" : "text-crm-text-dim"}`}>
-                      {email.subject}
+                    {/* Hover state: action icons */}
+                    <div className="absolute right-0 top-1/2 -translate-y-1/2 hidden group-hover:flex items-center gap-0.5 bg-crm-surface rounded-lg px-1">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); email.is_read ? markUnread.mutate(email.id) : markRead.mutate(email.id); }}
+                        className="p-1.5 rounded-full hover:bg-crm-border text-crm-text-muted transition-colors"
+                        title={email.is_read ? "Mark as unread" : "Mark as read"}
+                      >
+                        {email.is_read ? <Mail size={15} /> : <MailOpen size={15} />}
+                      </button>
+                      <button onClick={(e) => { e.stopPropagation(); moveToTrash.mutate(email.id); }} className="p-1.5 rounded-full hover:bg-crm-border text-crm-text-muted transition-colors" title="Move to trash">
+                        <Trash2 size={15} />
+                      </button>
                     </div>
-                  </div>
-                  {/* Desktop hover actions */}
-                  <div className="hidden md:flex absolute right-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 items-center gap-0.5 bg-crm-surface rounded-lg px-1 transition-opacity">
-                    <button
-                      onClick={(e) => { e.stopPropagation(); email.is_read ? markUnread.mutate(email.id) : markRead.mutate(email.id); }}
-                      className="p-1.5 rounded-full hover:bg-crm-border text-crm-text-muted transition-colors"
-                    >
-                      {email.is_read ? <Mail size={15} /> : <MailOpen size={15} />}
-                    </button>
-                    <button onClick={(e) => { e.stopPropagation(); moveToTrash.mutate(email.id); }} className="p-1.5 rounded-full hover:bg-crm-border text-crm-text-muted transition-colors">
-                      <Trash2 size={15} />
-                    </button>
                   </div>
                 </div>
               );
@@ -1598,10 +1624,7 @@ export default function EmailInboxModule() {
       </div>
 
       {/* ── Detail Panel ── */}
-      <div className={`
-        flex-1 overflow-hidden bg-crm
-        ${selectedEmail ? "flex flex-col" : "hidden md:flex flex-col"}
-      `}>
+      <div className="flex-1 overflow-hidden bg-crm">
         {selectedEmail ? (
           <EmailDetailPanel
             email={selectedEmail}
@@ -1628,7 +1651,7 @@ export default function EmailInboxModule() {
         )}
       </div>
 
-      {/* ── Compose Modal ── */}
+      {/* ── Compose Modal (bottom-right) ── */}
       {composeOpen && account && (
         <ComposeModal
           account={account}

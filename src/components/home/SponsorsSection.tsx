@@ -125,63 +125,64 @@ const SponsorsSection = () => {
                       <div className="flex-1 h-px bg-border" />
                     </div>
 
-                    <div className={`grid gap-6 ${
-                      tierGroup.tier === "presenting" ? "grid-cols-1 sm:grid-cols-2" :
-                      tierGroup.tier === "gold" ? "grid-cols-2 md:grid-cols-3" :
-                      "grid-cols-2 sm:grid-cols-3 md:grid-cols-4"
+                    <div className={`grid gap-5 ${
+                      tierGroup.tier === "presenting" ? "grid-cols-2 sm:grid-cols-3" :
+                      tierGroup.tier === "gold"       ? "grid-cols-2 sm:grid-cols-3 md:grid-cols-4" :
+                      "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
                     }`}>
                       {tierGroup.sponsors.map((sponsor: any, sIdx: number) => (
                         <Link
                           key={sponsor.id}
                           to={`/sponsors/${sponsor.slug}`}
-                          className="group flex flex-col items-center gap-3 p-5 rounded-2xl border border-border bg-card hover:border-primary/40 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer"
+                          className="group relative flex flex-col items-center rounded-2xl border border-border bg-card hover:border-primary/50 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 overflow-hidden cursor-pointer"
                           style={{
                             animationDelay: `${(tierIdx * 150) + (sIdx * 80)}ms`,
                             animation: "fade-in 0.5s ease-out both",
                           }}
                         >
-                          {/* Logo — large, bold, centred */}
-                          <div className={`w-full flex items-center justify-center rounded-xl overflow-hidden transition-transform duration-300 group-hover:scale-105 ${
-                            tierGroup.tier === "presenting" ? "h-32 bg-primary/5 p-4" :
-                            tierGroup.tier === "gold" ? "h-24 bg-amber-50/50 dark:bg-amber-950/20 p-3" :
-                            "h-20 bg-muted/50 p-3"
+                          {/* Tier ribbon */}
+                          <div className={`absolute top-0 right-0 px-2 py-1 text-[8px] font-black uppercase tracking-widest rounded-bl-xl z-10 ${
+                            tierGroup.tier === "presenting" ? "bg-primary text-primary-foreground" :
+                            tierGroup.tier === "gold"   ? "bg-amber-500 text-white" :
+                            tierGroup.tier === "silver" ? "bg-slate-400 text-white" :
+                            tierGroup.tier === "bronze" ? "bg-orange-600 text-white" :
+                            "bg-muted text-muted-foreground"
+                          }`}>
+                            {tierGroup.tier === "presenting" ? "Presenting" :
+                             tierGroup.tier === "gold"   ? "Gold" :
+                             tierGroup.tier === "silver" ? "Silver" :
+                             tierGroup.tier === "bronze" ? "Bronze" : "Partner"}
+                          </div>
+
+                          {/* Logo area — fills the card boldly */}
+                          <div className={`w-full flex items-center justify-center p-5 transition-all duration-300 group-hover:bg-primary/5 ${
+                            tierGroup.tier === "presenting" ? "pt-8 pb-6 min-h-[160px]" :
+                            tierGroup.tier === "gold"       ? "pt-7 pb-5 min-h-[130px]" :
+                            "pt-6 pb-4 min-h-[110px]"
                           }`}>
                             {sponsor.logo_url ? (
                               <img
                                 src={sponsor.logo_url}
                                 alt={sponsor.name}
-                                className="max-w-full max-h-full object-contain"
+                                className="w-full object-contain transition-transform duration-300 group-hover:scale-110"
+                                style={{ maxHeight: tierGroup.tier === "presenting" ? 96 : tierGroup.tier === "gold" ? 76 : 60 }}
                                 loading="lazy"
                               />
                             ) : (
-                              <span className={`font-black text-muted-foreground/40 ${
-                                tierGroup.tier === "presenting" ? "text-5xl" :
-                                tierGroup.tier === "gold" ? "text-4xl" : "text-3xl"
-                              }`}>
-                                {sponsor.name.charAt(0)}
-                              </span>
+                              <span className={`font-black text-muted-foreground/30 ${
+                                tierGroup.tier === "presenting" ? "text-5xl" : "text-4xl"
+                              }`}>{sponsor.name.charAt(0)}</span>
                             )}
                           </div>
 
-                          {/* Name below logo */}
-                          <div className="text-center">
-                            <p className={`font-bold text-card-foreground leading-tight ${
-                              tierGroup.tier === "presenting" ? "text-base" :
-                              tierGroup.tier === "gold" ? "text-sm" : "text-xs"
-                            }`}>
+                          {/* Sponsor name — below logo, small */}
+                          <div className="w-full px-3 pb-3 pt-1.5 border-t border-border/30">
+                            <p className="text-[11px] font-semibold text-center text-muted-foreground truncate leading-tight">
                               {sponsor.name}
                             </p>
-                            {sponsor.description && tierGroup.tier === "presenting" && (
-                              <p className="text-[11px] text-muted-foreground mt-1 line-clamp-2 leading-relaxed">
-                                {sponsor.description}
-                              </p>
-                            )}
                           </div>
 
-                          {/* Hover arrow */}
-                          <span className="text-[10px] font-semibold text-primary opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
-                            View Profile →
-                          </span>
+                          <div className="absolute inset-0 rounded-2xl bg-gradient-to-t from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
                         </Link>
                       ))}
                     </div>
