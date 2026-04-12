@@ -59,59 +59,54 @@ const ImplementingPartnersSection = () => {
           </p>
         </AnimatedSection>
 
-        {/* GRID */}
-        <div
-          className="
-            grid
-            grid-cols-2
-            sm:grid-cols-3
-            lg:grid-cols-4
-            gap-6 lg:gap-4
-            max-w-5xl
-            mx-auto
-            place-items-center
-            place-content-center
-          "
-        >
+        {/* FLEX SYSTEM (INSTITUTIONAL GRADE) */}
+        <div className="flex flex-wrap justify-center items-center gap-10 max-w-5xl mx-auto">
+
           {partners.map((partner, i) => (
             <AnimatedSection key={partner.id} delay={i * 80}>
               <Link
                 to={`/partners/${partner.slug}`}
-                className="group flex items-center justify-center w-full"
+                className="
+                  group
+                  flex
+                  items-center
+                  justify-center
+                  w-44
+                  h-44
+                "
               >
-                {/* LOGO */}
-                <div className="h-40 w-full flex items-center justify-center">
+                {/* LOGO CONTAINER */}
+                <div className="flex items-center justify-center w-full h-full">
+
                   {partner.logo_url ? (
                     <img
                       src={partner.logo_url}
-                      alt={`${partner.name} logo`}
+                      alt=""
                       loading="lazy"
                       decoding="async"
                       className="
-                        max-h-32
+                        max-h-24
                         max-w-full
                         object-contain
-                        mx-auto
-
-                        grayscale
                         opacity-80
 
                         transition-all
                         duration-300
                         ease-out
 
-                        group-hover:grayscale-0
                         group-hover:opacity-100
-                        group-hover:scale-105
+                        group-hover:scale-110
                       "
                     />
                   ) : (
-                    <Building2 className="h-16 w-16 text-primary/40 transition-transform duration-300 group-hover:scale-110" />
+                    <Building2 className="h-14 w-14 text-primary/40 transition-transform duration-300 group-hover:scale-110" />
                   )}
+
                 </div>
               </Link>
             </AnimatedSection>
           ))}
+
         </div>
 
       </div>
