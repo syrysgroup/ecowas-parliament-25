@@ -365,15 +365,6 @@ export const CRM_MODULES: CRMModule[] = [
     group: "ADMINISTRATION",
   },
   {
-    id: "super-admin",
-    label: "Super Admin Hub",
-    icon: Crown,
-    section: "super-admin",
-    allowedRoles: ["super_admin"],
-    isStub: false,
-    group: "ADMINISTRATION",
-  },
-  {
     id: "settings",
     label: "Settings",
     icon: Settings,

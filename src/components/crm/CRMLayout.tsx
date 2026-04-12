@@ -1,5 +1,5 @@
 import { ReactNode, useState, useRef, useEffect } from "react";
-import { Bell, Settings, X, Sun, Moon, User, Lock, Globe, LogOut, CheckCircle2 } from "lucide-react";
+import { Bell, Settings, X, Sun, Moon, User, Lock, Globe, LogOut, CheckCircle2, HelpCircle } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, parseISO } from "date-fns";
