@@ -26,7 +26,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import CRMAvatar from "@/components/crm/CRMAvatar";
-import CRMTour from "@/components/crm/CRMTour";
+import CRMTour, { useCRMTour } from "@/components/crm/CRMTour";
 import {
   Select as UISelect,
   SelectContent as UISelectContent,
@@ -477,6 +477,7 @@ function CRMThemeToggle() {
 // ─── Main layout ──────────────────────────────────────────────────────────────
 export default function CRMLayout({ activeSection, onNavigate, children }: CRMLayoutProps) {
   const { user, roles, signOut } = useAuthContext();
+  const { startTour } = useCRMTour(onNavigate);
   const activeModule = CRM_MODULES.find(m => m.section === activeSection);
   const moduleLabel  = activeModule?.label ?? "Dashboard";
 
