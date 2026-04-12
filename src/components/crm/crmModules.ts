@@ -56,7 +56,7 @@ export type ModuleId =
   | "finance"
   | "marketing"
   | "cms"
-  | "super-admin"
+  
   | "geo-analytics"
   | "events-manager"
   | "sponsors-partners"
