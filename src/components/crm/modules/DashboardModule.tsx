@@ -119,11 +119,52 @@ function StaggeredCard({ children, delay, className = "" }: { children: React.Re
   );
 }
 
+// ─── Role-aware quick actions ─────────────────────────────────────────────────
+function getRoleQuickActions(roles: string[], isSuperAdmin: boolean, isAdmin: boolean) {
+  const actions: { label: string; section: string }[] = [];
+
+  if (isSuperAdmin || isAdmin) {
+    actions.push({ label: "User Management", section: "people" });
+    actions.push({ label: "View Tasks", section: "tasks" });
+    actions.push({ label: "Check Email", section: "email-inbox" });
+  } else if (roles.includes("finance_coordinator")) {
+    actions.push({ label: "Finance", section: "finance" });
+    actions.push({ label: "Invoices", section: "invoices" });
+    actions.push({ label: "Check Email", section: "email-inbox" });
+  } else if (roles.includes("marketing_manager")) {
+    actions.push({ label: "Marketing", section: "marketing" });
+    actions.push({ label: "Newsletter", section: "newsletter" });
+    actions.push({ label: "Analytics", section: "analytics" });
+  } else if (roles.includes("programme_lead") || roles.includes("project_director")) {
+    actions.push({ label: "View Tasks", section: "tasks" });
+    actions.push({ label: "Calendar", section: "calendar" });
+    actions.push({ label: "Programme Pillars", section: "programme-pillars" });
+  } else if (roles.includes("communications_officer")) {
+    actions.push({ label: "News Editor", section: "news-editor" });
+    actions.push({ label: "Check Email", section: "email-inbox" });
+    actions.push({ label: "Calendar", section: "calendar" });
+  } else if (roles.includes("moderator")) {
+    actions.push({ label: "Parliament Ops", section: "parliament-ops" });
+    actions.push({ label: "View Tasks", section: "tasks" });
+    actions.push({ label: "Check Email", section: "email-inbox" });
+  } else {
+    actions.push({ label: "View Tasks", section: "tasks" });
+    actions.push({ label: "Check Email", section: "email-inbox" });
+    actions.push({ label: "Calendar", section: "calendar" });
+  }
+
+  return actions;
+}
+
 // ─── Welcome banner ───────────────────────────────────────────────────────────
-function WelcomeBanner({ name, onNavigate }: { name: string; onNavigate: (s: string) => void }) {
+function WelcomeBanner({ name, onNavigate, roles, isSuperAdmin, isAdmin }: {
+  name: string; onNavigate: (s: string) => void;
+  roles: string[]; isSuperAdmin: boolean; isAdmin: boolean;
+}) {
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
   const today = new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
+  const quickActions = getRoleQuickActions(roles, isSuperAdmin, isAdmin);
 
   return (
     <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary via-primary/90 to-primary/70 p-6 md:p-8 text-primary-foreground animate-fade-in">
@@ -142,11 +183,7 @@ function WelcomeBanner({ name, onNavigate }: { name: string; onNavigate: (s: str
         </p>
 
         <div className="flex flex-wrap gap-2 mt-4">
-          {[
-            { label: "View Tasks", section: "tasks" },
-            { label: "Check Email", section: "email-inbox" },
-            { label: "Calendar", section: "calendar" },
-          ].map((btn) => (
+          {quickActions.map((btn) => (
             <button
               key={btn.section}
               onClick={() => onNavigate(btn.section)}
