@@ -16,7 +16,6 @@ import {
   Layout,
   ShieldCheck,
   UserPlus,
-  Crown,
   Settings,
   Globe2,
   CalendarDays,
