@@ -66,9 +66,6 @@ const Footer = () => {
             <p className="text-sm text-muted-foreground leading-relaxed mb-4">{t("footer.tagline")}</p>
             <div className="space-y-1.5 text-xs text-muted-foreground mb-4">
               <p>📍 Herbert Macaulay Way, Garki, Abuja 900103, Federal Capital Territory</p>
-              <p>📧 {contactEmail}</p>
-              <p>📧 media@ecowasparliamentinitiatives.org</p>
-              <p>📧 sponsors@ecowasparliamentinitiatives.org</p>
             </div>
             <SocialMediaBar variant="full" showParliamentLink={true} />
 
