@@ -371,6 +371,8 @@ function ProfileCompletionModal({ userId }: { userId: string }) {
         })
         .eq("id", userId);
       if (error) throw error;
+      // Sync full_name to auth user_metadata
+      await supabase.auth.updateUser({ data: { full_name: fullName.trim() } });
       qc.invalidateQueries({ queryKey: ["profile-completion-check", userId] });
       toast({ title: "Profile saved" });
     } catch (err: any) {
@@ -505,6 +507,14 @@ export default function CRMLayout({ activeSection, onNavigate, children }: CRMLa
             <NotificationBell onNavigate={onNavigate} />
 
             <CRMThemeToggle />
+
+            <button
+              onClick={() => startTour()}
+              className="p-1.5 rounded-lg transition-colors text-crm-text-dim hover:text-crm-text-secondary hover:bg-crm-surface"
+              title="Guided Tour"
+            >
+              <HelpCircle size={15} />
+            </button>
 
             <button
               onClick={() => onNavigate("settings")}
