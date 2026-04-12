@@ -201,7 +201,7 @@ function WelcomeBanner({ name, onNavigate, roles, isSuperAdmin, isAdmin }: {
 
 // ─── Main dashboard ───────────────────────────────────────────────────────────
 export default function DashboardModule({ onNavigate }: { onNavigate: (s: string) => void }) {
-  const { user, isSponsor } = useAuthContext();
+  const { user, isSponsor, isSuperAdmin, isAdmin, roles } = useAuthContext();
   const displayName = (user?.user_metadata?.full_name as string) || user?.email?.split("@")[0] || "User";
 
   if (isSponsor) {
@@ -223,7 +223,7 @@ export default function DashboardModule({ onNavigate }: { onNavigate: (s: string
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto">
       {/* Welcome banner */}
-      <WelcomeBanner name={displayName} onNavigate={onNavigate} />
+      <WelcomeBanner name={displayName} onNavigate={onNavigate} roles={roles} isSuperAdmin={isSuperAdmin} isAdmin={isAdmin} />
 
       {/* Top stat cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
