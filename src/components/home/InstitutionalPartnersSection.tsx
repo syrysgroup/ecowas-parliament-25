@@ -62,11 +62,11 @@ const InstitutionalPartnersSection = () => {
             grid-cols-2
             sm:grid-cols-3
             lg:grid-cols-6
-            gap-6 lg:gap-4
-            max-w-6xl
+            gap-2 lg:gap-2
+            max-w-7xl
             mx-auto
-            items-center
-            justify-items-center
+            place-items-center
+            place-content-center
           "
         >
           {institutionalPartners.map((partner, i) => (
@@ -75,7 +75,7 @@ const InstitutionalPartnersSection = () => {
                 to={`/partners/${partner.slug}`}
                 className="group flex items-center justify-center w-full"
               >
-                <div className="h-28 w-full flex items-center justify-center px-2">
+                <div className="h-40 w-full flex items-center justify-center">
                   {partner.logo_url ? (
                     <img
                       src={partner.logo_url}
@@ -83,7 +83,7 @@ const InstitutionalPartnersSection = () => {
                       loading="lazy"
                       decoding="async"
                       className="
-                        max-h-20
+                        max-h-32
                         max-w-full
                         object-contain
                         grayscale
@@ -97,7 +97,7 @@ const InstitutionalPartnersSection = () => {
                       "
                     />
                   ) : (
-                    <Building2 className="h-12 w-12 text-ecowas-blue/40 transition-transform duration-300 group-hover:scale-110" />
+                    <Building2 className="h-16 w-16 text-ecowas-blue/40 transition-transform duration-300 group-hover:scale-110" />
                   )}
                 </div>
               </Link>

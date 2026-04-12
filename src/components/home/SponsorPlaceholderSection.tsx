@@ -53,27 +53,40 @@ const SponsorPlaceholderSection = () => {
           </p>
         </AnimatedSection>
 
-        {/* LOGO GRID ONLY */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-12 max-w-5xl mx-auto items-center justify-items-center">
-
+        {/* GRID */}
+        <div
+          className="
+            grid
+            grid-cols-2
+            sm:grid-cols-3
+            lg:grid-cols-6
+            gap-3
+            max-w-7xl
+            mx-auto
+            place-items-center
+            place-content-center
+          "
+        >
           {isLoading
-            ? Array.from({ length: 8 }).map((_, i) => (
-                <Skeleton key={i} className="h-32 w-52 rounded-xl" />
+            ? Array.from({ length: 12 }).map((_, i) => (
+                <Skeleton key={i} className="h-28 w-full rounded-xl" />
               ))
             : sponsors.map((sponsor, i) => (
                 <AnimatedSection key={sponsor.id} delay={i * 70}>
                   <Link
                     to={`/sponsors/${sponsor.slug}`}
-                    className="group flex items-center justify-center"
+                    className="group flex items-center justify-center w-full"
                   >
-                    <div className="h-40 w-full flex items-center justify-center overflow-hidden">
+                    <div className="h-32 w-full flex items-center justify-center px-1">
                       {sponsor.logo_url ? (
                         <img
                           src={sponsor.logo_url}
                           alt={`${sponsor.name} logo`}
+                          loading="lazy"
+                          decoding="async"
                           className="
-                            max-h-36
-                            max-w-[320px]
+                            max-h-24
+                            max-w-full
                             object-contain
 
                             grayscale
@@ -87,11 +100,9 @@ const SponsorPlaceholderSection = () => {
                             group-hover:opacity-100
                             group-hover:scale-105
                           "
-                          loading="lazy"
-                          decoding="async"
                         />
                       ) : (
-                        <Building2 className="h-16 w-16 text-primary/40 transition-transform duration-300 group-hover:scale-110" />
+                        <Building2 className="h-14 w-14 text-primary/40 transition-transform duration-300 group-hover:scale-110" />
                       )}
                     </div>
                   </Link>

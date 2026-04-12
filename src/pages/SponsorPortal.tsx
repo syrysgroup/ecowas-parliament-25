@@ -228,7 +228,7 @@ export default function SponsorPortal() {
               {platinum.length > 0 && (
                 <div className="mb-12">
                   <p className="text-center text-xs uppercase tracking-wider text-muted-foreground mb-6">
-                    Platinum Sponsors
+                    Sponsors
                   </p>
 
                   <div className="flex flex-wrap justify-center gap-10">
