@@ -1,5 +1,5 @@
 import { ReactNode, useState, useRef, useEffect } from "react";
-import { Bell, Settings, X, Sun, Moon, User, Lock, Globe, LogOut, CheckCircle2 } from "lucide-react";
+import { Bell, Settings, X, Sun, Moon, User, Lock, Globe, LogOut, CheckCircle2, HelpCircle } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, parseISO } from "date-fns";
@@ -26,7 +26,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import CRMAvatar from "@/components/crm/CRMAvatar";
-import CRMTour from "@/components/crm/CRMTour";
+import CRMTour, { useCRMTour } from "@/components/crm/CRMTour";
 import {
   Select as UISelect,
   SelectContent as UISelectContent,
@@ -371,6 +371,8 @@ function ProfileCompletionModal({ userId }: { userId: string }) {
         })
         .eq("id", userId);
       if (error) throw error;
+      // Sync full_name to auth user_metadata
+      await supabase.auth.updateUser({ data: { full_name: fullName.trim() } });
       qc.invalidateQueries({ queryKey: ["profile-completion-check", userId] });
       toast({ title: "Profile saved" });
     } catch (err: any) {
@@ -477,6 +479,7 @@ function CRMThemeToggle() {
 // ─── Main layout ──────────────────────────────────────────────────────────────
 export default function CRMLayout({ activeSection, onNavigate, children }: CRMLayoutProps) {
   const { user, roles, signOut } = useAuthContext();
+  const { startTour } = useCRMTour(onNavigate);
   const activeModule = CRM_MODULES.find(m => m.section === activeSection);
   const moduleLabel  = activeModule?.label ?? "Dashboard";
 
@@ -504,6 +507,14 @@ export default function CRMLayout({ activeSection, onNavigate, children }: CRMLa
             <NotificationBell onNavigate={onNavigate} />
 
             <CRMThemeToggle />
+
+            <button
+              onClick={() => startTour()}
+              className="p-1.5 rounded-lg transition-colors text-crm-text-dim hover:text-crm-text-secondary hover:bg-crm-surface"
+              title="Guided Tour"
+            >
+              <HelpCircle size={15} />
+            </button>
 
             <button
               onClick={() => onNavigate("settings")}

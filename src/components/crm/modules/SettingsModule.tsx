@@ -476,11 +476,20 @@ function SecuritySettings() {
 }
 
 // ─── Permission Manager ───────────────────────────────────────────────────────
-const MODULES = [
-  "dashboard", "people", "events", "news", "sponsors",
-  "site_content", "media_library", "settings", "analytics", "contacts", "newsletter",
+const PERM_MODULES = [
+  "dashboard", "tasks", "email-inbox", "calendar", "documents",
+  "team", "people", "news-editor", "events-manager", "programme-pillars",
+  "stakeholders-mgmt", "media-kit-mgmt", "sponsors-partners", "site-content",
+  "cms", "media-library", "analytics", "geo-analytics", "sponsor-metrics",
+  "finance", "invoices", "marketing", "newsletter", "contact-submissions",
+  "parliament-ops", "settings",
 ];
-const ROLES = ["admin", "moderator", "sponsor"] as const;
+const PERM_ROLES = [
+  "admin", "moderator", "project_director", "programme_lead",
+  "website_editor", "marketing_manager", "communications_officer",
+  "finance_coordinator", "logistics_coordinator", "sponsor_manager",
+  "consultant", "sponsor", "media",
+] as const;
 const ACTIONS = ["can_view", "can_create", "can_edit", "can_delete"] as const;
 
 function PermissionManager() {
@@ -518,12 +527,29 @@ function PermissionManager() {
     }));
   };
 
+  const toggleAllForRole = (role: string) => {
+    // Check if all are checked — if so, uncheck all; otherwise check all
+    const allChecked = PERM_MODULES.every(mod =>
+      ACTIONS.every(action => perms[`${role}:${mod}`]?.[action])
+    );
+    setPerms(prev => {
+      const next = { ...prev };
+      PERM_MODULES.forEach(mod => {
+        next[`${role}:${mod}`] = {
+          can_view: !allChecked, can_create: !allChecked,
+          can_edit: !allChecked, can_delete: !allChecked,
+        };
+      });
+      return next;
+    });
+  };
+
   const handleSave = async () => {
     setSaving(true);
     try {
       const upserts: any[] = [];
-      for (const role of ROLES) {
-        for (const module of MODULES) {
+      for (const role of PERM_ROLES) {
+        for (const module of PERM_MODULES) {
           const key = `${role}:${module}`;
           const p = perms[key] || { can_view: false, can_create: false, can_edit: false, can_delete: false };
           upserts.push({
@@ -533,8 +559,7 @@ function PermissionManager() {
           });
         }
       }
-      // Delete existing and re-insert for these roles
-      for (const role of ROLES) {
+      for (const role of PERM_ROLES) {
         await (supabase as any).from("role_permissions").delete().eq("role", role);
       }
       await (supabase as any).from("role_permissions").insert(upserts);
@@ -553,38 +578,44 @@ function PermissionManager() {
       <div className="flex items-start gap-2 p-3 bg-amber-950/40 border border-amber-800 rounded-lg">
         <AlertTriangle size={12} className="text-amber-400 flex-shrink-0 mt-0.5" />
         <p className="text-[10px] text-amber-300 leading-relaxed">
-          Super Admin always has full access. Configure permissions for Admin, Moderator, and Sponsor roles below.
+          Super Admin always has full access to all modules. Configure permissions for all other roles below.
         </p>
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto border border-crm-border rounded-lg">
         <table className="w-full text-[10px]">
           <thead>
-            <tr className="border-b border-crm-border">
-              <th className="text-left py-2 px-2 text-crm-text-dim font-semibold">Module</th>
-              {ROLES.map(role => (
-                <th key={role} colSpan={4} className="text-center py-2 px-1 text-crm-text-dim font-semibold capitalize">{role}</th>
+            <tr className="border-b border-crm-border bg-crm-surface/50">
+              <th className="text-left py-2 px-3 text-crm-text-dim font-semibold sticky left-0 bg-crm-surface/90 z-10 min-w-[130px]">Module</th>
+              {PERM_ROLES.map(role => (
+                <th key={role} colSpan={4} className="text-center py-2 px-1 text-crm-text-dim font-semibold">
+                  <button onClick={() => toggleAllForRole(role)} className="hover:text-crm-text transition-colors capitalize text-[9px]">
+                    {role.replace("_", " ")}
+                  </button>
+                </th>
               ))}
             </tr>
             <tr className="border-b border-crm-border">
-              <th></th>
-              {ROLES.map(role => ACTIONS.map(action => (
-                <th key={`${role}-${action}`} className="text-center py-1 px-0.5 text-crm-text-faint text-[8px]">
+              <th className="sticky left-0 bg-crm-surface/90 z-10"></th>
+              {PERM_ROLES.map(role => ACTIONS.map(action => (
+                <th key={`${role}-${action}`} className="text-center py-1 px-0.5 text-crm-text-faint text-[7px]">
                   {action.replace("can_", "").charAt(0).toUpperCase() + action.replace("can_", "").slice(1)}
                 </th>
               )))}
             </tr>
           </thead>
           <tbody>
-            {MODULES.map(module => (
+            {PERM_MODULES.map(module => (
               <tr key={module} className="border-b border-crm-border/50 hover:bg-crm-surface/50">
-                <td className="py-2 px-2 text-crm-text font-medium capitalize">{module.replace("_", " ")}</td>
-                {ROLES.map(role => ACTIONS.map(action => {
+                <td className="py-1.5 px-3 text-crm-text font-medium capitalize sticky left-0 bg-crm-card z-10 text-[10px]">
+                  {module.replace(/-/g, " ")}
+                </td>
+                {PERM_ROLES.map(role => ACTIONS.map(action => {
                   const key = `${role}:${module}`;
                   const checked = perms[key]?.[action] ?? false;
                   return (
-                    <td key={`${role}-${module}-${action}`} className="text-center py-2 px-0.5">
-                      <Checkbox checked={checked} onCheckedChange={() => toggle(role, module, action)} className="h-3.5 w-3.5" />
+                    <td key={`${role}-${module}-${action}`} className="text-center py-1.5 px-0.5">
+                      <Checkbox checked={checked} onCheckedChange={() => toggle(role, module, action)} className="h-3 w-3" />
                     </td>
                   );
                 }))}

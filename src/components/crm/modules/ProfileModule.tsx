@@ -287,6 +287,8 @@ export default function ProfileModule() {
         })
         .eq("id", user.id);
       if (error) throw error;
+      // Sync full_name to auth user_metadata so CRM header stays in sync
+      await supabase.auth.updateUser({ data: { full_name: fullName.trim(), avatar_url: avatarUrl || null } });
       qc.invalidateQueries({ queryKey: ["team-members"] });
       qc.invalidateQueries({ queryKey: ["team-members-profiles"] });
       toast({ title: t("crm.profile.saved") });

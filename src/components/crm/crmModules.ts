@@ -16,7 +16,6 @@ import {
   Layout,
   ShieldCheck,
   UserPlus,
-  Crown,
   Settings,
   Globe2,
   CalendarDays,
@@ -56,7 +55,7 @@ export type ModuleId =
   | "finance"
   | "marketing"
   | "cms"
-  | "super-admin"
+  
   | "geo-analytics"
   | "events-manager"
   | "sponsors-partners"
@@ -361,15 +360,6 @@ export const CRM_MODULES: CRMModule[] = [
     icon: ShieldCheck,
     section: "parliament-ops",
     allowedRoles: ["super_admin", "admin", "moderator"],
-    isStub: false,
-    group: "ADMINISTRATION",
-  },
-  {
-    id: "super-admin",
-    label: "Super Admin Hub",
-    icon: Crown,
-    section: "super-admin",
-    allowedRoles: ["super_admin"],
     isStub: false,
     group: "ADMINISTRATION",
   },

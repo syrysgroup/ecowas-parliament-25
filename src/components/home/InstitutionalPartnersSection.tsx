@@ -39,31 +39,26 @@ const InstitutionalPartnersSection = () => {
           <p className="mt-3 text-muted-foreground max-w-xl mx-auto">{t("instPartners.subtitle")}</p>
         </AnimatedSection>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5 max-w-5xl mx-auto">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-8 max-w-5xl mx-auto items-center justify-items-center">
           {institutionalPartners.map((partner, i) => (
             <AnimatedSection key={partner.id} delay={i * 80}>
               <Link
                 to={`/partners/${partner.slug}`}
-                className="group flex flex-col items-center gap-4 p-6 rounded-2xl bg-card border border-border hover:border-ecowas-blue/40 hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+                className="group flex flex-col items-center gap-3 text-center"
               >
-                <div className="w-full h-24 flex items-center justify-center bg-muted/40 rounded-xl overflow-hidden group-hover:bg-ecowas-blue/5 transition-colors duration-300 p-3">
+                <div className="h-20 flex items-center justify-center">
                   {partner.logo_url ? (
                     <img
                       src={partner.logo_url}
                       alt={partner.name}
-                      className="max-w-full max-h-full object-contain transition-transform duration-300 group-hover:scale-105"
+                      className="max-h-full max-w-[160px] object-contain transition-all duration-300 group-hover:scale-110 group-hover:drop-shadow-xl"
                       loading="lazy"
                     />
                   ) : (
-                    <Building2 className="h-10 w-10 text-ecowas-blue/40" />
+                    <Building2 className="h-10 w-10 text-ecowas-blue/40 transition-transform duration-300 group-hover:scale-110" />
                   )}
                 </div>
-                <div className="text-center flex-1">
-                  <p className="font-bold text-sm text-card-foreground leading-tight">{partner.name}</p>
-                  {partner.description && (
-                    <p className="text-[11px] text-muted-foreground mt-1 line-clamp-2 leading-relaxed">{partner.description}</p>
-                  )}
-                </div>
+                <p className="text-xs font-semibold text-muted-foreground group-hover:text-foreground transition-colors">{partner.name}</p>
                 <span className="flex items-center gap-1 text-[11px] font-semibold text-ecowas-blue opacity-0 group-hover:opacity-100 transition-opacity">
                   {t("common.learnMore")} <ArrowRight className="h-3 w-3" />
                 </span>
