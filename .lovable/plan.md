@@ -1,95 +1,85 @@
 
 
-## Plan: CRM Redesign — Modern, Animated, ECOWAS-Branded
+## Plan: Logo Treatment, Tour Help Button, Super Admin Cleanup, Permissions Overhaul, and Profile Name Sync
 
-This is a comprehensive visual overhaul of the `/crm` interface covering the sidebar, layout, dashboard, color system, animations, and responsive behavior.
+This addresses six related requests in one pass.
 
 ---
 
-### 1. ECOWAS Color System Update
+### 1. Pure-logo treatment for ImplementingPartnersSection and InstitutionalPartnersSection
 
-Update CSS variables in `src/index.css` to align with the ECOWAS Corporate Design Manual colors:
+**Files:** `src/components/home/ImplementingPartnersSection.tsx`, `src/components/home/InstitutionalPartnersSection.tsx`
 
-| Token | Current | New (from manual) |
-|---|---|---|
-| Primary Green | `152 100% 26%` | `145 63% 32%` (ECOWAS Green #1D6D37) |
-| Accent Yellow | `50 87% 45%` | `46 100% 50%` (ECOWAS Yellow #FFC800) |
-| Secondary Red | `340 66% 34%` | `0 72% 51%` (ECOWAS Red #D4252B) |
+Both sections currently wrap logos in card containers with borders, padding, and hover effects. The SponsorsSection already uses a "pure logo" style (no card, logo floats at natural size with hover scale).
 
-Update CRM-specific tokens (`--crm-bg`, `--crm-card`, etc.) to use warmer, richer tones derived from the ECOWAS green palette. Both light and dark modes updated.
+**Changes:**
+- Remove the card wrapper (`bg-card border rounded-2xl p-6`) from each partner item
+- Replace with a simple flex-col centered layout matching SponsorsSection: logo at natural size with `group-hover:scale-110 group-hover:drop-shadow-xl`, partner name below in small muted text
+- Remove the `bg-muted/40 rounded-xl` logo container — let the logo float directly
+- Keep the Link wrapper and "Learn more" hover text
+- Adjust grid to use `items-center justify-items-center` for clean alignment
 
-### 2. Sidebar Redesign (`CRMSidebar.tsx`)
+### 2. Help button in CRM topbar to trigger tour
 
-**Logo area:**
-- Replace the "EP" square with the actual ECOWAS Parliament Initiatives logo image (`/images/logo/logo.png`)
-- When collapsed, show just the badge/icon version
-- Add a subtle glow/pulse animation on the logo
+**File:** `src/components/crm/CRMLayout.tsx`
 
-**Navigation improvements:**
-- Reorder groups for workflow efficiency: WORKSPACE > COMMUNICATION > CONTENT > PEOPLE > ANALYTICS & FINANCE > MARKETING > ADMINISTRATION
-- Add smooth expand/collapse animation (CSS transition on width + opacity on labels)
-- Active item: ECOWAS green left border accent bar (3px) instead of full background highlight
-- Hover: subtle slide-in background with 150ms ease transition
-- Group headers: thin ECOWAS yellow accent line instead of plain text dividers
-- Unread badge: use ECOWAS red instead of blue
+- Import `useCRMTour` from `./CRMTour`
+- Import `HelpCircle` from lucide-react
+- Call `const { startTour } = useCRMTour(onNavigate)` inside the `CRMLayout` component
+- Add a `<button>` with `<HelpCircle size={15} />` next to the theme toggle in the topbar right section
+- On click, call `startTour()`
 
-**User section (bottom):**
-- Avatar with online presence dot (green pulse animation)
-- Role badge styled with ECOWAS colors
+### 3. Remove "Super Admin Hub" as a separate sidebar group — merge into existing modules
 
-**Responsive:**
-- Mobile: sidebar becomes a slide-out drawer (Sheet component) triggered by hamburger in top bar
-- Tablet: auto-collapse to icon-only mode
-- Desktop: full sidebar with collapse toggle
+**File:** `src/components/crm/crmModules.ts`
 
-### 3. Top Bar / Header Redesign (`CRMLayout.tsx`)
+The super_admin is already listed in `allowedRoles` for every module. The separate "Super Admin Hub" module (`id: "super-admin"`) creates a redundant grouping.
 
-- Clean header with frosted glass effect (`backdrop-blur-xl bg-crm-card/80`)
-- Breadcrumb showing current module name with fade-in animation
-- Search bar with expand animation on focus
-- Notification bell with bounce animation on new items
-- Theme toggle with smooth rotation animation
-- Profile dropdown with scale-in animation
+**Changes:**
+- Remove the `super-admin` module entry from `CRM_MODULES`
+- The SuperAdminModule's functionality (user management, invitations, activity logs, routes, branding, email config) is already accessible via "People & Access", "Settings", etc.
+- If any unique super-admin-only features exist that aren't elsewhere, we'll fold them into the Settings module under a super-admin-only tab
 
-### 4. Dashboard Module Redesign (`DashboardModule.tsx`)
+### 4. Role-differentiated dashboard
 
-**Stat cards:**
-- Glassmorphism cards with subtle border glow
-- Counter animation (count-up effect) on numbers
-- Hover: lift + shadow expansion animation
-- Icons use ECOWAS color palette (green, yellow, red accents)
+**File:** `src/components/crm/modules/DashboardModule.tsx`
 
-**Charts section:**
-- Staggered fade-in animation as cards enter viewport
-- Cards have subtle hover scale (1.02) effect
+Currently the dashboard shows the same content for all non-sponsor staff. Each role should see role-relevant quick actions and widgets.
 
-**Welcome banner (new):**
-- Greeting with user's name and time-of-day context
-- ECOWAS-branded gradient background (green to dark green)
-- Today's date and quick action buttons
+**Changes:**
+- Use `useAuthContext()` to get `roles`, `isSuperAdmin`, `isAdmin`, etc.
+- **Super Admin / Admin:** Full dashboard with all stat cards, charts, and a quick "User Management" action button
+- **Moderator:** Dashboard focused on pending applications, content review tasks, and recent activity
+- **Programme Lead / Project Director:** Tasks, calendar events, programme-specific metrics
+- **Marketing Manager:** Campaign stats, newsletter subscribers, website analytics
+- **Finance Coordinator:** Budget overview, recent invoices, payment status
+- **Sponsor:** Already handled (sponsor portal placeholder)
+- **Other staff:** Basic dashboard with tasks, calendar, and activity feed
+- The WelcomeBanner quick actions will adapt based on role
 
-### 5. Animation System
+### 5. Overhaul PermissionManager in Settings
 
-Add to `tailwind.config.ts` and `index.css`:
-- `animate-slide-in-left`: sidebar items stagger in on load
-- `animate-count-up`: number counters
-- `animate-glow-pulse`: subtle glow on active elements
-- `animate-bounce-in`: notification badge
-- CSS transitions on all interactive elements (150-200ms)
+**File:** `src/components/crm/modules/SettingsModule.tsx`
 
-### 6. Responsive Breakpoints
+The current permission manager only covers 3 roles (admin, moderator, sponsor) and 11 modules. It needs to cover all CRM roles and all actual CRM modules.
 
-- **Mobile (<768px):** Sidebar hidden, hamburger menu, single-column dashboard, stacked cards
-- **Tablet (768-1024px):** Collapsed icon sidebar, 2-column dashboard grid
-- **Desktop (>1024px):** Full sidebar, 4-column stat cards, multi-column chart layout
+**Changes:**
+- Expand `ROLES` to include all non-super_admin roles: `admin`, `moderator`, `project_director`, `programme_lead`, `website_editor`, `marketing_manager`, `communications_officer`, `finance_coordinator`, `logistics_coordinator`, `sponsor_manager`, `consultant`, `sponsor`
+- Expand `MODULES` to match actual CRM module IDs from `crmModules.ts`: `dashboard`, `tasks`, `email-inbox`, `calendar`, `documents`, `team`, `people`, `news-editor`, `events-manager`, `programme-pillars`, `stakeholders-mgmt`, `media-kit-mgmt`, `sponsors-partners`, `site-content`, `cms`, `media-library`, `analytics`, `geo-analytics`, `sponsor-metrics`, `finance`, `invoices`, `marketing`, `newsletter`, `contact-submissions`, `parliament-ops`, `settings`
+- Make the table horizontally scrollable with sticky first column for module names
+- Add a "Select All" toggle per role column
+- Super Admin note remains: "Super Admin always has full access"
 
-### 7. Content Group Reorder (`crmModules.ts`)
+### 6. Profile name sync — ensure CRM profile name stays in sync
 
-Reorder `MODULE_GROUPS` for better workflow:
-```
-WORKSPACE → COMMUNICATION → CONTENT → PEOPLE → ANALYTICS & FINANCE → MARKETING → ADMINISTRATION
-```
-Move "PEOPLE" after "CONTENT" since content management is used more frequently than people management.
+**File:** `src/components/crm/modules/ProfileModule.tsx`
+
+The `displayName` in `CRMLayout.tsx` reads from `user.user_metadata.full_name`, but the profile form saves to the `profiles` table. These can get out of sync.
+
+**Changes:**
+- In ProfileModule, after successfully saving the profile `full_name`, also call `supabase.auth.updateUser({ data: { full_name: newFullName } })` to keep `user_metadata` in sync
+- This ensures the CRM header, sidebar avatar name, and profile page all show the same name
+- Similarly, when the ProfileCompletionModal saves `full_name`, update `user_metadata` too
 
 ---
 
@@ -97,10 +87,11 @@ Move "PEOPLE" after "CONTENT" since content management is used more frequently t
 
 | File | Change |
 |---|---|
-| `src/index.css` | Update ECOWAS color tokens, add new animations |
-| `tailwind.config.ts` | Add new animation keyframes |
-| `src/components/crm/CRMSidebar.tsx` | Full redesign — logo, animations, responsive drawer, active indicators |
-| `src/components/crm/CRMLayout.tsx` | Glassmorphism header, animated breadcrumbs, responsive hamburger |
-| `src/components/crm/modules/DashboardModule.tsx` | Welcome banner, animated stat cards, staggered chart entry |
-| `src/components/crm/crmModules.ts` | Reorder MODULE_GROUPS |
+| `src/components/home/ImplementingPartnersSection.tsx` | Pure-logo treatment, remove card wrappers |
+| `src/components/home/InstitutionalPartnersSection.tsx` | Pure-logo treatment, remove card wrappers |
+| `src/components/crm/CRMLayout.tsx` | Add Help button with `useCRMTour`, sync name in ProfileCompletionModal |
+| `src/components/crm/crmModules.ts` | Remove `super-admin` module entry |
+| `src/components/crm/modules/DashboardModule.tsx` | Role-differentiated dashboard content |
+| `src/components/crm/modules/SettingsModule.tsx` | Expand PermissionManager roles and modules |
+| `src/components/crm/modules/ProfileModule.tsx` | Sync `full_name` to `user_metadata` on save |
 
