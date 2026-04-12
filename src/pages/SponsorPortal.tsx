@@ -188,50 +188,188 @@ export default function SponsorPortal() {
         </div>
       </section>
 
-      {/* CURRENT SPONSORS (COLOR LOGOS) */}
-      <section className="py-16">
-        <div className="container">
-          <AnimatedSection className="text-center mb-10">
-            <h2 className="text-2xl md:text-3xl font-bold">
-              Current sponsors
-            </h2>
-          </AnimatedSection>
+{/* CURRENT SPONSORS (PREMIUM HIERARCHY DISPLAY) */}
+<section className="py-16">
+  <div className="container">
+    <AnimatedSection className="text-center mb-12">
+      <h2 className="text-2xl md:text-3xl font-bold">
+        Current sponsors
+      </h2>
+    </AnimatedSection>
 
-          {currentSponsors.length > 0 && (
-            <div className="flex flex-wrap gap-4 justify-center">
-              {currentSponsors.map((s, i) => (
-                <AnimatedSection key={s.id} delay={i * 50}>
-                  <Link to={`/sponsors/${s.slug}`}>
-                    <div className="flex items-center gap-3 px-5 py-4 rounded-xl border border-border bg-card hover:shadow-md transition-all">
+    {currentSponsors.length > 0 && (
+      <>
+        {/* ─── SORTING LOGIC ─── */}
+        {(() => {
+          const tierRank: Record<string, number> = {
+            platinum: 0,
+            gold: 1,
+            silver: 2,
+            bronze: 3,
+          };
 
-                      {/* COLOR LOGO */}
-                      {s.logo_url && (
-                        <div className="h-10 w-24 flex items-center justify-center">
-                          <img
-                            src={s.logo_url}
-                            alt={s.name}
-                            className="max-h-10 max-w-[120px] object-contain transition-all duration-300 group-hover:scale-105"
-                            loading="lazy"
-                            decoding="async"
-                          />
-                        </div>
-                      )}
+          const sorted = [...currentSponsors].sort(
+            (a, b) =>
+              (tierRank[a.tier.toLowerCase()] ?? 99) -
+              (tierRank[b.tier.toLowerCase()] ?? 99)
+          );
 
-                      <span
-                        className={`text-xs font-bold px-2 py-0.5 rounded-full ${tierBadgeClass(
-                          s.tier
-                        )}`}
+          const platinum = sorted.filter(
+            (s) => s.tier.toLowerCase() === "platinum"
+          );
+
+          const others = sorted.filter(
+            (s) => s.tier.toLowerCase() !== "platinum"
+          );
+
+          return (
+            <>
+              {/* ─── PLATINUM (SPOTLIGHT ROW) ─── */}
+              {platinum.length > 0 && (
+                <div className="mb-12">
+                  <p className="text-center text-xs uppercase tracking-wider text-muted-foreground mb-6">
+                    Platinum Sponsors
+                  </p>
+
+                  <div className="flex flex-wrap justify-center gap-10">
+                    {platinum.map((s, i) => (
+                      <AnimatedSection key={s.id} delay={i * 80}>
+                        <Link
+                          to={`/sponsors/${s.slug}`}
+                          className="
+                            group flex items-center justify-center
+                            transition-transform duration-300
+                            hover:-translate-y-1
+                          "
+                        >
+                          <div className="relative h-32 w-40 flex items-center justify-center">
+
+                            {/* LOGO */}
+                            {s.logo_url ? (
+                              <img
+                                src={s.logo_url}
+                                alt={s.tier}
+                                className="
+                                  max-h-28
+                                  max-w-full
+                                  object-contain
+                                  grayscale
+                                  opacity-80
+                                  transition-all duration-300
+                                  group-hover:grayscale-0
+                                  group-hover:opacity-100
+                                  group-hover:scale-105
+                                  drop-shadow-md
+                                "
+                                loading="lazy"
+                                decoding="async"
+                              />
+                            ) : (
+                              <div className="h-12 w-12 bg-muted rounded-full" />
+                            )}
+
+                            {/* RIBBON */}
+                            <span className="absolute top-0 right-0 text-[9px] font-semibold px-2 py-1 rounded-bl-md bg-purple-100 text-purple-700">
+                              Platinum
+                            </span>
+                          </div>
+                        </Link>
+                      </AnimatedSection>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* ─── OTHER TIERS (GRID) ─── */}
+              <div
+                className="
+                  grid
+                  grid-cols-2
+                  sm:grid-cols-3
+                  lg:grid-cols-6
+                  gap-x-4
+                  gap-y-8
+                  max-w-6xl
+                  mx-auto
+                  items-center
+                  justify-items-center
+                "
+              >
+                {others.map((s, i) => {
+                  const tier = s.tier.toLowerCase();
+
+                  const sizeClass =
+                    tier === "gold"
+                      ? "max-h-22"
+                      : "max-h-16";
+
+                  const badgeClass =
+                    tier === "gold"
+                      ? "bg-amber-100 text-amber-700"
+                      : tier === "silver"
+                      ? "bg-slate-100 text-slate-700"
+                      : "bg-orange-100 text-orange-700";
+
+                  return (
+                    <AnimatedSection key={s.id} delay={i * 60}>
+                      <Link
+                        to={`/sponsors/${s.slug}`}
+                        className="
+                          group flex items-center justify-center w-full
+                          transition-transform duration-300
+                          hover:-translate-y-1
+                        "
                       >
-                        {s.tier}
-                      </span>
-                    </div>
-                  </Link>
-                </AnimatedSection>
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
+                        <div className="relative h-28 w-full flex items-center justify-center px-3">
+
+                          {/* LOGO */}
+                          {s.logo_url ? (
+                            <img
+                              src={s.logo_url}
+                              alt={s.tier}
+                              className={`
+                                ${sizeClass}
+                                max-w-full
+                                object-contain
+                                grayscale
+                                opacity-80
+                                transition-all duration-300
+                                group-hover:grayscale-0
+                                group-hover:opacity-100
+                                group-hover:scale-105
+                              `}
+                              loading="lazy"
+                              decoding="async"
+                            />
+                          ) : (
+                            <div className="h-10 w-10 bg-muted rounded-full" />
+                          )}
+
+                          {/* RIBBON */}
+                          <span
+                            className={`
+                              absolute top-0 right-0
+                              text-[9px] font-semibold
+                              px-2 py-1
+                              rounded-bl-md
+                              ${badgeClass}
+                            `}
+                          >
+                            {s.tier}
+                          </span>
+                        </div>
+                      </Link>
+                    </AnimatedSection>
+                  );
+                })}
+              </div>
+            </>
+          );
+        })()}
+      </>
+    )}
+  </div>
+</section>
 
       {/* IMPLEMENTING PARTNERS (CENTERED COLOR LOGOS) */}
       <section className="py-16 bg-muted/30 border-t border-border">

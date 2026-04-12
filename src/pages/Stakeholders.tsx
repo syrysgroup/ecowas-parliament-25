@@ -275,70 +275,137 @@ const Stakeholders = () => {
       </section>
 
       {/* Institutional Partners — from DB */}
-      <section className="py-16">
-        <div className="container">
-          <AnimatedSection className="mb-8">
-            <Badge className="mb-3 bg-ecowas-blue/10 text-ecowas-blue">{t("stakeholders.instPartnersBadge")}</Badge>
-            <h2 className="text-2xl font-black text-foreground">{t("stakeholders.instPartnersTitle")}</h2>
+<section className="py-16">
+  <div className="container">
+    <AnimatedSection className="mb-10 text-center">
+      <Badge className="mb-3 bg-ecowas-blue/10 text-ecowas-blue">
+        {t("stakeholders.instPartnersBadge")}
+      </Badge>
+      <h2 className="text-2xl font-black text-foreground">
+        {t("stakeholders.instPartnersTitle")}
+      </h2>
+    </AnimatedSection>
+
+    {(instPartners as any[]).length === 0 ? (
+      <p className="text-sm text-muted-foreground text-center">
+        No institutional partners published yet.
+      </p>
+    ) : (
+      <div
+        className="
+          grid
+          grid-cols-2
+          sm:grid-cols-3
+          lg:grid-cols-6
+          gap-x-4
+          gap-y-8
+          max-w-6xl
+          mx-auto
+          items-center
+          justify-items-center
+        "
+      >
+        {(instPartners as any[]).map((partner: any, index: number) => (
+          <AnimatedSection key={partner.id} delay={index * 60}>
+            <Link
+              to={`/partners/${partner.slug}`}
+              className="group flex items-center justify-center w-full transition-transform duration-300 hover:-translate-y-1"
+            >
+              <div className="h-28 w-full flex items-center justify-center px-3">
+                {partner.logo_url ? (
+                  <img
+                    src={partner.logo_url}
+                    alt={partner.name}
+                    className="
+                      max-h-20
+                      max-w-full
+                      object-contain
+                      grayscale
+                      opacity-80
+                      transition-all duration-300
+                      group-hover:grayscale-0
+                      group-hover:opacity-100
+                      group-hover:scale-105
+                    "
+                    loading="lazy"
+                    decoding="async"
+                  />
+                ) : (
+                  <div className="h-12 w-12 bg-muted rounded-full" />
+                )}
+              </div>
+            </Link>
           </AnimatedSection>
-          {(instPartners as any[]).length === 0 ? (
-            <p className="text-sm text-muted-foreground">No institutional partners published yet.</p>
-          ) : (
-            <div className="grid gap-6 md:grid-cols-2 max-w-4xl">
-              {(instPartners as any[]).map((partner: any, index: number) => (
-                <AnimatedSection key={partner.id} delay={index * 70}>
-                  <Link to={`/partners/${partner.slug}`} className="block h-full">
-                    <article className="overflow-hidden rounded-3xl border border-ecowas-blue/20 bg-card shadow-sm p-6 hover:border-ecowas-blue/40 transition-all hover:shadow-lg h-full flex flex-col">
-                      <h3 className="text-base font-black text-card-foreground">{partner.name}</h3>
-                      {partner.description && (
-                        <p className="text-sm text-muted-foreground leading-relaxed flex-1 mt-3">{partner.description}</p>
-                      )}
-                      <span className="mt-4 inline-flex items-center text-xs font-semibold text-primary">{t("stakeholders.learnMore")}</span>
-                    </article>
-                  </Link>
-                </AnimatedSection>
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
+        ))}
+      </div>
+    )}
+  </div>
+</section>
 
       {/* Sponsors — from DB */}
-      <section className="bg-muted/30 py-16">
-        <div className="container">
-          <AnimatedSection className="mb-8">
-            <h2 className="text-2xl font-black text-foreground">{t("stakeholders.sponsorsTitle")}</h2>
+<section className="bg-muted/30 py-16">
+  <div className="container">
+    <AnimatedSection className="mb-10 text-center">
+      <h2 className="text-2xl font-black text-foreground">
+        {t("stakeholders.sponsorsTitle")}
+      </h2>
+    </AnimatedSection>
+
+    {(sponsors as any[]).length === 0 ? (
+      <p className="text-sm text-muted-foreground text-center">
+        No sponsors published yet.
+      </p>
+    ) : (
+      <div
+        className="
+          grid
+          grid-cols-2
+          sm:grid-cols-3
+          lg:grid-cols-6
+          gap-x-4
+          gap-y-8
+          max-w-6xl
+          mx-auto
+          items-center
+          justify-items-center
+        "
+      >
+        {(sponsors as any[]).map((sponsor: any, index: number) => (
+          <AnimatedSection key={sponsor.id} delay={index * 60}>
+            <Link
+              to={`/sponsors/${sponsor.slug}`}
+              className="group flex items-center justify-center w-full transition-transform duration-300 hover:-translate-y-1"
+            >
+              <div className="h-28 w-full flex items-center justify-center px-3">
+                {sponsor.logo_url ? (
+                  <img
+                    src={sponsor.logo_url}
+                    alt={sponsor.tier}
+                    className="
+                      max-h-20
+                      max-w-full
+                      object-contain
+                      grayscale
+                      opacity-80
+                      transition-all duration-300
+                      group-hover:grayscale-0
+                      group-hover:opacity-100
+                      group-hover:scale-105
+                    "
+                    loading="lazy"
+                    decoding="async"
+                  />
+                ) : (
+                  <div className="h-12 w-12 bg-muted rounded-full" />
+                )}
+              </div>
+            </Link>
           </AnimatedSection>
-          {(sponsors as any[]).length === 0 ? (
-            <p className="text-sm text-muted-foreground">No sponsors published yet.</p>
-          ) : (
-            <div className="flex flex-wrap gap-4">
-              {(sponsors as any[]).map((sponsor: any, index: number) => (
-                <AnimatedSection key={sponsor.id} delay={index * 40}>
-                  <Link to={`/sponsors/${sponsor.slug}`}>
-                    <div className="flex items-center gap-3 rounded-2xl border border-border bg-card px-5 py-4 shadow-sm hover:border-primary/30 transition-all">
-                      {sponsor.logo_url ? (
-                        <img
-                          src={sponsor.logo_url}
-                          alt={sponsor.name}
-                          className="w-10 h-10 object-contain"
-                          loading="lazy"
-                          width={40}
-                          height={40}
-                          decoding="async"
-                        />
-                      ) : (
-                        <SponsorLogo name={sponsor.name} color="hsl(var(--primary))" size={42} />
-                      )}
-                      <span className="text-sm font-semibold text-card-foreground">{sponsor.name}</span>
-                    </div>
-                  </Link>
-                </AnimatedSection>
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
+        ))}
+      </div>
+    )}
+  </div>
+</section>
     </Layout>
   );
 };

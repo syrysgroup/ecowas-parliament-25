@@ -55,48 +55,54 @@ const InstitutionalPartnersSection = () => {
           </p>
         </AnimatedSection>
 
-        {/* GRID (6 per row on large screens) */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-10 max-w-6xl mx-auto items-center justify-items-center">
-
+        {/* GRID */}
+        <div
+          className="
+            grid
+            grid-cols-2
+            sm:grid-cols-3
+            lg:grid-cols-6
+            gap-6 lg:gap-4
+            max-w-6xl
+            mx-auto
+            items-center
+            justify-items-center
+          "
+        >
           {institutionalPartners.map((partner, i) => (
             <AnimatedSection key={partner.id} delay={i * 70}>
               <Link
                 to={`/partners/${partner.slug}`}
-                className="group flex items-center justify-center"
+                className="group flex items-center justify-center w-full"
               >
-                {/* CENTERED LOGO */}
-                <div className="h-36 w-full flex items-center justify-center">
+                <div className="h-28 w-full flex items-center justify-center px-2">
                   {partner.logo_url ? (
                     <img
                       src={partner.logo_url}
                       alt={`${partner.name} logo`}
+                      loading="lazy"
+                      decoding="async"
                       className="
-                        max-h-28
-                        max-w-[200px]
+                        max-h-20
+                        max-w-full
                         object-contain
-
                         grayscale
                         opacity-80
-
                         transition-all
                         duration-300
                         ease-out
-
                         group-hover:grayscale-0
                         group-hover:opacity-100
                         group-hover:scale-105
                       "
-                      loading="lazy"
-                      decoding="async"
                     />
                   ) : (
-                    <Building2 className="h-14 w-14 text-ecowas-blue/40 transition-transform duration-300 group-hover:scale-110" />
+                    <Building2 className="h-12 w-12 text-ecowas-blue/40 transition-transform duration-300 group-hover:scale-110" />
                   )}
                 </div>
               </Link>
             </AnimatedSection>
           ))}
-
         </div>
 
       </div>
