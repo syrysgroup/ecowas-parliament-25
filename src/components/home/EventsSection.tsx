@@ -47,7 +47,7 @@ const EventsSection = () => {
   });
 
   return (
-    <section className="py-20 bg-muted/20 border-t border-border">
+    <section className="py-20 bg-background">
       <div className="container">
         <div className="flex items-end justify-between gap-6 mb-12 flex-wrap">
           <AnimatedSection>
