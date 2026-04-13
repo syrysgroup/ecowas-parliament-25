@@ -47,7 +47,7 @@ export default function SetPassword() {
       const data = res.data as { success?: boolean; error?: string };
       if (data?.error) throw new Error(data.error);
       setPageState("success");
-      setTimeout(() => navigate("/crm"), 2500);
+      setTimeout(() => navigate("/complete-profile"), 2500);
     } catch (err: any) {
       setError(err.message || t("setPw.errSession"));
     } finally { setSaving(false); }

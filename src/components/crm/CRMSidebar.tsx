@@ -77,7 +77,7 @@ function SidebarContent({
       <div className={`flex items-center border-b border-crm-border/60 h-16 px-3 ${collapsed && !isMobile ? "justify-center" : "justify-between"}`}>
         {showLabels ? (
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center flex-shrink-0 animate-glow-pulse shadow-lg">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center flex-shrink-0 animate-glow-pulse shadow-[0_0_20px_hsl(var(--primary)/0.4)]">
               <img
                 src="/images/logo/logo.png"
                 alt="ECOWAS"
@@ -98,7 +98,7 @@ function SidebarContent({
             </div>
           </div>
         ) : (
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center animate-glow-pulse shadow-lg">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center animate-glow-pulse shadow-[0_0_20px_hsl(var(--primary)/0.4)]">
             <img
               src="/images/logo/logo.png"
               alt="EP"
@@ -138,17 +138,17 @@ function SidebarContent({
           <div key={group} className={gi > 0 ? "mt-2" : ""}>
             {/* Group header */}
             {showLabels ? (
-              <div className={`px-4 pt-3 pb-2 ${gi > 0 ? "mt-1" : ""}`}>
+              <div className={`px-3 pt-3 pb-2 ${gi > 0 ? "mt-1" : ""}`}>
                 <div className="flex items-center gap-2">
-                  <div className="w-6 h-px bg-accent/60" />
-                  <span className="text-[9px] font-bold tracking-[0.14em] text-muted-foreground uppercase select-none whitespace-nowrap">
+                  <div className="flex-1 h-px bg-gradient-to-r from-transparent to-primary/30" />
+                  <span className="text-[8px] font-bold tracking-[0.18em] text-primary/50 uppercase select-none whitespace-nowrap">
                     {group}
                   </span>
-                  <div className="flex-1 h-px bg-border/40" />
+                  <div className="flex-1 h-px bg-gradient-to-l from-transparent to-primary/30" />
                 </div>
               </div>
             ) : (
-              gi > 0 && <div className="mx-3 my-2 h-px bg-accent/40" />
+              gi > 0 && <div className="mx-3 my-2 h-px bg-primary/20" />
             )}
 
             <ul className="space-y-0.5 px-2">
@@ -168,8 +168,8 @@ function SidebarContent({
                         relative w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left
                         transition-all duration-150 ease-out group
                         ${isActive
-                          ? "bg-primary/10 text-primary font-semibold border-l-[3px] border-primary pl-2"
-                          : "text-muted-foreground hover:text-foreground hover:bg-muted/50 border-l-[3px] border-transparent"
+                          ? "bg-gradient-to-r from-primary/20 to-primary/5 text-primary font-semibold border-l-[3px] border-primary pl-2 shadow-[inset_0_0_12px_hsl(var(--primary)/0.12)]"
+                          : "text-muted-foreground hover:text-foreground hover:bg-white/5 border-l-[3px] border-transparent"
                         }
                         ${collapsed && !isMobile ? "justify-center" : ""}
                       `}
@@ -208,12 +208,12 @@ function SidebarContent({
       </nav>
 
       {/* User section */}
-      <div className={`border-t border-crm-border/60 p-3 ${collapsed && !isMobile ? "flex justify-center" : ""}`}>
+      <div className={`border-t border-crm-border/40 p-3 bg-gradient-to-t from-[hsl(152,40%,4%)] to-transparent ${collapsed && !isMobile ? "flex justify-center" : ""}`}>
         {showLabels ? (
           <div className="space-y-2">
             <div className="flex items-center gap-2.5 min-w-0">
               <div className="relative flex-shrink-0">
-                <div className="w-8 h-8 rounded-full bg-primary/15 flex items-center justify-center text-primary text-xs font-bold uppercase ring-2 ring-primary/20">
+                <div className="w-8 h-8 rounded-full bg-primary/15 flex items-center justify-center text-primary text-xs font-bold uppercase ring-2 ring-primary/30 shadow-[0_0_8px_hsl(var(--primary)/0.3)]">
                   {displayName.charAt(0)}
                 </div>
                 {/* Online dot */}
@@ -275,7 +275,7 @@ export default function CRMSidebar({ activeSection, onNavigate }: CRMSidebarProp
             <Menu size={20} />
           </button>
         </SheetTrigger>
-        <SheetContent side="left" className="w-[280px] p-0 bg-card border-r border-border">
+        <SheetContent side="left" className="w-[280px] p-0 bg-gradient-to-b from-[hsl(152,30%,8%)] via-[hsl(152,25%,6%)] to-[hsl(152,20%,4%)] border-r border-crm-border/40">
           <SidebarContent
             activeSection={activeSection}
             onNavigate={onNavigate}
@@ -293,7 +293,9 @@ export default function CRMSidebar({ activeSection, onNavigate }: CRMSidebarProp
   return (
     <aside
       className={`
-        flex flex-col h-screen bg-card border-r border-border/60
+        flex flex-col h-screen
+        bg-gradient-to-b from-[hsl(152,30%,8%)] via-[hsl(152,25%,6%)] to-[hsl(152,20%,4%)]
+        border-r border-crm-border/40
         transition-all duration-300 ease-in-out flex-shrink-0
         ${collapsed ? "w-[60px]" : "w-[240px]"}
       `}

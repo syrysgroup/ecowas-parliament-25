@@ -1,8 +1,9 @@
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { useEffect, lazy, Suspense } from "react";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { getModulesForRoles } from "@/components/crm/crmModules";
 import CRMLayout from "@/components/crm/CRMLayout";
+import { supabase } from "@/integrations/supabase/client";
 
 // Eager — core modules used immediately
 import DashboardModule    from "@/components/crm/modules/DashboardModule";
@@ -48,7 +49,8 @@ function ModuleLoader() {
 
 export default function CRMDashboard() {
   const [params, setParams] = useSearchParams();
-  const { roles, loading, rolesLoading } = useAuthContext();
+  const { user, roles, loading, rolesLoading } = useAuthContext();
+  const navigate = useNavigate();
 
   const section = params.get("section") ?? "";
 
@@ -56,6 +58,21 @@ export default function CRMDashboard() {
     s === "" ? setParams({}) : setParams({ section: s });
     window.scrollTo(0, 0);
   };
+
+  // Profile completion gate: redirect to /complete-profile if required fields are missing
+  useEffect(() => {
+    if (loading || rolesLoading || !user) return;
+    (supabase as any)
+      .from("profiles")
+      .select("full_name, title, country, organisation")
+      .eq("id", user.id)
+      .single()
+      .then(({ data }: any) => {
+        if (!data?.full_name || !data?.title || !data?.country || !data?.organisation) {
+          navigate("/complete-profile", { replace: true });
+        }
+      });
+  }, [user, loading, rolesLoading, navigate]);
 
   // Access guard: bounce to dashboard if section not allowed for user's roles
   useEffect(() => {

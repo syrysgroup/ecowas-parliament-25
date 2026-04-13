@@ -49,6 +49,7 @@ import ParliamentCountry from "./pages/programmes/ParliamentCountry";
 // Auth
 import Auth from "./pages/Auth";
 import SetPassword from "./pages/SetPassword";
+import CompleteProfile from "./pages/CompleteProfile";
 
 // Admin pages
 import UserManagement from "./pages/admin/UserManagement";
@@ -211,6 +212,17 @@ const App = () => (
               {/* Auth */}
               <Route path="/auth" element={<Auth />} />
               <Route path="/set-password" element={<SetPassword />} />
+              <Route path="/complete-profile" element={
+                <ProtectedRoute allowedRoles={[
+                  "super_admin", "admin", "moderator", "sponsor", "media",
+                  "project_director", "programme_lead", "website_editor",
+                  "marketing_manager", "communications_officer",
+                  "finance_coordinator", "logistics_coordinator",
+                  "sponsor_manager", "consultant",
+                ]}>
+                  <CompleteProfile />
+                </ProtectedRoute>
+              }/>
 
               {/* Accredited Media Portal */}
               <Route path="/media-portal" element={
@@ -218,8 +230,6 @@ const App = () => (
                   <MediaPortal />
                 </ProtectedRoute>
               }/>
-              <Route path="/set-password" element={<SetPassword />} />
-
               {/* Protected admin area */}
               <Route path="/admin/users" element={
                 <ProtectedRoute allowedRoles={["super_admin"]}>

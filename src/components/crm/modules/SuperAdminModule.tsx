@@ -27,6 +27,7 @@ interface UserWithRoles {
 interface Invitation {
   id: string; email: string; role: AppRole;
   invited_by: string; created_at: string; accepted_at: string | null;
+  expires_at: string | null; resent_at: string | null;
 }
 interface ActivityLog {
   id: string; action: string; entity_type: string;
@@ -86,13 +87,13 @@ function StatCard({ label, value, icon: Icon, accent }: {
   label: string; value: string | number; icon: React.ElementType; accent: string;
 }) {
   return (
-    <div className="bg-crm-card border border-crm-border rounded-xl p-4 flex items-start gap-3">
-      <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 border ${accent}`}>
-        <Icon size={15} />
+    <div className="bg-crm-card border border-crm-border rounded-xl p-4 flex items-start gap-3 hover:border-crm-border-hover transition-colors group">
+      <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 border bg-gradient-to-br shadow-lg ${accent}`}>
+        <Icon size={16} />
       </div>
       <div>
         <p className="text-[10px] font-mono uppercase tracking-widest text-crm-text-dim">{label}</p>
-        <p className="text-2xl font-bold text-crm-text">{value}</p>
+        <p className="text-2xl font-bold text-crm-text group-hover:text-primary transition-colors">{value}</p>
       </div>
     </div>
   );
@@ -106,9 +107,9 @@ function TabBtn({ id, label, icon: Icon, badge, active, onClick }: {
   return (
     <button
       onClick={onClick}
-      className={`flex items-center gap-2 px-3 py-2 rounded-lg text-[12px] font-medium transition-all ${
+      className={`flex items-center gap-2 px-3.5 py-2 rounded-full text-[12px] font-medium transition-all whitespace-nowrap ${
         active
-          ? "bg-amber-950 text-amber-400 border border-amber-800"
+          ? "bg-gradient-to-r from-amber-900 to-amber-950 text-amber-300 border border-amber-700 shadow-[0_0_10px_hsl(38,90%,50%,0.15)]"
           : "text-crm-text-muted hover:text-crm-text-secondary hover:bg-crm-surface border border-transparent"
       }`}
     >
@@ -561,10 +562,11 @@ export default function SuperAdminModule() {
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [activityLog, setActivityLog] = useState<ActivityLog[]>([]);
   const [loading,     setLoading]     = useState(true);
-  const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole,  setInviteRole]  = useState<AppRole>("admin");
-  const [sending,     setSending]     = useState(false);
-  const [searchQ,     setSearchQ]     = useState("");
+  const [inviteEmail,  setInviteEmail]  = useState("");
+  const [inviteRole,   setInviteRole]   = useState<AppRole>("admin");
+  const [sending,      setSending]      = useState(false);
+  const [searchQ,      setSearchQ]      = useState("");
+  const [resendingId,  setResendingId]  = useState<string | null>(null);
 
   // ── Load all data ────────────────────────────────────────────────────────
   const loadData = useCallback(async () => {
@@ -574,7 +576,7 @@ export default function SuperAdminModule() {
       const [profilesRes, rolesRes, invRes, actRes] = await Promise.all([
         (supabase as any).from("profiles").select("id, email, full_name, country, created_at, show_on_website, title, organisation").order("created_at", { ascending: false }),
         (supabase as any).from("user_roles").select("user_id, role"),
-        (supabase as any).from("invitations").select("id, email, role, invited_by, created_at, accepted_at").order("created_at", { ascending: false }),
+        (supabase as any).from("invitations").select("id, email, role, invited_by, created_at, accepted_at, expires_at, resent_at").order("created_at", { ascending: false }),
         (supabase as any).from("admin_activity_logs").select("id, action, entity_type, details, created_at, profiles!actor_user_id(full_name, email)").order("created_at", { ascending: false }).limit(50),
       ]);
 
@@ -677,6 +679,25 @@ export default function SuperAdminModule() {
     }
   };
 
+  // ── Resend invitation ─────────────────────────────────────────────────────
+  const resendInvitation = async (invId: string, email: string) => {
+    setResendingId(invId);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await supabase.functions.invoke("resend-invite", {
+        body: { invitation_id: invId },
+        headers: { Authorization: `Bearer ${session?.access_token}` },
+      });
+      if (res.error) throw new Error(res.error.message);
+      const body = res.data as any;
+      if (body?.error) throw new Error(body.error);
+      toast({ title: "Invitation resent", description: email });
+      loadData();
+    } catch (err: any) {
+      toast({ title: "Failed to resend", description: err.message, variant: "destructive" });
+    } finally { setResendingId(null); }
+  };
+
   // ── Revoke / delete invitation ────────────────────────────────────────────
   const revokeInvitation = async (invId: string, isAccepted: boolean) => {
     const label = isAccepted ? "Delete this accepted invitation?" : "Revoke this pending invitation?";
@@ -757,27 +778,27 @@ export default function SuperAdminModule() {
   return (
     <div className="space-y-5">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded bg-amber-950 border border-amber-800 flex items-center justify-center">
-              <Crown size={12} className="text-amber-400" />
-            </div>
-            <h2 className="text-lg font-bold text-crm-text">Super Admin Hub</h2>
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-900 to-amber-950 border border-amber-700 flex items-center justify-center shadow-[0_0_16px_hsl(38,90%,50%,0.2)]">
+            <Crown size={18} className="text-amber-300" />
           </div>
-          <p className="text-[12px] text-crm-text-muted mt-0.5">
-            Full system oversight — users, roles, activity, and configuration
-          </p>
+          <div>
+            <h2 className="text-lg font-bold text-crm-text leading-tight">Super Admin Hub</h2>
+            <p className="text-[11px] text-crm-text-muted">
+              Full system oversight — users, roles, activity & configuration
+            </p>
+          </div>
         </div>
         <Button size="sm" variant="outline" onClick={loadData} disabled={loading}
-          className="border-crm-border text-crm-text-muted hover:text-crm-text-secondary text-xs gap-1.5 h-8">
+          className="border-crm-border text-crm-text-muted hover:text-crm-text-secondary text-xs gap-1.5 h-8 flex-shrink-0">
           <RefreshCw size={12} className={loading ? "animate-spin" : ""} />
           Refresh
         </Button>
       </div>
 
       {/* Tab bar */}
-      <div className="flex items-center gap-1 flex-wrap">
+      <div className="flex items-center gap-1 flex-wrap overflow-x-auto scrollbar-hide pb-1">
         {NAV.map(n => (
           <TabBtn key={n.id} {...n} active={tab === n.id} onClick={() => setTab(n.id)} />
         ))}
@@ -791,6 +812,21 @@ export default function SuperAdminModule() {
             <StatCard label="Super admins"     value={loading ? "…" : stats.superAdmins} icon={Crown}    accent="bg-amber-950 border-amber-800 text-amber-400"    />
             <StatCard label="Admins"           value={loading ? "…" : stats.admins}     icon={ShieldCheck} accent="bg-sky-950 border-sky-800 text-sky-400"        />
             <StatCard label="Pending invites"  value={loading ? "…" : stats.pendingInv} icon={Mail}     accent="bg-red-950 border-red-800 text-red-400"           />
+          </div>
+
+          {/* Quick actions */}
+          <div className="flex flex-wrap gap-2">
+            {[
+              { label: "View Invitations", icon: Mail,     tab: "invitations" as Tab },
+              { label: "Manage Users",     icon: Users,    tab: "users" as Tab },
+              { label: "Activity Log",     icon: Activity, tab: "activity" as Tab },
+              { label: "Email Config",     icon: Settings, tab: "email-config" as Tab },
+            ].map(({ label, icon: Icon, tab: t }) => (
+              <button key={t} onClick={() => setTab(t)}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-crm-surface border border-crm-border hover:border-crm-border-hover text-[11px] text-crm-text-muted hover:text-crm-text-secondary transition-colors">
+                <Icon size={12} /> {label}
+              </button>
+            ))}
           </div>
 
           {/* Role breakdown */}
@@ -834,22 +870,30 @@ export default function SuperAdminModule() {
             ) : activityLog.length === 0 ? (
               <p className="text-[12px] text-crm-text-faint text-center py-8">No activity logged yet.</p>
             ) : (
-              <div className="divide-y divide-crm-border">
-                {activityLog.slice(0, 6).map(log => (
-                  <div key={log.id} className="flex items-start gap-3 px-4 py-3">
-                    <div className="w-6 h-6 rounded-full bg-emerald-950 border border-emerald-800 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <Activity size={10} className="text-emerald-400" />
-                    </div>
-                    <div>
-                      <p className="text-[12px] text-crm-text">
-                        <span className="font-semibold">{log.actor?.full_name || "System"}</span>
-                        {" "}<span className="text-emerald-400">{log.action}</span>
-                        {" "}on <span className="font-medium">{log.entity_type}</span>
-                      </p>
-                      <p className="text-[10px] text-crm-text-dim mt-0.5">{new Date(log.created_at).toLocaleString()}</p>
-                    </div>
-                  </div>
-                ))}
+              <div className="p-4">
+                <div className="relative pl-7 ml-2 space-y-0 before:absolute before:left-0 before:top-0 before:bottom-0 before:w-px before:bg-gradient-to-b before:from-primary/30 before:via-primary/10 before:to-transparent">
+                  {activityLog.slice(0, 6).map(log => {
+                    const ac =
+                      log.action.includes("delete") ? "text-red-400 bg-red-950 border-red-800" :
+                      log.action.includes("grant")  ? "text-emerald-400 bg-emerald-950 border-emerald-800" :
+                                                      "text-blue-400 bg-blue-950 border-blue-800";
+                    return (
+                      <div key={log.id} className="relative flex items-start gap-3 pb-3">
+                        <div className={`absolute -left-[26px] w-5 h-5 rounded-full border flex items-center justify-center flex-shrink-0 ${ac}`}>
+                          <Activity size={9} />
+                        </div>
+                        <div className="flex-1 min-w-0 pt-0.5">
+                          <p className="text-[12px] text-crm-text">
+                            <span className="font-semibold">{log.actor?.full_name || "System"}</span>
+                            {" "}<span className={`font-medium ${ac.split(" ")[0]}`}>{log.action}</span>
+                            {" "}on <span className="font-medium text-crm-text-secondary">{log.entity_type}</span>
+                          </p>
+                          <p className="text-[10px] text-crm-text-faint mt-0.5">{new Date(log.created_at).toLocaleString()}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             )}
           </div>
@@ -1017,59 +1061,95 @@ export default function SuperAdminModule() {
 
       {/* ══ INVITATIONS ══ */}
       {tab === "invitations" && (
-        <div className="bg-crm-card border border-crm-border rounded-xl overflow-hidden">
-          <div className="px-4 py-3 border-b border-crm-border flex items-center justify-between">
-            <h3 className="text-[12px] font-semibold text-crm-text-secondary">
-              Invitations ({invitations.length} total · {stats.pendingInv} pending)
-            </h3>
-            <button onClick={() => setTab("users")} className="text-[11px] text-emerald-500 hover:text-emerald-400 flex items-center gap-1">
-              <UserPlus size={11} /> New invite
-            </button>
+        <div className="space-y-4">
+          <div className="bg-crm-card border border-crm-border rounded-xl overflow-hidden">
+            <div className="px-4 py-3 border-b border-crm-border flex items-center justify-between">
+              <h3 className="text-[12px] font-semibold text-crm-text-secondary">
+                Pending Invitations ({invitations.length})
+              </h3>
+              <button onClick={() => setTab("users")} className="text-[11px] text-emerald-500 hover:text-emerald-400 flex items-center gap-1">
+                <UserPlus size={11} /> New invite
+              </button>
+            </div>
+            {invitations.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 gap-2">
+                <Mail size={28} className="text-crm-text-faint" />
+                <p className="text-[12px] text-crm-text-faint">No pending invitations.</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-crm-border">
+                      {["Email", "Role", "Invited", "Expires", "Status", "Actions"].map(h => (
+                        <th key={h} className="px-4 py-2.5 text-[10px] font-semibold text-crm-text-dim uppercase tracking-wider text-left">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-crm-border">
+                    {invitations.map(inv => {
+                      const cfg = ROLE_CONFIG[inv.role];
+                      const Icon = cfg?.icon ?? Mail;
+                      const isExpired = inv.expires_at
+                        ? new Date(inv.expires_at) < new Date()
+                        : false;
+                      return (
+                        <tr key={inv.id} className="hover:bg-crm-surface transition-colors">
+                          <td className="px-4 py-3 text-[12px] text-crm-text font-medium">{inv.email}</td>
+                          <td className="px-4 py-3">
+                            <span className={`flex items-center gap-1 text-[9px] font-mono px-1.5 py-0.5 rounded border w-fit ${cfg?.badge ?? "text-crm-text-muted bg-crm-border border-crm-border"}`}>
+                              <Icon size={9} />{cfg?.label ?? inv.role}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-[10px] text-crm-text-muted whitespace-nowrap">
+                            {new Date(inv.created_at).toLocaleDateString()}
+                          </td>
+                          <td className="px-4 py-3 text-[10px] text-crm-text-muted whitespace-nowrap">
+                            {inv.expires_at ? new Date(inv.expires_at).toLocaleDateString() : "—"}
+                          </td>
+                          <td className="px-4 py-3">
+                            {isExpired ? (
+                              <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-red-950 border border-red-800 text-red-400 w-fit whitespace-nowrap">
+                                <AlertTriangle size={9} /> Token Expired
+                              </span>
+                            ) : (
+                              <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-amber-950 border border-amber-800 text-amber-400 w-fit whitespace-nowrap">
+                                <Clock size={9} /> Pending
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-1.5">
+                              {isExpired && (
+                                <button
+                                  onClick={() => resendInvitation(inv.id, inv.email)}
+                                  disabled={resendingId === inv.id}
+                                  title="Resend invitation"
+                                  className="flex items-center gap-1 text-[10px] px-2 py-1 rounded bg-emerald-950 border border-emerald-800 text-emerald-400 hover:bg-emerald-900 transition-colors disabled:opacity-50 whitespace-nowrap"
+                                >
+                                  {resendingId === inv.id
+                                    ? <Loader2 size={10} className="animate-spin" />
+                                    : <RefreshCw size={10} />}
+                                  Resend
+                                </button>
+                              )}
+                              <button
+                                onClick={() => revokeInvitation(inv.id, !!inv.accepted_at)}
+                                className="text-crm-text-faint hover:text-red-400 p-1 transition-colors"
+                                title="Revoke invitation"
+                              >
+                                <Trash2 size={12} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
-          {invitations.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 gap-2">
-              <Mail size={28} className="text-crm-text-faint" />
-              <p className="text-[12px] text-crm-text-faint">No invitations sent yet.</p>
-            </div>
-          ) : (
-            <div className="divide-y divide-crm-border">
-              {invitations.map(inv => {
-                const cfg = ROLE_CONFIG[inv.role];
-                const Icon = cfg?.icon ?? Mail;
-                return (
-                  <div key={inv.id} className="flex items-center gap-3 px-4 py-3 hover:bg-crm-surface transition-colors">
-                    <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 border ${cfg?.badge ?? "text-crm-text-muted bg-crm-border border-crm-border-hover"}`}>
-                      <Icon size={12} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[12px] font-medium text-crm-text">{inv.email}</p>
-                      <p className="text-[10px] text-crm-text-dim">
-                        {cfg?.label ?? inv.role} · Invited {new Date(inv.created_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      {inv.accepted_at ? (
-                        <span className="flex items-center gap-1 text-[10px] text-emerald-400">
-                          <CheckCircle2 size={11} /> Accepted
-                        </span>
-                      ) : (
-                        <span className="text-[10px] text-amber-400 flex items-center gap-1">
-                          <Clock size={10} /> Pending
-                        </span>
-                      )}
-                      <button
-                        onClick={() => revokeInvitation(inv.id, !!inv.accepted_at)}
-                        className="text-crm-text-faint hover:text-red-400 transition-colors"
-                        title={inv.accepted_at ? "Delete" : "Revoke"}
-                      >
-                        <Trash2 size={12} />
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
         </div>
       )}
 
@@ -1089,25 +1169,35 @@ export default function SuperAdminModule() {
               <p className="text-[12px] text-crm-text-faint">No activity recorded yet.</p>
             </div>
           ) : (
-            <div className="divide-y divide-crm-border">
-              {activityLog.map(log => (
-                <div key={log.id} className="flex items-start gap-3 px-4 py-3">
-                  <div className="w-6 h-6 rounded-full bg-emerald-950 border border-emerald-800 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <Activity size={10} className="text-emerald-400" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[12px] text-crm-text">
-                      <span className="font-semibold">{log.actor?.full_name || "System"}</span>
-                      {" "}<span className="text-emerald-400">{log.action}</span>
-                      {" "}on <span className="font-medium">{log.entity_type}</span>
-                    </p>
-                    {log.details && typeof log.details === "object" && Object.keys(log.details).length > 0 && (
-                      <p className="text-[10px] text-crm-text-dim font-mono truncate mt-0.5">{JSON.stringify(log.details)}</p>
-                    )}
-                    <p className="text-[10px] text-crm-text-faint mt-0.5">{new Date(log.created_at).toLocaleString()}</p>
-                  </div>
-                </div>
-              ))}
+            <div className="p-4">
+              <div className="relative pl-7 ml-2 space-y-0 before:absolute before:left-0 before:top-0 before:bottom-0 before:w-px before:bg-gradient-to-b before:from-primary/30 before:via-primary/10 before:to-transparent">
+                {activityLog.map(log => {
+                  const actionColor =
+                    log.action.includes("delete") ? "text-red-400 bg-red-950 border-red-800" :
+                    log.action.includes("grant")  ? "text-emerald-400 bg-emerald-950 border-emerald-800" :
+                    log.action.includes("revoke") ? "text-amber-400 bg-amber-950 border-amber-800" :
+                                                    "text-blue-400 bg-blue-950 border-blue-800";
+                  const actionTextColor = actionColor.split(" ")[0];
+                  return (
+                    <div key={log.id} className="relative flex items-start gap-3 pb-4">
+                      <div className={`absolute -left-[26px] w-5 h-5 rounded-full border flex items-center justify-center flex-shrink-0 ${actionColor}`}>
+                        <Activity size={9} />
+                      </div>
+                      <div className="flex-1 min-w-0 pt-0.5">
+                        <p className="text-[12px] text-crm-text">
+                          <span className="font-semibold">{log.actor?.full_name || "System"}</span>
+                          {" "}<span className={`font-medium ${actionTextColor}`}>{log.action}</span>
+                          {" "}on <span className="font-medium text-crm-text-secondary">{log.entity_type}</span>
+                        </p>
+                        {log.details && typeof log.details === "object" && Object.keys(log.details).length > 0 && (
+                          <p className="text-[10px] text-crm-text-dim font-mono truncate mt-0.5">{JSON.stringify(log.details)}</p>
+                        )}
+                        <p className="text-[10px] text-crm-text-faint mt-0.5">{new Date(log.created_at).toLocaleString()}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
         </div>

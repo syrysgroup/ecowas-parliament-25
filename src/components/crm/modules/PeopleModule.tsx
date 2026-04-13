@@ -764,6 +764,7 @@ export default function PeopleModule() {
   const [editOpen, setEditOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<UserWithRoles | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [deletingId,      setDeletingId]      = useState<string | null>(null);
   const [addSheetOpen, setAddSheetOpen] = useState(false);
 
   const loadData = useCallback(async () => {
@@ -844,9 +845,29 @@ export default function PeopleModule() {
   };
 
   const deleteUser = async (userId: string) => {
-    await (supabase as any).from("user_roles").delete().eq("user_id", userId);
-    await (supabase as any).from("profiles").delete().eq("id", userId);
-    toast({ title: "User removed" }); setConfirmDeleteId(null); loadData();
+    if (userId === user?.id) {
+      toast({ title: "Cannot delete your own account", variant: "destructive" });
+      return;
+    }
+    setDeletingId(userId);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await supabase.functions.invoke("delete-user", {
+        body: { user_ids: [userId] },
+        headers: { Authorization: `Bearer ${session?.access_token}` },
+      });
+      if (res.error) throw new Error(res.error.message);
+      const results = (res.data?.results ?? []) as { success: boolean; error?: string }[];
+      const failed = results.filter((r: any) => !r.success);
+      if (failed.length > 0) throw new Error(failed[0]?.error ?? "Unknown error");
+      toast({ title: "User deleted" });
+      setConfirmDeleteId(null);
+      loadData();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   const pending = invitations.filter(i => !i.accepted_at).length;
@@ -987,11 +1008,19 @@ export default function PeopleModule() {
                             {isSuperAdmin && u.id !== user?.id && (
                               confirmDeleteId === u.id ? (
                                 <span className="flex items-center gap-1 text-[9px] ml-1">
-                                  <button onClick={() => deleteUser(u.id)} className="text-red-400">Yes</button>
+                                  <button
+                                    onClick={() => deleteUser(u.id)}
+                                    disabled={deletingId === u.id}
+                                    className="text-red-400 disabled:opacity-50 flex items-center gap-0.5"
+                                  >
+                                    {deletingId === u.id
+                                      ? <Loader2 size={10} className="animate-spin" />
+                                      : "Yes"}
+                                  </button>
                                   <button onClick={() => setConfirmDeleteId(null)} className="text-crm-text-dim">No</button>
                                 </span>
                               ) : (
-                                <button onClick={() => setConfirmDeleteId(u.id)} className="p-1.5 text-crm-text-dim hover:text-red-400 rounded"><UserMinus size={13} /></button>
+                                <button onClick={() => setConfirmDeleteId(u.id)} className="p-1.5 text-crm-text-dim hover:text-red-400 rounded" title="Delete user"><UserMinus size={13} /></button>
                               )
                             )}
                           </div>

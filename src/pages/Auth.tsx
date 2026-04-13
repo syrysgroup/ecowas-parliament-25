@@ -5,27 +5,18 @@ import { useAuthContext } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Mail, Lock, User, ArrowLeft, Crown, Eye, EyeOff,
-  ShieldCheck, KeyRound, CheckCircle2, AlertCircle, RefreshCw, Loader2,
+  Mail, Lock, ArrowLeft,
+  ShieldCheck, KeyRound, CheckCircle2, AlertCircle, RefreshCw, Loader2, Eye, EyeOff,
 } from "lucide-react";
 import { Turnstile } from "@marsidev/react-turnstile";
 import ecowasLogo from "@/assets/ecowas-parliament-logo.png";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-type AuthMode = "signin" | "signup" | "forgot" | "reset_sent";
+type AuthMode = "signin" | "forgot" | "reset_sent";
 
 const TURNSTILE_SITE_KEY = "0x4AAAAAACzus4H6t9WSW6Oy";
-
-const ECOWAS_COUNTRIES = [
-  "Benin","Burkina Faso","Cape Verde","Côte d'Ivoire","Gambia",
-  "Ghana","Guinea","Guinea-Bissau","Liberia","Mali","Niger",
-  "Nigeria","Senegal","Sierra Leone","Togo",
-];
 
 // ─── Role-based redirect ──────────────────────────────────────────────────────
 async function getRoleBasedRedirect(
@@ -76,18 +67,15 @@ export default function Auth() {
 
   const from = (location.state as any)?.from as string | undefined;
 
-  const [mode,        setMode]        = useState<AuthMode>("signin");
-  const [email,       setEmail]       = useState("");
-  const [password,    setPassword]    = useState("");
-  const [showPwd,     setShowPwd]     = useState(false);
-  const [fullName,    setFullName]    = useState("");
-  const [country,     setCountry]     = useState("");
-  const [submitting,  setSubmitting]  = useState(false);
-  const [teamMode,    setTeamMode]    = useState(false);
-  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
-  const [captchaError, setCaptchaError] = useState(false);
-  const [captchaLoading, setCaptchaLoading] = useState(true);
-  const turnstileRef = useRef<any>(null);
+  const [mode,          setMode]          = useState<AuthMode>("signin");
+  const [email,         setEmail]         = useState("");
+  const [password,      setPassword]      = useState("");
+  const [showPwd,       setShowPwd]       = useState(false);
+  const [submitting,    setSubmitting]    = useState(false);
+  const [captchaToken,  setCaptchaToken]  = useState<string | null>(null);
+  const [captchaError,  setCaptchaError]  = useState(false);
+  const [captchaLoading,setCaptchaLoading]= useState(true);
+  const turnstileRef    = useRef<any>(null);
   const captchaTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -96,12 +84,6 @@ export default function Auth() {
     }
   }, [user, loading, from, navigate]);
 
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    if (params.get("team") === "1") setTeamMode(true);
-  }, [location.search]);
-
-  // Clear captcha timeout on unmount
   useEffect(() => {
     return () => {
       if (captchaTimeoutRef.current) clearTimeout(captchaTimeoutRef.current);
@@ -147,38 +129,6 @@ export default function Auth() {
       }
     } catch (err: any) {
       toast({ title: "Sign-in failed", description: handleAuthError(err), variant: "destructive" });
-    } finally {
-      setSubmitting(false);
-      resetTurnstile();
-    }
-  };
-
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!fullName.trim() || !country) {
-      toast({ title: "Please fill all fields", variant: "destructive" });
-      return;
-    }
-    if (!captchaToken) {
-      toast({ title: "Please wait for CAPTCHA verification", variant: "destructive" });
-      return;
-    }
-    setSubmitting(true);
-    try {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          captchaToken,
-          emailRedirectTo: `${window.location.origin}/auth`,
-          data: { full_name: fullName.trim(), country },
-        },
-      });
-      if (error) throw error;
-      toast({ title: "Check your email", description: "We've sent a verification link." });
-      setMode("signin");
-    } catch (err: any) {
-      toast({ title: "Sign-up failed", description: handleAuthError(err), variant: "destructive" });
     } finally {
       setSubmitting(false);
       resetTurnstile();
@@ -254,7 +204,6 @@ export default function Auth() {
   };
 
   const handleCaptchaWidgetLoad = () => {
-    // Start a 30-second timeout — if token isn't received, show retry
     captchaTimeoutRef.current = setTimeout(() => {
       if (!captchaToken) {
         setCaptchaLoading(false);
@@ -294,8 +243,8 @@ export default function Auth() {
     </div>
   );
 
-  const modeTitle = mode === "signin" ? "Welcome back" : mode === "signup" ? "Create account" : mode === "forgot" ? "Reset password" : "Check your email";
-  const modeSubtitle = mode === "signin" ? "Sign in to your account" : mode === "signup" ? "Register to apply as a Youth Representative" : mode === "forgot" ? "We'll email you a reset link" : "Password reset email sent";
+  const modeTitle    = mode === "signin" ? "Welcome back" : mode === "forgot" ? "Reset password" : "Check your email";
+  const modeSubtitle = mode === "signin" ? "Sign in to your account" : mode === "forgot" ? "We'll email you a reset link" : "Password reset email sent";
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row">
@@ -319,7 +268,6 @@ export default function Auth() {
             ECOWAS of the Peoples: Peace and Prosperity for All
           </p>
 
-          {/* Decorative line */}
           <div className="mt-6 flex items-center gap-3">
             <div className="h-px w-12 bg-accent/60" />
             <div className="h-2 w-2 rounded-full bg-accent" />
@@ -327,7 +275,6 @@ export default function Auth() {
           </div>
         </div>
 
-        {/* Back link */}
         <Link to="/"
           className="absolute top-4 left-4 lg:top-6 lg:left-6 flex items-center gap-2 text-sm text-primary-foreground/60 hover:text-primary-foreground transition-colors z-20">
           <ArrowLeft className="h-4 w-4" /> Back to site
@@ -338,42 +285,18 @@ export default function Auth() {
       <div className="flex-1 flex items-center justify-center p-6 sm:p-10 lg:p-16 bg-background relative">
         <div className="w-full max-w-md space-y-6">
 
-          {/* Team mode banner */}
-          {teamMode && (
-            <div className="rounded-2xl border-2 border-accent/60 bg-accent/5 p-4">
-              <div className="flex items-center gap-2 mb-1">
-                <Crown className="h-5 w-5 text-accent-foreground" />
-                <h2 className="font-bold text-accent-foreground">Team / Staff Login</h2>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                This portal is for authorised team members and administrators only.
-                Unauthorised access attempts are logged.
-              </p>
-            </div>
-          )}
-
           {/* Header */}
-          {!teamMode && (
-            <div>
-              <h2 className="text-2xl sm:text-3xl font-black text-foreground">{modeTitle}</h2>
-              <p className="text-sm text-muted-foreground mt-1">{modeSubtitle}</p>
-            </div>
-          )}
+          <div>
+            <h2 className="text-2xl sm:text-3xl font-black text-foreground">{modeTitle}</h2>
+            <p className="text-sm text-muted-foreground mt-1">{modeSubtitle}</p>
+          </div>
 
           {/* ── Card ── */}
-          <div className={`rounded-2xl border p-6 sm:p-8 shadow-lg backdrop-blur-sm ${
-            teamMode ? "border-accent/40 bg-card/95" : "border-border bg-card/80"
-          }`}>
+          <div className="rounded-2xl border border-border bg-card/80 p-6 sm:p-8 shadow-lg backdrop-blur-sm">
 
             {/* Sign in */}
             {mode === "signin" && (
               <form onSubmit={handleSignIn} className="space-y-4">
-                {teamMode && (
-                  <div className="flex items-center gap-2 p-3 rounded-xl bg-accent/10 border border-accent/20 mb-2">
-                    <ShieldCheck className="h-4 w-4 text-accent-foreground flex-shrink-0" />
-                    <p className="text-xs text-muted-foreground font-medium">Staff credential check — all access is recorded.</p>
-                  </div>
-                )}
                 {EmailField}
                 {PasswordField}
                 <div className="flex items-center justify-between text-sm">
@@ -383,50 +306,18 @@ export default function Auth() {
                   <button type="button" onClick={() => setMode("forgot")} className="text-primary hover:underline font-medium">Forgot password?</button>
                 </div>
                 {TurnstileWidget}
-                <Button type="submit" className={`w-full gap-2 h-11 text-sm font-bold ${disabledClasses} ${teamMode ? "bg-accent text-accent-foreground hover:bg-accent/90" : ""}`} disabled={isButtonDisabled}>
-                  {submitting ? <><span className="animate-spin inline-block">⟳</span> Signing in…</> :
-                    <>{teamMode ? <Crown className="h-4 w-4" /> : <Lock className="h-4 w-4" />} Sign in</>}
+                <Button type="submit" className={`w-full gap-2 h-11 text-sm font-bold ${disabledClasses}`} disabled={isButtonDisabled}>
+                  {submitting
+                    ? <><Loader2 className="h-4 w-4 animate-spin" /> Signing in…</>
+                    : <><Lock className="h-4 w-4" /> Sign in</>}
                 </Button>
-                {!teamMode && (
-                  <p className="text-sm text-center text-muted-foreground">
-                    Don't have an account?{" "}
-                    <button type="button" onClick={() => setMode("signup")} className="text-primary font-semibold hover:underline">Sign up</button>
+                {/* Invitation-only notice */}
+                <div className="flex items-start gap-2.5 p-3 rounded-xl bg-muted/40 border border-border">
+                  <ShieldCheck className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Access is by invitation only. Contact your administrator if you need access.
                   </p>
-                )}
-              </form>
-            )}
-
-            {/* Sign up */}
-            {mode === "signup" && (
-              <form onSubmit={handleSignUp} className="space-y-4">
-                <div className="space-y-1.5">
-                  <Label htmlFor="fullName" className="text-sm font-semibold">Full name</Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input id="fullName" required placeholder="Your full name" className="pl-10 bg-background/50 border-border/60"
-                      value={fullName} onChange={e => setFullName(e.target.value)} maxLength={100} />
-                  </div>
                 </div>
-                <div className="space-y-1.5">
-                  <Label className="text-sm font-semibold">Country</Label>
-                  <Select value={country} onValueChange={setCountry} required>
-                    <SelectTrigger className="bg-background/50 border-border/60"><SelectValue placeholder="Select your country" /></SelectTrigger>
-                    <SelectContent>
-                      {ECOWAS_COUNTRIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-                {EmailField}
-                {PasswordField}
-                <p className="text-xs text-muted-foreground">Password must be at least 6 characters. By registering you agree to our privacy policy.</p>
-                {TurnstileWidget}
-                <Button type="submit" className={`w-full gap-2 h-11 font-bold ${disabledClasses}`} disabled={isButtonDisabled}>
-                  {submitting ? "Creating account…" : "Create account"}
-                </Button>
-                <p className="text-sm text-center text-muted-foreground">
-                  Already have an account?{" "}
-                  <button type="button" onClick={() => setMode("signin")} className="text-primary font-semibold hover:underline">Sign in</button>
-                </p>
               </form>
             )}
 
@@ -462,32 +353,15 @@ export default function Auth() {
             )}
           </div>
 
-          {/* Team switcher */}
-          <div className="text-center">
-            {!teamMode ? (
-              <button onClick={() => { setTeamMode(true); setMode("signin"); }}
-                className="text-xs text-muted-foreground hover:text-accent-foreground flex items-center gap-1.5 mx-auto transition-colors">
-                <Crown className="h-3.5 w-3.5" /> Team / staff portal
-              </button>
-            ) : (
-              <button onClick={() => { setTeamMode(false); setMode("signin"); }}
-                className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1.5 mx-auto">
-                <User className="h-3.5 w-3.5" /> Switch to public sign-in
-              </button>
-            )}
+          {/* Invitation-only footer note */}
+          <div className="flex items-start gap-2 p-3 rounded-xl bg-muted/50 border border-border">
+            <AlertCircle className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
+            <p className="text-xs text-muted-foreground">
+              This portal is for authorised team members only. If you haven't received
+              an invitation email, contact{" "}
+              <a href="mailto:admin@ecowasparliament25.org" className="text-primary underline">admin@ecowasparliament25.org</a>.
+            </p>
           </div>
-
-          {/* Team mode security note */}
-          {teamMode && (
-            <div className="flex items-start gap-2 p-3 rounded-xl bg-muted/50 border border-border">
-              <AlertCircle className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
-              <p className="text-xs text-muted-foreground">
-                Team members are invited by the Super Administrator. If you haven't received
-                an invitation email, contact{" "}
-                <a href="mailto:admin@ecowasparliament25.org" className="text-primary underline">admin@ecowasparliament25.org</a>.
-              </p>
-            </div>
-          )}
         </div>
       </div>
     </div>

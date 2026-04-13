@@ -1,10 +1,11 @@
 import { ReactNode, useState, useRef, useEffect } from "react";
-import { Bell, Settings, X, Sun, Moon, User, Lock, Globe, LogOut, CheckCircle2, HelpCircle } from "lucide-react";
+import { Bell, Settings, X, Sun, Moon, User, Lock, Globe, LogOut, HelpCircle } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, parseISO } from "date-fns";
 import CRMSidebar from "./CRMSidebar";
 import { CRM_MODULES } from "./crmModules";
+import { CRM_ROLE_META } from "./crmRoles";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthContext";
 import {
@@ -15,31 +16,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
 import CRMAvatar from "@/components/crm/CRMAvatar";
 import CRMTour, { useCRMTour } from "@/components/crm/CRMTour";
-import {
-  Select as UISelect,
-  SelectContent as UISelectContent,
-  SelectItem as UISelectItem,
-  SelectTrigger as UISelectTrigger,
-  SelectValue as UISelectValue,
-} from "@/components/ui/select";
-
-const ECOWAS_COUNTRIES = [
-  "Benin","Burkina Faso","Cape Verde","Côte d'Ivoire","Gambia",
-  "Ghana","Guinea","Guinea-Bissau","Liberia","Mali","Niger",
-  "Nigeria","Senegal","Sierra Leone","Togo",
-];
 
 interface CRMLayoutProps {
   activeSection: string;
@@ -318,145 +296,6 @@ function NotificationBell({ onNavigate }: { onNavigate: (s: string) => void }) {
   );
 }
 
-// ─── Profile Completion Modal ─────────────────────────────────────────────────
-function ProfileCompletionModal({ userId }: { userId: string }) {
-  const { toast } = useToast();
-  const qc = useQueryClient();
-
-  const { data: profile, isLoading } = useQuery({
-    queryKey: ["profile-completion-check", userId],
-    queryFn: async () => {
-      const { data } = await (supabase as any)
-        .from("profiles")
-        .select("full_name, title, country, phone")
-        .eq("id", userId)
-        .maybeSingle();
-      return data;
-    },
-    enabled: !!userId,
-  });
-
-  const needsCompletion = !isLoading && profile && (!profile.full_name || !profile.title);
-
-  const [fullName, setFullName] = useState("");
-  const [title, setTitle] = useState("");
-  const [country, setCountry] = useState("");
-  const [phone, setPhone] = useState("");
-  const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    if (profile) {
-      setFullName(profile.full_name ?? "");
-      setTitle(profile.title ?? "");
-      setCountry(profile.country ?? "");
-      setPhone(profile.phone ?? "");
-    }
-  }, [profile]);
-
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!fullName.trim() || !title.trim()) {
-      toast({ title: "Full name and title are required", variant: "destructive" });
-      return;
-    }
-    setSaving(true);
-    try {
-      const { error } = await (supabase as any)
-        .from("profiles")
-        .update({
-          full_name: fullName.trim(),
-          title: title.trim(),
-          country: country || null,
-          phone: phone.trim() || null,
-        })
-        .eq("id", userId);
-      if (error) throw error;
-      // Sync full_name to auth user_metadata
-      await supabase.auth.updateUser({ data: { full_name: fullName.trim() } });
-      qc.invalidateQueries({ queryKey: ["profile-completion-check", userId] });
-      toast({ title: "Profile saved" });
-    } catch (err: any) {
-      toast({ title: "Failed to save profile", description: err.message, variant: "destructive" });
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  if (isLoading || !needsCompletion) return null;
-
-  return (
-    <Dialog open modal>
-      <DialogContent
-        className="bg-crm-card border-crm-border text-crm-text max-w-md"
-        onInteractOutside={e => e.preventDefault()}
-        onEscapeKeyDown={e => e.preventDefault()}
-      >
-        <DialogHeader>
-          <DialogTitle className="text-base font-semibold text-crm-text flex items-center gap-2">
-            <User size={16} className="text-emerald-400" />
-            Complete your profile
-          </DialogTitle>
-        </DialogHeader>
-        <p className="text-[12px] text-crm-text-muted -mt-1">
-          Please fill in the required information before using the CRM.
-        </p>
-        <form onSubmit={handleSave} className="space-y-4 mt-1">
-          <div className="space-y-1.5">
-            <Label className="text-[11px] text-crm-text-muted">Full Name <span className="text-red-400">*</span></Label>
-            <Input
-              value={fullName}
-              onChange={e => setFullName(e.target.value)}
-              placeholder="e.g. Amara Koné"
-              required
-              className="bg-crm-surface border-crm-border text-crm-text text-sm"
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label className="text-[11px] text-crm-text-muted">Title / Position <span className="text-red-400">*</span></Label>
-            <Input
-              value={title}
-              onChange={e => setTitle(e.target.value)}
-              placeholder="e.g. Programme Coordinator"
-              required
-              className="bg-crm-surface border-crm-border text-crm-text text-sm"
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label className="text-[11px] text-crm-text-muted">Country</Label>
-            <UISelect value={country} onValueChange={setCountry}>
-              <UISelectTrigger className="bg-crm-surface border-crm-border text-crm-text text-sm">
-                <UISelectValue placeholder="Select country" />
-              </UISelectTrigger>
-              <UISelectContent className="bg-crm-card border-crm-border text-crm-text">
-                {ECOWAS_COUNTRIES.map(c => (
-                  <UISelectItem key={c} value={c}>{c}</UISelectItem>
-                ))}
-              </UISelectContent>
-            </UISelect>
-          </div>
-          <div className="space-y-1.5">
-            <Label className="text-[11px] text-crm-text-muted">Phone (optional)</Label>
-            <Input
-              value={phone}
-              onChange={e => setPhone(e.target.value)}
-              placeholder="+226 00 00 00 00"
-              type="tel"
-              className="bg-crm-surface border-crm-border text-crm-text text-sm"
-            />
-          </div>
-          <Button
-            type="submit"
-            disabled={saving || !fullName.trim() || !title.trim()}
-            className="w-full bg-emerald-700 hover:bg-emerald-600 text-white font-semibold gap-2"
-          >
-            {saving ? "Saving…" : "Save & Continue"}
-          </Button>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
 // ─── CRM Theme Toggle ─────────────────────────────────────────────────────────
 function CRMThemeToggle() {
   const { resolvedTheme, setTheme } = useTheme();
@@ -482,28 +321,36 @@ export default function CRMLayout({ activeSection, onNavigate, children }: CRMLa
   const { startTour } = useCRMTour(onNavigate);
   const activeModule = CRM_MODULES.find(m => m.section === activeSection);
   const moduleLabel  = activeModule?.label ?? "Dashboard";
+  const ModuleIcon   = activeModule?.icon;
 
   const displayName = (user?.user_metadata?.full_name as string) || user?.email?.split("@")[0] || "User";
-  const initial = displayName.charAt(0).toUpperCase();
+
+  // Primary role badge
+  const primaryRole = roles[0];
+  const primaryRoleMeta = primaryRole ? CRM_ROLE_META[primaryRole] : null;
 
   return (
     <div className="flex h-screen bg-crm text-crm-text overflow-hidden">
       <CRMSidebar activeSection={activeSection} onNavigate={onNavigate} />
 
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+        {/* Top gradient accent line */}
+        <div className="h-[3px] bg-gradient-to-r from-primary via-emerald-400 to-primary/40 flex-shrink-0" />
+
         {/* Top bar */}
-        <header className="h-14 border-b border-crm-border flex items-center px-6 flex-shrink-0 bg-crm-card">
+        <header className="h-13 border-b border-crm-border flex items-center px-4 flex-shrink-0 bg-crm-card/95 backdrop-blur-sm">
           {/* Left: breadcrumb */}
           <div className="flex items-center gap-2 flex-1 min-w-0">
+            {ModuleIcon && <ModuleIcon size={13} className="text-primary flex-shrink-0" />}
             <span className="text-[10px] font-mono text-crm-text-dim tracking-widest uppercase hidden sm:block">
-              ECOWAS Parliament 25
+              ECOWAS · CRM
             </span>
             <span className="text-crm-border hidden sm:block">/</span>
             <span className="text-[13px] font-semibold text-crm-text truncate">{moduleLabel}</span>
           </div>
 
           {/* Right: notification bell + theme toggle + settings + user dropdown */}
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex items-center gap-1.5 flex-shrink-0">
             <NotificationBell onNavigate={onNavigate} />
 
             <CRMThemeToggle />
@@ -541,11 +388,21 @@ export default function CRMLayout({ activeSection, onNavigate, children }: CRMLa
 
               <DropdownMenuContent
                 align="end"
-                className="w-52 bg-crm-card border-crm-border text-crm-text shadow-2xl shadow-black/60 z-50"
+                className="w-56 bg-crm-card border-crm-border text-crm-text shadow-2xl shadow-black/60 z-50"
               >
-                <DropdownMenuLabel className="pb-1">
-                  <p className="text-[12px] font-semibold text-crm-text truncate">{displayName}</p>
-                  <p className="text-[10px] text-crm-text-muted font-normal truncate">{user?.email}</p>
+                <DropdownMenuLabel className="pb-2">
+                  <div className="flex items-center gap-2 mb-1">
+                    <CRMAvatar src={user?.user_metadata?.avatar_url} name={displayName} size="sm" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[12px] font-semibold text-crm-text truncate">{displayName}</p>
+                      <p className="text-[10px] text-crm-text-muted font-normal truncate">{user?.email}</p>
+                    </div>
+                  </div>
+                  {primaryRoleMeta && (
+                    <span className={`text-[9px] font-mono border rounded px-2 py-0.5 ${primaryRoleMeta.bgColour} ${primaryRoleMeta.colour} ${primaryRoleMeta.borderColour}`}>
+                      {primaryRoleMeta.label}
+                    </span>
+                  )}
                 </DropdownMenuLabel>
 
                 <DropdownMenuSeparator className="bg-crm-border" />
@@ -602,14 +459,17 @@ export default function CRMLayout({ activeSection, onNavigate, children }: CRMLa
           </div>
         </header>
 
-        {/* Main content */}
-        <main className="flex-1 overflow-y-auto p-6">
-          {children}
+        {/* Main content — subtle dot-grid pattern background */}
+        <main
+          className="flex-1 overflow-y-auto p-6 relative"
+          style={{
+            backgroundImage: "radial-gradient(circle, hsl(var(--border)) 1px, transparent 1px)",
+            backgroundSize: "24px 24px",
+          }}
+        >
+          <div className="relative z-10">{children}</div>
         </main>
       </div>
-
-      {/* Profile completion gate */}
-      {user && <ProfileCompletionModal userId={user.id} />}
 
       {/* CRM Tour — auto-starts for new users */}
       <CRMTour onNavigate={onNavigate} autoStart />
