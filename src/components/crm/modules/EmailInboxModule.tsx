@@ -80,6 +80,8 @@ interface SearchFilters {
   freetext?: string;
 }
 
+const PAGE_SIZE = 25;
+
 const SYSTEM_FOLDERS: { id: string; label: string; icon: React.ElementType }[] = [
   { id: "inbox",   label: "Inbox",   icon: Inbox     },
   { id: "sent",    label: "Sent",    icon: Send      },
