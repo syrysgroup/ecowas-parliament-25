@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Settings, Mail, Bell, Shield, Save, Eye, EyeOff,
   CheckCircle2, AlertTriangle, Loader2, User, Lock, Globe,
+  Camera, MapPin, Briefcase, Link2, Phone, Linkedin, Twitter,
 } from "lucide-react";
 import EmailConfigSettings from "@/views/admin/settings/EmailConfigSettings";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,11 +13,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import ImageUploadOrUrl from "@/components/shared/ImageUploadOrUrl";
-import { LOGO_RECOMMENDED, FAVICON_RECOMMENDED } from "@/lib/constants";
+import { LOGO_RECOMMENDED, FAVICON_RECOMMENDED, DEFAULT_AVATAR } from "@/lib/constants";
+import PermissionManagerPanel from "./PermissionManagerPanel";
 
-type SettingsTab = "email" | "email-accounts" | "notifications" | "security" | "permissions" | "site_settings";
+type SettingsTab = "profile" | "email" | "email-accounts" | "notifications" | "security" | "permissions" | "site_settings";
 
 function Section({ title, icon: Icon, children }: {
   title: string; icon: React.ElementType; children: React.ReactNode;
@@ -44,6 +47,214 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
 
 const inputCls = "bg-crm-surface border-crm-border text-crm-text text-xs h-8 placeholder:text-crm-text-faint";
 const readOnlyCls = `${inputCls} opacity-60 cursor-not-allowed`;
+
+// ─── Profile tab ─────────────────────────────────────────────────────────────
+function ProfileSettings() {
+  const { user } = useAuthContext();
+  const { toast } = useToast();
+  const qc = useQueryClient();
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [showUrlInput, setShowUrlInput] = useState(false);
+  const [urlValue, setUrlValue] = useState("");
+
+  const [avatarUrl, setAvatarUrl]           = useState("");
+  const [fullName, setFullName]             = useState("");
+  const [title, setTitle]                   = useState("");
+  const [organisation, setOrganisation]     = useState("");
+  const [country, setCountry]               = useState("");
+  const [bio, setBio]                       = useState("");
+  const [phone, setPhone]                   = useState("");
+  const [linkedinUrl, setLinkedinUrl]       = useState("");
+  const [twitterUrl, setTwitterUrl]         = useState("");
+
+  useEffect(() => {
+    if (!user?.id) return;
+    (supabase as any)
+      .from("profiles")
+      .select("full_name, title, organisation, country, bio, avatar_url, phone, linkedin_url, twitter_url")
+      .eq("id", user.id)
+      .maybeSingle()
+      .then(({ data }: any) => {
+        if (data) {
+          setFullName(data.full_name ?? "");
+          setTitle(data.title ?? "");
+          setOrganisation(data.organisation ?? "");
+          setCountry(data.country ?? "");
+          setBio(data.bio ?? "");
+          setAvatarUrl(data.avatar_url ?? "");
+          setPhone(data.phone ?? "");
+          setLinkedinUrl(data.linkedin_url ?? "");
+          setTwitterUrl(data.twitter_url ?? "");
+        }
+        setLoading(false);
+      });
+  }, [user?.id]);
+
+  const handleUpload = async (file: File) => {
+    if (!user?.id) return;
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop();
+      const path = `avatars/${user.id}.${ext}`;
+      const { error } = await supabase.storage.from("public").upload(path, file, { upsert: true });
+      if (error) throw error;
+      const { data: urlData } = supabase.storage.from("public").getPublicUrl(path);
+      const url = `${urlData.publicUrl}?t=${Date.now()}`;
+      await (supabase as any).from("profiles").update({ avatar_url: url }).eq("id", user.id);
+      setAvatarUrl(url);
+      qc.invalidateQueries({ queryKey: ["profile", user.id] });
+      toast({ title: "Avatar updated" });
+    } catch (err: any) {
+      toast({ title: "Upload failed", description: err.message, variant: "destructive" });
+    } finally { setUploading(false); }
+  };
+
+  const handleSave = async () => {
+    if (!user?.id) return;
+    setSaving(true);
+    try {
+      await (supabase as any).from("profiles").update({
+        full_name: fullName, title, organisation, country,
+        bio, phone, linkedin_url: linkedinUrl, twitter_url: twitterUrl,
+      }).eq("id", user.id);
+      qc.invalidateQueries({ queryKey: ["profile", user.id] });
+      toast({ title: "Profile saved" });
+    } catch (err: any) {
+      toast({ title: "Failed", description: err.message, variant: "destructive" });
+    } finally { setSaving(false); }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-8">
+        <div className="w-5 h-5 border-2 border-emerald-700 border-t-emerald-400 rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  const displayAvatar = avatarUrl || DEFAULT_AVATAR;
+
+  return (
+    <div className="space-y-4">
+      {/* Avatar row */}
+      <Section title="Avatar" icon={Camera}>
+        <div className="flex items-center gap-4">
+          <div className="relative w-16 h-16 rounded-xl bg-crm-surface border border-crm-border overflow-hidden shrink-0">
+            <img src={displayAvatar} alt="" className="w-full h-full object-cover" />
+            {uploading && (
+              <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                <Loader2 size={16} className="text-white animate-spin" />
+              </div>
+            )}
+          </div>
+          <div className="flex flex-col gap-2">
+            <label className="cursor-pointer">
+              <span className="text-[11px] text-emerald-400 hover:text-emerald-300 border border-emerald-800 rounded-lg px-3 py-1.5 hover:bg-emerald-950/40 transition-colors">
+                Upload photo
+              </span>
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={e => e.target.files?.[0] && handleUpload(e.target.files[0])}
+              />
+            </label>
+            <button
+              type="button"
+              onClick={() => setShowUrlInput(!showUrlInput)}
+              className="text-[11px] text-crm-text-muted hover:text-crm-text flex items-center gap-1"
+            >
+              <Link2 size={10} /> Paste URL
+            </button>
+          </div>
+        </div>
+        {showUrlInput && (
+          <div className="flex gap-2 mt-2">
+            <Input
+              value={urlValue}
+              onChange={e => setUrlValue(e.target.value)}
+              placeholder="https://example.com/avatar.png"
+              className={inputCls}
+            />
+            <Button
+              size="sm"
+              variant="outline"
+              className="text-xs border-crm-border text-crm-text-muted shrink-0"
+              onClick={async () => {
+                if (!urlValue.trim() || !user?.id) return;
+                await (supabase as any).from("profiles").update({ avatar_url: urlValue.trim() }).eq("id", user.id);
+                setAvatarUrl(urlValue.trim());
+                setShowUrlInput(false);
+                setUrlValue("");
+                qc.invalidateQueries({ queryKey: ["profile", user.id] });
+                toast({ title: "Avatar updated" });
+              }}
+            >
+              Apply
+            </Button>
+            <Button size="sm" variant="ghost" className="text-xs text-crm-text-muted shrink-0" onClick={() => setShowUrlInput(false)}>
+              ✕
+            </Button>
+          </div>
+        )}
+      </Section>
+
+      {/* Basic info */}
+      <Section title="Basic Info" icon={User}>
+        <div className="grid sm:grid-cols-2 gap-3">
+          <Field label="Full name">
+            <Input value={fullName} onChange={e => setFullName(e.target.value)} className={inputCls} placeholder="Your full name" />
+          </Field>
+          <Field label="Job title">
+            <Input value={title} onChange={e => setTitle(e.target.value)} className={inputCls} placeholder="e.g. Project Director" />
+          </Field>
+          <Field label="Organisation">
+            <Input value={organisation} onChange={e => setOrganisation(e.target.value)} className={inputCls} placeholder="Organisation name" />
+          </Field>
+          <Field label="Country">
+            <Input value={country} onChange={e => setCountry(e.target.value)} className={inputCls} placeholder="Country" />
+          </Field>
+        </div>
+        <Field label="Bio">
+          <Textarea
+            value={bio}
+            onChange={e => setBio(e.target.value)}
+            className="bg-crm-surface border-crm-border text-crm-text text-xs placeholder:text-crm-text-faint resize-none"
+            rows={3}
+            placeholder="A short bio about yourself…"
+          />
+        </Field>
+      </Section>
+
+      {/* Contact & socials */}
+      <Section title="Contact & Socials" icon={Phone}>
+        <div className="grid sm:grid-cols-2 gap-3">
+          <Field label="Phone">
+            <Input value={phone} onChange={e => setPhone(e.target.value)} className={inputCls} placeholder="+1 234 567 890" />
+          </Field>
+          <Field label="LinkedIn URL">
+            <Input value={linkedinUrl} onChange={e => setLinkedinUrl(e.target.value)} className={inputCls} placeholder="https://linkedin.com/in/…" />
+          </Field>
+          <Field label="Twitter / X URL">
+            <Input value={twitterUrl} onChange={e => setTwitterUrl(e.target.value)} className={inputCls} placeholder="https://twitter.com/…" />
+          </Field>
+        </div>
+      </Section>
+
+      <Button
+        size="sm"
+        onClick={handleSave}
+        disabled={saving}
+        className="bg-emerald-700 hover:bg-emerald-600 text-white text-xs gap-1.5"
+      >
+        {saving ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
+        Save Profile
+      </Button>
+    </div>
+  );
+}
 
 // ─── Email settings ───────────────────────────────────────────────────────────
 function EmailSettings() {
@@ -475,163 +686,6 @@ function SecuritySettings() {
   );
 }
 
-// ─── Permission Manager ───────────────────────────────────────────────────────
-const PERM_MODULES = [
-  "dashboard", "tasks", "email-inbox", "calendar", "documents",
-  "team", "people", "news-editor", "events-manager", "programme-pillars",
-  "stakeholders-mgmt", "media-kit-mgmt", "sponsors-partners", "site-content",
-  "cms", "media-library", "analytics", "geo-analytics", "sponsor-metrics",
-  "finance", "invoices", "marketing", "newsletter", "contact-submissions",
-  "parliament-ops", "settings",
-];
-const PERM_ROLES = [
-  "admin", "moderator", "project_director", "programme_lead",
-  "website_editor", "marketing_manager", "communications_officer",
-  "finance_coordinator", "logistics_coordinator", "sponsor_manager",
-  "consultant", "sponsor", "media",
-] as const;
-const ACTIONS = ["can_view", "can_create", "can_edit", "can_delete"] as const;
-
-function PermissionManager() {
-  const { toast } = useToast();
-  const qc = useQueryClient();
-  const [perms, setPerms] = useState<Record<string, Record<string, boolean>>>({});
-  const [saving, setSaving] = useState(false);
-
-  const { data, isLoading } = useQuery({
-    queryKey: ["all-role-permissions"],
-    queryFn: async () => {
-      const { data } = await (supabase as any).from("role_permissions").select("*");
-      return data ?? [];
-    },
-  });
-
-  useEffect(() => {
-    if (!data) return;
-    const map: Record<string, Record<string, boolean>> = {};
-    (data as any[]).forEach(row => {
-      const key = `${row.role}:${row.module}`;
-      map[key] = {
-        can_view: row.can_view, can_create: row.can_create,
-        can_edit: row.can_edit, can_delete: row.can_delete,
-      };
-    });
-    setPerms(map);
-  }, [data]);
-
-  const toggle = (role: string, module: string, action: string) => {
-    const key = `${role}:${module}`;
-    setPerms(prev => ({
-      ...prev,
-      [key]: { ...(prev[key] || { can_view: false, can_create: false, can_edit: false, can_delete: false }), [action]: !(prev[key]?.[action] ?? false) },
-    }));
-  };
-
-  const toggleAllForRole = (role: string) => {
-    // Check if all are checked — if so, uncheck all; otherwise check all
-    const allChecked = PERM_MODULES.every(mod =>
-      ACTIONS.every(action => perms[`${role}:${mod}`]?.[action])
-    );
-    setPerms(prev => {
-      const next = { ...prev };
-      PERM_MODULES.forEach(mod => {
-        next[`${role}:${mod}`] = {
-          can_view: !allChecked, can_create: !allChecked,
-          can_edit: !allChecked, can_delete: !allChecked,
-        };
-      });
-      return next;
-    });
-  };
-
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      const upserts: any[] = [];
-      for (const role of PERM_ROLES) {
-        for (const module of PERM_MODULES) {
-          const key = `${role}:${module}`;
-          const p = perms[key] || { can_view: false, can_create: false, can_edit: false, can_delete: false };
-          upserts.push({
-            role, module,
-            can_view: p.can_view ?? false, can_create: p.can_create ?? false,
-            can_edit: p.can_edit ?? false, can_delete: p.can_delete ?? false,
-          });
-        }
-      }
-      for (const role of PERM_ROLES) {
-        await (supabase as any).from("role_permissions").delete().eq("role", role);
-      }
-      await (supabase as any).from("role_permissions").insert(upserts);
-      qc.invalidateQueries({ queryKey: ["all-role-permissions"] });
-      qc.invalidateQueries({ queryKey: ["role-permissions"] });
-      toast({ title: "Permissions saved" });
-    } catch (err: any) {
-      toast({ title: "Failed", description: err.message, variant: "destructive" });
-    } finally { setSaving(false); }
-  };
-
-  if (isLoading) return <div className="flex justify-center py-8"><div className="w-5 h-5 border-2 border-emerald-700 border-t-emerald-400 rounded-full animate-spin" /></div>;
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-start gap-2 p-3 bg-amber-950/40 border border-amber-800 rounded-lg">
-        <AlertTriangle size={12} className="text-amber-400 flex-shrink-0 mt-0.5" />
-        <p className="text-[10px] text-amber-300 leading-relaxed">
-          Super Admin always has full access to all modules. Configure permissions for all other roles below.
-        </p>
-      </div>
-
-      <div className="overflow-x-auto border border-crm-border rounded-lg">
-        <table className="w-full text-[10px]">
-          <thead>
-            <tr className="border-b border-crm-border bg-crm-surface/50">
-              <th className="text-left py-2 px-3 text-crm-text-dim font-semibold sticky left-0 bg-crm-surface/90 z-10 min-w-[130px]">Module</th>
-              {PERM_ROLES.map(role => (
-                <th key={role} colSpan={4} className="text-center py-2 px-1 text-crm-text-dim font-semibold">
-                  <button onClick={() => toggleAllForRole(role)} className="hover:text-crm-text transition-colors capitalize text-[9px]">
-                    {role.replace("_", " ")}
-                  </button>
-                </th>
-              ))}
-            </tr>
-            <tr className="border-b border-crm-border">
-              <th className="sticky left-0 bg-crm-surface/90 z-10"></th>
-              {PERM_ROLES.map(role => ACTIONS.map(action => (
-                <th key={`${role}-${action}`} className="text-center py-1 px-0.5 text-crm-text-faint text-[7px]">
-                  {action.replace("can_", "").charAt(0).toUpperCase() + action.replace("can_", "").slice(1)}
-                </th>
-              )))}
-            </tr>
-          </thead>
-          <tbody>
-            {PERM_MODULES.map(module => (
-              <tr key={module} className="border-b border-crm-border/50 hover:bg-crm-surface/50">
-                <td className="py-1.5 px-3 text-crm-text font-medium capitalize sticky left-0 bg-crm-card z-10 text-[10px]">
-                  {module.replace(/-/g, " ")}
-                </td>
-                {PERM_ROLES.map(role => ACTIONS.map(action => {
-                  const key = `${role}:${module}`;
-                  const checked = perms[key]?.[action] ?? false;
-                  return (
-                    <td key={`${role}-${module}-${action}`} className="text-center py-1.5 px-0.5">
-                      <Checkbox checked={checked} onCheckedChange={() => toggle(role, module, action)} className="h-3 w-3" />
-                    </td>
-                  );
-                }))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      <Button size="sm" onClick={handleSave} disabled={saving}
-        className="bg-emerald-700 hover:bg-emerald-600 text-white text-xs gap-1.5">
-        {saving ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />} Save Permissions
-      </Button>
-    </div>
-  );
-}
 
 // ─── Site Settings ────────────────────────────────────────────────────────────
 function SiteSettingsPanel() {
@@ -749,22 +803,23 @@ function SiteSettingsPanel() {
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
-export default function SettingsModule() {
+export default function SettingsModule({ onNavigate }: { onNavigate?: (section: string) => void } = {}) {
   const { isSuperAdmin, isAdmin } = useAuthContext();
-  const [tab, setTab] = useState<SettingsTab>("notifications");
+  const [tab, setTab] = useState<SettingsTab>("profile");
 
   const tabs: { id: SettingsTab; label: string; icon: React.ElementType; superAdminOnly?: boolean; adminOnly?: boolean }[] = [
+    { id: "profile",       label: "Profile",       icon: User },
     { id: "notifications", label: "Notifications", icon: Bell },
-    { id: "security", label: "Security", icon: Shield },
+    { id: "security",      label: "Security",      icon: Shield },
     { id: "email-accounts", label: "Email Accounts", icon: Mail, superAdminOnly: true },
-    { id: "email", label: "Email Config", icon: Mail, superAdminOnly: true },
-    { id: "permissions", label: "Permissions", icon: Lock, superAdminOnly: true },
+    { id: "email",         label: "Email Config",  icon: Mail, superAdminOnly: true },
+    { id: "permissions",   label: "Permissions",   icon: Lock, adminOnly: true },
     { id: "site_settings", label: "Site Settings", icon: Globe, superAdminOnly: true },
   ];
 
   const visibleTabs = tabs.filter(t =>
     (!t.superAdminOnly || isSuperAdmin) &&
-    (!t.adminOnly || isAdmin)
+    (!t.adminOnly || isAdmin || isSuperAdmin)
   );
 
   return (
@@ -772,7 +827,7 @@ export default function SettingsModule() {
       <div>
         <h2 className="text-lg font-bold text-crm-text">Settings</h2>
         <p className="text-[12px] text-crm-text-muted mt-0.5">
-          Manage notifications, security, permissions, and site configuration
+          Manage your profile, notifications, security, and site configuration
         </p>
       </div>
 
@@ -793,17 +848,22 @@ export default function SettingsModule() {
               <span className="text-[8px] font-mono text-amber-400 bg-amber-950 border border-amber-800 rounded px-1">SA</span>
             )}
             {t.adminOnly && !t.superAdminOnly && (
-              <span className="text-[8px] font-mono text-emerald-400 bg-emerald-950 border border-emerald-800 rounded px-1">A</span>
+              <span className="text-[8px] font-mono text-emerald-400 bg-emerald-950 border border-emerald-800 rounded px-1">ADM</span>
             )}
           </button>
         ))}
       </div>
 
+      {tab === "profile"      && <ProfileSettings />}
       {tab === "notifications" && <NotificationSettings />}
-      {tab === "security" && <SecuritySettings />}
+      {tab === "security"      && <SecuritySettings />}
       {tab === "email-accounts" && isSuperAdmin && <EmailConfigSettings />}
-      {tab === "email" && isSuperAdmin && <EmailSettings />}
-      {tab === "permissions" && isSuperAdmin && <PermissionManager />}
+      {tab === "email"          && isSuperAdmin && <EmailSettings />}
+      {tab === "permissions"    && (isAdmin || isSuperAdmin) && (
+        <PermissionManagerPanel
+          onNavigateToRoles={onNavigate ? () => onNavigate("roles") : undefined}
+        />
+      )}
       {tab === "site_settings" && isSuperAdmin && <SiteSettingsPanel />}
     </div>
   );

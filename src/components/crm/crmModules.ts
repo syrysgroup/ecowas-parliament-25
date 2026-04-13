@@ -64,6 +64,7 @@ export type ModuleId =
   | "contact-submissions"
   | "newsletter"
   | "media-library"
+  | "roles"
   | "settings"
   | "programme-pillars"
   | "stakeholders-mgmt"
@@ -354,6 +355,15 @@ export const CRM_MODULES: CRMModule[] = [
   },
 
   // ── ADMINISTRATION ────────────────────────────────────────────────────────
+  {
+    id: "roles",
+    label: "Roles & Permissions",
+    icon: ShieldCheck,
+    section: "roles",
+    allowedRoles: ["super_admin", "admin"],
+    isStub: false,
+    group: "ADMINISTRATION",
+  },
   {
     id: "parliament-ops",
     label: "Parliament Ops",

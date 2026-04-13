@@ -2,6 +2,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { useEffect, lazy, Suspense } from "react";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { getModulesForRoles } from "@/components/crm/crmModules";
+import { usePermissions } from "@/hooks/usePermissions";
 import CRMLayout from "@/components/crm/CRMLayout";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -26,6 +27,7 @@ import StakeholdersModule from "@/components/crm/modules/StakeholdersModule";
 import MediaKitModule from "@/components/crm/modules/MediaKitModule";
 import InvoiceModule from "@/components/crm/modules/InvoiceModule";
 import ProfileModule from "@/components/crm/modules/ProfileModule";
+import RolesModule from "@/components/crm/modules/RolesModule";
 
 // Lazy — less frequently used modules
 const MessagingModule = lazy(() => import("@/components/crm/modules/MessagingModule"));
@@ -49,8 +51,9 @@ function ModuleLoader() {
 
 export default function CRMDashboard() {
   const [params, setParams] = useSearchParams();
-  const { user, roles, loading, rolesLoading } = useAuthContext();
+  const { user, roles, loading, rolesLoading, isSuperAdmin } = useAuthContext();
   const navigate = useNavigate();
+  const { canView } = usePermissions();
 
   const section = params.get("section") ?? "";
 
@@ -78,9 +81,14 @@ export default function CRMDashboard() {
   useEffect(() => {
     if (loading || rolesLoading || roles.length === 0) return;
     if (section === "") return;
+    // Static role-based gate
     const allowed = getModulesForRoles(roles).some(m => m.section === section);
-    if (!allowed) setParams({});
-  }, [section, roles, loading, rolesLoading]);
+    if (!allowed) { setParams({}); return; }
+    // Dynamic DB permission gate (skip for super_admin — always allowed)
+    if (!isSuperAdmin && !canView(section)) {
+      setParams({});
+    }
+  }, [section, roles, loading, rolesLoading, isSuperAdmin, canView]);
 
   if (loading || rolesLoading) {
     return (
@@ -107,7 +115,7 @@ export default function CRMDashboard() {
       case "cms":             return <Suspense fallback={<ModuleLoader />}><CMSModule /></Suspense>;
       case "email-inbox":     return <EmailInboxModule />;
       case "super-admin":     return <SuperAdminModule />;
-      case "settings":        return <SettingsModule />;
+      case "settings":        return <SettingsModule onNavigate={navigateSection} />;
       case "geo-analytics":   return <GeoAnalyticsModule />;
       case "events-manager":  return <EventsManagerModule />;
       case "sponsors-partners": return <SponsorsManagerModule />;
@@ -121,6 +129,7 @@ export default function CRMDashboard() {
       case "media-kit-mgmt":      return <MediaKitModule />;
       case "invoices":             return <InvoiceModule />;
       case "profile":              return <ProfileModule />;
+      case "roles":                return <RolesModule />;
       default:                    return <DashboardModule onNavigate={navigateSection} />;
     }
   };
