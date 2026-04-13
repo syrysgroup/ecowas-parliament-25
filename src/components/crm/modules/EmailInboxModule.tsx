@@ -80,7 +80,7 @@ interface SearchFilters {
   freetext?: string;
 }
 
-const PAGE_SIZE = 25;
+const PAGE_SIZE = 20;
 
 const SYSTEM_FOLDERS: { id: string; label: string; icon: React.ElementType }[] = [
   { id: "inbox",   label: "Inbox",   icon: Inbox     },
@@ -1426,7 +1426,7 @@ export default function EmailInboxModule() {
 
   // ── Main render ────────────────────────────────────────────────────────────
   return (
-    <div className="flex h-[calc(100vh-4rem)] overflow-hidden bg-crm-card border border-crm-border rounded-xl shadow-sm">
+    <div className="flex h-[calc(100vh-3.5rem)] -m-3 md:-m-6 overflow-hidden bg-crm-card border border-crm-border rounded-xl shadow-sm">
 
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
@@ -1570,33 +1570,33 @@ export default function EmailInboxModule() {
           })}
         </div>
 
-        {/* Pagination bar */}
-        {allDisplayEmails.length > PAGE_SIZE && (
-          <div className="flex items-center justify-between px-3 py-2 border-t border-crm-border shrink-0 bg-crm-surface/30">
-            <span className="text-[11px] text-crm-text-muted">
-              {pageStart}–{pageEnd} of {allDisplayEmails.length}
+        {/* Pagination bar — always visible */}
+        <div className="flex items-center justify-between px-3 py-1.5 border-t border-crm-border shrink-0 bg-crm-surface/20">
+          <span className="text-[10px] text-crm-text-faint">
+            {allDisplayEmails.length === 0
+              ? "0 emails"
+              : `${pageStart}–${pageEnd} of ${allDisplayEmails.length}`}
+          </span>
+          <div className="flex items-center gap-0.5">
+            <button
+              onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
+              disabled={safePage === 0}
+              className="p-1 rounded hover:bg-crm-surface text-crm-text-muted disabled:opacity-25 transition-colors"
+            >
+              <ChevronLeft size={13} />
+            </button>
+            <span className="text-[10px] text-crm-text-faint px-1 tabular-nums">
+              {totalPages > 1 ? `${safePage + 1} / ${totalPages}` : `${PAGE_SIZE}/page`}
             </span>
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
-                disabled={safePage === 0}
-                className="p-1 rounded hover:bg-crm-surface text-crm-text-muted disabled:opacity-30 transition-colors"
-              >
-                <ChevronLeft size={14} />
-              </button>
-              <span className="text-[11px] text-crm-text-muted px-1">
-                {safePage + 1} / {totalPages}
-              </span>
-              <button
-                onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))}
-                disabled={safePage >= totalPages - 1}
-                className="p-1 rounded hover:bg-crm-surface text-crm-text-muted disabled:opacity-30 transition-colors"
-              >
-                <ChevronRight size={14} />
-              </button>
-            </div>
+            <button
+              onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))}
+              disabled={safePage >= totalPages - 1}
+              className="p-1 rounded hover:bg-crm-surface text-crm-text-muted disabled:opacity-25 transition-colors"
+            >
+              <ChevronRight size={13} />
+            </button>
           </div>
-        )}
+        </div>
       </div>
 
       {/* Detail pane */}

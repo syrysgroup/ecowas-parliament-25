@@ -51,10 +51,10 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Fetch the invitation
+    // Fetch the invitation (include created_at + resent_at for rate-limit check)
     const { data: invitation, error: fetchErr } = await serviceClient
       .from("invitations")
-      .select("id, email, role, accepted_at")
+      .select("id, email, role, accepted_at, resent_at, created_at")
       .eq("id", invitation_id)
       .single();
 
@@ -70,6 +70,24 @@ Deno.serve(async (req) => {
       });
     }
 
+    // ── 60-second server-side rate limit ────────────────────────────────────
+    // Use resent_at if available, otherwise created_at (first send).
+    // This prevents both UI bypass and direct API abuse.
+    const lastSent = invitation.resent_at
+      ? new Date(invitation.resent_at)
+      : new Date(invitation.created_at);
+    const secondsAgo = (Date.now() - lastSent.getTime()) / 1000;
+    if (secondsAgo < 60) {
+      const retryAfter = Math.ceil(60 - secondsAgo);
+      return new Response(
+        JSON.stringify({
+          error: `Please wait ${retryAfter} second${retryAfter === 1 ? "" : "s"} before resending`,
+          retry_after: retryAfter,
+        }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Re-send the auth invite email
     const siteUrl = Deno.env.get("SITE_URL") ?? "https://ecowasparliamentinitiatives.org";
     const { error: authErr2 } = await serviceClient.auth.admin.inviteUserByEmail(invitation.email, {
@@ -79,7 +97,7 @@ Deno.serve(async (req) => {
 
     if (authErr2) {
       console.error("Auth resend invite error:", authErr2);
-      // Non-fatal — user may already exist in auth, invitation record still updated
+      // Non-fatal — user may already exist in auth; invitation record still updated
     }
 
     // Update invitation: refresh expiry and record resent_at

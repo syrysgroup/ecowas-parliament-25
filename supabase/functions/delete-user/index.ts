@@ -51,16 +51,51 @@ Deno.serve(async (req) => {
 
     // Prevent deleting self
     const filtered = user_ids.filter((id: string) => id !== user.id);
-    const results: { id: string; success: boolean; error?: string }[] = [];
+    const results: { id: string; success: boolean; email?: string; error?: string }[] = [];
 
     for (const userId of filtered) {
       try {
+        // 1. Fetch user data before deletion (email + display name for logging)
+        const { data: authUser } = await serviceClient.auth.admin.getUserById(userId);
+        const userEmail = authUser?.user?.email ?? "";
+
+        const { data: profile } = await serviceClient
+          .from("profiles")
+          .select("full_name")
+          .eq("id", userId)
+          .maybeSingle();
+        const userName = profile?.full_name ?? userEmail;
+
+        // 2. Delete from auth.users — cascades to: profiles, channel_members,
+        //    channel_messages, direct_messages, email_accounts, crm_calendar_events,
+        //    admin_activity_logs, user_roles (once FK constraint is applied via migration)
         const { error: delErr } = await serviceClient.auth.admin.deleteUser(userId);
         if (delErr) {
           results.push({ id: userId, success: false, error: delErr.message });
-        } else {
-          results.push({ id: userId, success: true });
+          continue;
         }
+
+        // 3. Clean up any pending invitations for that email (accepted invitations are
+        //    already deleted by the trigger on acceptance; only pending ones remain)
+        if (userEmail) {
+          await serviceClient
+            .from("invitations")
+            .delete()
+            .eq("email", userEmail)
+            .is("accepted_at", null);
+        }
+
+        // 4. Log the deletion to the activity log
+        //    (actor's profile still exists — we're deleting a different user)
+        await serviceClient.from("admin_activity_logs").insert({
+          actor_user_id: user.id,
+          action: "delete_user",
+          entity_type: "user",
+          entity_id: userId,
+          details: { email: userEmail, name: userName },
+        });
+
+        results.push({ id: userId, success: true, email: userEmail });
       } catch (e: any) {
         results.push({ id: userId, success: false, error: e.message });
       }

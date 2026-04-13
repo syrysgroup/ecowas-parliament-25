@@ -568,6 +568,16 @@ export default function SuperAdminModule() {
   const [searchQ,      setSearchQ]      = useState("");
   const [resendingId,  setResendingId]  = useState<string | null>(null);
 
+  // ── Delete user dialog ────────────────────────────────────────────────────
+  const [deleteTarget,      setDeleteTarget]      = useState<UserWithRoles | null>(null);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [deleting,          setDeleting]          = useState(false);
+
+  // ── Resend cooldown tracking ──────────────────────────────────────────────
+  // key: invitation id, value: unix ms when cooldown expires
+  const [resendCooldowns, setResendCooldowns] = useState<Record<string, number>>({});
+  const [now, setNow] = useState(Date.now());
+
   // ── Load all data ────────────────────────────────────────────────────────
   const loadData = useCallback(async () => {
     if (!user) return;
@@ -595,7 +605,18 @@ export default function SuperAdminModule() {
         title: p.title ?? null, organisation: p.organisation ?? null,
       })));
 
-      setInvitations(invRes.data ?? []);
+      const invData: Invitation[] = invRes.data ?? [];
+      setInvitations(invData);
+
+      // Seed cooldowns from DB — if resent_at (or created_at) is within 60s, lock the button
+      const seeded: Record<string, number> = {};
+      for (const inv of invData) {
+        const lastSent = inv.resent_at ?? inv.created_at;
+        const expiresAt = new Date(lastSent).getTime() + 60_000;
+        if (expiresAt > Date.now()) seeded[inv.id] = expiresAt;
+      }
+      setResendCooldowns(seeded);
+
       setActivityLog((actRes.data ?? []).map((l: any) => ({
         id: l.id, action: l.action, entity_type: l.entity_type,
         details: l.details, created_at: l.created_at,
@@ -607,6 +628,14 @@ export default function SuperAdminModule() {
   }, [user]);
 
   useEffect(() => { loadData(); }, [loadData]);
+
+  // ── Countdown ticker — re-renders every second while any cooldown is active ─
+  useEffect(() => {
+    const hasActive = Object.values(resendCooldowns).some(t => t > Date.now());
+    if (!hasActive) return;
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [resendCooldowns]);
 
   // ── Invite ────────────────────────────────────────────────────────────────
   const handleInvite = async (e: React.FormEvent) => {
@@ -691,10 +720,17 @@ export default function SuperAdminModule() {
       if (res.error) throw new Error(res.error.message);
       const body = res.data as any;
       if (body?.error) throw new Error(body.error);
+      // Start 60-second client-side cooldown
+      setResendCooldowns(prev => ({ ...prev, [invId]: Date.now() + 60_000 }));
       toast({ title: "Invitation resent", description: email });
       loadData();
     } catch (err: any) {
-      toast({ title: "Failed to resend", description: err.message, variant: "destructive" });
+      const body = err as any;
+      const retryAfter: number | undefined = body?.retry_after;
+      const msg = retryAfter
+        ? `Please wait ${retryAfter}s before resending`
+        : (err.message ?? "Failed to resend");
+      toast({ title: "Failed to resend", description: msg, variant: "destructive" });
     } finally { setResendingId(null); }
   };
 
@@ -711,30 +747,59 @@ export default function SuperAdminModule() {
     }
   };
 
-  // ── Delete user ───────────────────────────────────────────────────────────
-  const deleteUser = async (targetId: string, name: string) => {
-    if (targetId === user?.id) {
+  // ── Delete user — opens confirmation dialog ───────────────────────────────
+  const deleteUser = (target: UserWithRoles) => {
+    if (target.id === user?.id) {
       toast({ title: "Cannot delete your own account", variant: "destructive" });
       return;
     }
-    if (!confirm(`Delete user "${name}"? This cannot be undone.`)) return;
+    setDeleteTarget(target);
+    setDeleteConfirmText("");
+  };
+
+  // ── Confirm delete user (called from dialog) ──────────────────────────────
+  const confirmDeleteUser = async () => {
+    if (!deleteTarget || deleteConfirmText !== "DELETE") return;
+    setDeleting(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const res = await supabase.functions.invoke("delete-user", {
-        body: { user_ids: [targetId] },
+        body: { user_ids: [deleteTarget.id] },
         headers: { Authorization: `Bearer ${session?.access_token}` },
       });
       if (res.error) throw new Error(res.error.message);
-      const results = (res.data?.results ?? []) as { success: boolean; error?: string }[];
+      const results = (res.data?.results ?? []) as { success: boolean; email?: string; error?: string }[];
       const failed = results.filter(r => !r.success);
       if (failed.length > 0) {
         toast({ title: "Deletion failed", description: failed[0]?.error ?? "Unknown error", variant: "destructive" });
       } else {
-        toast({ title: "User deleted" });
+        const deletedEmail = results[0]?.email ?? deleteTarget.email;
+        const firstRole = deleteTarget.roles[0] ?? "admin";
+        setDeleteTarget(null);
+        setDeleteConfirmText("");
         loadData();
+        // Offer re-invite shortcut
+        toast({
+          title: `${deleteTarget.full_name || deletedEmail} deleted`,
+          description: "User and all their data have been removed.",
+          action: (
+            <button
+              className="text-[11px] font-semibold text-emerald-400 hover:text-emerald-300 underline underline-offset-2 transition-colors whitespace-nowrap"
+              onClick={() => {
+                setInviteEmail(deletedEmail);
+                setInviteRole(firstRole as AppRole);
+                setTab("users");
+              }}
+            >
+              Re-invite {deletedEmail}
+            </button>
+          ) as any,
+        });
       }
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -777,6 +842,112 @@ export default function SuperAdminModule() {
 
   return (
     <div className="space-y-5">
+
+      {/* ══ DELETE USER DIALOG ══ */}
+      {deleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+          <div className="bg-crm-card border border-red-900 rounded-2xl w-full max-w-md shadow-2xl">
+            {/* Dialog header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-crm-border">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-red-950 border border-red-800 flex items-center justify-center">
+                  <Trash2 size={15} className="text-red-400" />
+                </div>
+                <h3 className="text-[14px] font-bold text-crm-text">Delete User</h3>
+              </div>
+              <button
+                onClick={() => { setDeleteTarget(null); setDeleteConfirmText(""); }}
+                className="text-crm-text-faint hover:text-crm-text-secondary transition-colors p-1"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="px-5 py-4 space-y-4">
+              {/* User info */}
+              <div className="flex items-start gap-3 p-3 rounded-xl bg-crm-surface border border-crm-border">
+                <div className="w-10 h-10 rounded-full bg-crm-border flex items-center justify-center text-sm font-bold text-emerald-400 flex-shrink-0 uppercase">
+                  {(deleteTarget.full_name || deleteTarget.email)[0]}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] font-semibold text-crm-text">{deleteTarget.full_name || "—"}</p>
+                  <p className="text-[11px] text-crm-text-muted">{deleteTarget.email}</p>
+                  <div className="flex flex-wrap gap-1 mt-1.5">
+                    {deleteTarget.roles.length === 0
+                      ? <span className="text-[10px] text-crm-text-faint">No roles</span>
+                      : deleteTarget.roles.map(r => {
+                          const cfg = ROLE_CONFIG[r];
+                          return cfg ? (
+                            <span key={r} className={`text-[9px] font-mono px-1.5 py-0.5 rounded border ${cfg.badge}`}>
+                              {cfg.label}
+                            </span>
+                          ) : null;
+                        })}
+                  </div>
+                </div>
+              </div>
+
+              {/* Destruction warning */}
+              <div className="p-3 rounded-xl bg-red-950/40 border border-red-900">
+                <div className="flex items-center gap-2 mb-2">
+                  <AlertTriangle size={13} className="text-red-400 flex-shrink-0" />
+                  <p className="text-[11px] font-semibold text-red-400">This will permanently destroy:</p>
+                </div>
+                <ul className="space-y-1 pl-5">
+                  {[
+                    "Profile and account credentials",
+                    "All channel and direct messages",
+                    "Calendar events they created",
+                    "Email accounts and synced emails",
+                    "Their roles and permission assignments",
+                    "Any pending invitation for this email",
+                  ].map(item => (
+                    <li key={item} className="text-[11px] text-crm-text-muted list-disc">{item}</li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Confirm input */}
+              <div>
+                <label className="text-[11px] text-crm-text-muted block mb-1.5">
+                  Type <span className="font-mono font-bold text-red-400">DELETE</span> to confirm:
+                </label>
+                <Input
+                  value={deleteConfirmText}
+                  onChange={e => setDeleteConfirmText(e.target.value)}
+                  placeholder="DELETE"
+                  className="bg-crm-surface border-crm-border text-crm-text text-xs h-8 font-mono focus:border-red-700"
+                  autoFocus
+                  onKeyDown={e => e.key === "Enter" && deleteConfirmText === "DELETE" && confirmDeleteUser()}
+                />
+              </div>
+            </div>
+
+            {/* Dialog footer */}
+            <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-crm-border">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => { setDeleteTarget(null); setDeleteConfirmText(""); }}
+                className="border-crm-border text-crm-text-muted hover:text-crm-text-secondary text-xs h-8"
+                disabled={deleting}
+              >
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                onClick={confirmDeleteUser}
+                disabled={deleteConfirmText !== "DELETE" || deleting}
+                className="bg-red-700 hover:bg-red-600 text-white text-xs h-8 gap-1.5 disabled:opacity-40"
+              >
+                {deleting ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
+                Delete permanently
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -1040,11 +1211,11 @@ export default function SuperAdminModule() {
                       {/* Delete user */}
                       {u.id !== user?.id && (
                         <button
-                          onClick={() => deleteUser(u.id, u.full_name || u.email)}
-                          className="text-crm-text-faint hover:text-red-400 transition-colors mt-1"
-                          title="Delete user"
+                          onClick={() => deleteUser(u)}
+                          className="flex items-center gap-1 text-[10px] text-crm-text-faint hover:text-red-400 hover:bg-red-950 px-2 py-1 rounded border border-transparent hover:border-red-900 transition-colors mt-1"
+                          title="Delete user permanently"
                         >
-                          <Trash2 size={12} />
+                          <Trash2 size={10} /> Delete
                         </button>
                       )}
                     </div>
@@ -1120,19 +1291,27 @@ export default function SuperAdminModule() {
                           </td>
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-1.5">
-                              {isExpired && (
-                                <button
-                                  onClick={() => resendInvitation(inv.id, inv.email)}
-                                  disabled={resendingId === inv.id}
-                                  title="Resend invitation"
-                                  className="flex items-center gap-1 text-[10px] px-2 py-1 rounded bg-emerald-950 border border-emerald-800 text-emerald-400 hover:bg-emerald-900 transition-colors disabled:opacity-50 whitespace-nowrap"
-                                >
-                                  {resendingId === inv.id
-                                    ? <Loader2 size={10} className="animate-spin" />
-                                    : <RefreshCw size={10} />}
-                                  Resend
-                                </button>
-                              )}
+                              {(() => {
+                                const cooldownExpiry = resendCooldowns[inv.id];
+                                const secondsLeft = cooldownExpiry ? Math.max(0, Math.ceil((cooldownExpiry - now) / 1000)) : 0;
+                                const isCooling = secondsLeft > 0;
+                                const isLoading = resendingId === inv.id;
+                                return (
+                                  <button
+                                    onClick={() => !isCooling && !isLoading && resendInvitation(inv.id, inv.email)}
+                                    disabled={isLoading || isCooling}
+                                    title={isCooling ? `Wait ${secondsLeft}s before resending` : "Resend invitation"}
+                                    className="flex items-center gap-1 text-[10px] px-2 py-1 rounded bg-emerald-950 border border-emerald-800 text-emerald-400 hover:bg-emerald-900 transition-colors disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
+                                  >
+                                    {isLoading
+                                      ? <Loader2 size={10} className="animate-spin" />
+                                      : isCooling
+                                      ? <Clock size={10} />
+                                      : <RefreshCw size={10} />}
+                                    {isCooling ? `${secondsLeft}s` : "Resend"}
+                                  </button>
+                                );
+                              })()}
                               <button
                                 onClick={() => revokeInvitation(inv.id, !!inv.accepted_at)}
                                 className="text-crm-text-faint hover:text-red-400 p-1 transition-colors"
