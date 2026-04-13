@@ -280,6 +280,7 @@ Deno.serve(async (req) => {
       replyToId,
       attachments,
       quotedHtml, quotedFrom, quotedDate,
+      clientSignatureIncluded,
     } = await req.json();
 
     if (!to || !subject) {
@@ -306,15 +307,17 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Fetch user signature (server-side always builds the HTML sig — client sends plain body only)
-    const { data: sig } = await serviceClient
-      .from("email_signatures")
-      .select("*")
-      .eq("user_id", user.id)
-      .eq("is_active", true)
-      .maybeSingle();
-
-    const signatureHtml = buildSignatureHtml(sig);
+    // Only build server-side signature when the client has NOT already included it
+    let signatureHtml = "";
+    if (!clientSignatureIncluded) {
+      const { data: sig } = await serviceClient
+        .from("email_signatures")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("is_active", true)
+        .maybeSingle();
+      signatureHtml = buildSignatureHtml(sig);
+    }
 
     // Resolve reply-to details
     let replyToAddr: string | undefined;
