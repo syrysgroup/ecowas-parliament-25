@@ -377,6 +377,25 @@ Deno.serve(async (req) => {
 
     await smtpSend(acct.email_address, acct.app_password, toList, ccList, bccList, mimeMessage);
 
+    // Auto-save all recipients to email_contacts (best-effort — never blocks the response)
+    try {
+      const allAddresses = [...toList, ...ccList, ...bccList].filter(Boolean);
+      for (const addr of allAddresses) {
+        const match = addr.match(/^"?([^"<]+)"?\s*<([^>]+)>$/);
+        const emailAddr = (match ? match[2] : addr).trim().toLowerCase();
+        const displayName = match ? match[1].trim() : null;
+        if (emailAddr.includes("@")) {
+          await serviceClient.rpc("upsert_email_contact", {
+            p_user_id: user.id,
+            p_email: emailAddr,
+            p_name: displayName,
+          });
+        }
+      }
+    } catch (contactErr) {
+      console.error("send-email: contact auto-save failed (non-fatal):", contactErr);
+    }
+
     // Save to DB — DB failure must not cause a 500 after successful SMTP send
     try {
       await serviceClient.from("emails").insert({
