@@ -15,9 +15,11 @@ import {
   RefreshCw, Settings, Activity, Globe, Lock, Clock, UserPlus, Download,
   Trash2, CheckCircle2, AlertTriangle, LayoutDashboard,
   FileText, Star, Calendar, Newspaper, ChevronRight, Palette, Upload, Save,
-  Link2, Twitter, Facebook, Instagram, Linkedin, Youtube,
-  Filter, Database, X, Plus, Shield, Timer, Sun, Moon, Monitor,
+  Link2,
+  Filter, X, Plus, Shield, Timer, Sun, Moon, Monitor,
   UserX, UserCheck, Zap, Image, BarChart2, Info, BanIcon,
+  Flag, Target, Building2, PenLine, Phone,
+  AtSign, BookUser, MapPin, Layers,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -43,8 +45,28 @@ interface AuditEntry {
   source: "activity" | "audit";
   actor_name?: string;
 }
+interface Country {
+  id: string; name: string; code: string; flag: string;
+  seats: number; nomination_target: number; sort_order: number;
+  created_at: string;
+}
+interface TeamMemberRecord {
+  id: string; full_name: string; title: string | null;
+  organisation: string | null; avatar_url: string | null;
+  bio: string | null; display_order: number; is_active: boolean;
+  created_at: string;
+}
+interface EmailSig {
+  id: string; user_id: string; full_name: string | null;
+  title: string | null; email: string | null; department: string | null;
+  mobile: string | null; website: string | null; tagline: string | null;
+  is_active: boolean; created_at: string; updated_at: string;
+  profile_name?: string; profile_email?: string;
+}
 
-type Tab = "overview" | "users" | "invitations" | "website" | "activity" | "routes" | "settings" | "email-config" | "branding";
+type Tab = "overview" | "users" | "invitations" | "website" | "activity" | "routes"
+         | "countries" | "team-members" | "signatures"
+         | "settings" | "email-config" | "branding";
 
 // ─── Role config ──────────────────────────────────────────────────────────────
 const ROLE_CONFIG: Partial<Record<AppRole, {
@@ -109,7 +131,7 @@ function StatCard({ label, value, icon: Icon, accent }: {
 }
 
 // ─── Tab button ───────────────────────────────────────────────────────────────
-function TabBtn({ id, label, icon: Icon, badge, active, onClick }: {
+function TabBtn({ label, icon: Icon, badge, active, onClick }: {
   id: Tab; label: string; icon: React.ElementType; badge?: number;
   active: boolean; onClick: () => void;
 }) {
@@ -625,15 +647,15 @@ function BrandingTab({ userId }: { userId?: string }) {
         </h3>
         <div className="grid sm:grid-cols-2 gap-3">
           {[
-            { key: "social_facebook", label: "Facebook", icon: Facebook },
-            { key: "social_twitter", label: "Twitter / X", icon: Twitter },
-            { key: "social_instagram", label: "Instagram", icon: Instagram },
-            { key: "social_linkedin", label: "LinkedIn", icon: Linkedin },
-            { key: "social_youtube", label: "YouTube", icon: Youtube },
-          ].map(({ key, label, icon: Icon }) => (
+            { key: "social_facebook",  label: "Facebook" },
+            { key: "social_twitter",   label: "Twitter / X" },
+            { key: "social_instagram", label: "Instagram" },
+            { key: "social_linkedin",  label: "LinkedIn" },
+            { key: "social_youtube",   label: "YouTube" },
+          ].map(({ key, label }) => (
             <div key={key} className="space-y-1.5">
               <Label className="text-[11px] text-crm-text-muted flex items-center gap-1.5">
-                <Icon size={11} /> {label}
+                <Link2 size={11} /> {label}
               </Label>
               <Input value={values[key] ?? ""} onChange={e => set(key, e.target.value)} className={inputCls} placeholder="https://..." />
             </div>
@@ -723,6 +745,483 @@ function BrandingTab({ userId }: { userId?: string }) {
   );
 }
 
+// ─── Countries CRUD Tab ───────────────────────────────────────────────────────
+function CountriesTab() {
+  const { toast } = useToast();
+  const qc = useQueryClient();
+  const [editId, setEditId] = useState<string | null>(null);
+  const [form, setForm] = useState<Partial<Country>>({});
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState<string | null>(null);
+
+  const { data: countries = [], isLoading } = useQuery<Country[]>({
+    queryKey: ["admin-countries"],
+    queryFn: async () => {
+      const { data } = await (supabase as any).from("countries").select("*").order("sort_order");
+      return data ?? [];
+    },
+  });
+
+  const openEdit = (c?: Partial<Country>) => {
+    setForm(c ?? { code: "", name: "", flag: "", seats: 1, nomination_target: 200, sort_order: 0 });
+    setEditId(c?.id ?? "new");
+  };
+
+  const handleSave = async () => {
+    if (!form.name?.trim() || !form.code?.trim()) {
+      toast({ title: "Name and code are required", variant: "destructive" }); return;
+    }
+    setSaving(true);
+    try {
+      const payload = {
+        name: form.name!.trim(), code: form.code!.trim().toUpperCase(),
+        flag: form.flag ?? "", seats: Number(form.seats ?? 1),
+        nomination_target: Number(form.nomination_target ?? 200),
+        sort_order: Number(form.sort_order ?? 0),
+      };
+      if (editId === "new") {
+        await (supabase as any).from("countries").insert(payload);
+      } else {
+        await (supabase as any).from("countries").update(payload).eq("id", editId);
+      }
+      qc.invalidateQueries({ queryKey: ["admin-countries"] });
+      toast({ title: editId === "new" ? "Country added" : "Country updated" });
+      setEditId(null);
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally { setSaving(false); }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Delete this country? This may break existing data references.")) return;
+    setDeleting(id);
+    try {
+      await (supabase as any).from("countries").delete().eq("id", id);
+      qc.invalidateQueries({ queryKey: ["admin-countries"] });
+      toast({ title: "Country deleted" });
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally { setDeleting(null); }
+  };
+
+  if (isLoading) return <div className="flex justify-center py-12"><Loader2 size={20} className="animate-spin text-crm-text-muted" /></div>;
+
+  return (
+    <div className="space-y-4">
+      <div className="bg-crm-card border border-crm-border rounded-xl overflow-hidden">
+        <div className="px-4 py-3 border-b border-crm-border flex items-center justify-between">
+          <h3 className="text-[12px] font-semibold text-crm-text-secondary">ECOWAS Member Countries ({countries.length})</h3>
+          <Button size="sm" onClick={() => openEdit()} className="bg-amber-700 hover:bg-amber-600 text-white text-xs gap-1.5 h-7">
+            <Plus size={11} /> Add country
+          </Button>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead><tr className="border-b border-crm-border">
+              {["Flag","Name","Code","Seats","Nomination Target","Order","Actions"].map(h => (
+                <th key={h} className="px-4 py-2.5 text-[10px] font-semibold text-crm-text-dim uppercase tracking-wider text-left">{h}</th>
+              ))}
+            </tr></thead>
+            <tbody className="divide-y divide-crm-border">
+              {countries.map(c => (
+                <tr key={c.id} className="hover:bg-crm-surface transition-colors">
+                  <td className="px-4 py-3 text-xl">{c.flag}</td>
+                  <td className="px-4 py-3 text-[12px] font-medium text-crm-text">{c.name}</td>
+                  <td className="px-4 py-3 font-mono text-[11px] text-crm-text-muted">{c.code}</td>
+                  <td className="px-4 py-3 text-[12px] text-crm-text">{c.seats}</td>
+                  <td className="px-4 py-3 text-[12px] text-crm-text">{c.nomination_target}</td>
+                  <td className="px-4 py-3 text-[12px] text-crm-text-muted">{c.sort_order}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-1.5">
+                      <button onClick={() => openEdit(c)} className="text-[10px] text-crm-text-muted hover:text-crm-text px-2 py-1 rounded border border-transparent hover:border-crm-border transition-colors">
+                        <PenLine size={11} />
+                      </button>
+                      <button onClick={() => handleDelete(c.id)} disabled={deleting === c.id}
+                        className="text-[10px] text-crm-text-faint hover:text-red-400 px-2 py-1 rounded border border-transparent hover:border-red-900 transition-colors">
+                        {deleting === c.id ? <Loader2 size={11} className="animate-spin" /> : <Trash2 size={11} />}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Edit modal */}
+      {editId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+          <div className="bg-crm-card border border-crm-border rounded-2xl w-full max-w-md shadow-2xl">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-crm-border">
+              <h3 className="text-[14px] font-bold text-crm-text flex items-center gap-2">
+                <Flag size={15} className="text-amber-400" /> {editId === "new" ? "Add Country" : "Edit Country"}
+              </h3>
+              <button onClick={() => setEditId(null)} className="text-crm-text-faint hover:text-crm-text-secondary p-1"><X size={15} /></button>
+            </div>
+            <div className="px-5 py-4 grid grid-cols-2 gap-3">
+              <div className="col-span-2 space-y-1.5">
+                <Label className="text-[11px] text-crm-text-muted">Country Name</Label>
+                <Input value={form.name ?? ""} onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
+                  className="bg-crm-surface border-crm-border text-crm-text text-[12px] h-9" placeholder="Nigeria" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-[11px] text-crm-text-muted">ISO Code</Label>
+                <Input value={form.code ?? ""} onChange={e => setForm(p => ({ ...p, code: e.target.value.toUpperCase() }))}
+                  className="bg-crm-surface border-crm-border text-crm-text text-[12px] h-9 font-mono uppercase" placeholder="NG" maxLength={3} />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-[11px] text-crm-text-muted">Flag emoji</Label>
+                <Input value={form.flag ?? ""} onChange={e => setForm(p => ({ ...p, flag: e.target.value }))}
+                  className="bg-crm-surface border-crm-border text-crm-text text-[12px] h-9 text-xl" placeholder="🇳🇬" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-[11px] text-crm-text-muted flex items-center gap-1"><Target size={10} /> Parliament Seats</Label>
+                <Input type="number" min={1} value={form.seats ?? 1} onChange={e => setForm(p => ({ ...p, seats: +e.target.value }))}
+                  className="bg-crm-surface border-crm-border text-crm-text text-[12px] h-9" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-[11px] text-crm-text-muted flex items-center gap-1"><Target size={10} /> Nomination Target</Label>
+                <Input type="number" min={1} value={form.nomination_target ?? 200} onChange={e => setForm(p => ({ ...p, nomination_target: +e.target.value }))}
+                  className="bg-crm-surface border-crm-border text-crm-text text-[12px] h-9" />
+              </div>
+              <div className="col-span-2 space-y-1.5">
+                <Label className="text-[11px] text-crm-text-muted">Display order (ascending)</Label>
+                <Input type="number" min={0} value={form.sort_order ?? 0} onChange={e => setForm(p => ({ ...p, sort_order: +e.target.value }))}
+                  className="bg-crm-surface border-crm-border text-crm-text text-[12px] h-9" />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 px-5 py-4 border-t border-crm-border">
+              <Button size="sm" variant="outline" onClick={() => setEditId(null)} className="border-crm-border text-crm-text-muted text-xs h-8">Cancel</Button>
+              <Button size="sm" onClick={handleSave} disabled={saving} className="bg-amber-700 hover:bg-amber-600 text-white text-xs h-8 gap-1.5">
+                {saving ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
+                {editId === "new" ? "Add Country" : "Save Changes"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Team Members CRUD Tab ────────────────────────────────────────────────────
+function TeamMembersTab() {
+  const { toast } = useToast();
+  const qc = useQueryClient();
+  const avatarRef = useRef<HTMLInputElement>(null);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [form, setForm] = useState<Partial<TeamMemberRecord>>({});
+  const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [deleting, setDeleting] = useState<string | null>(null);
+
+  const { data: members = [], isLoading } = useQuery<TeamMemberRecord[]>({
+    queryKey: ["admin-team-members"],
+    queryFn: async () => {
+      const { data } = await (supabase as any).from("team_members").select("*").order("display_order");
+      return data ?? [];
+    },
+  });
+
+  const openEdit = (m?: Partial<TeamMemberRecord>) => {
+    setForm(m ?? { full_name: "", title: "", organisation: "", bio: "", display_order: 0, is_active: true });
+    setEditId(m?.id ?? "new");
+  };
+
+  const handleAvatarUpload = async (file: File) => {
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop();
+      const path = `team/${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from("team-avatars").upload(path, file, { upsert: true });
+      if (error) throw error;
+      const { data: { publicUrl } } = supabase.storage.from("team-avatars").getPublicUrl(path);
+      setForm(p => ({ ...p, avatar_url: publicUrl }));
+      toast({ title: "Avatar uploaded" });
+    } catch (err: any) {
+      toast({ title: "Upload failed", description: err.message, variant: "destructive" });
+    } finally { setUploading(false); }
+  };
+
+  const handleSave = async () => {
+    if (!form.full_name?.trim()) { toast({ title: "Name required", variant: "destructive" }); return; }
+    setSaving(true);
+    try {
+      const payload = {
+        full_name: form.full_name!.trim(),
+        title: form.title?.trim() ?? null,
+        organisation: form.organisation?.trim() ?? null,
+        avatar_url: form.avatar_url ?? null,
+        bio: form.bio?.trim() ?? null,
+        display_order: Number(form.display_order ?? 0),
+        is_active: form.is_active !== false,
+      };
+      if (editId === "new") {
+        await (supabase as any).from("team_members").insert(payload);
+      } else {
+        await (supabase as any).from("team_members").update(payload).eq("id", editId);
+      }
+      qc.invalidateQueries({ queryKey: ["admin-team-members"] });
+      toast({ title: editId === "new" ? "Member added" : "Member updated" });
+      setEditId(null);
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally { setSaving(false); }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Remove this team member from the public page?")) return;
+    setDeleting(id);
+    try {
+      await (supabase as any).from("team_members").delete().eq("id", id);
+      qc.invalidateQueries({ queryKey: ["admin-team-members"] });
+      toast({ title: "Member removed" });
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally { setDeleting(null); }
+  };
+
+  if (isLoading) return <div className="flex justify-center py-12"><Loader2 size={20} className="animate-spin text-crm-text-muted" /></div>;
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-start gap-3 p-3.5 rounded-xl bg-crm-card border border-emerald-900">
+        <Info size={14} className="text-emerald-400 flex-shrink-0 mt-0.5" />
+        <p className="text-[12px] text-crm-text-secondary">
+          These are <strong className="text-crm-text">non-auth team members</strong> shown on the public <code className="text-[10px] bg-crm-surface border border-crm-border rounded px-1">/team</code> page.
+          CRM users who are shown on the website are managed via the <strong className="text-crm-text">Website Members</strong> tab.
+        </p>
+      </div>
+
+      <div className="bg-crm-card border border-crm-border rounded-xl overflow-hidden">
+        <div className="px-4 py-3 border-b border-crm-border flex items-center justify-between">
+          <h3 className="text-[12px] font-semibold text-crm-text-secondary">Team Members ({members.length})</h3>
+          <Button size="sm" onClick={() => openEdit()} className="bg-amber-700 hover:bg-amber-600 text-white text-xs gap-1.5 h-7">
+            <Plus size={11} /> Add member
+          </Button>
+        </div>
+        {members.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 gap-2">
+            <Users size={28} className="text-crm-text-faint" />
+            <p className="text-[12px] text-crm-text-faint">No team members added yet.</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-crm-border">
+            {members.map(m => (
+              <div key={m.id} className={`flex items-center gap-3 px-4 py-3 hover:bg-crm-surface transition-colors ${!m.is_active ? "opacity-50" : ""}`}>
+                <div className="w-9 h-9 rounded-full overflow-hidden bg-crm-border flex items-center justify-center flex-shrink-0">
+                  {m.avatar_url
+                    ? <img src={m.avatar_url} alt="" className="w-full h-full object-cover" />
+                    : <span className="text-sm font-bold text-emerald-400 uppercase">{m.full_name[0]}</span>}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[12.5px] font-semibold text-crm-text">{m.full_name}</p>
+                  <p className="text-[10px] text-crm-text-muted">{[m.title, m.organisation].filter(Boolean).join(" · ") || "—"}</p>
+                </div>
+                <div className="flex items-center gap-1.5 flex-shrink-0">
+                  <span className="text-[9px] px-1.5 py-0.5 rounded border font-mono text-crm-text-dim border-crm-border">#{m.display_order}</span>
+                  {!m.is_active && <span className="text-[9px] px-1.5 py-0.5 rounded border bg-amber-950 border-amber-800 text-amber-400">hidden</span>}
+                  <button onClick={() => openEdit(m)} className="text-crm-text-muted hover:text-crm-text p-1.5 rounded border border-transparent hover:border-crm-border transition-colors">
+                    <PenLine size={12} />
+                  </button>
+                  <button onClick={() => handleDelete(m.id)} disabled={deleting === m.id}
+                    className="text-crm-text-faint hover:text-red-400 p-1.5 rounded border border-transparent hover:border-red-900 transition-colors">
+                    {deleting === m.id ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Edit modal */}
+      {editId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+          <div className="bg-crm-card border border-crm-border rounded-2xl w-full max-w-md shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-crm-border sticky top-0 bg-crm-card z-10">
+              <h3 className="text-[14px] font-bold text-crm-text flex items-center gap-2">
+                <Users size={15} className="text-amber-400" /> {editId === "new" ? "Add Team Member" : "Edit Member"}
+              </h3>
+              <button onClick={() => setEditId(null)} className="text-crm-text-faint hover:text-crm-text-secondary p-1"><X size={15} /></button>
+            </div>
+            <div className="px-5 py-4 space-y-3">
+              {/* Avatar */}
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 rounded-full overflow-hidden bg-crm-surface border border-crm-border flex items-center justify-center flex-shrink-0">
+                  {form.avatar_url
+                    ? <img src={form.avatar_url} alt="" className="w-full h-full object-cover" />
+                    : <Users size={20} className="text-crm-text-dim" />}
+                </div>
+                <div>
+                  <button onClick={() => avatarRef.current?.click()} disabled={uploading}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-crm-border text-[11px] text-crm-text-muted hover:text-crm-text transition-colors">
+                    {uploading ? <Loader2 size={11} className="animate-spin" /> : <Upload size={11} />}
+                    {uploading ? "Uploading…" : "Upload photo"}
+                  </button>
+                  <input ref={avatarRef} type="file" accept="image/*" className="hidden"
+                    onChange={e => e.target.files?.[0] && handleAvatarUpload(e.target.files[0])} />
+                  {form.avatar_url && (
+                    <button onClick={() => setForm(p => ({ ...p, avatar_url: null }))}
+                      className="mt-1 text-[10px] text-red-400 hover:text-red-300">Remove photo</button>
+                  )}
+                </div>
+              </div>
+              {[
+                { key: "full_name", label: "Full Name *", placeholder: "Dr. Amina Ibrahim" },
+                { key: "title", label: "Title / Role", placeholder: "Secretary General" },
+                { key: "organisation", label: "Organisation", placeholder: "ECOWAS Parliament" },
+              ].map(({ key, label, placeholder }) => (
+                <div key={key} className="space-y-1.5">
+                  <Label className="text-[11px] text-crm-text-muted">{label}</Label>
+                  <Input value={(form as any)[key] ?? ""} onChange={e => setForm(p => ({ ...p, [key]: e.target.value }))}
+                    className="bg-crm-surface border-crm-border text-crm-text text-[12px] h-9" placeholder={placeholder} />
+                </div>
+              ))}
+              <div className="space-y-1.5">
+                <Label className="text-[11px] text-crm-text-muted">Bio</Label>
+                <textarea value={form.bio ?? ""} onChange={e => setForm(p => ({ ...p, bio: e.target.value }))} rows={3}
+                  className="w-full bg-crm-surface border border-crm-border rounded-lg text-crm-text text-[12px] px-3 py-2 resize-none focus:outline-none focus:border-primary/50" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-[11px] text-crm-text-muted">Display order</Label>
+                  <Input type="number" min={0} value={form.display_order ?? 0} onChange={e => setForm(p => ({ ...p, display_order: +e.target.value }))}
+                    className="bg-crm-surface border-crm-border text-crm-text text-[12px] h-9" />
+                </div>
+                <div className="flex items-end gap-2 pb-0.5">
+                  <Switch checked={form.is_active !== false} onCheckedChange={v => setForm(p => ({ ...p, is_active: v }))}
+                    className="data-[state=checked]:bg-emerald-600" />
+                  <Label className="text-[11px] text-crm-text-muted">Active (visible on site)</Label>
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 px-5 py-4 border-t border-crm-border">
+              <Button size="sm" variant="outline" onClick={() => setEditId(null)} className="border-crm-border text-crm-text-muted text-xs h-8">Cancel</Button>
+              <Button size="sm" onClick={handleSave} disabled={saving} className="bg-amber-700 hover:bg-amber-600 text-white text-xs h-8 gap-1.5">
+                {saving ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
+                {editId === "new" ? "Add Member" : "Save Changes"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Email Signatures Tab ─────────────────────────────────────────────────────
+function SignaturesTab() {
+  const { toast } = useToast();
+  const qc = useQueryClient();
+  const [deleting, setDeleting] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+
+  const { data: sigs = [], isLoading } = useQuery<EmailSig[]>({
+    queryKey: ["admin-signatures"],
+    queryFn: async () => {
+      const [sigsRes, profilesRes] = await Promise.all([
+        (supabase as any).from("email_signatures").select("*").order("created_at", { ascending: false }),
+        (supabase as any).from("profiles").select("id, full_name, email"),
+      ]);
+      const profileMap: Record<string, any> = {};
+      (profilesRes.data ?? []).forEach((p: any) => { profileMap[p.id] = p; });
+      return (sigsRes.data ?? []).map((s: any) => ({
+        ...s,
+        profile_name: profileMap[s.user_id]?.full_name ?? "Unknown",
+        profile_email: profileMap[s.user_id]?.email ?? "",
+      }));
+    },
+  });
+
+  const filtered = sigs.filter(s =>
+    !search ||
+    (s.full_name ?? "").toLowerCase().includes(search.toLowerCase()) ||
+    (s.profile_name ?? "").toLowerCase().includes(search.toLowerCase()) ||
+    (s.email ?? "").toLowerCase().includes(search.toLowerCase())
+  );
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Delete this email signature?")) return;
+    setDeleting(id);
+    try {
+      await (supabase as any).from("email_signatures").delete().eq("id", id);
+      qc.invalidateQueries({ queryKey: ["admin-signatures"] });
+      toast({ title: "Signature deleted" });
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally { setDeleting(null); }
+  };
+
+  const exportCSV = () => {
+    const header = "User,Signature Name,Title,Email,Department,Mobile,Active\n";
+    const rows = filtered.map(s =>
+      `"${s.profile_name}","${s.full_name ?? ""}","${s.title ?? ""}","${s.email ?? ""}","${s.department ?? ""}","${s.mobile ?? ""}","${s.is_active}"`
+    ).join("\n");
+    const blob = new Blob([header + rows], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = "email-signatures.csv"; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  if (isLoading) return <div className="flex justify-center py-12"><Loader2 size={20} className="animate-spin text-crm-text-muted" /></div>;
+
+  return (
+    <div className="space-y-4">
+      <div className="bg-crm-card border border-crm-border rounded-xl overflow-hidden">
+        <div className="px-4 py-3 border-b border-crm-border flex items-center justify-between gap-3 flex-wrap">
+          <h3 className="text-[12px] font-semibold text-crm-text-secondary">Email Signatures ({filtered.length})</h3>
+          <div className="flex items-center gap-2">
+            <Input placeholder="Search…" value={search} onChange={e => setSearch(e.target.value)}
+              className="bg-crm-surface border-crm-border text-crm-text text-xs h-7 w-48" />
+            <Button size="sm" variant="outline" onClick={exportCSV}
+              className="border-crm-border text-crm-text-muted text-xs gap-1 h-7">
+              <Download size={11} /> CSV
+            </Button>
+          </div>
+        </div>
+        {filtered.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 gap-2">
+            <PenLine size={28} className="text-crm-text-faint" />
+            <p className="text-[12px] text-crm-text-faint">No signatures found.</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-crm-border">
+            {filtered.map(s => (
+              <div key={s.id} className="px-4 py-3 hover:bg-crm-surface transition-colors">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="text-[12.5px] font-semibold text-crm-text">{s.full_name || "Unnamed Signature"}</p>
+                      {!s.is_active && <span className="text-[9px] px-1.5 py-0.5 rounded border bg-crm-surface border-crm-border text-crm-text-dim">inactive</span>}
+                    </div>
+                    <p className="text-[10px] text-crm-text-muted mt-0.5">
+                      Owner: <span className="text-crm-text-secondary">{s.profile_name}</span>
+                      {s.profile_email && <span className="text-crm-text-dim"> · {s.profile_email}</span>}
+                    </p>
+                    <div className="flex flex-wrap gap-3 mt-1.5 text-[10px] text-crm-text-dim">
+                      {s.title && <span className="flex items-center gap-1"><BookUser size={9} />{s.title}</span>}
+                      {s.email && <span className="flex items-center gap-1"><AtSign size={9} />{s.email}</span>}
+                      {s.department && <span className="flex items-center gap-1"><Building2 size={9} />{s.department}</span>}
+                      {s.mobile && <span className="flex items-center gap-1"><Phone size={9} />{s.mobile}</span>}
+                      {s.tagline && <span className="flex items-center gap-1 italic">{s.tagline}</span>}
+                    </div>
+                  </div>
+                  <button onClick={() => handleDelete(s.id)} disabled={deleting === s.id}
+                    className="text-crm-text-faint hover:text-red-400 p-1.5 rounded border border-transparent hover:border-red-900 transition-colors flex-shrink-0">
+                    {deleting === s.id ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function SuperAdminModule() {
   const { user, refreshRoles, signOut } = useAuthContext();
   const { toast } = useToast();
@@ -759,6 +1258,9 @@ export default function SuperAdminModule() {
 
   // ── Settings save state ───────────────────────────────────────────────────
   const [savingSettings, setSavingSettings] = useState(false);
+
+  // ── User profile viewer ───────────────────────────────────────────────────
+  const [profileUser, setProfileUser] = useState<UserWithRoles | null>(null);
 
   // ── Delete user dialog ────────────────────────────────────────────────────
   const [deleteTarget,      setDeleteTarget]      = useState<UserWithRoles | null>(null);
@@ -1127,15 +1629,18 @@ export default function SuperAdminModule() {
   };
 
   const NAV: { id: Tab; label: string; icon: React.ElementType; badge?: number }[] = [
-    { id:"overview",    label:"Overview",        icon:LayoutDashboard },
-    { id:"users",       label:"Users",           icon:Users,  badge:stats.total },
-    { id:"invitations", label:"Invitations",     icon:Mail,   badge:stats.pendingInv },
-    { id:"website",     label:"Website Members", icon:Globe,  badge:websiteUsers.length },
-    { id:"activity",    label:"Activity Log",    icon:Activity },
-    { id:"routes",      label:"Site Routes",     icon:Globe },
-    { id:"email-config",label:"Email Config",    icon:Mail },
-    { id:"branding",    label:"Branding & Site", icon:Palette },
-    { id:"settings",    label:"Settings",        icon:Settings },
+    { id:"overview",     label:"Overview",        icon:LayoutDashboard },
+    { id:"users",        label:"Users",           icon:Users,    badge:stats.total },
+    { id:"invitations",  label:"Invitations",     icon:Mail,     badge:stats.pendingInv },
+    { id:"website",      label:"Website Members", icon:Globe,    badge:websiteUsers.length },
+    { id:"team-members", label:"Team Members",    icon:Users },
+    { id:"countries",    label:"Countries",       icon:Flag },
+    { id:"signatures",   label:"Signatures",      icon:PenLine },
+    { id:"activity",     label:"Activity Log",    icon:Activity },
+    { id:"routes",       label:"Site Routes",     icon:Globe },
+    { id:"email-config", label:"Email Config",    icon:Mail },
+    { id:"branding",     label:"Branding & Site", icon:Palette },
+    { id:"settings",     label:"Settings",        icon:Settings },
   ];
 
   return (
@@ -1246,6 +1751,100 @@ export default function SuperAdminModule() {
         </div>
       )}
 
+      {/* ══ USER PROFILE VIEWER ══ */}
+      {profileUser && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-end sm:justify-end p-0 sm:p-4 bg-black/60 backdrop-blur-sm" onClick={() => setProfileUser(null)}>
+          <div className="bg-crm-card border-l border-crm-border w-full sm:w-[420px] h-full sm:h-auto sm:max-h-[90vh] sm:rounded-2xl overflow-y-auto shadow-2xl"
+            onClick={e => e.stopPropagation()}>
+            {/* Header */}
+            <div className="relative">
+              <div className="h-24 bg-gradient-to-r from-emerald-900 via-emerald-800 to-teal-900 sm:rounded-t-2xl" />
+              <button onClick={() => setProfileUser(null)}
+                className="absolute top-3 right-3 w-7 h-7 rounded-full bg-black/30 hover:bg-black/50 text-white flex items-center justify-center transition-colors">
+                <X size={14} />
+              </button>
+              <div className="px-5 pb-4 -mt-10 flex items-end gap-4">
+                <div className="w-20 h-20 rounded-xl bg-crm-card border-4 border-crm-card shadow-xl flex items-center justify-center flex-shrink-0 overflow-hidden">
+                  <span className="text-2xl font-black text-emerald-400 uppercase">
+                    {(profileUser.full_name || profileUser.email)[0]}
+                  </span>
+                </div>
+                <div className="pb-1 min-w-0">
+                  <h3 className="text-[15px] font-bold text-crm-text truncate">{profileUser.full_name || "—"}</h3>
+                  <p className="text-[11px] text-crm-text-muted truncate">{profileUser.email}</p>
+                </div>
+              </div>
+            </div>
+            {/* Details */}
+            <div className="px-5 pb-5 space-y-4">
+              {/* Status + suspend */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className={`text-[10px] font-bold px-2 py-1 rounded-full border ${profileUser.is_active ? "bg-emerald-950 border-emerald-800 text-emerald-400" : "bg-amber-950 border-amber-800 text-amber-400"}`}>
+                  {profileUser.is_active ? "Active" : "Suspended"}
+                </span>
+                {profileUser.show_on_website && (
+                  <span className="text-[10px] px-2 py-1 rounded-full border bg-blue-950 border-blue-800 text-blue-400">On website</span>
+                )}
+                {profileUser.id === user?.id && (
+                  <span className="text-[10px] px-2 py-1 rounded-full border bg-amber-950 border-amber-800 text-amber-400">You</span>
+                )}
+              </div>
+              {/* Info rows */}
+              <div className="bg-crm-surface border border-crm-border rounded-xl divide-y divide-crm-border">
+                {[
+                  { icon: AtSign,    label: "Email",        value: profileUser.email },
+                  { icon: MapPin,    label: "Country",      value: profileUser.country || "—" },
+                  { icon: Building2, label: "Organisation", value: profileUser.organisation || "—" },
+                  { icon: BookUser,  label: "Title",        value: profileUser.title || "—" },
+                  { icon: Calendar,  label: "Joined",       value: new Date(profileUser.created_at).toLocaleDateString("en-GB", { day:"numeric",month:"long",year:"numeric" }) },
+                  { icon: Shield,    label: "User ID",      value: profileUser.id.substring(0,8)+"…" },
+                ].map(({ icon: Icon, label, value }) => (
+                  <div key={label} className="flex items-center gap-3 px-3 py-2.5">
+                    <Icon size={12} className="text-crm-text-dim flex-shrink-0" />
+                    <span className="text-[11px] text-crm-text-muted w-24 flex-shrink-0">{label}</span>
+                    <span className="text-[12px] text-crm-text font-medium truncate">{value}</span>
+                  </div>
+                ))}
+              </div>
+              {/* Roles */}
+              <div>
+                <p className="text-[10px] font-mono uppercase tracking-widest text-crm-text-dim mb-2">Assigned Roles</p>
+                {profileUser.roles.length === 0
+                  ? <p className="text-[12px] text-crm-text-faint">No roles assigned</p>
+                  : <div className="flex flex-wrap gap-1.5">
+                    {profileUser.roles.map(r => {
+                      const cfg = ROLE_CONFIG[r];
+                      if (!cfg) return null;
+                      const Icon = cfg.icon;
+                      return (
+                        <span key={r} className={`flex items-center gap-1 text-[10px] font-mono px-2 py-1 rounded border ${cfg.badge}`}>
+                          <Icon size={10} /> {cfg.label}
+                        </span>
+                      );
+                    })}
+                  </div>}
+              </div>
+              {/* Actions */}
+              {profileUser.id !== user?.id && (
+                <div className="flex gap-2 pt-2">
+                  <Button size="sm" variant="outline"
+                    onClick={() => { toggleUserActive(profileUser.id, !profileUser.is_active); setProfileUser(prev => prev ? { ...prev, is_active: !prev.is_active } : null); }}
+                    className={`text-xs gap-1.5 h-8 flex-1 ${profileUser.is_active ? "border-amber-900 text-amber-400 hover:bg-amber-950" : "border-emerald-900 text-emerald-400 hover:bg-emerald-950"}`}>
+                    {profileUser.is_active ? <UserX size={12} /> : <UserCheck size={12} />}
+                    {profileUser.is_active ? "Suspend user" : "Reactivate user"}
+                  </Button>
+                  <Button size="sm" variant="outline"
+                    onClick={() => { setProfileUser(null); deleteUser(profileUser); }}
+                    className="text-xs gap-1.5 h-8 border-red-900 text-red-400 hover:bg-red-950">
+                    <Trash2 size={12} /> Delete
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -1286,16 +1885,47 @@ export default function SuperAdminModule() {
           {/* Quick actions */}
           <div className="flex flex-wrap gap-2">
             {[
-              { label: "View Invitations", icon: Mail,     tab: "invitations" as Tab },
               { label: "Manage Users",     icon: Users,    tab: "users" as Tab },
+              { label: "View Invitations", icon: Mail,     tab: "invitations" as Tab },
+              { label: "Website Members",  icon: Globe,    tab: "website" as Tab },
+              { label: "Team Members",     icon: Users,    tab: "team-members" as Tab },
+              { label: "Countries",        icon: Flag,     tab: "countries" as Tab },
+              { label: "Signatures",       icon: PenLine,  tab: "signatures" as Tab },
               { label: "Activity Log",     icon: Activity, tab: "activity" as Tab },
               { label: "Email Config",     icon: Settings, tab: "email-config" as Tab },
+              { label: "Branding",         icon: Palette,  tab: "branding" as Tab },
+              { label: "Settings",         icon: Settings, tab: "settings" as Tab },
             ].map(({ label, icon: Icon, tab: t }) => (
               <button key={t} onClick={() => setTab(t)}
                 className="flex items-center gap-2 px-3 py-2 rounded-lg bg-crm-surface border border-crm-border hover:border-crm-border-hover text-[11px] text-crm-text-muted hover:text-crm-text-secondary transition-colors">
                 <Icon size={12} /> {label}
               </button>
             ))}
+          </div>
+
+          {/* External module quick-links */}
+          <div className="bg-crm-card border border-crm-border rounded-xl p-4">
+            <h3 className="text-[12px] font-semibold text-crm-text-secondary mb-3">Dedicated Management Modules</h3>
+            <div className="grid sm:grid-cols-2 gap-2">
+              {[
+                { label: "Programme Pillars", desc: "Manage 7 programme pillars, progress & leads", icon: Layers, section: "programme-pillars" },
+                { label: "Sponsors & Partners", desc: "Full CRUD for sponsors, tiers, logos", icon: Star, section: "sponsors-partners" },
+                { label: "Newsletter", desc: "Subscribers list, export, unsubscribe tracking", icon: Mail, section: "newsletter" },
+                { label: "Contact Submissions", desc: "Review & manage contact form submissions", icon: FileText, section: "contact-submissions" },
+              ].map(({ label, desc, icon: Icon, section }) => (
+                <div key={section} className="flex items-start gap-3 p-3 rounded-lg border border-crm-border hover:border-crm-border-hover transition-colors">
+                  <div className="w-8 h-8 rounded-lg bg-crm-surface border border-crm-border flex items-center justify-center flex-shrink-0">
+                    <Icon size={14} className="text-amber-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[12px] font-semibold text-crm-text">{label}</p>
+                    <p className="text-[10px] text-crm-text-dim mt-0.5">{desc}</p>
+                  </div>
+                  <ChevronRight size={12} className="text-crm-text-faint flex-shrink-0 mt-1" />
+                </div>
+              ))}
+            </div>
+            <p className="text-[10px] text-crm-text-faint mt-3">Access via the CRM sidebar navigation.</p>
           </div>
 
           {/* Role breakdown */}
@@ -1523,7 +2153,8 @@ export default function SuperAdminModule() {
             ) : (
               <div className="divide-y divide-crm-border">
                 {filteredUsers.map(u => (
-                  <div key={u.id} className={`flex items-start gap-3 px-4 py-3 hover:bg-crm-surface transition-colors ${!u.is_active ? "opacity-60" : ""}`}>
+                  <div key={u.id} className={`flex items-start gap-3 px-4 py-3 hover:bg-crm-surface transition-colors cursor-pointer ${!u.is_active ? "opacity-60" : ""}`}
+                    onClick={() => setProfileUser(u)}>
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 uppercase ${u.is_active ? "bg-crm-border text-emerald-400" : "bg-amber-950 border border-amber-800 text-amber-400"}`}>
                       {(u.full_name || u.email)[0]}
                     </div>
@@ -1542,7 +2173,7 @@ export default function SuperAdminModule() {
                       <p className="text-[10px] text-crm-text-muted">{u.email}</p>
                       <p className="text-[10px] text-crm-text-dim">{u.country || "—"}</p>
                     </div>
-                    <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                    <div className="flex flex-col items-end gap-2 flex-shrink-0" onClick={e => e.stopPropagation()}>
                       {/* Show on Team toggle */}
                       <div className="flex items-center gap-2">
                         <span className="text-[9px] text-crm-text-dim">Team page</span>
@@ -2002,6 +2633,15 @@ export default function SuperAdminModule() {
           })}
         </div>
       )}
+
+      {/* ══ COUNTRIES ══ */}
+      {tab === "countries" && <CountriesTab />}
+
+      {/* ══ TEAM MEMBERS ══ */}
+      {tab === "team-members" && <TeamMembersTab />}
+
+      {/* ══ SIGNATURES ══ */}
+      {tab === "signatures" && <SignaturesTab />}
 
       {/* ══ EMAIL CONFIG ══ */}
       {tab === "email-config" && <EmailConfigTab userId={user?.id} />}

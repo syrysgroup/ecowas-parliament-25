@@ -3,7 +3,8 @@
     "allow": [
       "Bash(xargs grep:*)",
       "Bash(ls full-version-extracted/*/)",
-      "Bash(grep -r \"avatar_url\\\\|title\\\\|organisation\\\\|bio\" c:/Users/emmat/Downloads/Projects/Implementation/supabase/migrations/*.sql)"
+      "Bash(grep -r \"avatar_url\\\\|title\\\\|organisation\\\\|bio\" c:/Users/emmat/Downloads/Projects/Implementation/supabase/migrations/*.sql)",
+      "Bash(grep -l \"countries\\\\|team\\\\|programme_pillars\\\\|sponsors\\\\|partners\\\\|newsletter_subscribers\\\\|contact_submissions\\\\|email_signatures\" \"c:\\\\Users\\\\emmat\\\\Downloads\\\\Projects\\\\Implementation/supabase/migrations/\"*.sql)"
     ],
     "additionalDirectories": [
       "c:\\Users\\emmat\\.claude\\plans"
