@@ -1206,13 +1206,20 @@ export default function EmailInboxModule() {
   });
 
   // Thread grouping
-  const displayEmails = threadView
+  const allDisplayEmails = threadView
     ? Object.values(filteredEmails.reduce<Record<string, Email>>((acc, e) => {
         const key = e.thread_id || e.id;
         if (!acc[key] || new Date(e.sent_at) > new Date(acc[key].sent_at)) acc[key] = e;
         return acc;
       }, {})).sort((a, b) => new Date(b.sent_at).getTime() - new Date(a.sent_at).getTime())
     : filteredEmails;
+
+  // Pagination
+  const totalPages = Math.max(1, Math.ceil(allDisplayEmails.length / PAGE_SIZE));
+  const safePage = Math.min(currentPage, totalPages - 1);
+  const displayEmails = allDisplayEmails.slice(safePage * PAGE_SIZE, (safePage + 1) * PAGE_SIZE);
+  const pageStart = safePage * PAGE_SIZE + 1;
+  const pageEnd = Math.min((safePage + 1) * PAGE_SIZE, allDisplayEmails.length);
 
   const currentIdx = selectedEmail ? displayEmails.findIndex(e => e.id === selectedEmail.id) : -1;
 
