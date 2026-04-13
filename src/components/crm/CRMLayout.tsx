@@ -461,13 +461,13 @@ export default function CRMLayout({ activeSection, onNavigate, children }: CRMLa
 
         {/* Main content — subtle dot-grid pattern background */}
         <main
-          className="flex-1 overflow-y-auto p-6 relative"
+          className="flex-1 overflow-y-auto p-3 md:p-6 relative"
           style={{
             backgroundImage: "radial-gradient(circle, hsl(var(--border)) 1px, transparent 1px)",
             backgroundSize: "24px 24px",
           }}
         >
-          <div className="relative z-10">{children}</div>
+          <div className="relative z-10 w-full">{children}</div>
         </main>
       </div>
 

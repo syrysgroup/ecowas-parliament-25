@@ -757,6 +757,93 @@ export type Database = {
           },
         ]
       }
+      email_contacts: {
+        Row: {
+          contact_count: number
+          created_at: string
+          display_name: string | null
+          email_address: string
+          id: string
+          is_starred: boolean
+          last_contacted_at: string
+          user_id: string
+        }
+        Insert: {
+          contact_count?: number
+          created_at?: string
+          display_name?: string | null
+          email_address: string
+          id?: string
+          is_starred?: boolean
+          last_contacted_at?: string
+          user_id: string
+        }
+        Update: {
+          contact_count?: number
+          created_at?: string
+          display_name?: string | null
+          email_address?: string
+          id?: string
+          is_starred?: boolean
+          last_contacted_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      email_label_assignments: {
+        Row: {
+          email_id: string
+          label_id: string
+        }
+        Insert: {
+          email_id: string
+          label_id: string
+        }
+        Update: {
+          email_id?: string
+          label_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_label_assignments_email_id_fkey"
+            columns: ["email_id"]
+            isOneToOne: false
+            referencedRelation: "emails"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_label_assignments_label_id_fkey"
+            columns: ["label_id"]
+            isOneToOne: false
+            referencedRelation: "email_labels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_labels: {
+        Row: {
+          color: string
+          created_at: string
+          id: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          id?: string
+          name: string
+          user_id: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          id?: string
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       email_signatures: {
         Row: {
           created_at: string
@@ -802,6 +889,33 @@ export type Database = {
         }
         Relationships: []
       }
+      email_templates: {
+        Row: {
+          body_html: string
+          created_at: string
+          id: string
+          name: string
+          subject: string
+          user_id: string
+        }
+        Insert: {
+          body_html?: string
+          created_at?: string
+          id?: string
+          name: string
+          subject?: string
+          user_id: string
+        }
+        Update: {
+          body_html?: string
+          created_at?: string
+          id?: string
+          name?: string
+          subject?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       emails: {
         Row: {
           account_id: string
@@ -813,11 +927,15 @@ export type Database = {
           from_name: string
           has_attachments: boolean
           id: string
+          is_archived: boolean
           is_read: boolean
           is_starred: boolean
+          scheduled_at: string | null
           sent_at: string | null
+          snooze_until: string | null
           subject: string
           synced_at: string | null
+          thread_id: string | null
           to_address: string
           zoho_message_id: string | null
         }
@@ -831,11 +949,15 @@ export type Database = {
           from_name?: string
           has_attachments?: boolean
           id?: string
+          is_archived?: boolean
           is_read?: boolean
           is_starred?: boolean
+          scheduled_at?: string | null
           sent_at?: string | null
+          snooze_until?: string | null
           subject?: string
           synced_at?: string | null
+          thread_id?: string | null
           to_address?: string
           zoho_message_id?: string | null
         }
@@ -849,11 +971,15 @@ export type Database = {
           from_name?: string
           has_attachments?: boolean
           id?: string
+          is_archived?: boolean
           is_read?: boolean
           is_starred?: boolean
+          scheduled_at?: string | null
           sent_at?: string | null
+          snooze_until?: string | null
           subject?: string
           synced_at?: string | null
+          thread_id?: string | null
           to_address?: string
           zoho_message_id?: string | null
         }
@@ -2225,6 +2351,10 @@ export type Database = {
         | { Args: never; Returns: boolean }
         | { Args: { _user_id: string }; Returns: boolean }
       next_invoice_number: { Args: never; Returns: string }
+      upsert_email_contact: {
+        Args: { p_email: string; p_name?: string; p_user_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role:

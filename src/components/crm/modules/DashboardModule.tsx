@@ -173,26 +173,34 @@ function WelcomeBanner({ name, onNavigate, roles, isSuperAdmin, isAdmin }: {
       <div className="absolute bottom-0 left-0 w-48 h-48 bg-primary-foreground/5 rounded-full translate-y-24 -translate-x-24 blur-2xl" />
       <Sparkles className="absolute top-4 right-4 w-6 h-6 text-accent/40 animate-pulse" />
 
-      <div className="relative z-10">
-        <p className="text-xs font-medium text-primary-foreground/70 uppercase tracking-wider mb-1">{today}</p>
-        <h1 className="text-xl md:text-2xl font-bold mb-1">
-          {greeting}, {name.split(" ")[0]} 👋
-        </h1>
-        <p className="text-sm text-primary-foreground/80 max-w-lg">
-          Here's an overview of your workspace. Stay on top of tasks, communications, and key metrics.
-        </p>
+      <div className="relative z-10 flex flex-col md:flex-row md:items-center gap-4">
+        {/* Logos */}
+        <div className="flex items-center gap-3 md:gap-4 shrink-0">
+          <img src="/images/logo/logo.png" alt="ECOWAS Parliament" className="h-14 md:h-16 object-contain drop-shadow-lg" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+          <div className="h-10 w-px bg-primary-foreground/20 hidden md:block" />
+        </div>
 
-        <div className="flex flex-wrap gap-2 mt-4">
-          {quickActions.map((btn) => (
-            <button
-              key={btn.section}
-              onClick={() => onNavigate(btn.section)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary-foreground/15 hover:bg-primary-foreground/25 text-xs font-medium transition-all duration-200 backdrop-blur-sm border border-primary-foreground/10"
-            >
-              {btn.label}
-              <ArrowRight size={12} />
-            </button>
-          ))}
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-medium text-primary-foreground/70 uppercase tracking-wider mb-1">{today}</p>
+          <h1 className="text-xl md:text-2xl font-bold mb-1">
+            {greeting}, {name.split(" ")[0]} 👋
+          </h1>
+          <p className="text-sm text-primary-foreground/80 max-w-lg">
+            Here's an overview of your workspace. Stay on top of tasks, communications, and key metrics.
+          </p>
+
+          <div className="flex flex-wrap gap-2 mt-4">
+            {quickActions.map((btn) => (
+              <button
+                key={btn.section}
+                onClick={() => onNavigate(btn.section)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary-foreground/15 hover:bg-primary-foreground/25 text-xs font-medium transition-all duration-200 backdrop-blur-sm border border-primary-foreground/10"
+              >
+                {btn.label}
+                <ArrowRight size={12} />
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </div>
@@ -221,7 +229,7 @@ export default function DashboardModule({ onNavigate }: { onNavigate: (s: string
   }
 
   return (
-    <div className="space-y-6 max-w-[1600px] mx-auto">
+    <div className="space-y-6 w-full">
       {/* Welcome banner */}
       <WelcomeBanner name={displayName} onNavigate={onNavigate} roles={roles} isSuperAdmin={isSuperAdmin} isAdmin={isAdmin} />
 
@@ -232,8 +240,8 @@ export default function DashboardModule({ onNavigate }: { onNavigate: (s: string
           value={24983}
           change="+15.6%"
           positive
-          icon={<Users className="h-5 w-5 text-primary" />}
-          iconBg="bg-primary/10"
+          icon={<Users className="h-5 w-5 text-primary-foreground" />}
+          iconBg="bg-primary"
           delay={0}
         />
         <StatCard
@@ -242,7 +250,7 @@ export default function DashboardModule({ onNavigate }: { onNavigate: (s: string
           change="+3"
           positive
           icon={<Calendar className="h-5 w-5 text-accent-foreground" />}
-          iconBg="bg-accent/15"
+          iconBg="bg-accent"
           delay={80}
         />
         <StatCard
@@ -251,8 +259,8 @@ export default function DashboardModule({ onNavigate }: { onNavigate: (s: string
           prefix="$"
           change="+28.4%"
           positive
-          icon={<DollarSign className="h-5 w-5 text-primary" />}
-          iconBg="bg-primary/10"
+          icon={<DollarSign className="h-5 w-5 text-primary-foreground" />}
+          iconBg="bg-primary/80"
           delay={160}
         />
         <StatCard
@@ -260,8 +268,8 @@ export default function DashboardModule({ onNavigate }: { onNavigate: (s: string
           value={15}
           change="+2"
           positive
-          icon={<Globe className="h-5 w-5 text-secondary" />}
-          iconBg="bg-secondary/10"
+          icon={<Globe className="h-5 w-5 text-secondary-foreground" />}
+          iconBg="bg-secondary"
           delay={240}
         />
       </div>

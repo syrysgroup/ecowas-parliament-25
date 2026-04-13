@@ -291,6 +291,8 @@ export default function ProfileModule() {
       await supabase.auth.updateUser({ data: { full_name: fullName.trim(), avatar_url: avatarUrl || null } });
       qc.invalidateQueries({ queryKey: ["team-members"] });
       qc.invalidateQueries({ queryKey: ["team-members-profiles"] });
+      qc.invalidateQueries({ queryKey: ["profile-stats"] });
+      qc.invalidateQueries({ queryKey: ["crm-notifications"] });
       toast({ title: t("crm.profile.saved") });
     } catch (err: any) {
       toast({ title: t("crm.profile.saveFailed"), description: err.message, variant: "destructive" });

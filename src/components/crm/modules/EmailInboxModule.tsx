@@ -80,6 +80,8 @@ interface SearchFilters {
   freetext?: string;
 }
 
+const PAGE_SIZE = 25;
+
 const SYSTEM_FOLDERS: { id: string; label: string; icon: React.ElementType }[] = [
   { id: "inbox",   label: "Inbox",   icon: Inbox     },
   { id: "sent",    label: "Sent",    icon: Send      },
@@ -303,23 +305,37 @@ function ComposeModal({ account, replyTo, replyToAll, forwardOf, onClose, onSent
     enabled: !!userId,
   });
 
-  // Build initial body
+  // Build initial body with full branded HTML signature
   useEffect(() => {
     if (!userId) return;
     (supabase as any).from("email_signatures").select("title,full_name,department,mobile,email,website,tagline,is_active").eq("user_id", userId).maybeSingle()
       .then(({ data }: any) => {
         let sig = "";
         if (data?.is_active) {
-          const name = [data.title, data.full_name].filter(Boolean).join(" ");
-          const lines = [name, "ECOWAS Parliament Initiatives", data.department, data.mobile ? `Mobile: ${data.mobile}` : "", data.email ? `Email: ${data.email}` : "", data.website ?? "www.ecowasparliamentinitiatives.org", data.tagline ?? ""].filter(Boolean);
-          sig = `<br><br><div style="border-top:1px solid #ccc;padding-top:8px;color:#555;font-size:12px">${lines.join("<br>")}</div>`;
+          const sigName = [data.title, data.full_name].filter(Boolean).join(" ");
+          const logoUrl = "https://xahuyraommtfopnxrjvz.supabase.co/storage/v1/object/public/branding/logos/sing.png";
+          const websiteRaw = (data.website || "www.ecowasparliamentinitiatives.org").replace(/^https?:\/\//, "");
+          const parts: string[] = [];
+          parts.push('<div style="font-family:Arial,sans-serif;font-size:13px;color:#222;margin-top:20px;padding-top:12px;border-top:2px solid #006633">');
+          parts.push('<strong style="font-size:14px;color:#111">' + sigName + "</strong><br>");
+          parts.push('<span style="color:#006633;font-weight:600">ECOWAS Parliament Initiatives</span><br>');
+          if (data.department) parts.push(data.department + "<br>");
+          if (data.mobile) parts.push("Mobile Number: <strong>" + data.mobile + "</strong><br>");
+          if (data.email) parts.push('Email: <a href="mailto:' + data.email + '" style="color:#006633;text-decoration:none">' + data.email + "</a><br>");
+          parts.push('Website: <a href="https://' + websiteRaw + '" style="color:#006633;text-decoration:none">' + websiteRaw + "</a><br>");
+          if (data.tagline) parts.push('<br><em style="color:#006633">' + data.tagline + "</em>");
+          parts.push('<br><img src="' + logoUrl + '" alt="ECOWAS Parliament Initiatives" style="height:70px;display:block;margin-top:8px" />');
+          parts.push("</div>");
+          sig = "<br><br>" + parts.join("\n");
         }
         let quoted = "";
         if (replyTo || replyToAll) {
           const orig = replyTo || replyToAll!;
-          quoted = `<br><hr style="border-top:1px solid #ccc;margin:12px 0"><div style="color:#777;font-size:12px">On ${orig.sent_at ? format(parseISO(orig.sent_at), "d MMM yyyy") : ""}, ${orig.from_name || orig.from_address} wrote:</div><blockquote style="border-left:3px solid #ccc;padding-left:10px;margin:8px 0;color:#555">${orig.body_html || orig.body_text}</blockquote>`;
+          const dateStr = orig.sent_at ? format(parseISO(orig.sent_at), "d MMM yyyy") : "";
+          const fromStr = orig.from_name || orig.from_address;
+          quoted = '<br><hr style="border-top:1px solid #ccc;margin:12px 0"><div style="color:#777;font-size:12px">On ' + dateStr + ", " + fromStr + ' wrote:</div><blockquote style="border-left:3px solid #ccc;padding-left:10px;margin:8px 0;color:#555">' + (orig.body_html || orig.body_text) + "</blockquote>";
         } else if (forwardOf) {
-          quoted = `<br><hr style="border-top:1px solid #ccc;margin:12px 0"><div style="color:#777;font-size:12px">---------- Forwarded message ----------<br>From: ${forwardOf.from_name || forwardOf.from_address}<br>Subject: ${forwardOf.subject}</div><blockquote style="border-left:3px solid #ccc;padding-left:10px;margin:8px 0;color:#555">${forwardOf.body_html || forwardOf.body_text}</blockquote>`;
+          quoted = '<br><hr style="border-top:1px solid #ccc;margin:12px 0"><div style="color:#777;font-size:12px">---------- Forwarded message ----------<br>From: ' + (forwardOf.from_name || forwardOf.from_address) + "<br>Subject: " + forwardOf.subject + '</div><blockquote style="border-left:3px solid #ccc;padding-left:10px;margin:8px 0;color:#555">' + (forwardOf.body_html || forwardOf.body_text) + "</blockquote>";
         }
         if (bodyRef.current) {
           bodyRef.current.innerHTML = sig + quoted;
@@ -882,6 +898,7 @@ export default function EmailInboxModule() {
   const [newLabelName, setNewLabelName] = useState("");
   const [newLabelColor, setNewLabelColor] = useState("#6366f1");
   const [threadView, setThreadView] = useState(false);
+  const [currentPage, setCurrentPage] = useState(0);
   const syncInterval = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Connect/reauth dialogs
@@ -989,7 +1006,16 @@ export default function EmailInboxModule() {
   const markRead    = useMutation({ mutationFn: (id: string) => invokeUpdateEmail("mark_read", id), onSuccess: invalidateEmails });
   const markUnread  = useMutation({ mutationFn: (id: string) => invokeUpdateEmail("mark_unread", id), onSuccess: invalidateEmails });
   const toggleStar  = useMutation({ mutationFn: ({ id, starred }: { id: string; starred: boolean }) => invokeUpdateEmail(starred ? "star" : "unstar", id), onSuccess: () => qc.invalidateQueries({ queryKey: ["emails"] }) });
-  const moveToTrash = useMutation({ mutationFn: (id: string) => invokeUpdateEmail("trash", id), onSuccess: () => { setSelectedEmail(null); invalidateEmails(); } });
+  const moveToTrash = useMutation({
+    mutationFn: async ({ id, folder }: { id: string; folder?: string }) => {
+      if (folder === "trash") {
+        if (!confirm("Permanently delete this email?")) throw new Error("cancelled");
+        return invokeUpdateEmail("delete", id);
+      }
+      return invokeUpdateEmail("trash", id);
+    },
+    onSuccess: () => { setSelectedEmail(null); invalidateEmails(); },
+  });
   const moveEmail   = useMutation({ mutationFn: ({ id, folderId, folderName }: { id: string; folderId: string; folderName: string }) => invokeUpdateEmail("move", id, { folder_id: folderId, folder_name: folderName }), onSuccess: () => { setSelectedEmail(null); qc.invalidateQueries({ queryKey: ["emails"] }); } });
 
   const archiveEmail = async (id: string) => {
@@ -1126,8 +1152,15 @@ export default function EmailInboxModule() {
 
   // ── Bulk ops ───────────────────────────────────────────────────────────────
   const handleBulkTrash = async () => {
+    if (activeFolder === "trash") {
+      if (!confirm("This will permanently delete the selected emails. Continue?")) return;
+    }
     setBulkOperating(true);
-    try { for (const id of selectedIds) await invokeUpdateEmail("trash", id); setSelectedIds(new Set()); invalidateEmails(); }
+    try {
+      const action = activeFolder === "trash" ? "delete" : "trash";
+      for (const id of selectedIds) await invokeUpdateEmail(action, id);
+      setSelectedIds(new Set()); invalidateEmails();
+    }
     catch (err: any) { toast({ title: "Failed", description: err.message, variant: "destructive" }); }
     finally { setBulkOperating(false); }
   };
@@ -1173,13 +1206,20 @@ export default function EmailInboxModule() {
   });
 
   // Thread grouping
-  const displayEmails = threadView
+  const allDisplayEmails = threadView
     ? Object.values(filteredEmails.reduce<Record<string, Email>>((acc, e) => {
         const key = e.thread_id || e.id;
         if (!acc[key] || new Date(e.sent_at) > new Date(acc[key].sent_at)) acc[key] = e;
         return acc;
       }, {})).sort((a, b) => new Date(b.sent_at).getTime() - new Date(a.sent_at).getTime())
     : filteredEmails;
+
+  // Pagination
+  const totalPages = Math.max(1, Math.ceil(allDisplayEmails.length / PAGE_SIZE));
+  const safePage = Math.min(currentPage, totalPages - 1);
+  const displayEmails = allDisplayEmails.slice(safePage * PAGE_SIZE, (safePage + 1) * PAGE_SIZE);
+  const pageStart = safePage * PAGE_SIZE + 1;
+  const pageEnd = Math.min((safePage + 1) * PAGE_SIZE, allDisplayEmails.length);
 
   const currentIdx = selectedEmail ? displayEmails.findIndex(e => e.id === selectedEmail.id) : -1;
 
@@ -1299,8 +1339,9 @@ export default function EmailInboxModule() {
           const count = f.id === "starred" || f.id === "archive" ? undefined : unreadMap[f.id];
           const isActive = !activeLabelId && activeFolder === f.id;
           return (
-            <button key={f.id} onClick={() => { setActiveFolder(f.id); setActiveLabelId(null); setSelectedEmail(null); setSelectedIds(new Set()); setSidebarOpen(false); }}
+            <button key={f.id} onClick={() => { setActiveFolder(f.id); setActiveLabelId(null); setSelectedEmail(null); setSelectedIds(new Set()); setCurrentPage(0); setSidebarOpen(false); }}
               className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-left transition-colors ${isActive ? "bg-primary/12 text-primary font-semibold" : "text-crm-text-muted hover:text-crm-text hover:bg-crm-surface"}`}>
+
               <div className="flex items-center gap-2.5"><Icon size={16} className="shrink-0" /><span className="text-[13px]">{f.label}</span></div>
               {count != null && count > 0 && (
                 <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${f.id === "inbox" ? "bg-primary/15 text-primary" : f.id === "spam" ? "bg-red-500/15 text-red-400" : "bg-crm-surface text-crm-text-muted"}`}>{count > 99 ? "99+" : count}</span>
@@ -1385,7 +1426,7 @@ export default function EmailInboxModule() {
 
   // ── Main render ────────────────────────────────────────────────────────────
   return (
-    <div className="flex h-[calc(100vh-3.5rem)] -m-6 overflow-hidden bg-crm-card border border-crm-border rounded-xl shadow-sm">
+    <div className="flex h-[calc(100vh-4rem)] overflow-hidden bg-crm-card border border-crm-border rounded-xl shadow-sm">
 
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
@@ -1521,13 +1562,41 @@ export default function EmailInboxModule() {
                 {/* Hover quick actions */}
                 <div className="absolute right-2 top-1/2 -translate-y-1/2 hidden group-hover:flex items-center gap-0.5 bg-crm-card/95 border border-crm-border rounded-lg shadow-md px-1 py-0.5" onClick={e => e.stopPropagation()}>
                   <button onClick={() => archiveEmail(email.id)} title="Archive" className="p-1 rounded hover:bg-crm-surface text-crm-text-faint hover:text-crm-text transition-colors"><Archive size={12} /></button>
-                  <button onClick={() => moveToTrash.mutate(email.id)} title="Delete" className="p-1 rounded hover:bg-crm-surface text-crm-text-faint hover:text-red-400 transition-colors"><Trash2 size={12} /></button>
+                  <button onClick={() => moveToTrash.mutate({ id: email.id, folder: activeFolder })} title={activeFolder === "trash" ? "Delete permanently" : "Delete"} className="p-1 rounded hover:bg-crm-surface text-crm-text-faint hover:text-red-400 transition-colors"><Trash2 size={12} /></button>
                   <button onClick={() => markUnread.mutate(email.id)} title="Mark unread" className="p-1 rounded hover:bg-crm-surface text-crm-text-faint hover:text-crm-text transition-colors"><Mail size={12} /></button>
                 </div>
               </div>
             );
           })}
         </div>
+
+        {/* Pagination bar */}
+        {allDisplayEmails.length > PAGE_SIZE && (
+          <div className="flex items-center justify-between px-3 py-2 border-t border-crm-border shrink-0 bg-crm-surface/30">
+            <span className="text-[11px] text-crm-text-muted">
+              {pageStart}–{pageEnd} of {allDisplayEmails.length}
+            </span>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
+                disabled={safePage === 0}
+                className="p-1 rounded hover:bg-crm-surface text-crm-text-muted disabled:opacity-30 transition-colors"
+              >
+                <ChevronLeft size={14} />
+              </button>
+              <span className="text-[11px] text-crm-text-muted px-1">
+                {safePage + 1} / {totalPages}
+              </span>
+              <button
+                onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))}
+                disabled={safePage >= totalPages - 1}
+                className="p-1 rounded hover:bg-crm-surface text-crm-text-muted disabled:opacity-30 transition-colors"
+              >
+                <ChevronRight size={14} />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Detail pane */}
@@ -1540,7 +1609,7 @@ export default function EmailInboxModule() {
             onReplyAll={e => setComposeProps({ replyToAll: e })}
             onForward={e => setComposeProps({ forwardOf: e })}
             onStar={(id, starred) => toggleStar.mutate({ id, starred })}
-            onTrash={id => moveToTrash.mutate(id)}
+            onTrash={id => moveToTrash.mutate({ id, folder: activeFolder })}
             onArchive={archiveEmail}
             onMarkUnread={id => markUnread.mutate(id)}
             onMove={(id, fid, fn) => moveEmail.mutate({ id, folderId: fid, folderName: fn })}
