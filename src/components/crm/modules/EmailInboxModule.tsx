@@ -1339,7 +1339,7 @@ export default function EmailInboxModule() {
           const count = f.id === "starred" || f.id === "archive" ? undefined : unreadMap[f.id];
           const isActive = !activeLabelId && activeFolder === f.id;
           return (
-            <button key={f.id} onClick={() => { setActiveFolder(f.id); setActiveLabelId(null); setSelectedEmail(null); setSelectedIds(new Set()); setSidebarOpen(false); }}
+            <button key={f.id} onClick={() => { setActiveFolder(f.id); setActiveLabelId(null); setSelectedEmail(null); setSelectedIds(new Set()); setCurrentPage(0); setSidebarOpen(false); }}
               className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-left transition-colors ${isActive ? "bg-primary/12 text-primary font-semibold" : "text-crm-text-muted hover:text-crm-text hover:bg-crm-surface"}`}>
 
               <div className="flex items-center gap-2.5"><Icon size={16} className="shrink-0" /><span className="text-[13px]">{f.label}</span></div>
@@ -1426,7 +1426,7 @@ export default function EmailInboxModule() {
 
   // ── Main render ────────────────────────────────────────────────────────────
   return (
-    <div className="flex h-[calc(100vh-3.5rem)] -m-6 overflow-hidden bg-crm-card border border-crm-border rounded-xl shadow-sm">
+    <div className="flex h-[calc(100vh-4rem)] overflow-hidden bg-crm-card border border-crm-border rounded-xl shadow-sm">
 
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
