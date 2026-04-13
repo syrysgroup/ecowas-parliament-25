@@ -1551,7 +1551,7 @@ export default function EmailInboxModule() {
                 {/* Hover quick actions */}
                 <div className="absolute right-2 top-1/2 -translate-y-1/2 hidden group-hover:flex items-center gap-0.5 bg-crm-card/95 border border-crm-border rounded-lg shadow-md px-1 py-0.5" onClick={e => e.stopPropagation()}>
                   <button onClick={() => archiveEmail(email.id)} title="Archive" className="p-1 rounded hover:bg-crm-surface text-crm-text-faint hover:text-crm-text transition-colors"><Archive size={12} /></button>
-                  <button onClick={() => moveToTrash.mutate(email.id)} title="Delete" className="p-1 rounded hover:bg-crm-surface text-crm-text-faint hover:text-red-400 transition-colors"><Trash2 size={12} /></button>
+                  <button onClick={() => moveToTrash.mutate({ id: email.id, folder: activeFolder })} title={activeFolder === "trash" ? "Delete permanently" : "Delete"} className="p-1 rounded hover:bg-crm-surface text-crm-text-faint hover:text-red-400 transition-colors"><Trash2 size={12} /></button>
                   <button onClick={() => markUnread.mutate(email.id)} title="Mark unread" className="p-1 rounded hover:bg-crm-surface text-crm-text-faint hover:text-crm-text transition-colors"><Mail size={12} /></button>
                 </div>
               </div>
@@ -1570,7 +1570,7 @@ export default function EmailInboxModule() {
             onReplyAll={e => setComposeProps({ replyToAll: e })}
             onForward={e => setComposeProps({ forwardOf: e })}
             onStar={(id, starred) => toggleStar.mutate({ id, starred })}
-            onTrash={id => moveToTrash.mutate(id)}
+            onTrash={id => moveToTrash.mutate({ id, folder: activeFolder })}
             onArchive={archiveEmail}
             onMarkUnread={id => markUnread.mutate(id)}
             onMove={(id, fid, fn) => moveEmail.mutate({ id, folderId: fid, folderName: fn })}
