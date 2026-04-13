@@ -896,6 +896,7 @@ export default function EmailInboxModule() {
   const [newLabelName, setNewLabelName] = useState("");
   const [newLabelColor, setNewLabelColor] = useState("#6366f1");
   const [threadView, setThreadView] = useState(false);
+  const [currentPage, setCurrentPage] = useState(0);
   const syncInterval = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Connect/reauth dialogs
