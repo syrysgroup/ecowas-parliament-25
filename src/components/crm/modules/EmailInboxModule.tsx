@@ -310,24 +310,30 @@ function ComposeModal({ account, replyTo, replyToAll, forwardOf, onClose, onSent
       .then(({ data }: any) => {
         let sig = "";
         if (data?.is_active) {
-          const name = [data.title, data.full_name].filter(Boolean).join(" ");
-          sig = `<br><br><div style="font-family:Arial,sans-serif;font-size:13px;color:#222;margin-top:20px;padding-top:12px;border-top:2px solid #006633">
-  <strong style="font-size:14px;color:#111">${name}</strong><br>
-  <span style="color:#006633;font-weight:600">ECOWAS Parliament Initiatives</span><br>
-  ${data.department ? `${data.department}<br>` : ""}
-  ${data.mobile ? `Mobile Number: <strong>${data.mobile}</strong><br>` : ""}
-  ${data.email ? `Email: <a href="mailto:${data.email}" style="color:#006633;text-decoration:none">${data.email}</a><br>` : ""}
-  ${data.website ? `Website: <a href="https://${(data.website || "").replace(/^https?:\\/\\//, "")}" style="color:#006633;text-decoration:none">${(data.website || "").replace(/^https?:\\/\\//, "")}</a><br>` : `Website: <a href="https://www.ecowasparliamentinitiatives.org" style="color:#006633;text-decoration:none">www.ecowasparliamentinitiatives.org</a><br>`}
-  ${data.tagline ? `<br><em style="color:#006633">${data.tagline}</em>` : ""}
-  <br><img src="https://xahuyraommtfopnxrjvz.supabase.co/storage/v1/object/public/branding/logos/sing.png" alt="ECOWAS Parliament Initiatives" style="height:70px;display:block;margin-top:8px" />
-</div>`;
+          const sigName = [data.title, data.full_name].filter(Boolean).join(" ");
+          const logoUrl = "https://xahuyraommtfopnxrjvz.supabase.co/storage/v1/object/public/branding/logos/sing.png";
+          const websiteRaw = (data.website || "www.ecowasparliamentinitiatives.org").replace(/^https?:\/\//, "");
+          const parts: string[] = [];
+          parts.push('<div style="font-family:Arial,sans-serif;font-size:13px;color:#222;margin-top:20px;padding-top:12px;border-top:2px solid #006633">');
+          parts.push('<strong style="font-size:14px;color:#111">' + sigName + "</strong><br>");
+          parts.push('<span style="color:#006633;font-weight:600">ECOWAS Parliament Initiatives</span><br>');
+          if (data.department) parts.push(data.department + "<br>");
+          if (data.mobile) parts.push("Mobile Number: <strong>" + data.mobile + "</strong><br>");
+          if (data.email) parts.push('Email: <a href="mailto:' + data.email + '" style="color:#006633;text-decoration:none">' + data.email + "</a><br>");
+          parts.push('Website: <a href="https://' + websiteRaw + '" style="color:#006633;text-decoration:none">' + websiteRaw + "</a><br>");
+          if (data.tagline) parts.push('<br><em style="color:#006633">' + data.tagline + "</em>");
+          parts.push('<br><img src="' + logoUrl + '" alt="ECOWAS Parliament Initiatives" style="height:70px;display:block;margin-top:8px" />');
+          parts.push("</div>");
+          sig = "<br><br>" + parts.join("\n");
         }
         let quoted = "";
         if (replyTo || replyToAll) {
           const orig = replyTo || replyToAll!;
-          quoted = `<br><hr style="border-top:1px solid #ccc;margin:12px 0"><div style="color:#777;font-size:12px">On ${orig.sent_at ? format(parseISO(orig.sent_at), "d MMM yyyy") : ""}, ${orig.from_name || orig.from_address} wrote:</div><blockquote style="border-left:3px solid #ccc;padding-left:10px;margin:8px 0;color:#555">${orig.body_html || orig.body_text}</blockquote>`;
+          const dateStr = orig.sent_at ? format(parseISO(orig.sent_at), "d MMM yyyy") : "";
+          const fromStr = orig.from_name || orig.from_address;
+          quoted = '<br><hr style="border-top:1px solid #ccc;margin:12px 0"><div style="color:#777;font-size:12px">On ' + dateStr + ", " + fromStr + ' wrote:</div><blockquote style="border-left:3px solid #ccc;padding-left:10px;margin:8px 0;color:#555">' + (orig.body_html || orig.body_text) + "</blockquote>";
         } else if (forwardOf) {
-          quoted = `<br><hr style="border-top:1px solid #ccc;margin:12px 0"><div style="color:#777;font-size:12px">---------- Forwarded message ----------<br>From: ${forwardOf.from_name || forwardOf.from_address}<br>Subject: ${forwardOf.subject}</div><blockquote style="border-left:3px solid #ccc;padding-left:10px;margin:8px 0;color:#555">${forwardOf.body_html || forwardOf.body_text}</blockquote>`;
+          quoted = '<br><hr style="border-top:1px solid #ccc;margin:12px 0"><div style="color:#777;font-size:12px">---------- Forwarded message ----------<br>From: ' + (forwardOf.from_name || forwardOf.from_address) + "<br>Subject: " + forwardOf.subject + '</div><blockquote style="border-left:3px solid #ccc;padding-left:10px;margin:8px 0;color:#555">' + (forwardOf.body_html || forwardOf.body_text) + "</blockquote>";
         }
         if (bodyRef.current) {
           bodyRef.current.innerHTML = sig + quoted;
