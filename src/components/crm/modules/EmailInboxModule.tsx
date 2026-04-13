@@ -303,7 +303,7 @@ function ComposeModal({ account, replyTo, replyToAll, forwardOf, onClose, onSent
     enabled: !!userId,
   });
 
-  // Build initial body
+  // Build initial body with full branded HTML signature
   useEffect(() => {
     if (!userId) return;
     (supabase as any).from("email_signatures").select("title,full_name,department,mobile,email,website,tagline,is_active").eq("user_id", userId).maybeSingle()
@@ -311,8 +311,16 @@ function ComposeModal({ account, replyTo, replyToAll, forwardOf, onClose, onSent
         let sig = "";
         if (data?.is_active) {
           const name = [data.title, data.full_name].filter(Boolean).join(" ");
-          const lines = [name, "ECOWAS Parliament Initiatives", data.department, data.mobile ? `Mobile: ${data.mobile}` : "", data.email ? `Email: ${data.email}` : "", data.website ?? "www.ecowasparliamentinitiatives.org", data.tagline ?? ""].filter(Boolean);
-          sig = `<br><br><div style="border-top:1px solid #ccc;padding-top:8px;color:#555;font-size:12px">${lines.join("<br>")}</div>`;
+          sig = `<br><br><div style="font-family:Arial,sans-serif;font-size:13px;color:#222;margin-top:20px;padding-top:12px;border-top:2px solid #006633">
+  <strong style="font-size:14px;color:#111">${name}</strong><br>
+  <span style="color:#006633;font-weight:600">ECOWAS Parliament Initiatives</span><br>
+  ${data.department ? `${data.department}<br>` : ""}
+  ${data.mobile ? `Mobile Number: <strong>${data.mobile}</strong><br>` : ""}
+  ${data.email ? `Email: <a href="mailto:${data.email}" style="color:#006633;text-decoration:none">${data.email}</a><br>` : ""}
+  ${data.website ? `Website: <a href="https://${(data.website || "").replace(/^https?:\\/\\//, "")}" style="color:#006633;text-decoration:none">${(data.website || "").replace(/^https?:\\/\\//, "")}</a><br>` : `Website: <a href="https://www.ecowasparliamentinitiatives.org" style="color:#006633;text-decoration:none">www.ecowasparliamentinitiatives.org</a><br>`}
+  ${data.tagline ? `<br><em style="color:#006633">${data.tagline}</em>` : ""}
+  <br><img src="https://xahuyraommtfopnxrjvz.supabase.co/storage/v1/object/public/branding/logos/sing.png" alt="ECOWAS Parliament Initiatives" style="height:70px;display:block;margin-top:8px" />
+</div>`;
         }
         let quoted = "";
         if (replyTo || replyToAll) {
@@ -989,7 +997,16 @@ export default function EmailInboxModule() {
   const markRead    = useMutation({ mutationFn: (id: string) => invokeUpdateEmail("mark_read", id), onSuccess: invalidateEmails });
   const markUnread  = useMutation({ mutationFn: (id: string) => invokeUpdateEmail("mark_unread", id), onSuccess: invalidateEmails });
   const toggleStar  = useMutation({ mutationFn: ({ id, starred }: { id: string; starred: boolean }) => invokeUpdateEmail(starred ? "star" : "unstar", id), onSuccess: () => qc.invalidateQueries({ queryKey: ["emails"] }) });
-  const moveToTrash = useMutation({ mutationFn: (id: string) => invokeUpdateEmail("trash", id), onSuccess: () => { setSelectedEmail(null); invalidateEmails(); } });
+  const moveToTrash = useMutation({
+    mutationFn: async ({ id, folder }: { id: string; folder?: string }) => {
+      if (folder === "trash") {
+        if (!confirm("Permanently delete this email?")) throw new Error("cancelled");
+        return invokeUpdateEmail("delete", id);
+      }
+      return invokeUpdateEmail("trash", id);
+    },
+    onSuccess: () => { setSelectedEmail(null); invalidateEmails(); },
+  });
   const moveEmail   = useMutation({ mutationFn: ({ id, folderId, folderName }: { id: string; folderId: string; folderName: string }) => invokeUpdateEmail("move", id, { folder_id: folderId, folder_name: folderName }), onSuccess: () => { setSelectedEmail(null); qc.invalidateQueries({ queryKey: ["emails"] }); } });
 
   const archiveEmail = async (id: string) => {
@@ -1126,8 +1143,15 @@ export default function EmailInboxModule() {
 
   // ── Bulk ops ───────────────────────────────────────────────────────────────
   const handleBulkTrash = async () => {
+    if (activeFolder === "trash") {
+      if (!confirm("This will permanently delete the selected emails. Continue?")) return;
+    }
     setBulkOperating(true);
-    try { for (const id of selectedIds) await invokeUpdateEmail("trash", id); setSelectedIds(new Set()); invalidateEmails(); }
+    try {
+      const action = activeFolder === "trash" ? "delete" : "trash";
+      for (const id of selectedIds) await invokeUpdateEmail(action, id);
+      setSelectedIds(new Set()); invalidateEmails();
+    }
     catch (err: any) { toast({ title: "Failed", description: err.message, variant: "destructive" }); }
     finally { setBulkOperating(false); }
   };
