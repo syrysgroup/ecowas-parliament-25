@@ -73,39 +73,52 @@ function SidebarContent({
 
   return (
     <div className="flex flex-col h-full">
-      {/* Logo area */}
-      <div className={`flex items-center border-b border-crm-border/60 h-16 px-3 ${collapsed && !isMobile ? "justify-center" : "justify-between"}`}>
+      {/* ── Logo / Brand area ─────────────────────────────────────────────── */}
+      <div className={`
+        flex items-center border-b border-crm-border/60 flex-shrink-0
+        ${showLabels ? "min-h-[72px] px-3 justify-between" : "h-16 px-2 justify-center"}
+      `}>
         {showLabels ? (
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center flex-shrink-0 animate-glow-pulse shadow-[0_0_20px_hsl(var(--primary)/0.4)]">
+          /* Expanded: prominent ECOWAS Parliament branding */
+          <div className="flex items-center gap-3 min-w-0 flex-1 py-3">
+            {/* White background logo container — ECOWAS logo requires white bg */}
+            <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-white shadow-[0_2px_12px_rgba(0,0,0,0.18)] border border-black/8 flex items-center justify-center overflow-hidden">
               <img
                 src="/images/logo/logo.png"
-                alt="ECOWAS"
-                className="w-6 h-6 object-contain"
+                alt="ECOWAS Parliament"
+                className="w-9 h-9 object-contain"
                 onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = 'none';
-                  (e.target as HTMLImageElement).parentElement!.innerHTML = '<span class="text-primary-foreground font-black text-xs">EP</span>';
+                  const el = e.target as HTMLImageElement;
+                  el.style.display = "none";
+                  el.parentElement!.innerHTML =
+                    '<span style="color:hsl(152 100% 26%)" class="font-black text-sm">EP</span>';
                 }}
               />
             </div>
             <div className="min-w-0">
-              <span className="text-sm font-bold text-foreground block leading-tight truncate">
-                ECOWAS CRM
+              <span className="text-[12.5px] font-bold text-foreground block leading-tight truncate">
+                ECOWAS Parliament
               </span>
-              <span className="text-[10px] font-mono text-primary bg-primary/10 border border-primary/20 rounded px-1.5 py-0.5">
-                Parliament 25
+              <span className="text-[10px] text-muted-foreground block leading-tight truncate">
+                25th Anniversary Initiative
+              </span>
+              <span className="inline-block mt-1 text-[8px] font-mono bg-primary/10 text-primary border border-primary/20 rounded px-1.5 py-px tracking-widest uppercase">
+                CRM
               </span>
             </div>
           </div>
         ) : (
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center animate-glow-pulse shadow-[0_0_20px_hsl(var(--primary)/0.4)]">
+          /* Collapsed: white-bg logo mark only */
+          <div className="w-9 h-9 rounded-xl bg-white shadow-[0_2px_8px_rgba(0,0,0,0.18)] border border-black/8 flex items-center justify-center overflow-hidden flex-shrink-0">
             <img
               src="/images/logo/logo.png"
               alt="EP"
-              className="w-6 h-6 object-contain"
+              className="w-7 h-7 object-contain"
               onError={(e) => {
-                (e.target as HTMLImageElement).style.display = 'none';
-                (e.target as HTMLImageElement).parentElement!.innerHTML = '<span class="text-primary-foreground font-black text-xs">EP</span>';
+                const el = e.target as HTMLImageElement;
+                el.style.display = "none";
+                el.parentElement!.innerHTML =
+                  '<span style="color:hsl(152 100% 26%)" class="font-black text-xs">EP</span>';
               }}
             />
           </div>
@@ -113,7 +126,7 @@ function SidebarContent({
         {showLabels && !isMobile && (
           <button
             onClick={() => setCollapsed(true)}
-            className="text-muted-foreground hover:text-foreground transition-colors p-1.5 rounded-lg hover:bg-muted/50"
+            className="text-muted-foreground hover:text-foreground transition-colors p-1.5 rounded-lg hover:bg-muted/50 flex-shrink-0"
             title="Collapse sidebar"
           >
             <ChevronLeft size={14} />
@@ -140,15 +153,15 @@ function SidebarContent({
             {showLabels ? (
               <div className={`px-3 pt-3 pb-2 ${gi > 0 ? "mt-1" : ""}`}>
                 <div className="flex items-center gap-2">
-                  <div className="flex-1 h-px bg-gradient-to-r from-transparent to-primary/30" />
-                  <span className="text-[8px] font-bold tracking-[0.18em] text-primary/50 uppercase select-none whitespace-nowrap">
+                  <div className="flex-1 h-px bg-gradient-to-r from-transparent via-[hsl(var(--ecowas-green)/0.3)] to-transparent" />
+                  <span className="text-[8px] font-bold tracking-[0.18em] text-[hsl(var(--ecowas-green)/0.65)] uppercase select-none whitespace-nowrap">
                     {group}
                   </span>
-                  <div className="flex-1 h-px bg-gradient-to-l from-transparent to-primary/30" />
+                  <div className="flex-1 h-px bg-gradient-to-l from-transparent via-[hsl(var(--ecowas-green)/0.3)] to-transparent" />
                 </div>
               </div>
             ) : (
-              gi > 0 && <div className="mx-3 my-2 h-px bg-primary/20" />
+              gi > 0 && <div className="mx-3 my-2 h-px bg-[hsl(var(--ecowas-green)/0.25)]" />
             )}
 
             <ul className="space-y-0.5 px-2">
@@ -168,8 +181,8 @@ function SidebarContent({
                         relative w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left
                         transition-all duration-150 ease-out group
                         ${isActive
-                          ? "bg-gradient-to-r from-primary/20 to-primary/5 text-primary font-semibold border-l-[3px] border-primary pl-2 shadow-[inset_0_0_12px_hsl(var(--primary)/0.12)]"
-                          : "text-muted-foreground hover:text-foreground hover:bg-white/5 border-l-[3px] border-transparent"
+                          ? "bg-[hsl(var(--ecowas-green)/0.12)] dark:bg-[hsl(var(--ecowas-green)/0.15)] text-[hsl(var(--ecowas-green))] font-semibold border-l-[3px] border-[hsl(var(--ecowas-green))] pl-[7px] shadow-[inset_0_0_12px_hsl(var(--ecowas-green)/0.08)]"
+                          : "text-muted-foreground hover:text-foreground hover:bg-[hsl(var(--ecowas-green)/0.06)] dark:hover:bg-white/5 border-l-[3px] border-transparent"
                         }
                         ${collapsed && !isMobile ? "justify-center" : ""}
                       `}
@@ -177,7 +190,7 @@ function SidebarContent({
                       <Icon
                         size={16}
                         className={`flex-shrink-0 transition-transform duration-150 group-hover:scale-110 ${
-                          isActive ? "text-primary" : ""
+                          isActive ? "text-[hsl(var(--ecowas-green))]" : ""
                         }`}
                       />
                       {showLabels && (
@@ -207,22 +220,27 @@ function SidebarContent({
         ))}
       </nav>
 
-      {/* User section */}
-      <div className={`border-t border-crm-border/40 p-3 bg-gradient-to-t from-[hsl(152,40%,4%)] to-transparent ${collapsed && !isMobile ? "flex justify-center" : ""}`}>
+      {/* ── User section ──────────────────────────────────────────────────── */}
+      <div className={`
+        border-t border-crm-border/40 p-3
+        bg-gradient-to-t
+        from-[hsl(var(--ecowas-green)/0.07)] to-transparent
+        dark:from-[hsl(152,40%,4%)] dark:to-transparent
+        ${collapsed && !isMobile ? "flex justify-center" : ""}
+      `}>
         {showLabels ? (
           <div className="space-y-2">
             <div className="flex items-center gap-2.5 min-w-0">
               <div className="relative flex-shrink-0">
-                <div className="w-8 h-8 rounded-full bg-primary/15 flex items-center justify-center text-primary text-xs font-bold uppercase ring-2 ring-primary/30 shadow-[0_0_8px_hsl(var(--primary)/0.3)]">
+                <div className="w-8 h-8 rounded-full bg-[hsl(var(--ecowas-green)/0.12)] dark:bg-primary/15 flex items-center justify-center text-[hsl(var(--ecowas-green))] text-xs font-bold uppercase ring-2 ring-[hsl(var(--ecowas-green)/0.25)] shadow-[0_0_8px_hsl(var(--ecowas-green)/0.2)]">
                   {displayName.charAt(0)}
                 </div>
-                {/* Online dot */}
-                <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-primary border-2 border-card animate-pulse-dot" />
+                <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-[hsl(var(--ecowas-green))] border-2 border-card animate-pulse-dot" />
               </div>
               <div className="min-w-0">
                 <p className="text-[12px] font-semibold text-foreground truncate">{displayName}</p>
                 {roleMeta && (
-                  <p className="text-[10px] font-medium text-primary truncate">
+                  <p className="text-[10px] font-medium text-[hsl(var(--ecowas-green))] truncate">
                     {roleMeta.label}
                   </p>
                 )}
@@ -275,7 +293,7 @@ export default function CRMSidebar({ activeSection, onNavigate }: CRMSidebarProp
             <Menu size={20} />
           </button>
         </SheetTrigger>
-        <SheetContent side="left" className="w-[280px] p-0 bg-gradient-to-b from-[hsl(152,30%,8%)] via-[hsl(152,25%,6%)] to-[hsl(152,20%,4%)] border-r border-crm-border/40">
+        <SheetContent side="left" className="w-[280px] p-0 bg-[hsl(var(--sidebar-background))] dark:bg-gradient-to-b dark:from-[hsl(152,30%,8%)] dark:via-[hsl(152,25%,6%)] dark:to-[hsl(152,20%,4%)] border-r border-crm-border/40">
           <SidebarContent
             activeSection={activeSection}
             onNavigate={onNavigate}
@@ -294,7 +312,8 @@ export default function CRMSidebar({ activeSection, onNavigate }: CRMSidebarProp
     <aside
       className={`
         flex flex-col h-screen
-        bg-gradient-to-b from-[hsl(152,30%,8%)] via-[hsl(152,25%,6%)] to-[hsl(152,20%,4%)]
+        bg-[hsl(var(--sidebar-background))]
+        dark:bg-gradient-to-b dark:from-[hsl(152,30%,8%)] dark:via-[hsl(152,25%,6%)] dark:to-[hsl(152,20%,4%)]
         border-r border-crm-border/40
         transition-all duration-300 ease-in-out flex-shrink-0
         ${collapsed ? "w-[60px]" : "w-[240px]"}

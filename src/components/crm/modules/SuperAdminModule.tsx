@@ -586,7 +586,7 @@ export default function SuperAdminModule() {
       const [profilesRes, rolesRes, invRes, actRes] = await Promise.all([
         (supabase as any).from("profiles").select("id, email, full_name, country, created_at, show_on_website, title, organisation").order("created_at", { ascending: false }),
         (supabase as any).from("user_roles").select("user_id, role"),
-        (supabase as any).from("invitations").select("id, email, role, invited_by, created_at, accepted_at, expires_at, resent_at").order("created_at", { ascending: false }),
+        (supabase as any).from("invitations").select("id, email, role, invited_by, created_at, accepted_at, expires_at, resent_at").is("accepted_at", null).order("created_at", { ascending: false }),
         (supabase as any).from("admin_activity_logs").select("id, action, entity_type, details, created_at, profiles!actor_user_id(full_name, email)").order("created_at", { ascending: false }).limit(50),
       ]);
 
@@ -1379,6 +1379,100 @@ export default function SuperAdminModule() {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* ══ WEBSITE MEMBERS ══ */}
+      {tab === "website" && (
+        <div className="space-y-4">
+          {/* Info banner */}
+          <div className="flex items-start gap-3 p-3.5 rounded-xl bg-crm-card border border-emerald-900">
+            <Globe size={14} className="text-emerald-400 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-[12px] text-crm-text-secondary">
+                Users listed here have <strong className="text-crm-text">Show on Team Page</strong> enabled.
+                They appear on the public <code className="text-[10px] bg-crm-surface border border-crm-border rounded px-1">/team</code> website section.
+                A CRM user with this toggle on is the same person as their public-facing profile — they appear in both this tab and the Users tab.
+              </p>
+            </div>
+          </div>
+
+          <div className="bg-crm-card border border-crm-border rounded-xl overflow-hidden">
+            <div className="px-4 py-3 border-b border-crm-border flex items-center justify-between flex-wrap gap-2">
+              <h3 className="text-[12px] font-semibold text-crm-text-secondary">
+                Published on website ({websiteUsers.length} member{websiteUsers.length !== 1 ? "s" : ""})
+              </h3>
+              <a
+                href="/team"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[11px] text-emerald-500 hover:text-emerald-400 flex items-center gap-1"
+              >
+                <Globe size={11} /> View /team →
+              </a>
+            </div>
+
+            {websiteUsers.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 gap-2">
+                <Globe size={28} className="text-crm-text-faint" />
+                <p className="text-[12px] text-crm-text-faint">No users are currently published on the website.</p>
+                <button
+                  onClick={() => setTab("users")}
+                  className="text-[11px] text-emerald-500 hover:text-emerald-400 transition-colors"
+                >
+                  Go to Users tab to toggle visibility →
+                </button>
+              </div>
+            ) : (
+              <div className="divide-y divide-crm-border">
+                {websiteUsers.map(u => (
+                  <div key={u.id} className="flex items-center gap-3 px-4 py-3 hover:bg-crm-surface transition-colors">
+                    <div className="w-9 h-9 rounded-full bg-emerald-950 border border-emerald-800 flex items-center justify-center text-sm font-bold text-emerald-400 flex-shrink-0 uppercase">
+                      {(u.full_name || u.email)[0]}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-[12.5px] font-semibold text-crm-text">{u.full_name || "—"}</p>
+                        <span className="text-[9px] px-1.5 py-0.5 rounded border bg-emerald-950 border-emerald-800 text-emerald-400">
+                          on website
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-crm-text-muted">{u.email}</p>
+                      {(u.title || u.organisation) && (
+                        <p className="text-[10px] text-crm-text-dim mt-0.5">
+                          {[u.title, u.organisation].filter(Boolean).join(" · ")}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+                      {/* CRM roles */}
+                      <div className="flex flex-wrap gap-1 justify-end max-w-[160px]">
+                        {u.roles.map(role => {
+                          const cfg = ROLE_CONFIG[role];
+                          if (!cfg) return null;
+                          const RoleIcon = cfg.icon;
+                          return (
+                            <span key={role} className={`flex items-center gap-1 text-[9px] font-mono px-1.5 py-0.5 rounded border ${cfg.badge}`}>
+                              <RoleIcon size={9} />{cfg.label}
+                            </span>
+                          );
+                        })}
+                      </div>
+                      {/* Remove from website */}
+                      <div className="flex items-center gap-2">
+                        <span className="text-[9px] text-crm-text-dim">Team page</span>
+                        <Switch
+                          checked={u.show_on_website}
+                          onCheckedChange={v => toggleShowOnWebsite(u.id, v)}
+                          className="scale-75"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
