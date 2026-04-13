@@ -1341,6 +1341,7 @@ export default function EmailInboxModule() {
           return (
             <button key={f.id} onClick={() => { setActiveFolder(f.id); setActiveLabelId(null); setSelectedEmail(null); setSelectedIds(new Set()); setSidebarOpen(false); }}
               className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-left transition-colors ${isActive ? "bg-primary/12 text-primary font-semibold" : "text-crm-text-muted hover:text-crm-text hover:bg-crm-surface"}`}>
+
               <div className="flex items-center gap-2.5"><Icon size={16} className="shrink-0" /><span className="text-[13px]">{f.label}</span></div>
               {count != null && count > 0 && (
                 <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${f.id === "inbox" ? "bg-primary/15 text-primary" : f.id === "spam" ? "bg-red-500/15 text-red-400" : "bg-crm-surface text-crm-text-muted"}`}>{count > 99 ? "99+" : count}</span>
@@ -1568,6 +1569,34 @@ export default function EmailInboxModule() {
             );
           })}
         </div>
+
+        {/* Pagination bar */}
+        {allDisplayEmails.length > PAGE_SIZE && (
+          <div className="flex items-center justify-between px-3 py-2 border-t border-crm-border shrink-0 bg-crm-surface/30">
+            <span className="text-[11px] text-crm-text-muted">
+              {pageStart}–{pageEnd} of {allDisplayEmails.length}
+            </span>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
+                disabled={safePage === 0}
+                className="p-1 rounded hover:bg-crm-surface text-crm-text-muted disabled:opacity-30 transition-colors"
+              >
+                <ChevronLeft size={14} />
+              </button>
+              <span className="text-[11px] text-crm-text-muted px-1">
+                {safePage + 1} / {totalPages}
+              </span>
+              <button
+                onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))}
+                disabled={safePage >= totalPages - 1}
+                className="p-1 rounded hover:bg-crm-surface text-crm-text-muted disabled:opacity-30 transition-colors"
+              >
+                <ChevronRight size={14} />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Detail pane */}
