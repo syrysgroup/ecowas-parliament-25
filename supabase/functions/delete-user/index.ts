@@ -75,14 +75,15 @@ Deno.serve(async (req) => {
           continue;
         }
 
-        // 3. Clean up any pending invitations for that email (accepted invitations are
-        //    already deleted by the trigger on acceptance; only pending ones remain)
+        // 3. Clean up ALL invitations for that email (both pending and accepted).
+        //    Accepted invitations should have been removed by the on-signup trigger,
+        //    but legacy rows or edge cases may leave them behind. Deleting all of them
+        //    allows the email to be re-invited cleanly without a unique constraint error.
         if (userEmail) {
           await serviceClient
             .from("invitations")
             .delete()
-            .eq("email", userEmail)
-            .is("accepted_at", null);
+            .eq("email", userEmail);
         }
 
         // 4. Log the deletion to the activity log

@@ -16,6 +16,8 @@ import {
   Trash2, CheckCircle2, AlertTriangle, LayoutDashboard,
   FileText, Star, Calendar, Newspaper, ChevronRight, Palette, Upload, Save,
   Link2, Twitter, Facebook, Instagram, Linkedin, Youtube,
+  Filter, Database, X, Plus, Shield, Timer, Sun, Moon, Monitor,
+  UserX, UserCheck, Zap, Image, BarChart2, Info, BanIcon,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -23,6 +25,7 @@ interface UserWithRoles {
   id: string; email: string; full_name: string;
   country: string; created_at: string; roles: AppRole[];
   show_on_website: boolean; title: string | null; organisation: string | null;
+  is_active: boolean;
 }
 interface Invitation {
   id: string; email: string; role: AppRole;
@@ -34,8 +37,14 @@ interface ActivityLog {
   details: any; created_at: string;
   actor?: { full_name: string; email: string };
 }
+interface AuditEntry {
+  id: string; action: string; created_at: string;
+  performed_by?: string; target_user?: string; details: any;
+  source: "activity" | "audit";
+  actor_name?: string;
+}
 
-type Tab = "overview" | "users" | "invitations" | "activity" | "routes" | "settings" | "email-config" | "branding";
+type Tab = "overview" | "users" | "invitations" | "website" | "activity" | "routes" | "settings" | "email-config" | "branding";
 
 // ─── Role config ──────────────────────────────────────────────────────────────
 const ROLE_CONFIG: Partial<Record<AppRole, {
@@ -164,6 +173,27 @@ function EmailConfigTab({ userId }: { userId?: string }) {
   const [fromEmail, setFromEmail] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [testing, setTesting] = useState(false);
+
+  const handleTest = async () => {
+    setTesting(true);
+    try {
+      // Save current config first so test uses latest values
+      await handleSave();
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await supabase.functions.invoke("test-smtp", {
+        headers: { Authorization: `Bearer ${session?.access_token}` },
+      });
+      const body = res.data as any;
+      if (body?.success) {
+        toast({ title: "SMTP connection verified", description: "Server responded correctly." });
+      } else {
+        toast({ title: "SMTP test failed", description: body?.error ?? "Connection refused", variant: "destructive" });
+      }
+    } catch (err: any) {
+      toast({ title: "Test failed", description: err.message, variant: "destructive" });
+    } finally { setTesting(false); }
+  };
 
   // Email format state
   const [emailTemplate, setEmailTemplate] = useState("{firstname}.{lastname}");
@@ -343,11 +373,16 @@ function EmailConfigTab({ userId }: { userId?: string }) {
             <p className="text-[10px] text-crm-text-dim">{sslEnabled ? "SSL enabled — use port 465 or STARTTLS on 587" : "SSL disabled — use plain connection"}</p>
           </div>
         </div>
-        <div className="flex gap-2 mt-5">
-          <Button size="sm" onClick={handleSave} disabled={saving}
+        <div className="flex gap-2 mt-5 flex-wrap">
+          <Button size="sm" onClick={handleSave} disabled={saving || testing}
             className="text-[11px] gap-1.5">
             {saving ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle2 size={12} />}
             {saving ? "Saving…" : "Save Config"}
+          </Button>
+          <Button size="sm" variant="outline" onClick={handleTest} disabled={saving || testing}
+            className="text-[11px] gap-1.5 border-blue-900 text-blue-400 hover:bg-blue-950 hover:text-blue-300">
+            {testing ? <Loader2 size={12} className="animate-spin" /> : <Zap size={12} />}
+            {testing ? "Testing…" : "Test Connection"}
           </Button>
           <Button size="sm" variant="outline" onClick={handleDelete}
             className="text-[11px] gap-1.5 border-red-900 text-red-400 hover:bg-red-950 hover:text-red-300">
@@ -404,9 +439,20 @@ function BrandingTab({ userId }: { userId?: string }) {
   const { toast } = useToast();
   const qc = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
+  const faviconRef = useRef<HTMLInputElement>(null);
+  const ogImageRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadingFavicon, setUploadingFavicon] = useState(false);
+  const [uploadingOg, setUploadingOg] = useState(false);
   const [saving, setSaving] = useState(false);
   const [values, setValues] = useState<Record<string, string>>({});
+
+  const ALL_KEYS = [
+    "site_name", "site_logo_url", "contact_email", "footer_text",
+    "social_facebook", "social_twitter", "social_instagram", "social_linkedin", "social_youtube",
+    "favicon_url", "brand_primary_color", "brand_accent_color",
+    "ga_tracking_id", "gtm_id", "og_image_url", "og_description",
+  ];
 
   const { isLoading } = useQuery({
     queryKey: ["site-settings-admin"],
@@ -424,29 +470,27 @@ function BrandingTab({ userId }: { userId?: string }) {
 
   const set = (key: string, val: string) => setValues(prev => ({ ...prev, [key]: val }));
 
-  const handleLogoUpload = async (file: File) => {
-    setUploading(true);
+  const uploadFile = async (file: File, folder: string, onUrl: (url: string) => void, setFlag: (v: boolean) => void) => {
+    setFlag(true);
     try {
       const ext = file.name.split(".").pop();
-      const path = `logos/site-logo-${Date.now()}.${ext}`;
+      const path = `${folder}/file-${Date.now()}.${ext}`;
       const { error } = await supabase.storage.from("branding").upload(path, file, { upsert: true });
       if (error) throw error;
       const { data: { publicUrl } } = supabase.storage.from("branding").getPublicUrl(path);
-      set("site_logo_url", publicUrl);
-      toast({ title: "Logo uploaded" });
+      onUrl(publicUrl);
+      toast({ title: "Uploaded successfully" });
     } catch (err: any) {
       toast({ title: "Upload failed", description: err.message, variant: "destructive" });
-    } finally { setUploading(false); }
+    } finally { setFlag(false); }
   };
 
   const handleSave = async () => {
     setSaving(true);
     try {
-      const keys = ["site_name", "site_logo_url", "contact_email", "footer_text",
-        "social_facebook", "social_twitter", "social_instagram", "social_linkedin", "social_youtube"];
-      for (const key of keys) {
+      for (const key of ALL_KEYS) {
         if (values[key] !== undefined) {
-          const { data: existing } = await (supabase as any).from("site_settings").select("id").eq("key", key).single();
+          const { data: existing } = await (supabase as any).from("site_settings").select("id").eq("key", key).maybeSingle();
           if (existing) {
             await (supabase as any).from("site_settings").update({ value: values[key], updated_by: userId, updated_at: new Date().toISOString() }).eq("key", key);
           } else {
@@ -463,6 +507,7 @@ function BrandingTab({ userId }: { userId?: string }) {
   };
 
   const inputCls = "bg-crm-surface border-crm-border text-crm-text text-[12px] h-9";
+  const ogDescLen = (values.og_description ?? "").length;
 
   if (isLoading) return <div className="flex justify-center py-12"><Loader2 size={20} className="animate-spin text-crm-text-muted" /></div>;
 
@@ -471,7 +516,7 @@ function BrandingTab({ userId }: { userId?: string }) {
       {/* Logo upload */}
       <div className="bg-crm-card border border-crm-border rounded-xl p-5">
         <h3 className="text-[13px] font-semibold text-crm-text flex items-center gap-2 mb-4">
-          <Palette size={14} className="text-amber-400" /> Branding
+          <Palette size={14} className="text-amber-400" /> Logo & Site Name
         </h3>
         <div className="flex items-start gap-6">
           <div className="flex flex-col items-center gap-3">
@@ -480,16 +525,13 @@ function BrandingTab({ userId }: { userId?: string }) {
                 ? <img src={values.site_logo_url} alt="Logo" className="w-full h-full object-contain p-1" />
                 : <Globe size={28} className="text-crm-text-dim" />}
             </div>
-            <button
-              onClick={() => fileRef.current?.click()}
-              disabled={uploading}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-crm-border text-[11px] text-crm-text-muted hover:text-crm-text transition-colors"
-            >
+            <button onClick={() => fileRef.current?.click()} disabled={uploading}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-crm-border text-[11px] text-crm-text-muted hover:text-crm-text transition-colors">
               {uploading ? <Loader2 size={12} className="animate-spin" /> : <Upload size={12} />}
               {uploading ? "Uploading…" : "Upload Logo"}
             </button>
             <input ref={fileRef} type="file" accept="image/*" className="hidden"
-              onChange={e => e.target.files?.[0] && handleLogoUpload(e.target.files[0])} />
+              onChange={e => e.target.files?.[0] && uploadFile(e.target.files[0], "logos", url => set("site_logo_url", url), setUploading)} />
           </div>
           <div className="flex-1 space-y-3">
             <div className="space-y-1.5">
@@ -501,6 +543,61 @@ function BrandingTab({ userId }: { userId?: string }) {
               <Input value={values.site_logo_url ?? ""} onChange={e => set("site_logo_url", e.target.value)} className={inputCls} placeholder="https://..." />
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Favicon */}
+      <div className="bg-crm-card border border-crm-border rounded-xl p-5">
+        <h3 className="text-[13px] font-semibold text-crm-text flex items-center gap-2 mb-4">
+          <Image size={14} className="text-amber-400" /> Favicon
+        </h3>
+        <div className="flex items-center gap-5">
+          <div className="w-8 h-8 rounded bg-crm-surface border border-crm-border flex items-center justify-center overflow-hidden flex-shrink-0">
+            {values.favicon_url
+              ? <img src={values.favicon_url} alt="Favicon" className="w-full h-full object-contain" />
+              : <Globe size={14} className="text-crm-text-dim" />}
+          </div>
+          <div className="flex-1 space-y-2">
+            <Input value={values.favicon_url ?? ""} onChange={e => set("favicon_url", e.target.value)}
+              className={inputCls} placeholder="https://... or upload a .png/.ico" />
+            <button onClick={() => faviconRef.current?.click()} disabled={uploadingFavicon}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-crm-border text-[11px] text-crm-text-muted hover:text-crm-text transition-colors">
+              {uploadingFavicon ? <Loader2 size={12} className="animate-spin" /> : <Upload size={12} />}
+              {uploadingFavicon ? "Uploading…" : "Upload Favicon"}
+            </button>
+            <input ref={faviconRef} type="file" accept="image/*,.ico" className="hidden"
+              onChange={e => e.target.files?.[0] && uploadFile(e.target.files[0], "favicons", url => set("favicon_url", url), setUploadingFavicon)} />
+          </div>
+        </div>
+      </div>
+
+      {/* Brand Colors */}
+      <div className="bg-crm-card border border-crm-border rounded-xl p-5">
+        <h3 className="text-[13px] font-semibold text-crm-text flex items-center gap-2 mb-4">
+          <Palette size={14} className="text-amber-400" /> Brand Colors
+        </h3>
+        <div className="grid sm:grid-cols-2 gap-4">
+          {[
+            { key: "brand_primary_color", label: "Primary Color", placeholder: "#007A3D" },
+            { key: "brand_accent_color", label: "Accent Color", placeholder: "#FFC72C" },
+          ].map(({ key, label, placeholder }) => (
+            <div key={key} className="space-y-1.5">
+              <Label className="text-[11px] text-crm-text-muted">{label}</Label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="color"
+                  value={values[key] || placeholder}
+                  onChange={e => set(key, e.target.value)}
+                  className="w-9 h-9 rounded-lg border border-crm-border bg-crm-surface cursor-pointer p-0.5"
+                />
+                <Input value={values[key] ?? ""} onChange={e => set(key, e.target.value)}
+                  className={`${inputCls} font-mono`} placeholder={placeholder} />
+                {values[key] && (
+                  <div className="w-6 h-6 rounded border border-crm-border flex-shrink-0" style={{ backgroundColor: values[key] }} />
+                )}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -544,10 +641,83 @@ function BrandingTab({ userId }: { userId?: string }) {
         </div>
       </div>
 
+      {/* Analytics */}
+      <div className="bg-crm-card border border-crm-border rounded-xl p-5">
+        <h3 className="text-[13px] font-semibold text-crm-text flex items-center gap-2 mb-2">
+          <BarChart2 size={14} className="text-amber-400" /> Analytics & Tracking
+        </h3>
+        <p className="text-[11px] text-crm-text-muted mb-4">Paste your tracking IDs — the site will inject the relevant scripts automatically.</p>
+        <div className="grid sm:grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label className="text-[11px] text-crm-text-muted">Google Analytics ID</Label>
+            <Input value={values.ga_tracking_id ?? ""} onChange={e => set("ga_tracking_id", e.target.value)}
+              className={`${inputCls} font-mono`} placeholder="G-XXXXXXXXXX" />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-[11px] text-crm-text-muted">Google Tag Manager ID</Label>
+            <Input value={values.gtm_id ?? ""} onChange={e => set("gtm_id", e.target.value)}
+              className={`${inputCls} font-mono`} placeholder="GTM-XXXXXXX" />
+          </div>
+        </div>
+      </div>
+
+      {/* OG / Social Sharing */}
+      <div className="bg-crm-card border border-crm-border rounded-xl p-5">
+        <h3 className="text-[13px] font-semibold text-crm-text flex items-center gap-2 mb-2">
+          <Globe size={14} className="text-amber-400" /> Social Sharing (Open Graph)
+        </h3>
+        <p className="text-[11px] text-crm-text-muted mb-4">Controls how the site looks when shared on social media or in chat apps.</p>
+        <div className="space-y-4">
+          {/* OG Image */}
+          <div className="space-y-2">
+            <Label className="text-[11px] text-crm-text-muted">OG Share Image (1200×630px recommended)</Label>
+            <Input value={values.og_image_url ?? ""} onChange={e => set("og_image_url", e.target.value)}
+              className={inputCls} placeholder="https://... or upload below" />
+            <button onClick={() => ogImageRef.current?.click()} disabled={uploadingOg}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-crm-border text-[11px] text-crm-text-muted hover:text-crm-text transition-colors">
+              {uploadingOg ? <Loader2 size={12} className="animate-spin" /> : <Upload size={12} />}
+              {uploadingOg ? "Uploading…" : "Upload OG Image"}
+            </button>
+            <input ref={ogImageRef} type="file" accept="image/*" className="hidden"
+              onChange={e => e.target.files?.[0] && uploadFile(e.target.files[0], "og", url => set("og_image_url", url), setUploadingOg)} />
+          </div>
+          {/* OG Description */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <Label className="text-[11px] text-crm-text-muted">Meta Description</Label>
+              <span className={`text-[10px] font-mono ${ogDescLen > 160 ? "text-red-400" : "text-crm-text-dim"}`}>{ogDescLen}/160</span>
+            </div>
+            <textarea
+              value={values.og_description ?? ""}
+              onChange={e => set("og_description", e.target.value)}
+              maxLength={200}
+              rows={3}
+              placeholder="Brief description for search engines and social sharing…"
+              className="w-full bg-crm-surface border border-crm-border rounded-lg text-crm-text text-[12px] px-3 py-2 resize-none focus:outline-none focus:border-primary/50"
+            />
+          </div>
+          {/* Preview card */}
+          {(values.og_image_url || values.og_description || values.site_name) && (
+            <div className="rounded-xl overflow-hidden border border-crm-border max-w-sm">
+              {values.og_image_url && (
+                <div className="h-40 bg-crm-surface overflow-hidden">
+                  <img src={values.og_image_url} alt="OG Preview" className="w-full h-full object-cover" />
+                </div>
+              )}
+              <div className="p-3 bg-crm-surface">
+                <p className="text-[10px] text-crm-text-dim uppercase tracking-wider mb-0.5">ecowasparliamentinitiatives.org</p>
+                <p className="text-[12px] font-semibold text-crm-text truncate">{values.site_name || "ECOWAS Parliament"}</p>
+                <p className="text-[11px] text-crm-text-muted mt-0.5 line-clamp-2">{values.og_description || "No description set."}</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
       <Button size="sm" onClick={handleSave} disabled={saving}
         className="bg-amber-700 hover:bg-amber-600 text-white text-xs gap-1.5">
         {saving ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
-        {saving ? "Saving…" : "Save Site Settings"}
+        {saving ? "Saving…" : "Save All Settings"}
       </Button>
     </div>
   );
@@ -561,12 +731,34 @@ export default function SuperAdminModule() {
   const [users,       setUsers]       = useState<UserWithRoles[]>([]);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [activityLog, setActivityLog] = useState<ActivityLog[]>([]);
+  const [auditLog,    setAuditLog]    = useState<AuditEntry[]>([]);
+  const [globalSettings, setGlobalSettings] = useState<Record<string, any>>({});
   const [loading,     setLoading]     = useState(true);
   const [inviteEmail,  setInviteEmail]  = useState("");
   const [inviteRole,   setInviteRole]   = useState<AppRole>("admin");
   const [sending,      setSending]      = useState(false);
   const [searchQ,      setSearchQ]      = useState("");
   const [resendingId,  setResendingId]  = useState<string | null>(null);
+
+  // ── User active filter ────────────────────────────────────────────────────
+  const [userActiveFilter, setUserActiveFilter] = useState<"all" | "active" | "suspended">("all");
+
+  // ── Activity filters ──────────────────────────────────────────────────────
+  const [activityAction, setActivityAction] = useState("");
+  const [activityFrom,   setActivityFrom]   = useState("");
+  const [activityTo,     setActivityTo]     = useState("");
+  const [activitySource, setActivitySource] = useState<"activity" | "audit" | "both">("activity");
+
+  // ── Bulk invite dialog ────────────────────────────────────────────────────
+  const [bulkOpen,     setBulkOpen]     = useState(false);
+  const [bulkText,     setBulkText]     = useState("");
+  const [bulkRole,     setBulkRole]     = useState<AppRole>("admin");
+  const [bulkParsed,   setBulkParsed]   = useState<{email:string;role:AppRole;valid:boolean}[]>([]);
+  const [bulkSending,  setBulkSending]  = useState(false);
+  const [bulkProgress, setBulkProgress] = useState<{done:number;total:number;errors:string[]}>({done:0,total:0,errors:[]});
+
+  // ── Settings save state ───────────────────────────────────────────────────
+  const [savingSettings, setSavingSettings] = useState(false);
 
   // ── Delete user dialog ────────────────────────────────────────────────────
   const [deleteTarget,      setDeleteTarget]      = useState<UserWithRoles | null>(null);
@@ -583,11 +775,13 @@ export default function SuperAdminModule() {
     if (!user) return;
     setLoading(true);
     try {
-      const [profilesRes, rolesRes, invRes, actRes] = await Promise.all([
-        (supabase as any).from("profiles").select("id, email, full_name, country, created_at, show_on_website, title, organisation").order("created_at", { ascending: false }),
+      const [profilesRes, rolesRes, invRes, actRes, auditRes, gsRes] = await Promise.all([
+        (supabase as any).from("profiles").select("id, email, full_name, country, created_at, show_on_website, title, organisation, is_active").order("created_at", { ascending: false }),
         (supabase as any).from("user_roles").select("user_id, role"),
         (supabase as any).from("invitations").select("id, email, role, invited_by, created_at, accepted_at, expires_at, resent_at").is("accepted_at", null).order("created_at", { ascending: false }),
-        (supabase as any).from("admin_activity_logs").select("id, action, entity_type, details, created_at, profiles!actor_user_id(full_name, email)").order("created_at", { ascending: false }).limit(50),
+        (supabase as any).from("admin_activity_logs").select("id, action, entity_type, details, created_at, profiles!actor_user_id(full_name, email)").order("created_at", { ascending: false }).limit(200),
+        (supabase as any).from("admin_audit_log").select("id, action, performed_by, target_user, details, created_at").order("created_at", { ascending: false }).limit(200),
+        (supabase as any).from("global_settings").select("key, value"),
       ]);
 
       const rolesMap = new Map<string, AppRole[]>();
@@ -603,12 +797,13 @@ export default function SuperAdminModule() {
         roles: rolesMap.get(p.id) ?? [],
         show_on_website: p.show_on_website ?? false,
         title: p.title ?? null, organisation: p.organisation ?? null,
+        is_active: p.is_active !== false,
       })));
 
       const invData: Invitation[] = invRes.data ?? [];
       setInvitations(invData);
 
-      // Seed cooldowns from DB — if resent_at (or created_at) is within 60s, lock the button
+      // Seed cooldowns from DB
       const seeded: Record<string, number> = {};
       for (const inv of invData) {
         const lastSent = inv.resent_at ?? inv.created_at;
@@ -622,6 +817,17 @@ export default function SuperAdminModule() {
         details: l.details, created_at: l.created_at,
         actor: l.profiles ?? undefined,
       })));
+
+      setAuditLog((auditRes.data ?? []).map((l: any) => ({
+        id: l.id, action: l.action, created_at: l.created_at,
+        performed_by: l.performed_by, target_user: l.target_user,
+        details: l.details, source: "audit" as const,
+      })));
+
+      const gs: Record<string, any> = {};
+      (gsRes.data ?? []).forEach((r: any) => { gs[r.key] = r.value; });
+      setGlobalSettings(gs);
+
     } finally {
       setLoading(false);
     }
@@ -747,6 +953,75 @@ export default function SuperAdminModule() {
     }
   };
 
+  // ── Toggle user active/suspended ─────────────────────────────────────────
+  const toggleUserActive = async (targetId: string, active: boolean) => {
+    try {
+      await (supabase as any).from("profiles").update({ is_active: active }).eq("id", targetId);
+      setUsers(prev => prev.map(u => u.id === targetId ? { ...u, is_active: active } : u));
+      toast({ title: active ? "User reactivated" : "User suspended" });
+      await (supabase as any).from("admin_activity_logs").insert({
+        actor_user_id: user!.id,
+        action: active ? "user_reactivated" : "user_suspended",
+        entity_type: "user", entity_id: targetId,
+        details: { email: users.find(u => u.id === targetId)?.email },
+      });
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  };
+
+  // ── Save global_setting ───────────────────────────────────────────────────
+  const saveGlobalSetting = async (key: string, value: any) => {
+    await (supabase as any).from("global_settings")
+      .upsert({ key, value, updated_by: user?.id }, { onConflict: "key" });
+    setGlobalSettings(prev => ({ ...prev, [key]: value }));
+  };
+
+  // ── Export activity log CSV ───────────────────────────────────────────────
+  const exportActivityLog = (entries: AuditEntry[]) => {
+    const header = "Time,Source,Action,Actor,Details\n";
+    const rows = entries.map(e =>
+      `"${new Date(e.created_at).toLocaleString()}","${e.source}","${e.action}","${e.actor_name ?? e.performed_by ?? "system"}","${JSON.stringify(e.details ?? {}).replace(/"/g, '""')}"`
+    ).join("\n");
+    const blob = new Blob([header + rows], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = "activity-log.csv"; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // ── Bulk invite parse + send ──────────────────────────────────────────────
+  const parseBulkCSV = (text: string, defaultRole: AppRole) => {
+    return text.split("\n").map(l => l.trim()).filter(Boolean).map(line => {
+      const [emailRaw, roleRaw] = line.split(",").map(s => s.trim());
+      const validEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailRaw);
+      const validRole = roleRaw && Object.keys(ROLE_CONFIG).includes(roleRaw);
+      return { email: emailRaw, role: (validRole ? roleRaw : defaultRole) as AppRole, valid: validEmail };
+    });
+  };
+
+  const sendBulkInvites = async () => {
+    const valid = bulkParsed.filter(r => r.valid);
+    setBulkProgress({ done: 0, total: valid.length, errors: [] });
+    setBulkSending(true);
+    const { data: { session } } = await supabase.auth.getSession();
+    for (const row of valid) {
+      try {
+        const res = await supabase.functions.invoke("invite-user", {
+          body: { email: row.email, role: row.role, redirectUrl: `${window.location.origin}/set-password` },
+          headers: { Authorization: `Bearer ${session?.access_token}` },
+        });
+        const body = res.data as any;
+        if (body?.error) throw new Error(body.error);
+      } catch (e: any) {
+        setBulkProgress(prev => ({ ...prev, errors: [...prev.errors, `${row.email}: ${e.message}`] }));
+      } finally {
+        setBulkProgress(prev => ({ ...prev, done: prev.done + 1 }));
+      }
+    }
+    setBulkSending(false);
+    loadData();
+  };
+
   // ── Delete user — opens confirmation dialog ───────────────────────────────
   const deleteUser = (target: UserWithRoles) => {
     if (target.id === user?.id) {
@@ -810,17 +1085,39 @@ export default function SuperAdminModule() {
     pendingInv:  invitations.filter(i => !i.accepted_at).length,
   };
 
-  const filteredUsers = users.filter(u =>
-    !searchQ ||
-    u.full_name.toLowerCase().includes(searchQ.toLowerCase()) ||
-    u.email.toLowerCase().includes(searchQ.toLowerCase()) ||
-    u.country.toLowerCase().includes(searchQ.toLowerCase())
-  );
+  const websiteUsers = users.filter(u => u.show_on_website);
+
+  const filteredUsers = users.filter(u => {
+    if (userActiveFilter === "active" && !u.is_active) return false;
+    if (userActiveFilter === "suspended" && u.is_active) return false;
+    return !searchQ ||
+      u.full_name.toLowerCase().includes(searchQ.toLowerCase()) ||
+      u.email.toLowerCase().includes(searchQ.toLowerCase()) ||
+      u.country.toLowerCase().includes(searchQ.toLowerCase());
+  });
+
+  // ── Merged activity for the Activity tab ──────────────────────────────────
+  const mergedActivity: AuditEntry[] = (() => {
+    const fromActivity: AuditEntry[] = activityLog.map(l => ({
+      id: l.id, action: l.action, created_at: l.created_at,
+      details: l.details, source: "activity" as const,
+      actor_name: l.actor?.full_name ?? l.actor?.email,
+    }));
+    const all = activitySource === "activity" ? fromActivity
+      : activitySource === "audit" ? auditLog
+      : [...fromActivity, ...auditLog].sort((a, b) => b.created_at.localeCompare(a.created_at));
+    return all.filter(e => {
+      if (activityAction && !e.action.toLowerCase().includes(activityAction.toLowerCase())) return false;
+      if (activityFrom && e.created_at < activityFrom) return false;
+      if (activityTo && e.created_at > activityTo + "T23:59:59") return false;
+      return true;
+    });
+  })();
 
   const exportUsersCSV = () => {
-    const header = "Name,Email,Country,Roles,Joined\n";
+    const header = "Name,Email,Country,Roles,Status,Joined\n";
     const rows = filteredUsers.map(u =>
-      `"${u.full_name}","${u.email}","${u.country}","${u.roles.join('; ')}","${u.created_at}"`
+      `"${u.full_name}","${u.email}","${u.country}","${u.roles.join('; ')}","${u.is_active ? "active" : "suspended"}","${u.created_at}"`
     ).join("\n");
     const blob = new Blob([header + rows], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
@@ -830,14 +1127,15 @@ export default function SuperAdminModule() {
   };
 
   const NAV: { id: Tab; label: string; icon: React.ElementType; badge?: number }[] = [
-    { id:"overview",    label:"Overview",     icon:LayoutDashboard },
-    { id:"users",       label:"Users",        icon:Users,  badge:stats.total },
-    { id:"invitations", label:"Invitations",  icon:Mail,   badge:stats.pendingInv },
-    { id:"activity",    label:"Activity Log", icon:Activity },
-    { id:"routes",      label:"Site Routes",  icon:Globe },
-    { id:"email-config",label:"Email Config", icon:Mail },
+    { id:"overview",    label:"Overview",        icon:LayoutDashboard },
+    { id:"users",       label:"Users",           icon:Users,  badge:stats.total },
+    { id:"invitations", label:"Invitations",     icon:Mail,   badge:stats.pendingInv },
+    { id:"website",     label:"Website Members", icon:Globe,  badge:websiteUsers.length },
+    { id:"activity",    label:"Activity Log",    icon:Activity },
+    { id:"routes",      label:"Site Routes",     icon:Globe },
+    { id:"email-config",label:"Email Config",    icon:Mail },
     { id:"branding",    label:"Branding & Site", icon:Palette },
-    { id:"settings",    label:"Settings",     icon:Settings },
+    { id:"settings",    label:"Settings",        icon:Settings },
   ];
 
   return (
@@ -1071,14 +1369,103 @@ export default function SuperAdminModule() {
         </div>
       )}
 
+      {/* ══ BULK INVITE DIALOG ══ */}
+      {bulkOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+          <div className="bg-crm-card border border-crm-border rounded-2xl w-full max-w-lg shadow-2xl">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-crm-border">
+              <div className="flex items-center gap-2">
+                <Users size={15} className="text-amber-400" />
+                <h3 className="text-[14px] font-bold text-crm-text">Bulk Invite</h3>
+              </div>
+              <button onClick={() => { setBulkOpen(false); setBulkParsed([]); setBulkText(""); }} className="text-crm-text-faint hover:text-crm-text-secondary p-1">
+                <X size={15} />
+              </button>
+            </div>
+            <div className="px-5 py-4 space-y-4">
+              <div className="flex items-center gap-3">
+                <Label className="text-[11px] text-crm-text-muted whitespace-nowrap">Default role:</Label>
+                <Select value={bulkRole} onValueChange={v => setBulkRole(v as AppRole)}>
+                  <SelectTrigger className="bg-crm-surface border-crm-border text-crm-text text-xs h-8 w-44">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-crm-card border-crm-border">
+                    {(Object.keys(ROLE_CONFIG) as AppRole[]).map(r => (
+                      <SelectItem key={r} value={r} className="text-crm-text text-xs">{ROLE_CONFIG[r]?.label ?? r}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-[11px] text-crm-text-muted">Paste emails — one per line, or <span className="font-mono">email,role</span> per line</Label>
+                <textarea
+                  value={bulkText} onChange={e => setBulkText(e.target.value)}
+                  rows={6} placeholder={"alice@example.com\nbob@example.com,admin\ncarol@example.com,moderator"}
+                  className="w-full bg-crm-surface border border-crm-border rounded-lg text-crm-text text-[12px] font-mono px-3 py-2 resize-none focus:outline-none focus:border-primary/50"
+                />
+              </div>
+              <Button size="sm" variant="outline" onClick={() => setBulkParsed(parseBulkCSV(bulkText, bulkRole))}
+                className="border-crm-border text-crm-text-muted text-xs gap-1.5 h-7">
+                <Filter size={11} /> Parse &amp; Preview
+              </Button>
+              {bulkParsed.length > 0 && (
+                <div className="max-h-40 overflow-y-auto space-y-1 rounded-lg bg-crm-surface border border-crm-border p-2">
+                  {bulkParsed.map((row, i) => (
+                    <div key={i} className={`flex items-center justify-between text-[11px] px-2 py-1 rounded ${row.valid ? "text-crm-text" : "text-red-400"}`}>
+                      <span className="font-mono">{row.email}</span>
+                      {row.valid
+                        ? <span className="text-[9px] px-1.5 py-0.5 rounded border border-emerald-800 bg-emerald-950 text-emerald-400">{row.role}</span>
+                        : <span className="text-[9px] text-red-400">invalid email</span>}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {bulkSending && (
+                <div className="space-y-1">
+                  <div className="flex justify-between text-[11px] text-crm-text-muted">
+                    <span>Sending…</span>
+                    <span>{bulkProgress.done} / {bulkProgress.total}</span>
+                  </div>
+                  <div className="w-full h-1.5 rounded-full bg-crm-border overflow-hidden">
+                    <div className="h-full bg-amber-500 transition-all" style={{ width: `${bulkProgress.total ? (bulkProgress.done/bulkProgress.total)*100 : 0}%` }} />
+                  </div>
+                  {bulkProgress.errors.length > 0 && (
+                    <div className="text-[10px] text-red-400 space-y-0.5 mt-1">
+                      {bulkProgress.errors.map((e, i) => <p key={i}>{e}</p>)}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+            <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-crm-border">
+              <Button size="sm" variant="outline" onClick={() => { setBulkOpen(false); setBulkParsed([]); setBulkText(""); }}
+                className="border-crm-border text-crm-text-muted text-xs h-8">Cancel</Button>
+              <Button size="sm"
+                disabled={bulkSending || bulkParsed.filter(r => r.valid).length === 0}
+                onClick={sendBulkInvites}
+                className="bg-amber-700 hover:bg-amber-600 text-white text-xs h-8 gap-1.5">
+                {bulkSending ? <Loader2 size={12} className="animate-spin" /> : <Send size={12} />}
+                Send {bulkParsed.filter(r => r.valid).length} Invite{bulkParsed.filter(r => r.valid).length !== 1 ? "s" : ""}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ══ USERS ══ */}
       {tab === "users" && (
         <div className="space-y-4">
           {/* Invite form */}
           <div className="bg-crm-card border border-amber-800 rounded-xl p-4">
-            <h3 className="text-[12px] font-semibold text-amber-400 flex items-center gap-2 mb-3">
-              <UserPlus size={13} /> Invite a new team member
-            </h3>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-[12px] font-semibold text-amber-400 flex items-center gap-2">
+                <UserPlus size={13} /> Invite a new team member
+              </h3>
+              <button onClick={() => setBulkOpen(true)}
+                className="flex items-center gap-1.5 text-[11px] text-amber-400 hover:text-amber-300 border border-amber-800 rounded-lg px-2.5 py-1 hover:bg-amber-950 transition-colors">
+                <Plus size={11} /> Bulk invite
+              </button>
+            </div>
             <form onSubmit={handleInvite} className="flex flex-col sm:flex-row gap-3">
               <Input
                 type="email" required placeholder="colleague@example.com"
@@ -1106,7 +1493,17 @@ export default function SuperAdminModule() {
           {/* Users table */}
           <div className="bg-crm-card border border-crm-border rounded-xl overflow-hidden">
             <div className="px-4 py-3 border-b border-crm-border flex items-center justify-between gap-3 flex-wrap">
-              <h3 className="text-[12px] font-semibold text-crm-text-secondary">All users ({filteredUsers.length})</h3>
+              <div className="flex items-center gap-2">
+                <h3 className="text-[12px] font-semibold text-crm-text-secondary">Users ({filteredUsers.length})</h3>
+                <div className="flex rounded-lg border border-crm-border overflow-hidden text-[10px]">
+                  {(["all","active","suspended"] as const).map(f => (
+                    <button key={f} onClick={() => setUserActiveFilter(f)}
+                      className={`px-2.5 py-1 transition-colors capitalize ${userActiveFilter === f ? "bg-crm-surface text-crm-text font-semibold" : "text-crm-text-muted hover:text-crm-text-secondary"}`}>
+                      {f}
+                    </button>
+                  ))}
+                </div>
+              </div>
               <div className="flex items-center gap-2">
                 <Input
                   placeholder="Search name, email, country…"
@@ -1126,8 +1523,8 @@ export default function SuperAdminModule() {
             ) : (
               <div className="divide-y divide-crm-border">
                 {filteredUsers.map(u => (
-                  <div key={u.id} className="flex items-start gap-3 px-4 py-3 hover:bg-crm-surface transition-colors">
-                    <div className="w-8 h-8 rounded-full bg-crm-border flex items-center justify-center text-xs font-bold text-emerald-400 flex-shrink-0 uppercase">
+                  <div key={u.id} className={`flex items-start gap-3 px-4 py-3 hover:bg-crm-surface transition-colors ${!u.is_active ? "opacity-60" : ""}`}>
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 uppercase ${u.is_active ? "bg-crm-border text-emerald-400" : "bg-amber-950 border border-amber-800 text-amber-400"}`}>
                       {(u.full_name || u.email)[0]}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -1135,6 +1532,11 @@ export default function SuperAdminModule() {
                         <p className="text-[12.5px] font-semibold text-crm-text">{u.full_name || "—"}</p>
                         {u.id === user?.id && (
                           <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-950 border border-amber-800 text-amber-400">you</span>
+                        )}
+                        {!u.is_active && (
+                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-950 border border-amber-800 text-amber-400 flex items-center gap-1">
+                            <BanIcon size={8} /> Suspended
+                          </span>
                         )}
                       </div>
                       <p className="text-[10px] text-crm-text-muted">{u.email}</p>
@@ -1208,11 +1610,26 @@ export default function SuperAdminModule() {
                           </SelectContent>
                         </Select>
                       )}
+                      {/* Suspend / Reactivate */}
+                      {u.id !== user?.id && (
+                        <button
+                          onClick={() => toggleUserActive(u.id, !u.is_active)}
+                          className={`flex items-center gap-1 text-[10px] px-2 py-1 rounded border transition-colors mt-0.5 ${
+                            u.is_active
+                              ? "text-crm-text-faint hover:text-amber-400 hover:bg-amber-950 border-transparent hover:border-amber-900"
+                              : "text-amber-400 bg-amber-950 border-amber-800 hover:bg-amber-900"
+                          }`}
+                          title={u.is_active ? "Suspend user (blocks login)" : "Reactivate user"}
+                        >
+                          {u.is_active ? <UserX size={10} /> : <UserCheck size={10} />}
+                          {u.is_active ? "Suspend" : "Reactivate"}
+                        </button>
+                      )}
                       {/* Delete user */}
                       {u.id !== user?.id && (
                         <button
                           onClick={() => deleteUser(u)}
-                          className="flex items-center gap-1 text-[10px] text-crm-text-faint hover:text-red-400 hover:bg-red-950 px-2 py-1 rounded border border-transparent hover:border-red-900 transition-colors mt-1"
+                          className="flex items-center gap-1 text-[10px] text-crm-text-faint hover:text-red-400 hover:bg-red-950 px-2 py-1 rounded border border-transparent hover:border-red-900 transition-colors"
                           title="Delete user permanently"
                         >
                           <Trash2 size={10} /> Delete
@@ -1334,51 +1751,104 @@ export default function SuperAdminModule() {
 
       {/* ══ ACTIVITY LOG ══ */}
       {tab === "activity" && (
-        <div className="bg-crm-card border border-crm-border rounded-xl overflow-hidden">
-          <div className="px-4 py-3 border-b border-crm-border">
-            <h3 className="text-[12px] font-semibold text-crm-text-secondary">Activity log (last 50 actions)</h3>
-          </div>
-          {loading ? (
-            <div className="flex items-center justify-center h-24">
-              <div className="w-5 h-5 border-2 border-emerald-700 border-t-emerald-400 rounded-full animate-spin" />
-            </div>
-          ) : activityLog.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 gap-2">
-              <Activity size={28} className="text-crm-text-faint" />
-              <p className="text-[12px] text-crm-text-faint">No activity recorded yet.</p>
-            </div>
-          ) : (
-            <div className="p-4">
-              <div className="relative pl-7 ml-2 space-y-0 before:absolute before:left-0 before:top-0 before:bottom-0 before:w-px before:bg-gradient-to-b before:from-primary/30 before:via-primary/10 before:to-transparent">
-                {activityLog.map(log => {
-                  const actionColor =
-                    log.action.includes("delete") ? "text-red-400 bg-red-950 border-red-800" :
-                    log.action.includes("grant")  ? "text-emerald-400 bg-emerald-950 border-emerald-800" :
-                    log.action.includes("revoke") ? "text-amber-400 bg-amber-950 border-amber-800" :
-                                                    "text-blue-400 bg-blue-950 border-blue-800";
-                  const actionTextColor = actionColor.split(" ")[0];
-                  return (
-                    <div key={log.id} className="relative flex items-start gap-3 pb-4">
-                      <div className={`absolute -left-[26px] w-5 h-5 rounded-full border flex items-center justify-center flex-shrink-0 ${actionColor}`}>
-                        <Activity size={9} />
-                      </div>
-                      <div className="flex-1 min-w-0 pt-0.5">
-                        <p className="text-[12px] text-crm-text">
-                          <span className="font-semibold">{log.actor?.full_name || "System"}</span>
-                          {" "}<span className={`font-medium ${actionTextColor}`}>{log.action}</span>
-                          {" "}on <span className="font-medium text-crm-text-secondary">{log.entity_type}</span>
-                        </p>
-                        {log.details && typeof log.details === "object" && Object.keys(log.details).length > 0 && (
-                          <p className="text-[10px] text-crm-text-dim font-mono truncate mt-0.5">{JSON.stringify(log.details)}</p>
-                        )}
-                        <p className="text-[10px] text-crm-text-faint mt-0.5">{new Date(log.created_at).toLocaleString()}</p>
-                      </div>
-                    </div>
-                  );
-                })}
+        <div className="space-y-4">
+          {/* Filter bar */}
+          <div className="bg-crm-card border border-crm-border rounded-xl p-4 flex flex-wrap items-end gap-3">
+            {/* Source toggle */}
+            <div className="flex flex-col gap-1">
+              <Label className="text-[10px] text-crm-text-dim uppercase tracking-wider">Source</Label>
+              <div className="flex rounded-lg border border-crm-border overflow-hidden text-[10px]">
+                {(["activity","audit","both"] as const).map(s => (
+                  <button key={s} onClick={() => setActivitySource(s)}
+                    className={`px-2.5 py-1.5 capitalize transition-colors ${activitySource === s ? "bg-crm-surface text-crm-text font-semibold" : "text-crm-text-muted hover:text-crm-text-secondary"}`}>
+                    {s === "activity" ? "Action Log" : s === "audit" ? "Audit Log" : "Both"}
+                  </button>
+                ))}
               </div>
             </div>
-          )}
+            {/* Action filter */}
+            <div className="flex flex-col gap-1 flex-1 min-w-[140px]">
+              <Label className="text-[10px] text-crm-text-dim uppercase tracking-wider">Action keyword</Label>
+              <Input value={activityAction} onChange={e => setActivityAction(e.target.value)}
+                placeholder="delete, grant, invite…"
+                className="bg-crm-surface border-crm-border text-crm-text text-[11px] h-8" />
+            </div>
+            {/* Date range */}
+            <div className="flex flex-col gap-1">
+              <Label className="text-[10px] text-crm-text-dim uppercase tracking-wider">From</Label>
+              <Input type="date" value={activityFrom} onChange={e => setActivityFrom(e.target.value)}
+                className="bg-crm-surface border-crm-border text-crm-text text-[11px] h-8 w-36" />
+            </div>
+            <div className="flex flex-col gap-1">
+              <Label className="text-[10px] text-crm-text-dim uppercase tracking-wider">To</Label>
+              <Input type="date" value={activityTo} onChange={e => setActivityTo(e.target.value)}
+                className="bg-crm-surface border-crm-border text-crm-text text-[11px] h-8 w-36" />
+            </div>
+            <Button size="sm" variant="outline" onClick={() => exportActivityLog(mergedActivity)}
+              className="border-crm-border text-crm-text-muted text-xs gap-1.5 h-8 self-end">
+              <Download size={11} /> Export CSV
+            </Button>
+            {(activityAction || activityFrom || activityTo) && (
+              <button onClick={() => { setActivityAction(""); setActivityFrom(""); setActivityTo(""); }}
+                className="text-[11px] text-crm-text-muted hover:text-crm-text-secondary flex items-center gap-1 self-end pb-1.5">
+                <X size={11} /> Clear
+              </button>
+            )}
+          </div>
+
+          <div className="bg-crm-card border border-crm-border rounded-xl overflow-hidden">
+            <div className="px-4 py-3 border-b border-crm-border flex items-center justify-between">
+              <h3 className="text-[12px] font-semibold text-crm-text-secondary">
+                {mergedActivity.length} event{mergedActivity.length !== 1 ? "s" : ""}
+                {(activityAction || activityFrom || activityTo) && " (filtered)"}
+              </h3>
+            </div>
+            {loading ? (
+              <div className="flex items-center justify-center h-24">
+                <div className="w-5 h-5 border-2 border-emerald-700 border-t-emerald-400 rounded-full animate-spin" />
+              </div>
+            ) : mergedActivity.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 gap-2">
+                <Activity size={28} className="text-crm-text-faint" />
+                <p className="text-[12px] text-crm-text-faint">No events match the current filters.</p>
+              </div>
+            ) : (
+              <div className="p-4">
+                <div className="relative pl-7 ml-2 space-y-0 before:absolute before:left-0 before:top-0 before:bottom-0 before:w-px before:bg-gradient-to-b before:from-primary/30 before:via-primary/10 before:to-transparent">
+                  {mergedActivity.map(log => {
+                    const actionColor =
+                      log.action.includes("delete") || log.action.includes("suspend") ? "text-red-400 bg-red-950 border-red-800" :
+                      log.action.includes("grant")  || log.action.includes("reactivat") ? "text-emerald-400 bg-emerald-950 border-emerald-800" :
+                      log.action.includes("revoke") || log.action.includes("remove")   ? "text-amber-400 bg-amber-950 border-amber-800" :
+                                                                                          "text-blue-400 bg-blue-950 border-blue-800";
+                    const actionTextColor = actionColor.split(" ")[0];
+                    return (
+                      <div key={`${log.source}-${log.id}`} className="relative flex items-start gap-3 pb-4">
+                        <div className={`absolute -left-[26px] w-5 h-5 rounded-full border flex items-center justify-center flex-shrink-0 ${actionColor}`}>
+                          {log.source === "audit" ? <Shield size={9} /> : <Activity size={9} />}
+                        </div>
+                        <div className="flex-1 min-w-0 pt-0.5">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="text-[12px] text-crm-text">
+                              <span className="font-semibold">{log.actor_name ?? log.performed_by ?? "System"}</span>
+                              {" "}<span className={`font-medium ${actionTextColor}`}>{log.action}</span>
+                            </p>
+                            <span className={`text-[8px] font-mono px-1 py-0.5 rounded border ${log.source === "audit" ? "text-purple-400 border-purple-800 bg-purple-950" : "text-crm-text-dim border-crm-border bg-crm-surface"}`}>
+                              {log.source}
+                            </span>
+                          </div>
+                          {log.details && typeof log.details === "object" && Object.keys(log.details).length > 0 && (
+                            <p className="text-[10px] text-crm-text-dim font-mono truncate mt-0.5">{JSON.stringify(log.details)}</p>
+                          )}
+                          <p className="text-[10px] text-crm-text-faint mt-0.5">{new Date(log.created_at).toLocaleString()}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -1539,10 +2009,144 @@ export default function SuperAdminModule() {
 
       {/* ══ SETTINGS ══ */}
       {tab === "settings" && (
-        <div className="space-y-4">
+        <div className="space-y-4 max-w-2xl">
+
+          {/* Platform Configuration */}
+          <div className="bg-crm-card border border-crm-border rounded-xl p-5">
+            <h3 className="text-[13px] font-semibold text-crm-text flex items-center gap-2 mb-4">
+              <Settings size={14} className="text-amber-400" /> Platform Configuration
+            </h3>
+            <div className="space-y-4">
+              {/* Maintenance Mode */}
+              <div className="flex items-start justify-between gap-4 p-3 rounded-xl bg-crm-surface border border-crm-border">
+                <div className="flex-1">
+                  <p className="text-[12px] font-semibold text-crm-text">Maintenance Mode</p>
+                  <p className="text-[11px] text-crm-text-muted mt-0.5">When enabled, all non-super-admin users see a maintenance page and cannot access the CRM.</p>
+                  {globalSettings.maintenance_mode && (
+                    <div className="flex items-center gap-1.5 mt-2 text-[10px] text-amber-400">
+                      <AlertTriangle size={10} /> Platform is currently in maintenance mode
+                    </div>
+                  )}
+                </div>
+                <Switch
+                  checked={!!globalSettings.maintenance_mode}
+                  onCheckedChange={async v => {
+                    await saveGlobalSetting("maintenance_mode", v);
+                    toast({ title: v ? "Maintenance mode ON" : "Maintenance mode OFF" });
+                  }}
+                  className="data-[state=checked]:bg-red-600 flex-shrink-0 mt-1"
+                />
+              </div>
+              {/* App Name */}
+              <div className="space-y-1.5">
+                <Label className="text-[11px] text-crm-text-muted">Platform Name</Label>
+                <div className="flex gap-2">
+                  <Input
+                    value={globalSettings.app_name ?? ""}
+                    onChange={e => setGlobalSettings(prev => ({ ...prev, app_name: e.target.value }))}
+                    className="bg-crm-surface border-crm-border text-crm-text text-[12px] h-9 flex-1"
+                    placeholder="ECOWAS Parliament CRM"
+                  />
+                  <Button size="sm" onClick={() => saveGlobalSetting("app_name", globalSettings.app_name ?? "")}
+                    className="text-[11px] h-9 gap-1.5">
+                    <Save size={12} /> Save
+                  </Button>
+                </div>
+              </div>
+              {/* Default theme */}
+              <div className="space-y-1.5">
+                <Label className="text-[11px] text-crm-text-muted">Default Theme</Label>
+                <div className="flex gap-2">
+                  {([["light","Light",Sun],["dark","Dark",Moon],["system","System",Monitor]] as const).map(([val, label, Icon]) => (
+                    <button key={val} onClick={() => saveGlobalSetting("default_theme", val)}
+                      className={`flex items-center gap-1.5 px-3 py-2 rounded-lg border text-[11px] transition-colors ${globalSettings.default_theme === val ? "border-amber-700 bg-amber-950 text-amber-400" : "border-crm-border text-crm-text-muted hover:border-crm-border-hover"}`}>
+                      <Icon size={12} /> {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Security & Sessions */}
+          <div className="bg-crm-card border border-crm-border rounded-xl p-5">
+            <h3 className="text-[13px] font-semibold text-crm-text flex items-center gap-2 mb-4">
+              <Shield size={14} className="text-amber-400" /> Security &amp; Sessions
+            </h3>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-[11px] text-crm-text-muted">Session Timeout (hours)</Label>
+                <Input
+                  type="number" min={1} max={720}
+                  value={globalSettings.session_config?.session_timeout_hours ?? 24}
+                  onChange={e => setGlobalSettings(prev => ({ ...prev, session_config: { ...(prev.session_config ?? {}), session_timeout_hours: Number(e.target.value) }}))}
+                  className="bg-crm-surface border-crm-border text-crm-text text-[12px] h-9"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-[11px] text-crm-text-muted">Max Login Attempts</Label>
+                <Input
+                  type="number" min={1} max={20}
+                  value={globalSettings.session_config?.max_login_attempts ?? 5}
+                  onChange={e => setGlobalSettings(prev => ({ ...prev, session_config: { ...(prev.session_config ?? {}), max_login_attempts: Number(e.target.value) }}))}
+                  className="bg-crm-surface border-crm-border text-crm-text text-[12px] h-9"
+                />
+              </div>
+            </div>
+            <div className="flex items-center justify-between mt-4 p-3 rounded-xl bg-crm-surface border border-crm-border">
+              <div>
+                <p className="text-[12px] font-medium text-crm-text">Require 2FA for Admins</p>
+                <p className="text-[11px] text-crm-text-muted">Records policy intent — enforcement is handled via Auth provider</p>
+              </div>
+              <Switch
+                checked={!!globalSettings.session_config?.require_2fa_for_admins}
+                onCheckedChange={v => setGlobalSettings(prev => ({ ...prev, session_config: { ...(prev.session_config ?? {}), require_2fa_for_admins: v }}))}
+                className="data-[state=checked]:bg-emerald-600"
+              />
+            </div>
+            <Button size="sm" onClick={() => { saveGlobalSetting("session_config", globalSettings.session_config); setSavingSettings(true); setTimeout(() => setSavingSettings(false), 800); }}
+              disabled={savingSettings}
+              className="mt-4 text-[11px] gap-1.5">
+              {savingSettings ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
+              Save Session Settings
+            </Button>
+          </div>
+
+          {/* Data Retention */}
+          <div className="bg-crm-card border border-crm-border rounded-xl p-5">
+            <h3 className="text-[13px] font-semibold text-crm-text flex items-center gap-2 mb-4">
+              <Timer size={14} className="text-amber-400" /> Data Retention
+            </h3>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-[11px] text-crm-text-muted">Activity Log Retention (days)</Label>
+                <Input
+                  type="number" min={7} max={3650}
+                  value={globalSettings.data_retention?.activity_log_days ?? 90}
+                  onChange={e => setGlobalSettings(prev => ({ ...prev, data_retention: { ...(prev.data_retention ?? {}), activity_log_days: Number(e.target.value) }}))}
+                  className="bg-crm-surface border-crm-border text-crm-text text-[12px] h-9"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-[11px] text-crm-text-muted">Deleted User Data Retention (days)</Label>
+                <Input
+                  type="number" min={1} max={365}
+                  value={globalSettings.data_retention?.deleted_user_data_days ?? 30}
+                  onChange={e => setGlobalSettings(prev => ({ ...prev, data_retention: { ...(prev.data_retention ?? {}), deleted_user_data_days: Number(e.target.value) }}))}
+                  className="bg-crm-surface border-crm-border text-crm-text text-[12px] h-9"
+                />
+              </div>
+            </div>
+            <Button size="sm" onClick={() => saveGlobalSetting("data_retention", globalSettings.data_retention)}
+              className="mt-4 text-[11px] gap-1.5">
+              <Save size={12} /> Save Retention Settings
+            </Button>
+          </div>
+
+          {/* System info */}
           <div className="bg-crm-card border border-crm-border rounded-xl p-4">
             <h3 className="text-[12px] font-semibold text-crm-text-secondary flex items-center gap-2 mb-4">
-              <Settings size={13} /> System information
+              <Info size={13} /> System Information
             </h3>
             <div className="space-y-2">
               {[
@@ -1566,12 +2170,9 @@ export default function SuperAdminModule() {
               <AlertTriangle size={13} /> Danger zone
             </h3>
             <p className="text-[11px] text-crm-text-muted mb-3">These actions are irreversible. Proceed with caution.</p>
-            <Button
-              variant="outline"
-              size="sm"
+            <Button variant="outline" size="sm"
               className="border-red-900 text-red-400 hover:bg-red-950 hover:text-red-300 text-xs gap-1.5"
-              onClick={() => signOut()}
-            >
+              onClick={() => signOut()}>
               Sign out of super admin session
             </Button>
           </div>

@@ -86,7 +86,38 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Insert invitation record
+    // Check for an existing invitation record for this email.
+    const { data: existingInv } = await serviceClient
+      .from("invitations")
+      .select("id, accepted_at")
+      .eq("email", email)
+      .maybeSingle();
+
+    if (existingInv) {
+      if (!existingInv.accepted_at) {
+        // Pending invitation exists — check whether a profile still exists for this email.
+        // Profiles are CASCADE-deleted with auth users, so a missing profile means the
+        // user was deleted without the invitation being cleaned up (stale record).
+        const { data: profile } = await serviceClient
+          .from("profiles")
+          .select("id")
+          .eq("email", email)
+          .maybeSingle();
+        const authUserExists = !!profile;
+        if (authUserExists) {
+          // Active user still has a pending invite — tell caller to use resend
+          return new Response(
+            JSON.stringify({ error: "This email has already been invited. Use resend to re-send the link." }),
+            { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        // Auth user no longer exists — stale pending invitation, replace it
+      }
+      // Stale invitation (user deleted) — remove before re-inviting
+      await serviceClient.from("invitations").delete().eq("id", existingInv.id);
+    }
+
+    // Insert fresh invitation record
     const { error: invErr } = await serviceClient.from("invitations").insert({
       email,
       role,
@@ -96,13 +127,6 @@ Deno.serve(async (req) => {
     });
 
     if (invErr) {
-      // Duplicate means already invited
-      if (invErr.code === "23505") {
-        return new Response(
-          JSON.stringify({ error: "This email has already been invited for this role" }),
-          { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
       throw invErr;
     }
 
