@@ -888,10 +888,16 @@ export default function PeopleModule() {
   const handleResend = async (inv: Invitation) => {
     setResendingId(inv.id);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: r, error: re } = await supabase.auth.refreshSession();
+      const token = r?.session?.access_token;
+      if (re || !token) {
+        toast({ title: "Session expired", description: "Please reload and log in again.", variant: "destructive" });
+        setResendingId(null);
+        return;
+      }
       const res = await supabase.functions.invoke("invite-user", {
         body: { email: inv.email, role: inv.role, redirectUrl: `${window.location.origin}/set-password` },
-        headers: { Authorization: `Bearer ${session?.access_token}` },
+        headers: { Authorization: `Bearer ${token}` },
       });
       if (res.error) throw new Error(res.error.message);
       const body = res.data as any;
@@ -1167,6 +1173,114 @@ export default function PeopleModule() {
       )}
       <AddUserSheet open={addSheetOpen} onClose={() => setAddSheetOpen(false)}
         assignableRoles={assignableRoles} onInvited={loadData} isSuperAdmin={isSuperAdmin} />
+
+      {/* Create User Dialog */}
+      <Dialog open={createOpen} onOpenChange={open => { if (!open) { setCreateOpen(false); setCreateResult(null); } }}>
+        <DialogContent className="bg-crm-card border-crm-border text-crm-text max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-sm font-semibold flex items-center gap-2">
+              <KeyRound size={14} className="text-violet-400" /> Create User Account
+            </DialogTitle>
+          </DialogHeader>
+
+          {createResult ? (
+            <div className="space-y-4 py-2">
+              <div className="bg-emerald-950 border border-emerald-800 rounded-lg p-4 space-y-2">
+                <p className="text-xs text-emerald-400 font-semibold">User created successfully</p>
+                <p className="text-[11px] text-crm-text-muted">Temporary password — copy it now, it will not be shown again:</p>
+                <div className="flex items-center gap-2 mt-1">
+                  <code className="flex-1 font-mono text-sm bg-crm-surface border border-crm-border rounded px-3 py-1.5 text-emerald-300 select-all">
+                    {createResult}
+                  </code>
+                  <button
+                    onClick={() => { navigator.clipboard.writeText(createResult); setCopiedCreate(true); setTimeout(() => setCopiedCreate(false), 2000); }}
+                    className="p-2 rounded bg-crm-surface border border-crm-border hover:bg-crm-border transition-colors text-crm-text-dim hover:text-crm-text-secondary"
+                  >
+                    {copiedCreate ? <CheckCheck size={14} className="text-emerald-400" /> : <Copy size={14} />}
+                  </button>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button size="sm" onClick={() => { setCreateOpen(false); setCreateResult(null); }}
+                  className="bg-crm-surface border border-crm-border text-crm-text-secondary hover:bg-crm-border text-xs">
+                  Close
+                </Button>
+                <Button size="sm"
+                  onClick={() => { setCreateResult(null); setCreatePassword(generatePassword()); setCreateEmail(""); setCreateName(""); }}
+                  className="bg-violet-800 hover:bg-violet-700 text-white text-xs gap-1.5">
+                  <KeyRound size={12} /> Create another
+                </Button>
+              </DialogFooter>
+            </div>
+          ) : (
+            <div className="space-y-4 py-2">
+              <div className="space-y-1.5">
+                <Label className="text-[11px] text-crm-text-muted">Email *</Label>
+                <Input value={createEmail} onChange={e => setCreateEmail(e.target.value)}
+                  placeholder="user@example.com" type="email"
+                  className="bg-crm-surface border-crm-border text-crm-text-secondary text-sm" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-[11px] text-crm-text-muted">Full Name</Label>
+                <Input value={createName} onChange={e => setCreateName(e.target.value)}
+                  placeholder="Jane Doe"
+                  className="bg-crm-surface border-crm-border text-crm-text-secondary text-sm" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-[11px] text-crm-text-muted">Role</Label>
+                <Select value={createRole} onValueChange={v => setCreateRole(v as AppRole)}>
+                  <SelectTrigger className="bg-crm-surface border-crm-border text-crm-text-secondary text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-crm-card border-crm-border text-crm-text">
+                    {assignableRoles.map(r => (
+                      <SelectItem key={r} value={r}>{CRM_ROLE_META[r]?.label ?? r}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-[11px] text-crm-text-muted">Temporary Password *</Label>
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Input value={createPassword} onChange={e => setCreatePassword(e.target.value)}
+                      type={showCreatePw ? "text" : "password"} placeholder="Min 8 characters"
+                      className="bg-crm-surface border-crm-border text-crm-text-secondary text-sm pr-8" />
+                    <button type="button"
+                      onClick={() => setShowCreatePw(v => !v)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-crm-text-dim hover:text-crm-text-secondary">
+                      {showCreatePw ? <EyeOff size={13} /> : <Eye size={13} />}
+                    </button>
+                  </div>
+                  <Button size="sm" variant="outline" onClick={() => setCreatePassword(generatePassword())}
+                    className="border-crm-border text-crm-text-muted text-xs shrink-0">
+                    Gen
+                  </Button>
+                </div>
+                {createPassword.length > 0 && createPassword.length < 8 && (
+                  <p className="text-[10px] text-red-400">Password must be at least 8 characters</p>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch id="force-chg" checked={createForceChg} onCheckedChange={setCreateForceChg} />
+                <Label htmlFor="force-chg" className="text-[11px] text-crm-text-muted cursor-pointer">
+                  Force password change on first login
+                </Label>
+              </div>
+              <DialogFooter className="pt-1">
+                <Button size="sm" variant="outline" onClick={() => setCreateOpen(false)}
+                  className="border-crm-border text-crm-text-muted text-xs">Cancel</Button>
+                <Button size="sm"
+                  onClick={handleCreateUser}
+                  disabled={creating || !createEmail.trim() || createPassword.length < 8}
+                  className="bg-violet-800 hover:bg-violet-700 text-white text-xs gap-1.5">
+                  {creating ? <><Loader2 size={12} className="animate-spin" /> Creating…</> : <><KeyRound size={12} /> Create user</>}
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
