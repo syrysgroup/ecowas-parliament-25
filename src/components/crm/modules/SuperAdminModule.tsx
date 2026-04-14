@@ -202,14 +202,8 @@ function EmailConfigTab({ userId }: { userId?: string }) {
     try {
       // Save current config first so test uses latest values
       await handleSave();
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        toast({ title: "Session expired", description: "Please reload the page and try again.", variant: "destructive" });
-        return;
-      }
-      const res = await supabase.functions.invoke("test-smtp", {
-        headers: { Authorization: `Bearer ${session.access_token}` },
-      });
+      // No manual Authorization header — SDK's this.headers.Authorization is always fresh
+      const res = await supabase.functions.invoke("test-smtp", {});
       const body = res.data as any;
       if (body?.success) {
         toast({ title: "SMTP connection verified", description: "Server responded correctly." });
@@ -1353,17 +1347,24 @@ export default function SuperAdminModule() {
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inviteEmail.trim()) return;
-    if (!session?.access_token) {
-      toast({ title: "Session expired", description: "Please reload the page and try again.", variant: "destructive" });
+    if (!session) {
+      toast({ title: "Session expired", description: "Please reload the page and log in again.", variant: "destructive" });
       return;
     }
     setSending(true);
     try {
+      // Do NOT pass a manual Authorization header — the Supabase SDK maintains
+      // this.headers.Authorization via setAuth() on every onAuthStateChange,
+      // so it is always fresher than the React-state session snapshot.
       const res = await supabase.functions.invoke("invite-user", {
         body: { email: inviteEmail.trim(), role: inviteRole, redirectUrl: `${window.location.origin}/set-password` },
-        headers: { Authorization: `Bearer ${session.access_token}` },
       });
-      if (res.error) throw new Error(res.error.message);
+      if (res.error) {
+        // Try to surface the actual error message from the edge function body
+        let msg = "Edge Function error";
+        try { msg = (await (res.error as any).context?.json?.())?.error ?? res.error.message; } catch { msg = res.error.message; }
+        throw new Error(msg);
+      }
       const body = res.data as any;
       if (body?.error) throw new Error(body.error);
       toast({ title: "Invitation sent", description: `${inviteEmail} — ${inviteRole}` });
@@ -1425,17 +1426,20 @@ export default function SuperAdminModule() {
 
   // ── Resend invitation ─────────────────────────────────────────────────────
   const resendInvitation = async (invId: string, email: string) => {
-    if (!session?.access_token) {
-      toast({ title: "Session expired", description: "Please reload the page and try again.", variant: "destructive" });
+    if (!session) {
+      toast({ title: "Session expired", description: "Please reload the page and log in again.", variant: "destructive" });
       return;
     }
     setResendingId(invId);
     try {
       const res = await supabase.functions.invoke("resend-invite", {
         body: { invitation_id: invId },
-        headers: { Authorization: `Bearer ${session.access_token}` },
       });
-      if (res.error) throw new Error(res.error.message);
+      if (res.error) {
+        let msg = "Edge Function error";
+        try { msg = (await (res.error as any).context?.json?.())?.error ?? res.error.message; } catch { msg = res.error.message; }
+        throw new Error(msg);
+      }
       const body = res.data as any;
       if (body?.error) throw new Error(body.error);
       // Start 60-second client-side cooldown
@@ -1512,8 +1516,8 @@ export default function SuperAdminModule() {
   };
 
   const sendBulkInvites = async () => {
-    if (!session?.access_token) {
-      toast({ title: "Session expired", description: "Please reload the page and try again.", variant: "destructive" });
+    if (!session) {
+      toast({ title: "Session expired", description: "Please reload the page and log in again.", variant: "destructive" });
       return;
     }
     const valid = bulkParsed.filter(r => r.valid);
@@ -1523,8 +1527,12 @@ export default function SuperAdminModule() {
       try {
         const res = await supabase.functions.invoke("invite-user", {
           body: { email: row.email, role: row.role, redirectUrl: `${window.location.origin}/set-password` },
-          headers: { Authorization: `Bearer ${session.access_token}` },
         });
+        if (res.error) {
+          let msg = "Edge Function error";
+          try { msg = (await (res.error as any).context?.json?.())?.error ?? res.error.message; } catch { msg = res.error.message; }
+          throw new Error(msg);
+        }
         const body = res.data as any;
         if (body?.error) throw new Error(body.error);
       } catch (e: any) {
@@ -1550,17 +1558,20 @@ export default function SuperAdminModule() {
   // ── Confirm delete user (called from dialog) ──────────────────────────────
   const confirmDeleteUser = async () => {
     if (!deleteTarget || deleteConfirmText !== "DELETE") return;
-    if (!session?.access_token) {
-      toast({ title: "Session expired", description: "Please reload the page and try again.", variant: "destructive" });
+    if (!session) {
+      toast({ title: "Session expired", description: "Please reload the page and log in again.", variant: "destructive" });
       return;
     }
     setDeleting(true);
     try {
       const res = await supabase.functions.invoke("delete-user", {
         body: { user_ids: [deleteTarget.id] },
-        headers: { Authorization: `Bearer ${session.access_token}` },
       });
-      if (res.error) throw new Error(res.error.message);
+      if (res.error) {
+        let msg = "Edge Function error";
+        try { msg = (await (res.error as any).context?.json?.())?.error ?? res.error.message; } catch { msg = res.error.message; }
+        throw new Error(msg);
+      }
       const results = (res.data?.results ?? []) as { success: boolean; email?: string; error?: string }[];
       const failed = results.filter(r => !r.success);
       if (failed.length > 0) {
