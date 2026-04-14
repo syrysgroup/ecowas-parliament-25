@@ -202,8 +202,14 @@ function EmailConfigTab({ userId }: { userId?: string }) {
     try {
       // Save current config first so test uses latest values
       await handleSave();
-      // No manual Authorization header — SDK's this.headers.Authorization is always fresh
-      const res = await supabase.functions.invoke("test-smtp", {});
+      // functions.invoke() uses getSession() internally (not the setAuth() path used by
+      // DB calls), so we must pass the token explicitly to guarantee a fresh JWT is sent.
+      const { data: { session: liveSession } } = await supabase.auth.getSession();
+      const smtpToken = liveSession?.access_token;
+      if (!smtpToken) { toast({ title: "Session expired", description: "Please reload and log in again.", variant: "destructive" }); return; }
+      const res = await supabase.functions.invoke("test-smtp", {
+        headers: { Authorization: `Bearer ${smtpToken}` },
+      });
       const body = res.data as any;
       if (body?.success) {
         toast({ title: "SMTP connection verified", description: "Server responded correctly." });
@@ -1353,10 +1359,18 @@ export default function SuperAdminModule() {
     }
     setSending(true);
     try {
-      // Do NOT pass a manual Authorization header — the Supabase SDK maintains
-      // this.headers.Authorization via setAuth() on every onAuthStateChange,
-      // so it is always fresher than the React-state session snapshot.
+      // functions.invoke() calls getSession() internally which can return a stale/expired
+      // token in @supabase/supabase-js v2.99.x (unlike DB calls which use the setAuth()
+      // path). Always pass the token explicitly so the Edge Function receives a valid JWT.
+      const { data: { session: liveSession } } = await supabase.auth.getSession();
+      const inviteToken = liveSession?.access_token ?? session?.access_token;
+      if (!inviteToken) {
+        toast({ title: "Session expired", description: "Please reload the page and log in again.", variant: "destructive" });
+        setSending(false);
+        return;
+      }
       const res = await supabase.functions.invoke("invite-user", {
+        headers: { Authorization: `Bearer ${inviteToken}` },
         body: { email: inviteEmail.trim(), role: inviteRole, redirectUrl: `${window.location.origin}/set-password` },
       });
       if (res.error) {
@@ -1432,7 +1446,15 @@ export default function SuperAdminModule() {
     }
     setResendingId(invId);
     try {
+      const { data: { session: liveSessionR } } = await supabase.auth.getSession();
+      const resendToken = liveSessionR?.access_token ?? session?.access_token;
+      if (!resendToken) {
+        toast({ title: "Session expired", description: "Please reload and log in again.", variant: "destructive" });
+        setResendingId(null);
+        return;
+      }
       const res = await supabase.functions.invoke("resend-invite", {
+        headers: { Authorization: `Bearer ${resendToken}` },
         body: { invitation_id: invId },
       });
       if (res.error) {
@@ -1523,9 +1545,20 @@ export default function SuperAdminModule() {
     const valid = bulkParsed.filter(r => r.valid);
     setBulkProgress({ done: 0, total: valid.length, errors: [] });
     setBulkSending(true);
+    // Fetch token once before the loop — avoids repeated async overhead per row
+    // and ensures all rows use the same fresh JWT rather than relying on
+    // functions.invoke()'s internal getSession() which may return stale tokens.
+    const { data: { session: liveSessionB } } = await supabase.auth.getSession();
+    const bulkToken = liveSessionB?.access_token ?? session?.access_token;
+    if (!bulkToken) {
+      toast({ title: "Session expired", description: "Please reload the page and log in again.", variant: "destructive" });
+      setBulkSending(false);
+      return;
+    }
     for (const row of valid) {
       try {
         const res = await supabase.functions.invoke("invite-user", {
+          headers: { Authorization: `Bearer ${bulkToken}` },
           body: { email: row.email, role: row.role, redirectUrl: `${window.location.origin}/set-password` },
         });
         if (res.error) {
@@ -1564,7 +1597,15 @@ export default function SuperAdminModule() {
     }
     setDeleting(true);
     try {
+      const { data: { session: liveSessionD } } = await supabase.auth.getSession();
+      const deleteToken = liveSessionD?.access_token ?? session?.access_token;
+      if (!deleteToken) {
+        toast({ title: "Session expired", description: "Please reload and log in again.", variant: "destructive" });
+        setDeleting(false);
+        return;
+      }
       const res = await supabase.functions.invoke("delete-user", {
+        headers: { Authorization: `Bearer ${deleteToken}` },
         body: { user_ids: [deleteTarget.id] },
       });
       if (res.error) {
