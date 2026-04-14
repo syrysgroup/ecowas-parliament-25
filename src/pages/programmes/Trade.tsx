@@ -116,7 +116,7 @@ const Trade = () => {
             <div className="flex flex-wrap gap-8 mt-10">
               {[
                 { icon: <MapPin className="h-5 w-5" />, value: "7", label: t("trade.stat.countries") },
-                { icon: <Users className="h-5 w-5" />, value: "200+", label: t("trade.stat.smes") },
+                { icon: <Users className="h-5 w-5" />, value: "10,00+", label: t("trade.stat.smes") },
                 { icon: <Globe className="h-5 w-5" />, value: "3", label: t("trade.stat.tiers") },
               ].map((s) => (
                 <div key={s.label} className="flex items-center gap-3">
@@ -139,7 +139,7 @@ const Trade = () => {
                 {t("trade.applyNow")} <ExternalLink className="ml-2 h-4 w-4" />
               </a>
             </Button>
-            <Button asChild variant="outline" size="lg" className="border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10">
+            <Button asChild size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90 font-bold shadow-lg">
               <Link to="/contact">{t("trade.partnerWithUs")}</Link>
             </Button>
           </div>
