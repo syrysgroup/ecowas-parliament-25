@@ -118,7 +118,11 @@ function ProfileSettings() {
         full_name: fullName, title, organisation, country,
         bio, phone, linkedin_url: linkedinUrl, twitter_url: twitterUrl,
       }).eq("id", user.id);
+      // Sync to auth user_metadata so sidebar/header displayName updates immediately
+      await supabase.auth.updateUser({ data: { full_name: fullName.trim() } });
       qc.invalidateQueries({ queryKey: ["profile", user.id] });
+      qc.invalidateQueries({ queryKey: ["team-members"] });
+      qc.invalidateQueries({ queryKey: ["team-members-profiles"] });
       toast({ title: "Profile saved" });
     } catch (err: any) {
       toast({ title: "Failed", description: err.message, variant: "destructive" });

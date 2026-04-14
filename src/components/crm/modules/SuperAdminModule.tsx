@@ -1229,6 +1229,7 @@ function SignaturesTab() {
 export default function SuperAdminModule({ onNavigate }: { onNavigate?: (s: string) => void } = {}) {
   const { user, session, refreshRoles, signOut } = useAuthContext();
   const { toast } = useToast();
+  const qc = useQueryClient();
 
   const [tab,         setTab]         = useState<Tab>("overview");
   const [users,       setUsers]       = useState<UserWithRoles[]>([]);
@@ -1439,6 +1440,8 @@ export default function SuperAdminModule({ onNavigate }: { onNavigate?: (s: stri
       await (supabase as any).from("profiles").update({ show_on_website: newVal }).eq("id", targetUserId);
       toast({ title: newVal ? "Added to Team page" : "Removed from Team page" });
       setUsers(prev => prev.map(u => u.id === targetUserId ? { ...u, show_on_website: newVal } : u));
+      qc.invalidateQueries({ queryKey: ["website-team"] });
+      qc.invalidateQueries({ queryKey: ["team-members"] });
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     }

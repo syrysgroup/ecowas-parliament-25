@@ -524,7 +524,13 @@ function ConvertTeamMemberDialog({ open, onClose, member, assignableRoles }: {
     }
     setConverting(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: r, error: re } = await supabase.auth.refreshSession();
+      const session = r?.session;
+      if (re || !session) {
+        toast({ title: "Session expired", description: "Please reload and log in again.", variant: "destructive" });
+        setConverting(false);
+        return;
+      }
       const res = await supabase.functions.invoke("invite-user", {
         body: {
           email: email.trim(),
