@@ -77,16 +77,14 @@ function AddUserSheet({ open, onClose, assignableRoles, onInvited, isSuperAdmin 
     if (!email.trim()) return;
     setSending(true);
     try {
-      const { data: r, error: re } = await supabase.auth.refreshSession();
-      const token = r?.session?.access_token;
-      if (re || !token) {
+      const { error: _refreshErr } = await supabase.auth.refreshSession();
+      if (_refreshErr) {
         toast({ title: "Session expired", description: "Please reload and log in again.", variant: "destructive" });
         setSending(false);
         return;
       }
       const res = await supabase.functions.invoke("invite-user", {
         body: { email: email.trim(), role, redirectUrl: `${window.location.origin}/set-password` },
-        headers: { Authorization: `Bearer ${token}` },
       });
       if (res.error) throw new Error(res.error.message);
       const body = res.data as any;
@@ -267,10 +265,9 @@ function EditUserDialog({ target, isSuperAdmin, onClose, onSaved }: {
     setTesting(true);
     setTestResult(null);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      await supabase.auth.refreshSession();
       const res = await supabase.functions.invoke("validate-email-credentials", {
         body: { email: emailCfg.smtp_user, password: emailCfg.smtp_password, target_user_id: target.id },
-        headers: { Authorization: `Bearer ${session?.access_token}` },
       });
       const result = res.data as { valid: boolean; error?: string };
       setTestResult(result);
@@ -524,13 +521,7 @@ function ConvertTeamMemberDialog({ open, onClose, member, assignableRoles }: {
     }
     setConverting(true);
     try {
-      const { data: r, error: re } = await supabase.auth.refreshSession();
-      const session = r?.session;
-      if (re || !session) {
-        toast({ title: "Session expired", description: "Please reload and log in again.", variant: "destructive" });
-        setConverting(false);
-        return;
-      }
+      await supabase.auth.refreshSession();
       const res = await supabase.functions.invoke("invite-user", {
         body: {
           email: email.trim(),
@@ -544,7 +535,6 @@ function ConvertTeamMemberDialog({ open, onClose, member, assignableRoles }: {
             avatar_url: member.avatar_url ?? undefined,
           },
         },
-        headers: { Authorization: `Bearer ${session?.access_token}` },
       });
       if (res.error) throw new Error(res.error.message);
       const body = res.data as any;
@@ -800,9 +790,8 @@ export default function PeopleModule() {
 
   const handleCreateUser = async () => {
     if (!createEmail.trim() || createPassword.length < 8) return;
-    const { data: r, error: re } = await supabase.auth.refreshSession();
-    const token = r?.session?.access_token;
-    if (re || !token) {
+    const { error: _refreshErr2 } = await supabase.auth.refreshSession();
+    if (_refreshErr2) {
       toast({ title: "Session expired", description: "Please reload and log in again.", variant: "destructive" });
       return;
     }
@@ -810,7 +799,6 @@ export default function PeopleModule() {
     setCreateResult(null);
     try {
       const res = await supabase.functions.invoke("create-user", {
-        headers: { Authorization: `Bearer ${token}` },
         body: {
           email: createEmail.trim(),
           password: createPassword,
@@ -894,16 +882,14 @@ export default function PeopleModule() {
   const handleResend = async (inv: Invitation) => {
     setResendingId(inv.id);
     try {
-      const { data: r, error: re } = await supabase.auth.refreshSession();
-      const token = r?.session?.access_token;
-      if (re || !token) {
+      const { error: _refreshErr3 } = await supabase.auth.refreshSession();
+      if (_refreshErr3) {
         toast({ title: "Session expired", description: "Please reload and log in again.", variant: "destructive" });
         setResendingId(null);
         return;
       }
       const res = await supabase.functions.invoke("invite-user", {
         body: { email: inv.email, role: inv.role, redirectUrl: `${window.location.origin}/set-password` },
-        headers: { Authorization: `Bearer ${token}` },
       });
       if (res.error) throw new Error(res.error.message);
       const body = res.data as any;
@@ -929,16 +915,9 @@ export default function PeopleModule() {
     }
     setDeletingId(userId);
     try {
-      const { data: r, error: re } = await supabase.auth.refreshSession();
-      const token = r?.session?.access_token;
-      if (re || !token) {
-        toast({ title: "Session expired", description: "Please reload and log in again.", variant: "destructive" });
-        setDeletingId(null);
-        return;
-      }
+      await supabase.auth.refreshSession();
       const res = await supabase.functions.invoke("delete-user", {
         body: { user_ids: [userId] },
-        headers: { Authorization: `Bearer ${token}` },
       });
       if (res.error) throw new Error(res.error.message);
       const results = (res.data?.results ?? []) as { success: boolean; error?: string }[];
