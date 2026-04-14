@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthContext";
@@ -13,68 +13,95 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, CheckCircle2, AlertCircle, UserCircle2 } from "lucide-react";
+import { Loader2, CheckCircle2, AlertCircle, UserCircle2, Camera } from "lucide-react";
 import ecowasLogo from "@/assets/ecowas-parliament-logo.png";
 
 const ECOWAS_COUNTRIES = [
-  "Benin","Burkina Faso","Cape Verde","Côte d'Ivoire","Gambia",
-  "Ghana","Guinea","Guinea-Bissau","Liberia","Mali","Niger",
-  "Nigeria","Senegal","Sierra Leone","Togo",
+  "Benin", "Burkina Faso", "Cape Verde", "Côte d'Ivoire", "Gambia",
+  "Ghana", "Guinea", "Guinea-Bissau", "Liberia", "Mali", "Niger",
+  "Nigeria", "Senegal", "Sierra Leone", "Togo",
 ];
+
+const DEFAULT_ORG = "ECOWAS Parliament Initiative";
 
 type PageState = "checking" | "form" | "saving" | "success";
 
 export default function CompleteProfile() {
   const navigate = useNavigate();
   const { user, loading } = useAuthContext();
+  const fileRef = useRef<HTMLInputElement>(null);
 
-  const [pageState, setPageState] = useState<PageState>("checking");
-  const [fullName,     setFullName]     = useState("");
-  const [title,        setTitle]        = useState("");
-  const [organisation, setOrganisation] = useState("");
-  const [country,      setCountry]      = useState("");
-  const [bio,          setBio]          = useState("");
-  const [avatarUrl,    setAvatarUrl]    = useState("");
-  const [error,        setError]        = useState<string | null>(null);
+  const [pageState,     setPageState]     = useState<PageState>("checking");
+  const [isSponsor,     setIsSponsor]     = useState(false);
+  const [fullName,      setFullName]      = useState("");
+  const [title,         setTitle]         = useState("");
+  const [organisation,  setOrganisation]  = useState("");
+  const [country,       setCountry]       = useState("");
+  const [bio,           setBio]           = useState("");
+  const [avatarFile,    setAvatarFile]    = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [error,         setError]         = useState<string | null>(null);
 
   // Redirect to /auth if not logged in
   useEffect(() => {
-    if (!loading && !user) {
-      navigate("/auth", { replace: true });
-    }
+    if (!loading && !user) navigate("/auth", { replace: true });
   }, [user, loading, navigate]);
 
-  // Check if profile is already complete; pre-fill partial data
+  // Resolve role + load existing profile data
   useEffect(() => {
     if (loading || !user) return;
-    (supabase as any)
-      .from("profiles")
-      .select("full_name, title, country, organisation, bio, avatar_url")
-      .eq("id", user.id)
-      .single()
-      .then(({ data }: any) => {
-        if (
-          data?.full_name &&
-          data?.title &&
-          data?.country &&
-          data?.organisation
-        ) {
-          // Profile already complete — go straight to CRM
-          navigate("/crm", { replace: true });
-          return;
-        }
-        // Pre-fill whatever exists (e.g. from invitation metadata)
-        if (data) {
-          setFullName(data.full_name ?? "");
-          setTitle(data.title ?? "");
-          setCountry(data.country ?? "");
-          setOrganisation(data.organisation ?? "");
-          setBio(data.bio ?? "");
-          setAvatarUrl(data.avatar_url ?? "");
-        }
-        setPageState("form");
-      });
+
+    (async () => {
+      // 1. Determine role: user_metadata first, then user_roles table
+      const metaRole = user.user_metadata?.role as string | undefined;
+      let resolvedRole = metaRole;
+      if (!resolvedRole) {
+        const { data: roleData } = await (supabase as any)
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", user.id)
+          .limit(1)
+          .maybeSingle();
+        resolvedRole = roleData?.role ?? "";
+      }
+      const sponsorUser = resolvedRole === "sponsor";
+      setIsSponsor(sponsorUser);
+
+      // 2. Load existing profile
+      const { data } = await (supabase as any)
+        .from("profiles")
+        .select("full_name, title, country, organisation, bio, avatar_url")
+        .eq("id", user.id)
+        .single();
+
+      // 3. If already complete, go straight to the right destination
+      if (data?.full_name && data?.title && data?.country && data?.organisation) {
+        navigate(sponsorUser ? "/sponsor-dashboard" : "/crm", { replace: true });
+        return;
+      }
+
+      // 4. Pre-fill existing data (may come from invitation metadata)
+      if (data) {
+        setFullName(data.full_name ?? "");
+        setTitle(data.title ?? "");
+        setCountry(data.country ?? "");
+        setBio(data.bio ?? "");
+        setAvatarPreview(data.avatar_url ?? null);
+        setOrganisation(data.organisation ?? (sponsorUser ? "" : DEFAULT_ORG));
+      } else {
+        if (!sponsorUser) setOrganisation(DEFAULT_ORG);
+      }
+
+      setPageState("form");
+    })();
   }, [user, loading, navigate]);
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setAvatarFile(file);
+    setAvatarPreview(URL.createObjectURL(file));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,6 +112,21 @@ export default function CompleteProfile() {
     }
     setPageState("saving");
     try {
+      let avatarUrl: string | null = avatarPreview;
+
+      // Upload avatar if a new file was selected
+      if (avatarFile) {
+        const ext  = avatarFile.name.split(".").pop();
+        const path = `${user!.id}-${Date.now()}.${ext}`;
+        const { error: uploadErr } = await supabase.storage
+          .from("profile-photos")
+          .upload(path, avatarFile, { upsert: true });
+        if (!uploadErr) {
+          const { data: urlData } = supabase.storage.from("profile-photos").getPublicUrl(path);
+          avatarUrl = urlData.publicUrl;
+        }
+      }
+
       const { error: dbErr } = await (supabase as any)
         .from("profiles")
         .update({
@@ -93,16 +135,16 @@ export default function CompleteProfile() {
           organisation: organisation.trim(),
           country,
           bio:          bio.trim() || null,
-          avatar_url:   avatarUrl.trim() || null,
+          avatar_url:   avatarUrl,
         })
         .eq("id", user!.id);
       if (dbErr) throw dbErr;
 
-      // Sync full_name to Supabase auth metadata
+      // Sync full_name to auth metadata
       await supabase.auth.updateUser({ data: { full_name: fullName.trim() } });
 
       setPageState("success");
-      setTimeout(() => navigate("/crm", { replace: true }), 2000);
+      setTimeout(() => navigate(isSponsor ? "/sponsor-dashboard" : "/crm", { replace: true }), 2000);
     } catch (err: any) {
       setError(err.message || "Failed to save profile. Please try again.");
       setPageState("form");
@@ -124,17 +166,16 @@ export default function CompleteProfile() {
       <div className="hidden lg:flex lg:w-1/2 flex-col items-center justify-center p-12 gap-8">
         <div className="bg-white/10 backdrop-blur-sm rounded-3xl p-10 flex flex-col items-center gap-6 border border-white/20">
           <div className="bg-white rounded-full p-4 shadow-2xl">
-            <img src={ecowasLogo} alt="ECOWAS Parliament" className="h-20 w-20 object-contain" width={80} height={80} />
+            <img src={ecowasLogo} alt="ECOWAS Parliament Initiative" className="h-20 w-20 object-contain" width={80} height={80} />
           </div>
           <div className="text-center">
-            <h1 className="text-3xl font-black text-white tracking-tight">ECOWAS Parliament</h1>
+            <h1 className="text-3xl font-black text-white tracking-tight">ECOWAS Parliament Initiative</h1>
             <p className="text-white/70 mt-2 text-sm font-medium">CRM Portal — Staff Onboarding</p>
           </div>
           <div className="w-16 h-0.5 bg-white/30 rounded" />
 
           {/* Step progress */}
           <div className="flex items-center gap-3">
-            {/* Step 1 — done */}
             <div className="flex items-center gap-2">
               <div className="w-7 h-7 rounded-full bg-emerald-500/30 border border-emerald-500/60 flex items-center justify-center">
                 <CheckCircle2 size={13} className="text-emerald-300" />
@@ -142,7 +183,6 @@ export default function CompleteProfile() {
               <span className="text-white/50 text-xs">Set password</span>
             </div>
             <div className="w-8 h-px bg-white/20" />
-            {/* Step 2 — active */}
             <div className="flex items-center gap-2">
               <div className="w-7 h-7 rounded-full bg-white/25 border border-white/50 flex items-center justify-center">
                 <span className="text-white text-[11px] font-bold">2</span>
@@ -164,7 +204,7 @@ export default function CompleteProfile() {
           {/* Mobile logo */}
           <div className="flex justify-center mb-6 lg:hidden">
             <div className="bg-white rounded-full p-3 shadow-xl">
-              <img src={ecowasLogo} alt="ECOWAS" className="h-12 w-12 object-contain" />
+              <img src={ecowasLogo} alt="ECOWAS Parliament Initiative" className="h-12 w-12 object-contain" />
             </div>
           </div>
 
@@ -195,25 +235,49 @@ export default function CompleteProfile() {
                 </div>
                 <div>
                   <h2 className="text-white font-bold text-lg">Profile complete!</h2>
-                  <p className="text-white/60 text-sm mt-2">Taking you to the CRM…</p>
+                  <p className="text-white/60 text-sm mt-2">
+                    {isSponsor ? "Taking you to your sponsor portal…" : "Taking you to the CRM…"}
+                  </p>
                 </div>
+                <Loader2 size={16} className="animate-spin text-white/50" />
               </div>
             )}
 
             {/* Form state */}
             {(pageState === "form" || pageState === "saving") && (
               <>
-                <div className="mb-6 flex items-start gap-3">
+                <div className="mb-5 flex items-start gap-3">
                   <div className="w-9 h-9 rounded-xl bg-white/15 border border-white/20 flex items-center justify-center flex-shrink-0">
                     <UserCircle2 size={17} className="text-white/80" />
                   </div>
                   <div>
                     <h2 className="text-white font-bold text-lg leading-tight">Complete your profile</h2>
-                    <p className="text-white/50 text-xs mt-0.5">Required before accessing the CRM</p>
+                    <p className="text-white/50 text-xs mt-0.5">Required before accessing the portal</p>
                   </div>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
+
+                  {/* Avatar upload */}
+                  <div className="flex items-center gap-4">
+                    <div
+                      onClick={() => fileRef.current?.click()}
+                      className="w-16 h-16 rounded-full bg-white/10 border-2 border-dashed border-white/30 flex items-center justify-center cursor-pointer overflow-hidden hover:border-white/60 transition-colors flex-shrink-0"
+                    >
+                      {avatarPreview
+                        ? <img src={avatarPreview} className="w-full h-full object-cover" alt="Avatar" />
+                        : <Camera size={20} className="text-white/40" />
+                      }
+                    </div>
+                    <div>
+                      <button type="button" onClick={() => fileRef.current?.click()} className="text-xs text-white/70 hover:text-white font-medium hover:underline">
+                        Upload photo
+                      </button>
+                      <p className="text-[10px] text-white/30 mt-0.5">JPG or PNG, max 2MB (optional)</p>
+                      <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
+                    </div>
+                  </div>
+
                   {/* Full Name */}
                   <div className="space-y-1.5">
                     <Label className="text-white/70 text-xs font-semibold">
@@ -250,10 +314,13 @@ export default function CompleteProfile() {
                     <Input
                       value={organisation}
                       onChange={e => setOrganisation(e.target.value)}
-                      placeholder="e.g. ECOWAS Secretariat"
+                      placeholder={isSponsor ? "Your organisation name" : DEFAULT_ORG}
                       required
                       className="bg-white/10 border-white/20 text-white placeholder-white/30 focus:border-white/50 focus:bg-white/15"
                     />
+                    {!isSponsor && organisation === DEFAULT_ORG && (
+                      <p className="text-white/30 text-[10px]">Pre-filled — you can change this if needed.</p>
+                    )}
                   </div>
 
                   {/* Country */}
@@ -273,7 +340,7 @@ export default function CompleteProfile() {
                     </Select>
                   </div>
 
-                  {/* Bio (optional) */}
+                  {/* Bio */}
                   <div className="space-y-1.5">
                     <Label className="text-white/70 text-xs font-semibold">
                       Bio <span className="text-white/30 font-normal">(optional)</span>
@@ -284,20 +351,6 @@ export default function CompleteProfile() {
                       placeholder="A short description about yourself…"
                       rows={2}
                       className="bg-white/10 border-white/20 text-white placeholder-white/30 focus:border-white/50 focus:bg-white/15 resize-none text-sm"
-                    />
-                  </div>
-
-                  {/* Avatar URL (optional) */}
-                  <div className="space-y-1.5">
-                    <Label className="text-white/70 text-xs font-semibold">
-                      Profile Photo URL <span className="text-white/30 font-normal">(optional)</span>
-                    </Label>
-                    <Input
-                      value={avatarUrl}
-                      onChange={e => setAvatarUrl(e.target.value)}
-                      placeholder="https://example.com/photo.jpg"
-                      type="url"
-                      className="bg-white/10 border-white/20 text-white placeholder-white/30 focus:border-white/50 focus:bg-white/15"
                     />
                   </div>
 
@@ -315,7 +368,7 @@ export default function CompleteProfile() {
                   >
                     {pageState === "saving"
                       ? <><Loader2 size={15} className="animate-spin" /> Saving…</>
-                      : "Save & Enter CRM"}
+                      : isSponsor ? "Save & Enter Sponsor Portal" : "Save & Enter CRM"}
                   </Button>
                 </form>
               </>

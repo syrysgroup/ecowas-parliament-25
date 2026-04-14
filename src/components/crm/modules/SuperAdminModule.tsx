@@ -19,7 +19,7 @@ import {
   Filter, X, Plus, Shield, Timer, Sun, Moon, Monitor,
   UserX, UserCheck, Zap, Image, BarChart2, Info, BanIcon,
   Flag, Target, Building2, PenLine, Phone,
-  AtSign, BookUser, MapPin, Layers,
+  AtSign, BookUser, MapPin, Layers, KeyRound, Copy, CheckCheck,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -1276,6 +1276,26 @@ export default function SuperAdminModule() {
   const [resendCooldowns, setResendCooldowns] = useState<Record<string, number>>({});
   const [now, setNow] = useState(Date.now());
 
+  // ── Create User (direct, with password) ──────────────────────────────────
+  const [inviteMode,      setInviteMode]      = useState<"invite" | "create">("invite");
+  const [createEmail,     setCreateEmail]     = useState("");
+  const [createName,      setCreateName]      = useState("");
+  const [createRole,      setCreateRole]      = useState<AppRole>("admin");
+  const [createPassword,  setCreatePassword]  = useState("");
+  const [createForceChange, setCreateForceChange] = useState(true);
+  const [createResult,    setCreateResult]    = useState<string | null>(null);
+  const [creating,        setCreating]        = useState(false);
+  const [showCreatePw,    setShowCreatePw]    = useState(false);
+  const [copiedCreate,    setCopiedCreate]    = useState(false);
+
+  // ── Reset Password per user ───────────────────────────────────────────────
+  const [resetTarget,   setResetTarget]   = useState<UserWithRoles | null>(null);
+  const [resetPassword, setResetPassword] = useState("");
+  const [resetForce,    setResetForce]    = useState(true);
+  const [resettingPw,   setResettingPw]   = useState(false);
+  const [showResetPw,   setShowResetPw]   = useState(false);
+  const [copiedReset,   setCopiedReset]   = useState(false);
+
   // ── Load all data ────────────────────────────────────────────────────────
   const loadData = useCallback(async () => {
     if (!user) return;
@@ -1540,9 +1560,9 @@ export default function SuperAdminModule() {
     // Fetch token once before the loop — avoids repeated async overhead per row
     // and ensures all rows use the same fresh JWT rather than relying on
     // functions.invoke()'s internal getSession() which may return stale tokens.
-    const { data: { session: liveSessionB } } = await supabase.auth.getSession();
-    const bulkToken = liveSessionB?.access_token ?? session?.access_token;
-    if (!bulkToken) {
+    const { data: refreshDataB, error: refreshErrB } = await supabase.auth.refreshSession();
+    const bulkToken = refreshDataB?.session?.access_token;
+    if (refreshErrB || !bulkToken) {
       toast({ title: "Session expired", description: "Please reload the page and log in again.", variant: "destructive" });
       setBulkSending(false);
       return;
@@ -1589,9 +1609,9 @@ export default function SuperAdminModule() {
     }
     setDeleting(true);
     try {
-      const { data: { session: liveSessionD } } = await supabase.auth.getSession();
-      const deleteToken = liveSessionD?.access_token ?? session?.access_token;
-      if (!deleteToken) {
+      const { data: refreshDataD, error: refreshErrD } = await supabase.auth.refreshSession();
+      const deleteToken = refreshDataD?.session?.access_token;
+      if (refreshErrD || !deleteToken) {
         toast({ title: "Session expired", description: "Please reload and log in again.", variant: "destructive" });
         setDeleting(false);
         return;
@@ -1637,6 +1657,86 @@ export default function SuperAdminModule() {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     } finally {
       setDeleting(false);
+    }
+  };
+
+  // ── Generate a random password ────────────────────────────────────────────
+  const generatePassword = () => {
+    const chars = "ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%";
+    return Array.from({ length: 12 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+  };
+
+  // ── Create User (direct, no invite email) ────────────────────────────────
+  const handleCreateUser = async () => {
+    if (!createEmail.trim() || !createPassword) return;
+    const { data: refreshData, error: refreshErr } = await supabase.auth.refreshSession();
+    const token = refreshData?.session?.access_token;
+    if (refreshErr || !token) {
+      toast({ title: "Session expired", description: "Please reload and log in again.", variant: "destructive" });
+      return;
+    }
+    setCreating(true);
+    setCreateResult(null);
+    try {
+      const res = await supabase.functions.invoke("create-user", {
+        headers: { Authorization: `Bearer ${token}` },
+        body: {
+          email: createEmail.trim(),
+          password: createPassword,
+          role: createRole,
+          full_name: createName.trim() || undefined,
+          force_password_change: createForceChange,
+        },
+      });
+      if (res.error) {
+        let msg = "Edge Function error";
+        try { msg = (await (res.error as any).context?.json?.())?.error ?? res.error.message; } catch { msg = res.error.message; }
+        throw new Error(msg);
+      }
+      const body = res.data as any;
+      if (body?.error) throw new Error(body.error);
+      setCreateResult(createPassword);
+      toast({ title: "User created", description: `Account created for ${createEmail.trim()}` });
+      setCreateEmail("");
+      setCreateName("");
+      setCreatePassword("");
+      loadData();
+    } catch (err: any) {
+      toast({ title: "Error creating user", description: err.message, variant: "destructive" });
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  // ── Admin reset password ──────────────────────────────────────────────────
+  const handleAdminResetPassword = async () => {
+    if (!resetTarget || !resetPassword) return;
+    const { data: refreshData, error: refreshErr } = await supabase.auth.refreshSession();
+    const token = refreshData?.session?.access_token;
+    if (refreshErr || !token) {
+      toast({ title: "Session expired", description: "Please reload and log in again.", variant: "destructive" });
+      return;
+    }
+    setResettingPw(true);
+    try {
+      const res = await supabase.functions.invoke("admin-reset-password", {
+        headers: { Authorization: `Bearer ${token}` },
+        body: { target_user_id: resetTarget.id, new_password: resetPassword, force_password_change: resetForce },
+      });
+      if (res.error) {
+        let msg = "Edge Function error";
+        try { msg = (await (res.error as any).context?.json?.())?.error ?? res.error.message; } catch { msg = res.error.message; }
+        throw new Error(msg);
+      }
+      const body = res.data as any;
+      if (body?.error) throw new Error(body.error);
+      toast({ title: "Password reset", description: `Password updated for ${resetTarget.full_name || resetTarget.email}` });
+      setResetTarget(null);
+      setResetPassword("");
+    } catch (err: any) {
+      toast({ title: "Error resetting password", description: err.message, variant: "destructive" });
+    } finally {
+      setResettingPw(false);
     }
   };
 
@@ -1705,6 +1805,101 @@ export default function SuperAdminModule() {
 
   return (
     <div className="space-y-5">
+
+      {/* ══ RESET PASSWORD DIALOG ══ */}
+      {resetTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+          <div className="bg-crm-card border border-amber-900 rounded-2xl w-full max-w-md shadow-2xl">
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-crm-border">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-amber-950 border border-amber-800 flex items-center justify-center">
+                  <KeyRound size={15} className="text-amber-400" />
+                </div>
+                <h3 className="text-[14px] font-bold text-crm-text">Reset Password</h3>
+              </div>
+              <button
+                onClick={() => { setResetTarget(null); setResetPassword(""); }}
+                className="text-crm-text-faint hover:text-crm-text-secondary transition-colors p-1"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="px-5 py-4 space-y-4">
+              {/* User info */}
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-crm-surface border border-crm-border">
+                <div className="w-9 h-9 rounded-full bg-crm-border flex items-center justify-center text-sm font-bold text-emerald-400 flex-shrink-0 uppercase">
+                  {(resetTarget.full_name || resetTarget.email)[0]}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[13px] font-semibold text-crm-text">{resetTarget.full_name || "—"}</p>
+                  <p className="text-[11px] text-crm-text-muted">{resetTarget.email}</p>
+                </div>
+              </div>
+
+              {/* New password field */}
+              <div>
+                <label className="text-[11px] text-crm-text-muted block mb-1.5">New password</label>
+                <div className="relative">
+                  <Input
+                    type={showResetPw ? "text" : "password"}
+                    value={resetPassword}
+                    onChange={e => setResetPassword(e.target.value)}
+                    className="bg-crm-surface border-crm-border text-crm-text text-xs h-8 font-mono pr-20"
+                  />
+                  <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-0.5">
+                    <button type="button" onClick={() => setShowResetPw(v => !v)}
+                      className="text-crm-text-muted hover:text-crm-text-secondary p-1 transition-colors">
+                      <Eye size={12} />
+                    </button>
+                    <button type="button"
+                      onClick={() => { const p = generatePassword(); setResetPassword(p); }}
+                      className="text-[9px] font-bold text-amber-500 hover:text-amber-400 px-1.5 py-0.5 rounded border border-amber-800 hover:bg-amber-950 transition-colors">
+                      Gen
+                    </button>
+                    <button type="button"
+                      onClick={() => { navigator.clipboard.writeText(resetPassword); setCopiedReset(true); setTimeout(() => setCopiedReset(false), 2000); }}
+                      className="text-crm-text-muted hover:text-crm-text-secondary p-1 transition-colors"
+                      title="Copy password"
+                    >
+                      {copiedReset ? <CheckCheck size={12} className="text-emerald-400" /> : <Copy size={12} />}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Force change checkbox */}
+              <label className="flex items-center gap-2 text-[11px] text-crm-text-muted cursor-pointer">
+                <input type="checkbox" checked={resetForce} onChange={e => setResetForce(e.target.checked)}
+                  className="accent-amber-500 w-3 h-3" />
+                Force password change on next login
+              </label>
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-crm-border">
+              <Button
+                variant="outline" size="sm"
+                onClick={() => { setResetTarget(null); setResetPassword(""); }}
+                className="border-crm-border text-crm-text-muted hover:text-crm-text-secondary text-xs h-8"
+                disabled={resettingPw}
+              >
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleAdminResetPassword}
+                disabled={!resetPassword || resetPassword.length < 8 || resettingPw}
+                className="bg-amber-700 hover:bg-amber-600 text-white text-xs h-8 gap-1.5 disabled:opacity-40"
+              >
+                {resettingPw ? <Loader2 size={12} className="animate-spin" /> : <KeyRound size={12} />}
+                Reset password
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ══ DELETE USER DIALOG ══ */}
       {deleteTarget && (
@@ -2145,39 +2340,131 @@ export default function SuperAdminModule() {
       {/* ══ USERS ══ */}
       {tab === "users" && (
         <div className="space-y-4">
-          {/* Invite form */}
+          {/* Invite / Create User form */}
           <div className="bg-crm-card border border-amber-800 rounded-xl p-4">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-[12px] font-semibold text-amber-400 flex items-center gap-2">
-                <UserPlus size={13} /> Invite a new team member
-              </h3>
+              {/* Mode toggle */}
+              <div className="flex rounded-lg border border-amber-800 overflow-hidden text-[11px]">
+                <button
+                  onClick={() => { setInviteMode("invite"); setCreateResult(null); }}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 transition-colors ${inviteMode === "invite" ? "bg-amber-900 text-amber-300 font-semibold" : "text-amber-600 hover:text-amber-400"}`}
+                >
+                  <Send size={11} /> Invite by email
+                </button>
+                <button
+                  onClick={() => { setInviteMode("create"); setCreateResult(null); }}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 transition-colors ${inviteMode === "create" ? "bg-amber-900 text-amber-300 font-semibold" : "text-amber-600 hover:text-amber-400"}`}
+                >
+                  <KeyRound size={11} /> Create with password
+                </button>
+              </div>
               <button onClick={() => setBulkOpen(true)}
                 className="flex items-center gap-1.5 text-[11px] text-amber-400 hover:text-amber-300 border border-amber-800 rounded-lg px-2.5 py-1 hover:bg-amber-950 transition-colors">
                 <Plus size={11} /> Bulk invite
               </button>
             </div>
-            <form onSubmit={handleInvite} className="flex flex-col sm:flex-row gap-3">
-              <Input
-                type="email" required placeholder="colleague@example.com"
-                value={inviteEmail} onChange={e => setInviteEmail(e.target.value)}
-                className="bg-crm-surface border-crm-border text-crm-text text-xs h-8 flex-1"
-              />
-              <Select value={inviteRole} onValueChange={v => setInviteRole(v as AppRole)}>
-                <SelectTrigger className="bg-crm-surface border-crm-border text-crm-text text-xs h-8 sm:w-44">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-crm-card border-crm-border">
-                  {(Object.keys(ROLE_CONFIG) as AppRole[]).map(r => (
-                    <SelectItem key={r} value={r} className="text-crm-text text-xs">{ROLE_CONFIG[r]?.label ?? r}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button type="submit" disabled={sending} size="sm"
-                className="bg-amber-700 hover:bg-amber-600 text-white text-xs gap-1.5 h-8">
-                {sending ? <Loader2 size={12} className="animate-spin" /> : <Send size={12} />}
-                Send invite
-              </Button>
-            </form>
+
+            {inviteMode === "invite" && (
+              <form onSubmit={handleInvite} className="flex flex-col sm:flex-row gap-3">
+                <Input
+                  type="email" required placeholder="colleague@example.com"
+                  value={inviteEmail} onChange={e => setInviteEmail(e.target.value)}
+                  className="bg-crm-surface border-crm-border text-crm-text text-xs h-8 flex-1"
+                />
+                <Select value={inviteRole} onValueChange={v => setInviteRole(v as AppRole)}>
+                  <SelectTrigger className="bg-crm-surface border-crm-border text-crm-text text-xs h-8 sm:w-44">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-crm-card border-crm-border">
+                    {(Object.keys(ROLE_CONFIG) as AppRole[]).map(r => (
+                      <SelectItem key={r} value={r} className="text-crm-text text-xs">{ROLE_CONFIG[r]?.label ?? r}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button type="submit" disabled={sending} size="sm"
+                  className="bg-amber-700 hover:bg-amber-600 text-white text-xs gap-1.5 h-8">
+                  {sending ? <Loader2 size={12} className="animate-spin" /> : <Send size={12} />}
+                  Send invite
+                </Button>
+              </form>
+            )}
+
+            {inviteMode === "create" && (
+              <div className="space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <Input
+                    type="email" required placeholder="Email address"
+                    value={createEmail} onChange={e => setCreateEmail(e.target.value)}
+                    className="bg-crm-surface border-crm-border text-crm-text text-xs h-8"
+                  />
+                  <Input
+                    placeholder="Full name (optional)"
+                    value={createName} onChange={e => setCreateName(e.target.value)}
+                    className="bg-crm-surface border-crm-border text-crm-text text-xs h-8"
+                  />
+                </div>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Select value={createRole} onValueChange={v => setCreateRole(v as AppRole)}>
+                    <SelectTrigger className="bg-crm-surface border-crm-border text-crm-text text-xs h-8 sm:w-44">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-crm-card border-crm-border">
+                      {(Object.keys(ROLE_CONFIG) as AppRole[]).map(r => (
+                        <SelectItem key={r} value={r} className="text-crm-text text-xs">{ROLE_CONFIG[r]?.label ?? r}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <div className="relative flex-1">
+                    <Input
+                      type={showCreatePw ? "text" : "password"}
+                      placeholder="Password (min 8 chars)"
+                      value={createPassword} onChange={e => setCreatePassword(e.target.value)}
+                      className="bg-crm-surface border-crm-border text-crm-text text-xs h-8 pr-16"
+                    />
+                    <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-0.5">
+                      <button type="button" onClick={() => setShowCreatePw(v => !v)}
+                        className="text-crm-text-muted hover:text-crm-text-secondary p-1 transition-colors">
+                        {showCreatePw ? <Eye size={12} /> : <Eye size={12} />}
+                      </button>
+                      <button type="button"
+                        onClick={() => setCreatePassword(generatePassword())}
+                        className="text-[9px] font-bold text-amber-500 hover:text-amber-400 px-1.5 py-0.5 rounded border border-amber-800 hover:bg-amber-950 transition-colors">
+                        Gen
+                      </button>
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    disabled={creating || !createEmail.trim() || createPassword.length < 8}
+                    onClick={handleCreateUser}
+                    size="sm"
+                    className="bg-amber-700 hover:bg-amber-600 text-white text-xs gap-1.5 h-8"
+                  >
+                    {creating ? <Loader2 size={12} className="animate-spin" /> : <UserPlus size={12} />}
+                    Create user
+                  </Button>
+                </div>
+                <label className="flex items-center gap-2 text-[11px] text-crm-text-muted cursor-pointer">
+                  <input type="checkbox" checked={createForceChange} onChange={e => setCreateForceChange(e.target.checked)}
+                    className="accent-amber-500 w-3 h-3" />
+                  Force password change on first login
+                </label>
+                {createResult && (
+                  <div className="flex items-center gap-2 bg-emerald-950 border border-emerald-800 rounded-lg px-3 py-2">
+                    <CheckCircle2 size={13} className="text-emerald-400 flex-shrink-0" />
+                    <span className="text-[11px] text-emerald-400 flex-1">User created. Temporary password:</span>
+                    <code className="text-[11px] font-mono text-emerald-300 bg-emerald-900/40 px-2 py-0.5 rounded">{createResult}</code>
+                    <button
+                      onClick={() => { navigator.clipboard.writeText(createResult); setCopiedCreate(true); setTimeout(() => setCopiedCreate(false), 2000); }}
+                      className="text-emerald-500 hover:text-emerald-300 transition-colors"
+                      title="Copy password"
+                    >
+                      {copiedCreate ? <CheckCheck size={13} /> : <Copy size={13} />}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Users table */}
@@ -2314,6 +2601,16 @@ export default function SuperAdminModule() {
                         >
                           {u.is_active ? <UserX size={10} /> : <UserCheck size={10} />}
                           {u.is_active ? "Suspend" : "Reactivate"}
+                        </button>
+                      )}
+                      {/* Reset password */}
+                      {u.id !== user?.id && (
+                        <button
+                          onClick={() => { setResetTarget(u); setResetPassword(generatePassword()); setResetForce(true); setShowResetPw(false); setCopiedReset(false); }}
+                          className="flex items-center gap-1 text-[10px] text-crm-text-faint hover:text-amber-400 hover:bg-amber-950 px-2 py-1 rounded border border-transparent hover:border-amber-900 transition-colors"
+                          title="Reset user password"
+                        >
+                          <KeyRound size={10} /> Reset pw
                         </button>
                       )}
                       {/* Delete user */}
