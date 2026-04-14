@@ -1353,18 +1353,14 @@ export default function SuperAdminModule() {
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inviteEmail.trim()) return;
-    if (!session) {
-      toast({ title: "Session expired", description: "Please reload the page and log in again.", variant: "destructive" });
-      return;
-    }
     setSending(true);
     try {
-      // functions.invoke() calls getSession() internally which can return a stale/expired
-      // token in @supabase/supabase-js v2.99.x (unlike DB calls which use the setAuth()
-      // path). Always pass the token explicitly so the Edge Function receives a valid JWT.
-      const { data: { session: liveSession } } = await supabase.auth.getSession();
-      const inviteToken = liveSession?.access_token ?? session?.access_token;
-      if (!inviteToken) {
+      // refreshSession() makes a server round-trip to obtain a guaranteed-fresh JWT.
+      // getSession() alone returns the cached token which may be expired in v2.99.x,
+      // causing the edge function to reject with 401 even when the user is still logged in.
+      const { data: refreshData, error: refreshErr } = await supabase.auth.refreshSession();
+      const inviteToken = refreshData?.session?.access_token;
+      if (refreshErr || !inviteToken) {
         toast({ title: "Session expired", description: "Please reload the page and log in again.", variant: "destructive" });
         setSending(false);
         return;
@@ -1440,15 +1436,11 @@ export default function SuperAdminModule() {
 
   // ── Resend invitation ─────────────────────────────────────────────────────
   const resendInvitation = async (invId: string, email: string) => {
-    if (!session) {
-      toast({ title: "Session expired", description: "Please reload the page and log in again.", variant: "destructive" });
-      return;
-    }
     setResendingId(invId);
     try {
-      const { data: { session: liveSessionR } } = await supabase.auth.getSession();
-      const resendToken = liveSessionR?.access_token ?? session?.access_token;
-      if (!resendToken) {
+      const { data: refreshData, error: refreshErr } = await supabase.auth.refreshSession();
+      const resendToken = refreshData?.session?.access_token;
+      if (refreshErr || !resendToken) {
         toast({ title: "Session expired", description: "Please reload and log in again.", variant: "destructive" });
         setResendingId(null);
         return;
