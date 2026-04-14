@@ -203,8 +203,12 @@ function EmailConfigTab({ userId }: { userId?: string }) {
       // Save current config first so test uses latest values
       await handleSave();
       const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        toast({ title: "Session expired", description: "Please reload the page and try again.", variant: "destructive" });
+        return;
+      }
       const res = await supabase.functions.invoke("test-smtp", {
-        headers: { Authorization: `Bearer ${session?.access_token}` },
+        headers: { Authorization: `Bearer ${session.access_token}` },
       });
       const body = res.data as any;
       if (body?.success) {
@@ -1223,7 +1227,7 @@ function SignaturesTab() {
 }
 
 export default function SuperAdminModule() {
-  const { user, refreshRoles, signOut } = useAuthContext();
+  const { user, session, refreshRoles, signOut } = useAuthContext();
   const { toast } = useToast();
 
   const [tab,         setTab]         = useState<Tab>("overview");
@@ -1349,12 +1353,15 @@ export default function SuperAdminModule() {
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inviteEmail.trim()) return;
+    if (!session?.access_token) {
+      toast({ title: "Session expired", description: "Please reload the page and try again.", variant: "destructive" });
+      return;
+    }
     setSending(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
       const res = await supabase.functions.invoke("invite-user", {
         body: { email: inviteEmail.trim(), role: inviteRole, redirectUrl: `${window.location.origin}/set-password` },
-        headers: { Authorization: `Bearer ${session?.access_token}` },
+        headers: { Authorization: `Bearer ${session.access_token}` },
       });
       if (res.error) throw new Error(res.error.message);
       const body = res.data as any;
@@ -1418,12 +1425,15 @@ export default function SuperAdminModule() {
 
   // ── Resend invitation ─────────────────────────────────────────────────────
   const resendInvitation = async (invId: string, email: string) => {
+    if (!session?.access_token) {
+      toast({ title: "Session expired", description: "Please reload the page and try again.", variant: "destructive" });
+      return;
+    }
     setResendingId(invId);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
       const res = await supabase.functions.invoke("resend-invite", {
         body: { invitation_id: invId },
-        headers: { Authorization: `Bearer ${session?.access_token}` },
+        headers: { Authorization: `Bearer ${session.access_token}` },
       });
       if (res.error) throw new Error(res.error.message);
       const body = res.data as any;
@@ -1502,15 +1512,18 @@ export default function SuperAdminModule() {
   };
 
   const sendBulkInvites = async () => {
+    if (!session?.access_token) {
+      toast({ title: "Session expired", description: "Please reload the page and try again.", variant: "destructive" });
+      return;
+    }
     const valid = bulkParsed.filter(r => r.valid);
     setBulkProgress({ done: 0, total: valid.length, errors: [] });
     setBulkSending(true);
-    const { data: { session } } = await supabase.auth.getSession();
     for (const row of valid) {
       try {
         const res = await supabase.functions.invoke("invite-user", {
           body: { email: row.email, role: row.role, redirectUrl: `${window.location.origin}/set-password` },
-          headers: { Authorization: `Bearer ${session?.access_token}` },
+          headers: { Authorization: `Bearer ${session.access_token}` },
         });
         const body = res.data as any;
         if (body?.error) throw new Error(body.error);
@@ -1537,12 +1550,15 @@ export default function SuperAdminModule() {
   // ── Confirm delete user (called from dialog) ──────────────────────────────
   const confirmDeleteUser = async () => {
     if (!deleteTarget || deleteConfirmText !== "DELETE") return;
+    if (!session?.access_token) {
+      toast({ title: "Session expired", description: "Please reload the page and try again.", variant: "destructive" });
+      return;
+    }
     setDeleting(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
       const res = await supabase.functions.invoke("delete-user", {
         body: { user_ids: [deleteTarget.id] },
-        headers: { Authorization: `Bearer ${session?.access_token}` },
+        headers: { Authorization: `Bearer ${session.access_token}` },
       });
       if (res.error) throw new Error(res.error.message);
       const results = (res.data?.results ?? []) as { success: boolean; email?: string; error?: string }[];
