@@ -449,7 +449,7 @@ export default function CRMLayout({ activeSection, onNavigate, children }: CRMLa
 
                 <DropdownMenuItem
                   onClick={() => signOut()}
-                  className="flex items-center gap-2.5 text-[12px] text-red-400 hover:text-red-300 hover:bg-[#2a1010] cursor-pointer"
+                  className="flex items-center gap-2.5 text-[12px] text-red-400 hover:text-red-300 hover:bg-destructive/10 cursor-pointer"
                 >
                   <LogOut size={13} />
                   Sign Out

@@ -73,7 +73,7 @@ const Navbar = () => {
         <div className="container flex h-16 items-center justify-between">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-3 flex-shrink-0">
-            <div className="bg-gray-200 rounded-full p-2 shadow-sm border-2 border-ecowas-green">
+            <div className="bg-muted rounded-full p-2 shadow-sm border-2 border-ecowas-green">
               <img
                 src={dbLogoUrl || ecowasLogo}
                 alt={dbSiteName || "ECOWAS Parliament"}

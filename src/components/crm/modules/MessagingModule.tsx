@@ -193,7 +193,7 @@ function Bubble({ msg, isOwn, showSender, onAvatarClick }: {
         <div className={`px-3 py-2 rounded-2xl text-[13px] leading-relaxed break-words ${
           isOwn
             ? "bg-emerald-700 text-white rounded-br-md"
-            : "bg-[#1e2d1e] text-crm-text rounded-bl-md border border-crm-border/40"
+            : "bg-crm-surface text-crm-text rounded-bl-md border border-crm-border/60"
         }`}>
           {msg.body}
         </div>
@@ -469,7 +469,7 @@ function CreateGroupDialog({
           <div className="flex items-center gap-3">
             <div className="relative">
               <select value={emoji} onChange={e => setEmoji(e.target.value)}
-                className="appearance-none w-14 h-14 rounded-full bg-[#1a2e1a] border border-emerald-800 text-2xl text-center cursor-pointer outline-none">
+                className="appearance-none w-14 h-14 rounded-full bg-crm-surface border border-crm-border text-2xl text-center cursor-pointer outline-none">
                 {GROUP_EMOJIS.map(e => <option key={e} value={e}>{e}</option>)}
               </select>
             </div>
@@ -926,7 +926,7 @@ export default function MessagingModule() {
         ${mobileShowChat ? "hidden md:flex" : "flex"}`}>
 
         {/* Sidebar header */}
-        <div className="flex items-center gap-2 px-4 py-3 border-b border-crm-border bg-[#111e11]">
+        <div className="flex items-center gap-2 px-4 py-3 border-b border-crm-border bg-crm-card">
           <p className="text-[15px] font-bold text-crm-text flex-1">Messages</p>
           <button onClick={() => setShowNewDm(true)}
             title="New direct message"
@@ -971,7 +971,7 @@ export default function MessagingModule() {
                 return (
                   <button key={item.id}
                     onClick={() => { setView({ type: "group", id: item.id }); setMobileShowChat(true); setShowPanel(false); }}
-                    className={`w-full flex items-center gap-3 px-4 py-3 transition-colors text-left border-b border-crm-border/20 ${isActive ? "bg-[#1a2e1a]" : "hover:bg-crm-surface/40"}`}>
+                    className={`w-full flex items-center gap-3 px-4 py-3 transition-colors text-left border-b border-crm-border/20 ${isActive ? "bg-crm-surface" : "hover:bg-crm-surface/60"}`}>
                     <Av name={item.name} url={item.avatarUrl} emoji={item.emoji} size={42} />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-baseline justify-between gap-1">
@@ -996,7 +996,7 @@ export default function MessagingModule() {
                 return (
                   <button key={item.id}
                     onClick={() => { setView({ type: "dm", peerId: item.id, peerName: item.name, peerAvatar: item.avatarUrl }); setMobileShowChat(true); }}
-                    className={`w-full flex items-center gap-3 px-4 py-3 transition-colors text-left border-b border-crm-border/20 ${isActive ? "bg-[#1a2e1a]" : "hover:bg-crm-surface/40"}`}>
+                    className={`w-full flex items-center gap-3 px-4 py-3 transition-colors text-left border-b border-crm-border/20 ${isActive ? "bg-crm-surface" : "hover:bg-crm-surface/60"}`}>
                     <div className="relative shrink-0">
                       <Av name={item.name} url={item.avatarUrl} size={42} />
                       <span className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-crm-card ${item.online ? "bg-emerald-500" : "bg-crm-surface"}`} />
@@ -1024,14 +1024,14 @@ export default function MessagingModule() {
       </div>
 
       {/* ── Chat area ── */}
-      <div className={`flex-col flex-1 min-w-0 absolute md:relative inset-0 z-20 md:z-auto bg-[#0d1a0d]
+      <div className={`flex-col flex-1 min-w-0 absolute md:relative inset-0 z-20 md:z-auto bg-crm-bg
         ${mobileShowChat ? "flex" : "hidden md:flex"}`}
         style={{ backgroundImage: "radial-gradient(circle at 1px 1px, rgba(255,255,255,0.02) 1px, transparent 0)", backgroundSize: "24px 24px" }}>
 
         {!view ? (
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center space-y-3 px-8">
-              <div className="w-20 h-20 rounded-full bg-[#1a2e1a] border border-emerald-900 mx-auto flex items-center justify-center">
+              <div className="w-20 h-20 rounded-full bg-crm-surface border border-crm-border mx-auto flex items-center justify-center">
                 <MessageSquare size={32} className="text-emerald-700" />
               </div>
               <p className="text-[14px] font-semibold text-crm-text">Select a chat</p>
@@ -1053,7 +1053,7 @@ export default function MessagingModule() {
             {/* Chat column */}
             <div className="flex flex-col flex-1 min-w-0 min-h-0">
               {/* Header */}
-              <div className="flex items-center gap-3 px-4 py-3 border-b border-crm-border/60 bg-[#111e11] shrink-0">
+              <div className="flex items-center gap-3 px-4 py-3 border-b border-crm-border/60 bg-crm-card shrink-0">
                 <button onClick={() => { setMobileShowChat(false); setShowPanel(false); }}
                   className="md:hidden p-1 rounded text-crm-text-muted hover:text-crm-text">
                   <ArrowLeft size={18} />
@@ -1064,7 +1064,7 @@ export default function MessagingModule() {
                     : <div className="relative">
                         <Av name={activeDmPeer?.peerName ?? ""} url={activeDmPeer?.peerAvatar} size={38} />
                         {activeDmPeer && (
-                          <span className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-[#111e11] ${presence[activeDmPeer.peerId]?.online ? "bg-emerald-500" : "bg-crm-surface"}`} />
+                          <span className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-crm-card ${presence[activeDmPeer.peerId]?.online ? "bg-emerald-500" : "bg-crm-surface"}`} />
                         )}
                       </div>
                   }
@@ -1125,7 +1125,7 @@ export default function MessagingModule() {
               </div>
 
               {/* Input */}
-              <div className="px-3 py-3 border-t border-crm-border/60 bg-[#111e11] shrink-0">
+              <div className="px-3 py-3 border-t border-crm-border/60 bg-crm-card shrink-0">
                 <div className="flex items-end gap-2 bg-crm-surface border border-crm-border/60 rounded-2xl px-3 py-2 focus-within:border-emerald-700/60 transition-colors">
                   {view.type === "group" && (
                     <button onClick={() => setShowCreateTask(true)}
