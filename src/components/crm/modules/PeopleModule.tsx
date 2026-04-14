@@ -3,12 +3,13 @@ import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { usePermissions } from "@/hooks/usePermissions";
 import type { AppRole } from "@/contexts/AuthContext";
 import { CRM_ROLE_META } from "../crmRoles";
 import {
   Send, Trash2, CheckCircle2, Clock, UserPlus, RefreshCw, X,
   Eye, Pencil, UserMinus, EyeOff, AlertTriangle, Globe, Plus, ExternalLink,
-  Users, UserCheck, Mail, Shield, Loader2, Copy, Check,
+  Users, UserCheck, Mail, Shield, Loader2, Copy, Check, KeyRound, CheckCheck,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -76,10 +77,16 @@ function AddUserSheet({ open, onClose, assignableRoles, onInvited, isSuperAdmin 
     if (!email.trim()) return;
     setSending(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: r, error: re } = await supabase.auth.refreshSession();
+      const token = r?.session?.access_token;
+      if (re || !token) {
+        toast({ title: "Session expired", description: "Please reload and log in again.", variant: "destructive" });
+        setSending(false);
+        return;
+      }
       const res = await supabase.functions.invoke("invite-user", {
         body: { email: email.trim(), role, redirectUrl: `${window.location.origin}/set-password` },
-        headers: { Authorization: `Bearer ${session?.access_token}` },
+        headers: { Authorization: `Bearer ${token}` },
       });
       if (res.error) throw new Error(res.error.message);
       const body = res.data as any;
@@ -748,6 +755,7 @@ export default function PeopleModule() {
   const { user, roles, isAdmin, refreshRoles } = useAuthContext();
   const { toast } = useToast();
   const qc = useQueryClient();
+  const { canCreate } = usePermissions();
 
   const isSuperAdmin = roles.includes("super_admin" as AppRole);
   const assignableRoles = isSuperAdmin ? SUPER_ADMIN_ASSIGNABLE_ROLES : ADMIN_ASSIGNABLE_ROLES;
@@ -766,6 +774,64 @@ export default function PeopleModule() {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [deletingId,      setDeletingId]      = useState<string | null>(null);
   const [addSheetOpen, setAddSheetOpen] = useState(false);
+
+  // ── Create User (direct, with password) ────────────────────────────────────
+  const [createOpen,     setCreateOpen]     = useState(false);
+  const [createEmail,    setCreateEmail]    = useState("");
+  const [createName,     setCreateName]     = useState("");
+  const [createRole,     setCreateRole]     = useState<AppRole>("admin");
+  const [createPassword, setCreatePassword] = useState("");
+  const [createForceChg, setCreateForceChg] = useState(true);
+  const [creating,       setCreating]       = useState(false);
+  const [createResult,   setCreateResult]   = useState<string | null>(null);
+  const [showCreatePw,   setShowCreatePw]   = useState(false);
+  const [copiedCreate,   setCopiedCreate]   = useState(false);
+
+  const generatePassword = () => {
+    const chars = "ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%";
+    return Array.from({ length: 12 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+  };
+
+  const handleCreateUser = async () => {
+    if (!createEmail.trim() || createPassword.length < 8) return;
+    const { data: r, error: re } = await supabase.auth.refreshSession();
+    const token = r?.session?.access_token;
+    if (re || !token) {
+      toast({ title: "Session expired", description: "Please reload and log in again.", variant: "destructive" });
+      return;
+    }
+    setCreating(true);
+    setCreateResult(null);
+    try {
+      const res = await supabase.functions.invoke("create-user", {
+        headers: { Authorization: `Bearer ${token}` },
+        body: {
+          email: createEmail.trim(),
+          password: createPassword,
+          role: createRole,
+          full_name: createName.trim() || undefined,
+          force_password_change: createForceChg,
+        },
+      });
+      if (res.error) {
+        let msg = "Edge Function error";
+        try { msg = (await (res.error as any).context?.json?.())?.error ?? res.error.message; } catch { msg = res.error.message; }
+        throw new Error(msg);
+      }
+      const body = res.data as any;
+      if (body?.error) throw new Error(body.error);
+      setCreateResult(createPassword);
+      toast({ title: "User created", description: createEmail.trim() });
+      setCreateEmail("");
+      setCreateName("");
+      setCreatePassword("");
+      loadData();
+    } catch (err: any) {
+      toast({ title: "Error creating user", description: err.message, variant: "destructive" });
+    } finally {
+      setCreating(false);
+    }
+  };
 
   const loadData = useCallback(async () => {
     if (!user?.id) return;
@@ -917,6 +983,13 @@ export default function PeopleModule() {
             className="bg-emerald-700 hover:bg-emerald-600 text-white text-xs gap-1.5">
             <UserPlus size={12} /> Add User
           </Button>
+          {canCreate("people") && (
+            <Button size="sm"
+              onClick={() => { setCreateOpen(true); setCreatePassword(generatePassword()); setCreateResult(null); setShowCreatePw(false); setCopiedCreate(false); }}
+              className="bg-violet-800 hover:bg-violet-700 text-white text-xs gap-1.5">
+              <KeyRound size={12} /> Create user
+            </Button>
+          )}
         </div>
       </div>
 

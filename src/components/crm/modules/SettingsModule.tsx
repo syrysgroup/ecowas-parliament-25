@@ -17,9 +17,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import ImageUploadOrUrl from "@/components/shared/ImageUploadOrUrl";
 import { LOGO_RECOMMENDED, FAVICON_RECOMMENDED, DEFAULT_AVATAR } from "@/lib/constants";
-import PermissionManagerPanel from "./PermissionManagerPanel";
 
-type SettingsTab = "profile" | "email" | "email-accounts" | "notifications" | "security" | "permissions" | "site_settings";
+type SettingsTab = "profile" | "email" | "email-accounts" | "notifications" | "security" | "site_settings";
 
 function Section({ title, icon: Icon, children }: {
   title: string; icon: React.ElementType; children: React.ReactNode;
@@ -813,7 +812,6 @@ export default function SettingsModule({ onNavigate }: { onNavigate?: (section: 
     { id: "security",      label: "Security",      icon: Shield },
     { id: "email-accounts", label: "Email Accounts", icon: Mail, superAdminOnly: true },
     { id: "email",         label: "Email Config",  icon: Mail, superAdminOnly: true },
-    { id: "permissions",   label: "Permissions",   icon: Lock, adminOnly: true },
     { id: "site_settings", label: "Site Settings", icon: Globe, superAdminOnly: true },
   ];
 
@@ -859,11 +857,6 @@ export default function SettingsModule({ onNavigate }: { onNavigate?: (section: 
       {tab === "security"      && <SecuritySettings />}
       {tab === "email-accounts" && isSuperAdmin && <EmailConfigSettings />}
       {tab === "email"          && isSuperAdmin && <EmailSettings />}
-      {tab === "permissions"    && (isAdmin || isSuperAdmin) && (
-        <PermissionManagerPanel
-          onNavigateToRoles={onNavigate ? () => onNavigate("roles") : undefined}
-        />
-      )}
       {tab === "site_settings" && isSuperAdmin && <SiteSettingsPanel />}
     </div>
   );
