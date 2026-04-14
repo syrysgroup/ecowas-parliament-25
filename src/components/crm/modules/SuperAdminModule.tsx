@@ -1226,7 +1226,7 @@ function SignaturesTab() {
   );
 }
 
-export default function SuperAdminModule() {
+export default function SuperAdminModule({ onNavigate }: { onNavigate?: (s: string) => void } = {}) {
   const { user, session, refreshRoles, signOut } = useAuthContext();
   const { toast } = useToast();
 
@@ -2113,11 +2113,20 @@ export default function SuperAdminModule() {
             </p>
           </div>
         </div>
-        <Button size="sm" variant="outline" onClick={loadData} disabled={loading}
-          className="border-crm-border text-crm-text-muted hover:text-crm-text-secondary text-xs gap-1.5 h-8 flex-shrink-0">
-          <RefreshCw size={12} className={loading ? "animate-spin" : ""} />
-          Refresh
-        </Button>
+        <div className="flex items-center gap-2">
+          {onNavigate && (
+            <Button size="sm" variant="outline" onClick={() => onNavigate("")}
+              className="border-crm-border text-crm-text-muted hover:text-crm-text-secondary text-xs gap-1.5 h-8 flex-shrink-0">
+              <LayoutDashboard size={12} />
+              Dashboard
+            </Button>
+          )}
+          <Button size="sm" variant="outline" onClick={loadData} disabled={loading}
+            className="border-crm-border text-crm-text-muted hover:text-crm-text-secondary text-xs gap-1.5 h-8 flex-shrink-0">
+            <RefreshCw size={12} className={loading ? "animate-spin" : ""} />
+            Refresh
+          </Button>
+        </div>
       </div>
 
       {/* Tab bar */}
@@ -2130,14 +2139,33 @@ export default function SuperAdminModule() {
       {/* ══ OVERVIEW ══ */}
       {tab === "overview" && (
         <div className="space-y-5">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <StatCard label="Total users"      value={loading ? "…" : stats.total}      icon={Users}    accent="bg-emerald-950 border-emerald-800 text-emerald-400" />
-            <StatCard label="Super admins"     value={loading ? "…" : stats.superAdmins} icon={Crown}    accent="bg-amber-950 border-amber-800 text-amber-400"    />
-            <StatCard label="Admins"           value={loading ? "…" : stats.admins}     icon={ShieldCheck} accent="bg-sky-950 border-sky-800 text-sky-400"        />
-            <StatCard label="Pending invites"  value={loading ? "…" : stats.pendingInv} icon={Mail}     accent="bg-red-950 border-red-800 text-red-400"           />
+          {/* System Health card */}
+          <div className="bg-crm-card border border-crm-border rounded-xl p-4">
+            <h3 className="text-[12px] font-semibold text-crm-text-secondary flex items-center gap-2 mb-3">
+              <Zap size={13} className="text-amber-400" /> System Health
+            </h3>
+            <div className="grid sm:grid-cols-2 gap-2 text-[11px]">
+              {[
+                { label: "Platform status",   value: globalSettings.maintenance_mode ? "Maintenance mode ON" : "Operational",                                    color: globalSettings.maintenance_mode ? "text-amber-400" : "text-emerald-400" },
+                { label: "Total users",       value: loading ? "…" : String(stats.total),                                                                        color: "text-crm-text" },
+                { label: "Super admins",      value: loading ? "…" : String(stats.superAdmins),                                                                  color: "text-amber-400" },
+                { label: "Admins",            value: loading ? "…" : String(stats.admins),                                                                       color: "text-sky-400" },
+                { label: "Pending invites",   value: loading ? "…" : String(stats.pendingInv),                                                                   color: stats.pendingInv > 0 ? "text-red-400" : "text-crm-text-muted" },
+                { label: "App name",          value: globalSettings.app_name ?? "—",                                                                             color: "text-crm-text" },
+                { label: "Default theme",     value: globalSettings.default_theme ?? "—",                                                                        color: "text-crm-text" },
+                { label: "Session timeout",   value: globalSettings.session_config?.session_timeout_hours ? `${globalSettings.session_config.session_timeout_hours}h` : "—", color: "text-crm-text" },
+                { label: "Your user ID",      value: (user?.id?.substring(0, 14) ?? "—") + "…",                                                                 color: "text-crm-text-dim font-mono" },
+                { label: "Your email",        value: user?.email ?? "—",                                                                                         color: "text-crm-text-dim" },
+              ].map(({ label, value, color }) => (
+                <div key={label} className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg bg-crm-surface border border-crm-border">
+                  <span className="text-crm-text-muted">{label}</span>
+                  <span className={`font-semibold truncate max-w-[160px] text-right ${color}`}>{value}</span>
+                </div>
+              ))}
+            </div>
           </div>
 
-          {/* Quick actions */}
+          {/* Quick actions — navigate within this module */}
           <div className="flex flex-wrap gap-2">
             {[
               { label: "Manage Users",     icon: Users,    tab: "users" as Tab },
@@ -2156,31 +2184,6 @@ export default function SuperAdminModule() {
                 <Icon size={12} /> {label}
               </button>
             ))}
-          </div>
-
-          {/* External module quick-links */}
-          <div className="bg-crm-card border border-crm-border rounded-xl p-4">
-            <h3 className="text-[12px] font-semibold text-crm-text-secondary mb-3">Dedicated Management Modules</h3>
-            <div className="grid sm:grid-cols-2 gap-2">
-              {[
-                { label: "Programme Pillars", desc: "Manage 7 programme pillars, progress & leads", icon: Layers, section: "programme-pillars" },
-                { label: "Sponsors & Partners", desc: "Full CRUD for sponsors, tiers, logos", icon: Star, section: "sponsors-partners" },
-                { label: "Newsletter", desc: "Subscribers list, export, unsubscribe tracking", icon: Mail, section: "newsletter" },
-                { label: "Contact Submissions", desc: "Review & manage contact form submissions", icon: FileText, section: "contact-submissions" },
-              ].map(({ label, desc, icon: Icon, section }) => (
-                <div key={section} className="flex items-start gap-3 p-3 rounded-lg border border-crm-border hover:border-crm-border-hover transition-colors">
-                  <div className="w-8 h-8 rounded-lg bg-crm-surface border border-crm-border flex items-center justify-center flex-shrink-0">
-                    <Icon size={14} className="text-amber-400" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[12px] font-semibold text-crm-text">{label}</p>
-                    <p className="text-[10px] text-crm-text-dim mt-0.5">{desc}</p>
-                  </div>
-                  <ChevronRight size={12} className="text-crm-text-faint flex-shrink-0 mt-1" />
-                </div>
-              ))}
-            </div>
-            <p className="text-[10px] text-crm-text-faint mt-3">Access via the CRM sidebar navigation.</p>
           </div>
 
           {/* Role breakdown */}

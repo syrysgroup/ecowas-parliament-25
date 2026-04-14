@@ -29,6 +29,7 @@ import {
   BookOpen,
   FileText,
   User,
+  Crown,
 } from "lucide-react";
 
 export type ModuleGroup =
@@ -70,7 +71,8 @@ export type ModuleId =
   | "stakeholders-mgmt"
   | "media-kit-mgmt"
   | "invoices"
-  | "profile";
+  | "profile"
+  | "super-admin";
 
 export interface CRMModule {
   id:              ModuleId;
@@ -355,6 +357,15 @@ export const CRM_MODULES: CRMModule[] = [
   },
 
   // ── ADMINISTRATION ────────────────────────────────────────────────────────
+  {
+    id: "super-admin",
+    label: "Super Admin Hub",
+    icon: Crown,
+    section: "super-admin",
+    allowedRoles: ["super_admin"],
+    isStub: false,
+    group: "ADMINISTRATION",
+  },
   {
     id: "roles",
     label: "Roles & Permissions",

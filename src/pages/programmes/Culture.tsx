@@ -61,7 +61,7 @@ const objectives = [
 
 const Culture = () => (
   <Layout>
-    <ProgrammeSponsorMarquee sponsors={[{ name: "ECOWAS Commission" }, { name: "Cabo Verde Tourism Board" }, { name: "AWALCO" }]} />
+    <ProgrammeSponsorMarquee programme="culture" />
     {/* Hero */}
     <section className="relative py-24 bg-gradient-hero text-primary-foreground overflow-hidden">
       <HeroIllustration theme="culture" />

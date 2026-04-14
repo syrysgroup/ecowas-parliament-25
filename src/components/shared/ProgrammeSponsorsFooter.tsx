@@ -24,7 +24,7 @@ const ProgrammeSponsorsFooter = ({ programme, tiers: staticTiers, title = "Progr
     queryFn: async () => {
       const { data } = await supabase
         .from("sponsors")
-        .select("id, name, logo_url, tier")
+        .select("id, name, logo_url, tier, description")
         .eq("is_published", true)
         .contains("programmes", [programme!])
         .order("sort_order", { ascending: true });
@@ -45,13 +45,13 @@ const ProgrammeSponsorsFooter = ({ programme, tiers: staticTiers, title = "Progr
         .filter(t => grouped[t]?.length)
         .map(t => ({
           label: TIER_LABELS[t] || t,
-          sponsors: grouped[t].map(s => ({ name: s.name, logo_url: s.logo_url })),
+          sponsors: grouped[t].map(s => ({ name: s.name, logo_url: s.logo_url, description: (s as any).description as string | null | undefined })),
         }));
     }
     // Fallback to static tiers
     return (staticTiers ?? []).map(t => ({
       ...t,
-      sponsors: t.sponsors.map(s => ({ ...s, logo_url: undefined as string | undefined | null })),
+      sponsors: t.sponsors.map(s => ({ ...s, logo_url: undefined as string | undefined | null, description: undefined as string | undefined | null })),
     }));
   })();
 
@@ -70,14 +70,20 @@ const ProgrammeSponsorsFooter = ({ programme, tiers: staticTiers, title = "Progr
             <div className="flex flex-wrap justify-center gap-8">
               {tier.sponsors.map((s, si) => (
                 <div key={si} className="flex flex-col items-center gap-2 group">
-                  <div className="p-3 rounded-xl bg-card border border-border group-hover:shadow-md transition-shadow duration-300">
+                  <div className="p-3 rounded-xl bg-card border border-border group-hover:shadow-md transition-shadow duration-300 flex items-center justify-center min-w-[80px]">
                     {s.logo_url ? (
-                      <img src={s.logo_url} alt={s.name} className="h-14 w-14 object-contain" loading="lazy" />
+                      <img src={s.logo_url} alt={s.name} className="h-auto w-auto max-h-14 max-w-[140px] object-contain" loading="lazy" />
                     ) : (
                       <SponsorPlaceholderLogo name={s.name} size={56} />
                     )}
                   </div>
-                  <span className="text-[10px] font-medium text-muted-foreground text-center max-w-[80px] leading-tight">{s.name}</span>
+                  {s.logo_url ? (
+                    (s as any).description && (
+                      <span className="text-[10px] font-medium text-muted-foreground text-center max-w-[140px] leading-tight">{(s as any).description}</span>
+                    )
+                  ) : (
+                    <span className="text-[10px] font-medium text-muted-foreground text-center max-w-[80px] leading-tight">{s.name}</span>
+                  )}
                 </div>
               ))}
             </div>

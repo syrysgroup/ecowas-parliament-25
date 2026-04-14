@@ -136,7 +136,7 @@ const Parliament = () => {
 
   return (
     <Layout>
-      <ProgrammeSponsorMarquee sponsors={[{ name: "EU Delegation ECOWAS" }, { name: "ECOWAS Commission" }, { name: "AWALCO" }]} />
+      <ProgrammeSponsorMarquee programme="parliament" />
 
       {/* Hero */}
       <section className="relative overflow-hidden bg-gradient-hero py-20 text-primary-foreground">

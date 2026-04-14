@@ -114,7 +114,7 @@ export default function CRMDashboard() {
       case "marketing":       return <Suspense fallback={<ModuleLoader />}><MarketingModule /></Suspense>;
       case "cms":             return <Suspense fallback={<ModuleLoader />}><CMSModule /></Suspense>;
       case "email-inbox":     return <EmailInboxModule />;
-      case "super-admin":     return <SuperAdminModule />;
+      case "super-admin":     return <SuperAdminModule onNavigate={navigateSection} />;
       case "settings":        return <SettingsModule onNavigate={navigateSection} />;
       case "geo-analytics":   return <GeoAnalyticsModule />;
       case "events-manager":  return <EventsManagerModule />;

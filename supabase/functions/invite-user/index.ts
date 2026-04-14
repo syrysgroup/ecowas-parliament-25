@@ -73,12 +73,14 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // 🗑️ DELETE any existing pending invitation so re-invite works cleanly (no 409)
+    // 🗑️ DELETE any existing invitation for this email+role so re-invite works cleanly.
+    // This covers both pending rows AND history rows inserted by create-user
+    // (which set accepted_at = NOW()), preventing a UNIQUE(email, role) conflict.
     await serviceClient
       .from("invitations")
       .delete()
       .eq("email", email)
-      .is("accepted_at", null);
+      .eq("role", role);
 
     // 📝 INSERT FRESH INVITATION RECORD
     // Required so the DB trigger on_profile_created_assign_invitation_role can

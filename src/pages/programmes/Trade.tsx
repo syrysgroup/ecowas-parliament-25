@@ -91,11 +91,7 @@ const Trade = () => {
   return (
     <Layout>
       {/* Sponsor Marquee */}
-      <ProgrammeSponsorMarquee sponsors={[
-        { name: "Providus Bank" }, { name: "Global African Business Assoc." },
-        { name: "VALCERTRA" }, { name: "SMEDAN" }, { name: "Awalco" },
-        { name: "African Development Bank" }, { name: "ECOWAS Commission" },
-      ]} />
+      <ProgrammeSponsorMarquee programme="trade" />
 
       {/* Hero */}
       <section className="relative py-24 bg-gradient-hero text-primary-foreground overflow-hidden">
@@ -116,7 +112,7 @@ const Trade = () => {
             <div className="flex flex-wrap gap-8 mt-10">
               {[
                 { icon: <MapPin className="h-5 w-5" />, value: "7", label: t("trade.stat.countries") },
-                { icon: <Users className="h-5 w-5" />, value: "10,00+", label: t("trade.stat.smes") },
+                { icon: <Users className="h-5 w-5" />, value: "10,000+", label: t("trade.stat.smes") },
                 { icon: <Globe className="h-5 w-5" />, value: "3", label: t("trade.stat.tiers") },
               ].map((s) => (
                 <div key={s.label} className="flex items-center gap-3">

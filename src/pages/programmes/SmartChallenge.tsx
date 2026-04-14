@@ -16,12 +16,6 @@ import {
 import { useTranslation } from "@/lib/i18n";
 import heroBg from "@/assets/smart-challenge-hero-bg.jpg";
 
-const sponsors = [
-  { name: "African Development Bank" },
-  { name: "SYRYS Technologies" },
-  { name: "Resident Technology" },
-];
-
 const SmartChallenge = () => {
   const { t } = useTranslation();
 
@@ -56,7 +50,7 @@ const SmartChallenge = () => {
 
   return (
     <Layout>
-      <ProgrammeSponsorMarquee sponsors={sponsors} />
+      <ProgrammeSponsorMarquee programme="smart" />
       {/* Hero */}
       <section className="relative min-h-[80vh] flex items-center overflow-hidden">
         <img src={heroBg} alt="" className="absolute inset-0 w-full h-full object-cover" width={1920} height={1080} decoding="async" fetchPriority="high" />
