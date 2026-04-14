@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -163,10 +163,21 @@ function UserFormDialog({ user, open, onClose, onSaved }: UserFormProps) {
       } else {
         // New user — send invite via existing invite-user function
         const res = await supabase.functions.invoke("invite-user", {
-          body: { email: email.trim(), role: permTier === "tier1" ? "admin" : "moderator", full_name: fullName.trim() },
+          body: {
+            email: email.trim(),
+            role: permTier === "tier1" ? "admin" : "moderator",
+            redirectUrl: `${window.location.origin}/set-password`,
+            metadata: { full_name: fullName.trim() },
+          },
           headers: { Authorization: `Bearer ${token}` },
         });
-        if (res.error) throw new Error(res.error.message);
+        if (res.error) {
+          let msg = res.error.message;
+          try { msg = (await (res.error as any).context?.json?.())?.error ?? msg; } catch { /* keep msg */ }
+          throw new Error(msg);
+        }
+        const inviteBody = res.data as any;
+        if (inviteBody?.error) throw new Error(inviteBody.error);
 
         // Wait briefly then update profile with extra fields
         setTimeout(async () => {
@@ -205,7 +216,12 @@ function UserFormDialog({ user, open, onClose, onSaved }: UserFormProps) {
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-base font-bold">{isEdit ? "Edit User" : "Create New User"}</DialogTitle>
+          <DialogTitle className="text-base font-bold">{isEdit ? "Edit User" : "Invite New User"}</DialogTitle>
+          <DialogDescription>
+            {isEdit
+              ? "Update this user's profile and access settings."
+              : "Send an invitation email. The user will set their password via the link."}
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-5 py-2">

@@ -105,7 +105,37 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // 🚀 SEND INVITE
+    // 🔍 CHECK FOR EXISTING PENDING INVITATION
+    const { data: existing } = await serviceClient
+      .from("invitations")
+      .select("id")
+      .eq("email", email)
+      .is("accepted_at", null)
+      .maybeSingle();
+
+    if (existing) {
+      return new Response(
+        JSON.stringify({ error: "A pending invitation for this email already exists." }),
+        { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // 📝 INSERT INVITATION RECORD
+    // This is required so the DB trigger on_profile_created_assign_invitation_role
+    // can assign the correct role and pre-populate the profile when the user accepts.
+    const { error: insertErr } = await serviceClient
+      .from("invitations")
+      .insert({ email, role, invited_by: userId, metadata: metadata ?? null });
+
+    if (insertErr) {
+      console.error("❌ Invitation insert error:", insertErr);
+      return new Response(
+        JSON.stringify({ error: insertErr.message }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // 🚀 SEND INVITE EMAIL
     const { data, error } =
       await serviceClient.auth.admin.inviteUserByEmail(email, {
         redirectTo:
@@ -116,9 +146,11 @@ Deno.serve(async (req) => {
 
     if (error) {
       console.error("❌ Invite error:", error);
+      // Roll back the invitation row so the superadmin can retry
+      await serviceClient.from("invitations").delete().eq("email", email).is("accepted_at", null);
       return new Response(JSON.stringify({ error: error.message }), {
         status: 400,
-        headers: corsHeaders,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -127,7 +159,7 @@ Deno.serve(async (req) => {
         success: true,
         message: `Invitation sent to ${email}`,
       }),
-      { status: 200, headers: corsHeaders }
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
     console.error("❌ Server error:", err);
