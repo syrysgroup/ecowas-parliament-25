@@ -1,9 +1,9 @@
 export function generateId(): string {
-  // Modern browsers (Chrome, Edge, Firefox, Safari)
+  // Browser + modern runtime support
   if (typeof crypto !== "undefined" && crypto.randomUUID) {
     return crypto.randomUUID();
   }
 
-  // Safe fallback (works everywhere)
-  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  // Fallback (stable + low collision risk)
+  return `id_${Date.now()}_${Math.random().toString(16).slice(2)}`;
 }
