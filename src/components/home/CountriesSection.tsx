@@ -8,7 +8,7 @@ interface CountryRow {
   id: string;
   name: string;
   code: string | null;
-  flag_url: string | null;
+  flag: string | null; // ✅ FIXED
 }
 
 const CountriesSection = () => {
@@ -17,13 +17,19 @@ const CountriesSection = () => {
   const { data: countries = [], isLoading } = useQuery<CountryRow[]>({
     queryKey: ["countries-marquee"],
     queryFn: async () => {
-      const { data } = await (supabase as any)
+      const { data, error } = await supabase
         .from("countries")
-        .select("id, name, code, flag_url")
+        .select("id, name, code, flag") // ✅ FIXED
         .order("name");
+
+      if (error) {
+        console.error("Countries fetch error:", error); // ✅ helpful debug
+        return [];
+      }
+
       return data ?? [];
     },
-    staleTime: 60 * 60 * 1000, // 1 hour — country list is static
+    staleTime: 60 * 60 * 1000,
   });
 
   if (isLoading) {
@@ -45,13 +51,19 @@ const CountriesSection = () => {
       <p className="text-center text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground mb-5">
         {t("countries.heading")}
       </p>
+
       <div className="relative group">
         <div className="absolute left-0 top-0 bottom-0 w-16 z-10 bg-gradient-to-r from-card to-transparent pointer-events-none" />
         <div className="absolute right-0 top-0 bottom-0 w-16 z-10 bg-gradient-to-l from-card to-transparent pointer-events-none" />
-        <div className="flex animate-marquee group-hover:[animation-play-state:paused]" style={{ animationDuration: "24s" }}>
+
+        <div
+          className="flex animate-marquee group-hover:[animation-play-state:paused]"
+          style={{ animationDuration: "24s" }}
+        >
           {doubled.map((country, i) => {
-            // Prefer Supabase Storage URL; fall back to local bundled asset
-            const flagSrc = country.flag_url || getFlagSrc(country.name);
+            // ✅ FIX: use flag OR fallback
+            const flagSrc = country.flag || getFlagSrc(country.name);
+
             return (
               <div
                 key={`${country.id}-${i}`}
@@ -69,10 +81,15 @@ const CountriesSection = () => {
                   />
                 ) : (
                   <div className="w-[62px] h-10 rounded shadow-md bg-muted flex items-center justify-center">
-                    <span className="text-xs text-muted-foreground font-mono">{country.code}</span>
+                    <span className="text-xs text-muted-foreground font-mono">
+                      {country.code}
+                    </span>
                   </div>
                 )}
-                <p className="text-[10px] font-bold text-muted-foreground text-center whitespace-nowrap leading-tight">{country.name}</p>
+
+                <p className="text-[10px] font-bold text-muted-foreground text-center whitespace-nowrap leading-tight">
+                  {country.name}
+                </p>
               </div>
             );
           })}
