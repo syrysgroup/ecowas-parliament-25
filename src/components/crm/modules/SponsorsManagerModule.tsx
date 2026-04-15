@@ -37,7 +37,12 @@ interface PartnerRow {
 
 interface ProgrammePillar {
   id: string; slug: string; emoji: string | null;
+  route: string | null; title: string;
 }
+
+// Derive the key used by programme pages (last segment of route, e.g. "trade" from "/programmes/trade")
+const pillarPageKey = (p: ProgrammePillar): string =>
+  p.route ? p.route.split("/").filter(Boolean).pop() ?? p.slug : p.slug;
 
 // ─── Programme multi-checkbox dropdown ───────────────────────────────────────
 function ProgrammeSelect({ selected, onChange }: { selected: string[]; onChange: (v: string[]) => void }) {
@@ -49,7 +54,7 @@ function ProgrammeSelect({ selected, onChange }: { selected: string[]; onChange:
     queryFn: async () => {
       const { data } = await (supabase as any)
         .from("programme_pillars")
-        .select("id, slug, emoji")
+        .select("id, slug, emoji, route, title")
         .eq("is_active", true)
         .order("display_order");
       return data ?? [];
@@ -64,12 +69,13 @@ function ProgrammeSelect({ selected, onChange }: { selected: string[]; onChange:
     return () => document.removeEventListener("mousedown", handler);
   }, [open]);
 
-  const toggle = (slug: string) => {
-    onChange(selected.includes(slug) ? selected.filter(s => s !== slug) : [...selected, slug]);
+  // Store the route-derived key (matches what programme pages query by)
+  const toggle = (key: string) => {
+    onChange(selected.includes(key) ? selected.filter(s => s !== key) : [...selected, key]);
   };
 
-  const label = (slug: string) =>
-    slug.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+  const displayLabel = (key: string) =>
+    key.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase());
 
   return (
     <div ref={ref} className="relative">
@@ -81,28 +87,34 @@ function ProgrammeSelect({ selected, onChange }: { selected: string[]; onChange:
         <span className="truncate">
           {selected.length === 0
             ? "Select programmes…"
-            : `${selected.length} programme${selected.length > 1 ? "s" : ""} selected`}
+            : selected.map(displayLabel).join(", ")}
         </span>
         <ChevronDown size={12} className={`flex-shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
       {open && (
-        <div className="absolute z-50 mt-1 w-full max-h-48 overflow-y-auto bg-crm-card border border-crm-border rounded-lg shadow-lg">
+        <div className="absolute z-50 mt-1 w-full max-h-52 overflow-y-auto bg-crm-card border border-crm-border rounded-lg shadow-lg">
           {pillars.length === 0 ? (
             <p className="text-[11px] text-crm-text-dim px-3 py-2">No active programmes found</p>
           ) : (
-            pillars.map(p => (
-              <label key={p.id} className="flex items-center gap-2.5 px-3 py-2 hover:bg-crm-surface cursor-pointer">
-                <Checkbox
-                  checked={selected.includes(p.slug)}
-                  onCheckedChange={() => toggle(p.slug)}
-                  className="data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
-                />
-                <span className="text-xs text-crm-text">
-                  {p.emoji && <span className="mr-1">{p.emoji}</span>}
-                  {label(p.slug)}
-                </span>
-              </label>
-            ))
+            pillars.map(p => {
+              const key = pillarPageKey(p);
+              return (
+                <label key={p.id} className="flex items-center gap-2.5 px-3 py-2 hover:bg-crm-surface cursor-pointer">
+                  <Checkbox
+                    checked={selected.includes(key)}
+                    onCheckedChange={() => toggle(key)}
+                    className="data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
+                  />
+                  <span className="flex-1 min-w-0 text-xs text-crm-text">
+                    {p.emoji && <span className="mr-1">{p.emoji}</span>}
+                    {p.title || displayLabel(p.slug)}
+                  </span>
+                  <span className="text-[9px] text-crm-text-faint shrink-0 font-mono bg-crm-surface rounded px-1">
+                    {key}
+                  </span>
+                </label>
+              );
+            })
           )}
         </div>
       )}

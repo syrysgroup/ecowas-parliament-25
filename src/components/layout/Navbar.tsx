@@ -25,7 +25,14 @@ const Navbar = () => {
 
   const navLinks = [
     { label: t("nav.home"), to: "/" },
-    { label: t("nav.about"), to: "/about" },
+    {
+      label: t("nav.about"),
+      to: "/about",
+      children: [
+        { label: t("nav.about"), to: "/about" },
+        { label: "ECOWAS Parliament", to: "/ecowas-parliament" },
+      ],
+    },
     {
       label: t("nav.programmes"),
       to: "/programmes/youth",

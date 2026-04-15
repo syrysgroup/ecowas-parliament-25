@@ -1,7 +1,9 @@
+import { Link } from "react-router-dom";
 import AnimatedSection from "@/components/shared/AnimatedSection";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Scale, Users, Shield, Globe } from "lucide-react";
+import { Scale, Users, Shield, Globe, ArrowRight } from "lucide-react";
 import { useTranslation } from "@/lib/i18n";
 import parliamentChamber from "@/assets/parliament-chamber.png";
 
@@ -18,9 +20,9 @@ const PeopleMandateSection = () => {
   return (
     <section className="py-20 bg-gradient-to-b from-background to-muted/30">
       <div className="container">
-        {/* Two-column hero: text left, portrait image right */}
+        {/* Two-column hero — text left, image right (visible from md breakpoint) */}
         <AnimatedSection className="mb-14">
-          <div className="grid gap-8 lg:grid-cols-2 items-center">
+          <div className="grid gap-8 md:grid-cols-2 items-center">
             {/* Text column */}
             <div className="space-y-4">
               <Badge className="bg-ecowas-yellow/90 text-accent-foreground border-0 text-xs font-bold">
@@ -29,33 +31,36 @@ const PeopleMandateSection = () => {
               <h2 className="text-3xl md:text-4xl font-black text-foreground leading-tight">
                 {t("mandate.title")} <span className="text-primary">{t("mandate.titleAccent")}</span>
               </h2>
-              <p className="text-muted-foreground text-base md:text-lg leading-relaxed max-w-xl">
+              <p className="text-muted-foreground text-base leading-relaxed max-w-xl">
                 {t("mandate.desc")}
               </p>
+              <div className="flex gap-3 flex-wrap pt-2">
+                <Button asChild className="gap-2">
+                  <Link to="/ecowas-parliament">
+                    About ECOWAS Parliament <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
             </div>
 
-            {/* Portrait image column */}
+            {/* Landscape image column — reduced height */}
             <div className="relative">
-              <div className="overflow-hidden rounded-3xl shadow-2xl border border-border">
+              <div className="overflow-hidden rounded-2xl shadow-xl border border-border">
                 <img
                   src={parliamentChamber}
                   alt="ECOWAS Parliament during the 25th Anniversary ordinary session in Abuja"
-                  className="w-full aspect-[3/4] object-cover object-top"
+                  className="w-full aspect-[16/9] max-h-64 object-cover object-center"
                   loading="lazy"
                 />
               </div>
-              <p className="text-muted-foreground text-xs mt-3 italic text-center">
+              <p className="text-muted-foreground text-xs mt-2 italic text-center">
                 ECOWAS Parliament during the 25th Anniversary ordinary session in Abuja
               </p>
             </div>
           </div>
         </AnimatedSection>
 
-        <AnimatedSection className="text-center max-w-3xl mx-auto mb-14">
-          <Badge className="bg-primary/10 text-primary border-primary/20 mb-4">{t("mandate.badge")}</Badge>
-          <p className="text-muted-foreground leading-relaxed">{t("mandate.desc")}</p>
-        </AnimatedSection>
-
+        {/* Four pillar cards */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {pillars.map((pillar, i) => (
             <AnimatedSection key={i} delay={i * 100}>

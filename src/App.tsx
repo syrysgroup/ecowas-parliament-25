@@ -60,6 +60,9 @@ import SponsorDashboard from "./pages/SponsorDashboard";
 // CRM
 import CRMDashboard from "./pages/CRMDashboard";
 
+// Institutional pages
+import EcowasParliament from "./pages/EcowasParliament";
+
 // New feature pages
 import DashboardCRM from "./pages/DashboardCRM";
 import EmailPage from "./pages/apps/Email";
@@ -203,6 +206,7 @@ const App = () => (
               <Route path="/volunteer"          element={<Volunteer />}      />
               <Route path="/partners/:slug"     element={<PartnerPage />}    />
               <Route path="/sponsors/:slug"     element={<SponsorPage />}    />
+              <Route path="/ecowas-parliament"  element={<EcowasParliament />} />
 
               {/* Programme pillars */}
               <Route path="/programmes/youth"      element={<Youth />}      />

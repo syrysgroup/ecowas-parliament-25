@@ -752,10 +752,6 @@ export default function MessagingModule() {
     enabled: !!activeGroupId,
   });
 
-  // Admin = the user who created the channel (channels.created_by)
-  // channel_members has no `role` column in the DB — using created_by is the source of truth
-  const isGroupAdmin = activeGroup?.created_by === user?.id;
-
   // ── Group tasks
   const { data: groupTasks = [], refetch: refetchTasks } = useQuery<GroupTask[]>({
     queryKey: ["group-tasks", activeGroupId],
@@ -925,6 +921,10 @@ export default function MessagingModule() {
 
   const activeGroup = view?.type === "group" ? groups.find(g => g.id === view.id) : null;
   const activeDmPeer = view?.type === "dm" ? view : null;
+
+  // Admin = the user who created the channel (channels.created_by)
+  // channel_members has no `role` column in the DB — using created_by is the source of truth
+  const isGroupAdmin = activeGroup?.created_by === user?.id;
 
   // Group messages by date
   const groupedMessages: { day: string; msgs: Message[] }[] = [];
