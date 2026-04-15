@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { generateId } from "@/utils/id";
 import { usePermissions } from "@/hooks/usePermissions";
 import { toast } from "@/components/ui/sonner";
 
@@ -42,7 +43,7 @@ function ArticleDialog({ open, onClose, article }: { open: boolean; onClose: () 
   const handleUpload = async (file: File) => {
     setUploading(true);
     try {
-      const path = `${crypto.randomUUID()}.${file.name.split(".").pop()}`;
+      const path = `${generateId()}.${file.name.split(".").pop()}`;
       await supabase.storage.from("news-images").upload(path, file);
       const { data: { publicUrl } } = supabase.storage.from("news-images").getPublicUrl(path);
       setCoverUrl(publicUrl);

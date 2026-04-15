@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
+import { generateId } from "@/utils/id";
 import { usePermissions } from "@/hooks/usePermissions";
 import { toast } from "@/components/ui/sonner";
 
@@ -82,7 +83,7 @@ function EventDialog({ open, onClose, event }: { open: boolean; onClose: () => v
     setUploading(true);
     try {
       const ext = file.name.split(".").pop();
-      const path = `${crypto.randomUUID()}.${ext}`;
+      const path = `${generateId()}.${ext}`;
       const { error } = await supabase.storage.from("event-images").upload(path, file);
       if (error) throw error;
       const { data: { publicUrl } } = supabase.storage.from("event-images").getPublicUrl(path);

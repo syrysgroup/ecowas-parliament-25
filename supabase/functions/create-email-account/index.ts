@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { generateId } from "@/utils/id";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -63,7 +64,7 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         accountName: emailAddress,
         displayName: displayName || emailPrefix,
-        password: crypto.randomUUID(), // temporary; user sets real password via set-password flow
+        password: Math.random().toString(36).slice(2) + generateId().slice(0, 6), // temporary; user sets real password via set-password flow
       }),
     });
     const zohoData = await zohoRes.json();

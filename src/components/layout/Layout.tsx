@@ -1,11 +1,12 @@
 import { ReactNode, useEffect } from "react";
 import Navbar from "./Navbar";
+import { generateId } from "@/utils/id";
 import Footer from "./Footer";
 
 // Lightweight visitor tracker
 function useVisitorTracker() {
   useEffect(() => {
-    const sessionId = sessionStorage.getItem("_vid") || crypto.randomUUID();
+    const sessionId = sessionStorage.getItem("_vid") || generateId();
     sessionStorage.setItem("_vid", sessionId);
 
     const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;

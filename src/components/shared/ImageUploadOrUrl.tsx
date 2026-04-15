@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Upload, Link2, Loader2, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { generateId } from "@/utils/id";
 import { toast } from "sonner";
 
 interface ImageUploadOrUrlProps {
@@ -52,7 +53,7 @@ export default function ImageUploadOrUrl({
     setUploading(true);
     try {
       const ext = file.name.split(".").pop();
-      const path = `${pathPrefix}${Date.now()}_${crypto.randomUUID().slice(0, 8)}.${ext}`;
+      const path = `${pathPrefix}${Date.now()}_${generateId().slice(0, 8)}.${ext}`;
       const { error } = await supabase.storage.from(bucket).upload(path, file, { upsert: true });
       if (error) throw error;
       const { data: { publicUrl } } = supabase.storage.from(bucket).getPublicUrl(path);

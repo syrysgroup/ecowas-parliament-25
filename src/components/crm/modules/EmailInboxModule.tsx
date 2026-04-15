@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { generateId } from "@/utils/id";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Inbox, Send, FileText, Star, Trash2, RefreshCw, Pencil,
@@ -455,7 +456,7 @@ function ComposeModal({ account, replyTo, replyToAll, forwardOf, onClose, onSent
       if (cid) {
         await (supabase as any).from("emails").update(row).eq("id", cid);
       } else {
-        cid = crypto.randomUUID();
+        cid = generateId();
         await (supabase as any).from("emails").insert({ id: cid, ...row });
         setDraftId(cid);
       }
@@ -506,7 +507,7 @@ function ComposeModal({ account, replyTo, replyToAll, forwardOf, onClose, onSent
         if (cid) {
           await (supabase as any).from("emails").update(row).eq("id", cid);
         } else {
-          cid = crypto.randomUUID();
+          cid = generateId();
           await (supabase as any).from("emails").insert({ id: cid, ...row });
           setDraftId(cid);
         }
@@ -529,7 +530,7 @@ function ComposeModal({ account, replyTo, replyToAll, forwardOf, onClose, onSent
     const hasContent = toChips.length > 0 || subject.trim() ||
       bodyHtml.replace(/<[^>]*>/g, "").trim().length > 5;
     if (hasContent) {
-      const cid = draftId || crypto.randomUUID();
+      const cid = draftId || generateId();
       const row = {
         account_id: account.id, folder: "drafts",
         from_address: account.email_address,
