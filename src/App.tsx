@@ -67,7 +67,14 @@ import CustomerListPage from "./pages/apps/CustomerList";
 import AdminSettings from "./pages/admin/Settings";
 import Forbidden from "./pages/Forbidden";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      staleTime: 5 * 60 * 1000,   // 5 minutes — don't re-fetch fresh data on every render
+    },
+  },
+});
 
 function ScrollToTop() {
   const { pathname } = useLocation();

@@ -292,6 +292,8 @@ function ComposeModal({ account, replyTo, replyToAll, forwardOf, onClose, onSent
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [undoCountdown, setUndoCountdown] = useState(0);
   const undoTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [autoSaveStatus, setAutoSaveStatus] = useState<"idle" | "pending" | "saved">("idle");
   const [showTemplates, setShowTemplates] = useState(false);
   const [saveTemplateMode, setSaveTemplateMode] = useState(false);
   const [templateName, setTemplateName] = useState("");
@@ -423,7 +425,18 @@ function ComposeModal({ account, replyTo, replyToAll, forwardOf, onClose, onSent
     setUndoCountdown(0);
   };
 
-  useEffect(() => () => { if (undoTimer.current) clearInterval(undoTimer.current); }, []);
+  useEffect(() => () => {
+    if (undoTimer.current) clearInterval(undoTimer.current);
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+  }, []);
+
+  // Auto-save whenever subject or recipients change (body uses onInput directly)
+  const isFirstAutoSaveRenderRef = useRef(true);
+  useEffect(() => {
+    if (isFirstAutoSaveRenderRef.current) { isFirstAutoSaveRenderRef.current = false; return; }
+    scheduleAutoSave();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subject, toChips, ccChips, bccChips]);
 
   const handleSaveDraft = async () => {
     const bodyHtml = getBodyHtml();
@@ -462,6 +475,81 @@ function ComposeModal({ account, replyTo, replyToAll, forwardOf, onClose, onSent
     } finally { setSavingDraft(false); }
   };
 
+  // ── Gmail-style auto-save: debounced 3s after last change ────────────────────
+  const scheduleAutoSave = () => {
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    setAutoSaveStatus("pending");
+    // Capture current values in closure so the timeout uses the right data
+    const capturedBody = bodyRef.current?.innerHTML ?? "";
+    const capturedTo = toChips;
+    const capturedCc = ccChips;
+    const capturedSubject = subject;
+    const capturedDraftId = draftId;
+
+    autoSaveTimerRef.current = setTimeout(async () => {
+      const plainText = capturedBody.replace(/<[^>]*>/g, "").trim();
+      if (!capturedTo.length && !capturedSubject.trim() && plainText.length < 5) {
+        setAutoSaveStatus("idle");
+        return;
+      }
+      const row: Record<string, any> = {
+        account_id: account.id, folder: "drafts",
+        from_address: account.email_address,
+        to_address: capturedTo.join(", ") || null,
+        cc_address: capturedCc.join(", ") || null,
+        subject: capturedSubject || "(No subject)",
+        body_html: capturedBody, body_text: "",
+        is_read: true, sent_at: new Date().toISOString(),
+      };
+      try {
+        let cid = capturedDraftId;
+        if (cid) {
+          await (supabase as any).from("emails").update(row).eq("id", cid);
+        } else {
+          cid = crypto.randomUUID();
+          await (supabase as any).from("emails").insert({ id: cid, ...row });
+          setDraftId(cid);
+        }
+        qc.invalidateQueries({ queryKey: ["emails"] });
+        setAutoSaveStatus("saved");
+        setTimeout(() => setAutoSaveStatus(s => s === "saved" ? "idle" : s), 3000);
+      } catch {
+        setAutoSaveStatus("idle");
+      }
+    }, 3000);
+  };
+
+  // ── Save draft silently on close if compose has content ────────────────────
+  const handleClose = () => {
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+      autoSaveTimerRef.current = null;
+    }
+    const bodyHtml = bodyRef.current?.innerHTML ?? "";
+    const hasContent = toChips.length > 0 || subject.trim() ||
+      bodyHtml.replace(/<[^>]*>/g, "").trim().length > 5;
+    if (hasContent) {
+      const cid = draftId || crypto.randomUUID();
+      const row = {
+        account_id: account.id, folder: "drafts",
+        from_address: account.email_address,
+        to_address: toChips.join(", ") || null,
+        cc_address: ccChips.join(", ") || null,
+        subject: subject || "(No subject)",
+        body_html: bodyHtml, body_text: "",
+        is_read: true, sent_at: new Date().toISOString(),
+      };
+      // Fire-and-forget — close is instant
+      if (draftId) {
+        (supabase as any).from("emails").update(row).eq("id", cid);
+      } else {
+        (supabase as any).from("emails").insert({ id: cid, ...row });
+      }
+      qc.invalidateQueries({ queryKey: ["emails"] });
+    }
+    onClose();
+  };
+
   const applyTemplate = (t: EmailTemplate) => {
     setSubject(t.subject);
     if (bodyRef.current) bodyRef.current.innerHTML = t.body_html;
@@ -495,7 +583,7 @@ function ComposeModal({ account, replyTo, replyToAll, forwardOf, onClose, onSent
           <button onClick={() => setExpanded(v => !v)} className="p-1 rounded hover:bg-crm-border transition-colors text-crm-text-muted" title={expanded ? "Restore" : "Expand"}>
             <Zap size={14} />
           </button>
-          <button onClick={onClose} className="p-1 rounded hover:bg-red-500/20 transition-colors text-crm-text-muted hover:text-red-400" title="Close">
+          <button onClick={handleClose} className="p-1 rounded hover:bg-red-500/20 transition-colors text-crm-text-muted hover:text-red-400" title="Close">
             <X size={14} />
           </button>
         </div>
@@ -564,12 +652,14 @@ function ComposeModal({ account, replyTo, replyToAll, forwardOf, onClose, onSent
             </div>
           </div>
 
-          {/* Body */}
+          {/* Body — always white bg so HTML email content (inline light-mode styles) renders correctly */}
           <div
             ref={bodyRef}
             contentEditable
             suppressContentEditableWarning
-            className="flex-1 px-4 py-3 text-[13px] text-crm-text overflow-y-auto outline-none min-h-[120px] [&_a]:text-primary [&_a]:underline [&_blockquote]:border-l-2 [&_blockquote]:border-crm-border [&_blockquote]:pl-3 [&_blockquote]:text-crm-text-muted"
+            onInput={scheduleAutoSave}
+            className="flex-1 px-4 py-3 overflow-y-auto outline-none min-h-[120px] [&_a]:underline [&_blockquote]:border-l-2 [&_blockquote]:border-gray-300 [&_blockquote]:pl-3 [&_blockquote]:text-gray-600"
+            style={{ background: "#ffffff", colorScheme: "light", color: "#111111" }}
           />
 
           {/* Attachments strip */}
@@ -609,7 +699,17 @@ function ComposeModal({ account, replyTo, replyToAll, forwardOf, onClose, onSent
                 {savingDraft ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
               </button>
               <div className="flex-1" />
-              <button type="button" onClick={onClose} title="Discard" className="p-1.5 rounded-full hover:bg-red-500/15 text-crm-text-muted hover:text-red-400 transition-colors"><Trash2 size={15} /></button>
+              {autoSaveStatus === "pending" && (
+                <span className="text-[10px] text-crm-text-faint flex items-center gap-1">
+                  <Clock size={9} className="animate-pulse" /> Saving…
+                </span>
+              )}
+              {autoSaveStatus === "saved" && (
+                <span className="text-[10px] text-crm-text-faint flex items-center gap-1">
+                  <Check size={9} className="text-green-500" /> Saved
+                </span>
+              )}
+              <button type="button" onClick={handleClose} title="Discard" className="p-1.5 rounded-full hover:bg-red-500/15 text-crm-text-muted hover:text-red-400 transition-colors"><Trash2 size={15} /></button>
             </div>
           )}
         </>
@@ -817,7 +917,10 @@ function EmailDetailPane({ email, onBack, onReply, onReplyAll, onForward, onStar
           {fetchingBody ? (
             <div className="flex items-center gap-2 text-crm-text-muted text-[13px]"><Loader2 size={14} className="animate-spin" /> Loading…</div>
           ) : bodyHtml ? (
-            <div className="text-[13px] leading-relaxed text-crm-text-secondary [&_a]:text-primary [&_a]:underline [&_img]:max-w-full [&_img]:rounded [&_table]:w-full [&_table]:border-collapse" dangerouslySetInnerHTML={{ __html: safeHtml }} />
+            /* Wrap in forced light-mode container so inline email styles (color:#222 etc.) are visible */
+            <div style={{ background: "#ffffff", borderRadius: "8px", padding: "4px", colorScheme: "light" }}>
+              <div className="text-[13px] leading-relaxed [&_a]:underline [&_img]:max-w-full [&_img]:rounded [&_table]:w-full [&_table]:border-collapse" dangerouslySetInnerHTML={{ __html: safeHtml }} />
+            </div>
           ) : (
             <p className="text-[13px] text-crm-text-secondary whitespace-pre-wrap">{email.body_text || "(No content)"}</p>
           )}

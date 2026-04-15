@@ -1,5 +1,5 @@
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { useEffect, lazy, Suspense } from "react";
+import { useEffect, lazy, Suspense, useState, useRef, ReactNode } from "react";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { getModulesForRoles } from "@/components/crm/crmModules";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -57,14 +57,30 @@ export default function CRMDashboard() {
 
   const section = params.get("section") ?? "";
 
+  // ── Keep-alive: track which sections have been mounted so they stay in the DOM ──
+  const [mountedSections, setMountedSections] = useState<Set<string>>(() => new Set([section]));
+
+  // ── Prevent spinner flash on token refresh — only block on true initial load ──
+  const hasLoadedOnceRef = useRef(false);
+
   const navigateSection = (s: string) => {
     s === "" ? setParams({}) : setParams({ section: s });
     window.scrollTo(0, 0);
   };
 
-  // Profile completion gate: redirect to /complete-profile if required fields are missing
+  // Add newly-visited sections to the mounted set
   useEffect(() => {
-    if (loading || rolesLoading || !user) return;
+    setMountedSections(prev => {
+      if (prev.has(section)) return prev;
+      const next = new Set(prev);
+      next.add(section);
+      return next;
+    });
+  }, [section]);
+
+  // Profile completion gate: only re-run when user ID changes, not on every token refresh
+  useEffect(() => {
+    if (loading || rolesLoading || !user?.id) return;
     (supabase as any)
       .from("profiles")
       .select("full_name, title, country, organisation")
@@ -75,31 +91,33 @@ export default function CRMDashboard() {
           navigate("/complete-profile", { replace: true });
         }
       });
-  }, [user, loading, rolesLoading, navigate]);
+  }, [user?.id, loading, rolesLoading, navigate]);
 
   // Access guard: bounce to dashboard if section not allowed for user's roles
   useEffect(() => {
     if (loading || rolesLoading || roles.length === 0) return;
     if (section === "") return;
-    // Static role-based gate
     const allowed = getModulesForRoles(roles).some(m => m.section === section);
     if (!allowed) { setParams({}); return; }
-    // Dynamic DB permission gate (skip for super_admin — always allowed)
     if (!isSuperAdmin && !canView(section)) {
       setParams({});
     }
   }, [section, roles, loading, rolesLoading, isSuperAdmin, canView]);
 
-  if (loading || rolesLoading) {
+  // Show full-screen spinner ONLY during initial load — never again after that
+  if (!hasLoadedOnceRef.current && (loading || rolesLoading)) {
     return (
-      <div className="flex h-screen bg-[#0a0f0d] items-center justify-center">
-        <div className="w-8 h-8 border-2 border-emerald-700 border-t-emerald-400 rounded-full animate-spin" />
+      <div className="flex h-screen bg-background items-center justify-center">
+        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
+  // Mark initial load complete — subsequent role refreshes won't trigger the spinner
+  hasLoadedOnceRef.current = true;
 
-  const renderModule = () => {
-    switch (section) {
+  // Map section key → component (keep-alive: components are mounted once and hidden, not unmounted)
+  const getModuleForSection = (sec: string): ReactNode => {
+    switch (sec) {
       case "":                return <DashboardModule onNavigate={navigateSection} />;
       case "tasks":           return <TaskBoardModule />;
       case "calendar":        return <CalendarModule />;
@@ -123,20 +141,24 @@ export default function CRMDashboard() {
       case "site-content":    return <Suspense fallback={<ModuleLoader />}><SiteContentModule /></Suspense>;
       case "contact-submissions": return <Suspense fallback={<ModuleLoader />}><ContactSubmissionsModule /></Suspense>;
       case "newsletter":      return <Suspense fallback={<ModuleLoader />}><NewsletterModule /></Suspense>;
-      case "media-library":       return <Suspense fallback={<ModuleLoader />}><MediaLibraryModule /></Suspense>;
-      case "programme-pillars":   return <ProgrammePillarsModule />;
-      case "stakeholders-mgmt":   return <StakeholdersModule />;
-      case "media-kit-mgmt":      return <MediaKitModule />;
-      case "invoices":             return <InvoiceModule />;
-      case "profile":              return <ProfileModule />;
-      case "roles":                return <RolesModule />;
-      default:                    return <DashboardModule onNavigate={navigateSection} />;
+      case "media-library":   return <Suspense fallback={<ModuleLoader />}><MediaLibraryModule /></Suspense>;
+      case "programme-pillars":  return <ProgrammePillarsModule />;
+      case "stakeholders-mgmt":  return <StakeholdersModule />;
+      case "media-kit-mgmt":     return <MediaKitModule />;
+      case "invoices":           return <InvoiceModule />;
+      case "profile":            return <ProfileModule />;
+      case "roles":              return <RolesModule />;
+      default:                   return <DashboardModule onNavigate={navigateSection} />;
     }
   };
 
   return (
     <CRMLayout activeSection={section} onNavigate={navigateSection}>
-      {renderModule()}
+      {Array.from(mountedSections).map(sec => (
+        <div key={sec} style={sec === section ? undefined : { display: "none" }}>
+          {getModuleForSection(sec)}
+        </div>
+      ))}
     </CRMLayout>
   );
 }

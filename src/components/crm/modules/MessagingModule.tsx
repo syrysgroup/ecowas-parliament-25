@@ -155,6 +155,21 @@ function usePresence() {
 }
 
 // ─── Message bubble ───────────────────────────────────────────────────────────
+// Highlight @all and @mentions in message bodies
+function renderMentions(body: string): React.ReactNode {
+  const parts = body.split(/(@all|@\S+)/gi);
+  return parts.map((part, i) => {
+    if (!part) return null;
+    if (/^@all$/i.test(part)) {
+      return <span key={i} className="font-bold bg-emerald-600/20 text-emerald-400 rounded px-0.5">{part}</span>;
+    }
+    if (part.startsWith("@")) {
+      return <span key={i} className="font-semibold bg-blue-600/15 text-blue-400 rounded px-0.5">{part}</span>;
+    }
+    return part;
+  });
+}
+
 function Bubble({ msg, isOwn, showSender, onAvatarClick }: {
   msg: Message; isOwn: boolean; showSender: boolean; onAvatarClick?: () => void;
 }) {
@@ -195,7 +210,7 @@ function Bubble({ msg, isOwn, showSender, onAvatarClick }: {
             ? "bg-emerald-700 text-white rounded-br-md"
             : "bg-crm-surface text-crm-text rounded-bl-md border border-crm-border/60"
         }`}>
-          {msg.body}
+          {renderMentions(msg.body)}
         </div>
         <div className={`flex items-center gap-1 mt-0.5 px-1 ${isOwn ? "flex-row-reverse" : ""}`}>
           <span className="text-[9px] text-crm-text-faint">{format(parseISO(msg.sent_at), "h:mm a")}</span>
@@ -315,7 +330,7 @@ function GroupInfoPanel({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5">
                     <p className="text-[12px] font-medium text-crm-text truncate">{m.profile.full_name}</p>
-                    {m.role === "admin" && (
+                    {m.user_id === group.created_by && (
                       <span className="text-[8px] font-mono bg-emerald-950 text-emerald-400 border border-emerald-800 rounded px-1">Admin</span>
                     )}
                   </div>
@@ -432,9 +447,9 @@ function CreateGroupDialog({
         .select().single();
       if (error) throw error;
 
-      // Add creator + selected members
-      const memberRows = [{ channel_id: group.id, user_id: userId, role: "admin" },
-        ...Array.from(selected).map(uid => ({ channel_id: group.id, user_id: uid, role: "member" }))];
+      // Add creator + selected members (no role column in channel_members — admin = channels.created_by)
+      const memberRows = [{ channel_id: group.id, user_id: userId },
+        ...Array.from(selected).map(uid => ({ channel_id: group.id, user_id: uid }))];
       await (supabase as any).from("channel_members").insert(memberRows);
 
       toast({ title: `Group "${group.name}" created` });
@@ -678,6 +693,8 @@ export default function MessagingModule() {
   const [view, setView] = useState<ChatView | null>(null);
   const [body, setBody] = useState("");
   const [sending, setSending] = useState(false);
+  const [mentionQuery, setMentionQuery] = useState("");
+  const [showMentions, setShowMentions] = useState(false);
   const [search, setSearch] = useState("");
   const [showPanel, setShowPanel] = useState(false);
   const [mobileShowChat, setMobileShowChat] = useState(false);
@@ -735,7 +752,9 @@ export default function MessagingModule() {
     enabled: !!activeGroupId,
   });
 
-  const isGroupAdmin = members.some(m => m.user_id === user?.id && m.role === "admin");
+  // Admin = the user who created the channel (channels.created_by)
+  // channel_members has no `role` column in the DB — using created_by is the source of truth
+  const isGroupAdmin = activeGroup?.created_by === user?.id;
 
   // ── Group tasks
   const { data: groupTasks = [], refetch: refetchTasks } = useQuery<GroupTask[]>({
@@ -869,6 +888,7 @@ export default function MessagingModule() {
         qc.invalidateQueries({ queryKey: ["dm-conversations"] });
       }
       setBody("");
+      setShowMentions(false);
     } catch (err: any) {
       toast({ title: "Send failed", description: err.message, variant: "destructive" });
     } finally { setSending(false); }
@@ -1126,7 +1146,37 @@ export default function MessagingModule() {
 
               {/* Input */}
               <div className="px-3 py-3 border-t border-crm-border/60 bg-crm-card shrink-0">
-                <div className="flex items-end gap-2 bg-crm-surface border border-crm-border/60 rounded-2xl px-3 py-2 focus-within:border-emerald-700/60 transition-colors">
+                <div className="relative flex items-end gap-2 bg-crm-surface border border-crm-border/60 rounded-2xl px-3 py-2 focus-within:border-emerald-700/60 transition-colors">
+                  {/* @mention autocomplete popup */}
+                  {showMentions && view.type === "group" && (
+                    <div className="absolute bottom-full left-0 right-0 mb-1 bg-crm-card border border-crm-border rounded-xl shadow-xl max-h-52 overflow-y-auto z-50">
+                      <button
+                        type="button"
+                        onMouseDown={e => { e.preventDefault(); const lastAt = body.lastIndexOf("@"); setBody(body.slice(0, lastAt) + "@all "); setShowMentions(false); }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-[12px] hover:bg-crm-surface transition-colors text-left">
+                        <span className="font-bold text-emerald-400">@all</span>
+                        <span className="text-crm-text-faint">Notify everyone</span>
+                      </button>
+                      {members
+                        .filter(m => m.user_id !== user?.id && m.profile.full_name.toLowerCase().includes(mentionQuery.toLowerCase()))
+                        .map(m => (
+                          <button
+                            key={m.user_id}
+                            type="button"
+                            onMouseDown={e => {
+                              e.preventDefault();
+                              const lastAt = body.lastIndexOf("@");
+                              const mention = m.profile.full_name.replace(/\s+/g, "");
+                              setBody(body.slice(0, lastAt) + `@${mention} `);
+                              setShowMentions(false);
+                            }}
+                            className="w-full flex items-center gap-2 px-3 py-2 text-[12px] hover:bg-crm-surface transition-colors text-left">
+                            <Av name={m.profile.full_name} url={m.profile.avatar_url} size={22} />
+                            <span className="text-crm-text truncate">{m.profile.full_name}</span>
+                          </button>
+                        ))}
+                    </div>
+                  )}
                   {view.type === "group" && (
                     <button onClick={() => setShowCreateTask(true)}
                       title="Create group task"
@@ -1136,9 +1186,29 @@ export default function MessagingModule() {
                   )}
                   <textarea
                     value={body}
-                    onChange={e => setBody(e.target.value)}
-                    onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-                    placeholder="Type a message…"
+                    onChange={e => {
+                      const val = e.target.value;
+                      setBody(val);
+                      // Detect @ to trigger mention picker
+                      const lastAt = val.lastIndexOf("@");
+                      if (lastAt !== -1) {
+                        const afterAt = val.slice(lastAt + 1);
+                        if (!afterAt.includes(" ") && afterAt.length <= 25) {
+                          setMentionQuery(afterAt);
+                          setShowMentions(true);
+                        } else {
+                          setShowMentions(false);
+                        }
+                      } else {
+                        setShowMentions(false);
+                      }
+                    }}
+                    onKeyDown={e => {
+                      if (e.key === "Escape") { setShowMentions(false); return; }
+                      if (e.key === "Enter" && !e.shiftKey && !showMentions) { e.preventDefault(); handleSend(); }
+                    }}
+                    onBlur={() => setTimeout(() => setShowMentions(false), 150)}
+                    placeholder={view.type === "group" ? "Type a message… (@ to mention)" : "Type a message…"}
                     rows={1}
                     className="flex-1 bg-transparent text-[13px] text-crm-text placeholder-crm-text-faint outline-none resize-none max-h-32 overflow-y-auto"
                     style={{ lineHeight: "1.5" }}
