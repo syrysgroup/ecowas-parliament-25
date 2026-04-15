@@ -222,14 +222,14 @@ function SystemStatCard({ label, value, icon: Icon, gradient, textColor }: {
 }) {
   return (
     <div className={`rounded-xl p-4 border flex items-center gap-3 ${gradient} hover:shadow-lg transition-all duration-200 group`}>
-      <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 bg-background/10 group-hover:scale-110 transition-transform duration-200 ${textColor}`}>
+      <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 bg-current/10 group-hover:scale-110 transition-transform duration-200 ${textColor}`}>
         <Icon size={20} />
       </div>
       <div>
         <p className="text-[11px] font-medium text-muted-foreground">{label}</p>
         <p className={`text-2xl font-black tabular-nums ${textColor}`}>
           {value === null ? (
-            <span className="inline-block w-12 h-7 bg-muted/40 rounded animate-pulse align-middle" />
+            <span className="inline-block w-12 h-7 bg-current/10 rounded animate-pulse align-middle" />
           ) : (
             value.toLocaleString()
           )}
@@ -264,14 +264,14 @@ function useDashboardStats(enabled: boolean) {
 
 // ─── Super admin overview: live stats + quick-nav grid ───────────────────────
 const QUICK_NAV_ITEMS = [
-  { label: "Super Admin Hub",    desc: "Users, roles, invitations & system config", section: "super-admin",      icon: Crown,        gradient: "bg-gradient-to-br from-amber-950 to-amber-900/40 border-amber-800/60",   iconColor: "text-amber-400"   },
-  { label: "People & Access",    desc: "Manage staff accounts, invite & delete",    section: "people",            icon: UserPlus,     gradient: "bg-gradient-to-br from-emerald-950 to-emerald-900/40 border-emerald-800/40", iconColor: "text-emerald-400" },
-  { label: "Analytics",          desc: "Traffic, engagement & programme metrics",   section: "analytics",         icon: BarChart2,    gradient: "bg-gradient-to-br from-blue-950 to-blue-900/40 border-blue-800/40",       iconColor: "text-blue-400"    },
-  { label: "Sponsors & Partners",desc: "Sponsor CRUD, tiers & logos",              section: "sponsors-partners", icon: Handshake,    gradient: "bg-gradient-to-br from-violet-950 to-violet-900/40 border-violet-800/40", iconColor: "text-violet-400"  },
-  { label: "Finance",            desc: "Budget, income & reconciliation",           section: "finance",           icon: DollarSign,   gradient: "bg-gradient-to-br from-yellow-950 to-yellow-900/40 border-yellow-800/40", iconColor: "text-yellow-400"  },
-  { label: "Events Manager",     desc: "Events, RSVP & attendance",                 section: "events-manager",    icon: CalendarDays, gradient: "bg-gradient-to-br from-sky-950 to-sky-900/40 border-sky-800/40",          iconColor: "text-sky-400"     },
-  { label: "Roles & Permissions",desc: "Role assignments & permission matrix",      section: "roles",             icon: ShieldCheck,  gradient: "bg-gradient-to-br from-red-950 to-red-900/40 border-red-800/40",          iconColor: "text-red-400"     },
-  { label: "Settings",           desc: "Platform, SMTP, branding & sessions",       section: "settings",          icon: Settings,     gradient: "bg-gradient-to-br from-slate-900 to-slate-900/60 border-slate-700/40",     iconColor: "text-slate-300"   },
+  { label: "Super Admin Hub",    desc: "Users, roles, invitations & system config", section: "super-admin",      icon: Crown,        gradient: "bg-gradient-to-br from-amber-50 to-amber-100/60 border-amber-200 dark:from-amber-950 dark:to-amber-900/40 dark:border-amber-800/60",     iconColor: "text-amber-700 dark:text-amber-400"   },
+  { label: "People & Access",    desc: "Manage staff accounts, invite & delete",    section: "people",            icon: UserPlus,     gradient: "bg-gradient-to-br from-emerald-50 to-emerald-100/60 border-emerald-200 dark:from-emerald-950 dark:to-emerald-900/40 dark:border-emerald-800/40", iconColor: "text-emerald-700 dark:text-emerald-400" },
+  { label: "Analytics",          desc: "Traffic, engagement & programme metrics",   section: "analytics",         icon: BarChart2,    gradient: "bg-gradient-to-br from-blue-50 to-blue-100/60 border-blue-200 dark:from-blue-950 dark:to-blue-900/40 dark:border-blue-800/40",           iconColor: "text-blue-700 dark:text-blue-400"    },
+  { label: "Sponsors & Partners",desc: "Sponsor CRUD, tiers & logos",              section: "sponsors-partners", icon: Handshake,    gradient: "bg-gradient-to-br from-violet-50 to-violet-100/60 border-violet-200 dark:from-violet-950 dark:to-violet-900/40 dark:border-violet-800/40", iconColor: "text-violet-700 dark:text-violet-400"  },
+  { label: "Finance",            desc: "Budget, income & reconciliation",           section: "finance",           icon: DollarSign,   gradient: "bg-gradient-to-br from-yellow-50 to-yellow-100/60 border-yellow-200 dark:from-yellow-950 dark:to-yellow-900/40 dark:border-yellow-800/40", iconColor: "text-yellow-700 dark:text-yellow-400"  },
+  { label: "Events Manager",     desc: "Events, RSVP & attendance",                 section: "events-manager",    icon: CalendarDays, gradient: "bg-gradient-to-br from-sky-50 to-sky-100/60 border-sky-200 dark:from-sky-950 dark:to-sky-900/40 dark:border-sky-800/40",                 iconColor: "text-sky-700 dark:text-sky-400"     },
+  { label: "Roles & Permissions",desc: "Role assignments & permission matrix",      section: "roles",             icon: ShieldCheck,  gradient: "bg-gradient-to-br from-red-50 to-red-100/60 border-red-200 dark:from-red-950 dark:to-red-900/40 dark:border-red-800/40",               iconColor: "text-red-700 dark:text-red-400"     },
+  { label: "Settings",           desc: "Platform, SMTP, branding & sessions",       section: "settings",          icon: Settings,     gradient: "bg-gradient-to-br from-slate-100 to-slate-50 border-slate-200 dark:from-slate-900 dark:to-slate-900/60 dark:border-slate-700/40",        iconColor: "text-slate-600 dark:text-slate-300"   },
 ] as const;
 
 function SuperAdminSystemOverview({ onNavigate }: { onNavigate: (s: string) => void }) {
@@ -285,29 +285,29 @@ function SuperAdminSystemOverview({ onNavigate }: { onNavigate: (s: string) => v
           label="Total Users"
           value={isLoading ? null : (stats?.users ?? 0)}
           icon={Users}
-          gradient="bg-gradient-to-br from-emerald-950 to-emerald-900/40 border border-emerald-800/60"
-          textColor="text-emerald-400"
+          gradient="bg-gradient-to-br from-emerald-50 to-emerald-100/60 border border-emerald-200 dark:from-emerald-950 dark:to-emerald-900/40 dark:border-emerald-800/60"
+          textColor="text-emerald-700 dark:text-emerald-400"
         />
         <SystemStatCard
           label="Pending Invites"
           value={isLoading ? null : (stats?.invites ?? 0)}
           icon={UserPlus}
-          gradient="bg-gradient-to-br from-amber-950 to-amber-900/40 border border-amber-800/60"
-          textColor="text-amber-400"
+          gradient="bg-gradient-to-br from-amber-50 to-amber-100/60 border border-amber-200 dark:from-amber-950 dark:to-amber-900/40 dark:border-amber-800/60"
+          textColor="text-amber-700 dark:text-amber-400"
         />
         <SystemStatCard
           label="Active Sponsors"
           value={isLoading ? null : (stats?.sponsors ?? 0)}
           icon={Handshake}
-          gradient="bg-gradient-to-br from-violet-950 to-violet-900/40 border border-violet-800/60"
-          textColor="text-violet-400"
+          gradient="bg-gradient-to-br from-violet-50 to-violet-100/60 border border-violet-200 dark:from-violet-950 dark:to-violet-900/40 dark:border-violet-800/60"
+          textColor="text-violet-700 dark:text-violet-400"
         />
         <SystemStatCard
           label="Open Tasks"
           value={isLoading ? null : (stats?.tasks ?? 0)}
           icon={CheckSquare}
-          gradient="bg-gradient-to-br from-sky-950 to-sky-900/40 border border-sky-800/60"
-          textColor="text-sky-400"
+          gradient="bg-gradient-to-br from-sky-50 to-sky-100/60 border border-sky-200 dark:from-sky-950 dark:to-sky-900/40 dark:border-sky-800/60"
+          textColor="text-sky-700 dark:text-sky-400"
         />
       </div>
 
@@ -323,7 +323,7 @@ function SuperAdminSystemOverview({ onNavigate }: { onNavigate: (s: string) => v
                 onClick={() => onNavigate(item.section)}
                 className={`group flex flex-col items-start p-4 rounded-xl border transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg text-left ${item.gradient}`}
               >
-                <div className={`w-9 h-9 rounded-lg bg-background/15 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-200 ${item.iconColor}`}>
+                <div className={`w-9 h-9 rounded-lg bg-current/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-200 ${item.iconColor}`}>
                   <Icon size={16} />
                 </div>
                 <p className="text-[12.5px] font-semibold text-foreground leading-tight">{item.label}</p>

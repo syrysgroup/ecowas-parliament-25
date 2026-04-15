@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from "react";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { inviteUser } from "@/services/inviteUser";
 import { useToast } from "@/hooks/use-toast";
 import { usePermissions } from "@/hooks/usePermissions";
 import type { AppRole } from "@/contexts/AuthContext";
@@ -77,24 +78,14 @@ function AddUserSheet({ open, onClose, assignableRoles, onInvited, isSuperAdmin 
     if (!email.trim()) return;
     setSending(true);
     try {
-      const { error: _refreshErr } = await supabase.auth.refreshSession();
-      if (_refreshErr) {
-        toast({ title: "Session expired", description: "Please reload and log in again.", variant: "destructive" });
-        setSending(false);
-        return;
-      }
-      const res = await supabase.functions.invoke("invite-user", {
-        body: { email: email.trim(), role, redirectUrl: `${window.location.origin}/set-password` },
-      });
-      if (res.error) throw new Error(res.error.message);
-      const body = res.data as any;
-      if (body?.error) throw new Error(body.error);
+      await inviteUser({ email: email.trim(), role });
       toast({ title: "Invitation sent", description: `${email} — ${CRM_ROLE_META[role]?.label ?? role}` });
       setEmail("");
       onInvited();
       onClose();
-    } catch (err: any) {
-      toast({ title: "Failed", description: err.message, variant: "destructive" });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to send invitation";
+      toast({ title: "Failed", description: msg, variant: "destructive" });
     } finally {
       setSending(false);
     }
@@ -521,28 +512,22 @@ function ConvertTeamMemberDialog({ open, onClose, member, assignableRoles }: {
     }
     setConverting(true);
     try {
-      await supabase.auth.refreshSession();
-      const res = await supabase.functions.invoke("invite-user", {
-        body: {
-          email: email.trim(),
-          role,
-          redirectUrl: `${window.location.origin}/set-password`,
-          metadata: {
-            full_name: member.full_name || undefined,
-            title: member.title ?? undefined,
-            organisation: member.organisation ?? undefined,
-            bio: member.bio ?? undefined,
-            avatar_url: member.avatar_url ?? undefined,
-          },
+      const result = await inviteUser({
+        email: email.trim(),
+        role,
+        metadata: {
+          full_name: member.full_name || undefined,
+          title: member.title ?? undefined,
+          organisation: member.organisation ?? undefined,
+          bio: member.bio ?? undefined,
+          avatar_url: member.avatar_url ?? undefined,
         },
       });
-      if (res.error) throw new Error(res.error.message);
-      const body = res.data as any;
-      if (body?.error) throw new Error(body.error);
-      setGeneratedLink(body?.actionLink ?? null);
+      setGeneratedLink(result.actionLink ?? null);
       toast({ title: "Invitation sent", description: `${email} has been invited as ${role}` });
-    } catch (err: any) {
-      toast({ title: "Failed", description: err.message, variant: "destructive" });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to send invitation";
+      toast({ title: "Failed", description: msg, variant: "destructive" });
     } finally {
       setConverting(false);
     }
@@ -882,21 +867,11 @@ export default function PeopleModule() {
   const handleResend = async (inv: Invitation) => {
     setResendingId(inv.id);
     try {
-      const { error: _refreshErr3 } = await supabase.auth.refreshSession();
-      if (_refreshErr3) {
-        toast({ title: "Session expired", description: "Please reload and log in again.", variant: "destructive" });
-        setResendingId(null);
-        return;
-      }
-      const res = await supabase.functions.invoke("invite-user", {
-        body: { email: inv.email, role: inv.role, redirectUrl: `${window.location.origin}/set-password` },
-      });
-      if (res.error) throw new Error(res.error.message);
-      const body = res.data as any;
-      if (body?.error) throw new Error(body.error);
+      await inviteUser({ email: inv.email, role: inv.role });
       toast({ title: "Invitation resent", description: inv.email });
-    } catch (err: any) {
-      toast({ title: "Failed to resend", description: err.message, variant: "destructive" });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to resend";
+      toast({ title: "Failed to resend", description: msg, variant: "destructive" });
     } finally {
       setResendingId(null);
     }

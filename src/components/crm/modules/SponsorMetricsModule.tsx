@@ -3,6 +3,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { TrendingUp, Eye, Handshake, Clock, Pencil, UserMinus, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { inviteUser } from "@/services/inviteUser";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -32,6 +34,7 @@ function deriveTier(index: number): Tier {
 
 // ─── Invite Sponsor Dialog ─────────────────────────────────────────────────────
 function InviteSponsorDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [isPending, setIsPending] = useState(false);
@@ -40,11 +43,17 @@ function InviteSponsorDialog({ open, onClose }: { open: boolean; onClose: () => 
     if (!email.trim()) return;
     setIsPending(true);
     try {
-      await (supabase as any).functions.invoke("invite-user", {
-        body: { email: email.trim(), role: "sponsor", full_name: name.trim() || undefined },
+      await inviteUser({
+        email: email.trim(),
+        role: "sponsor",
+        metadata: name.trim() ? { full_name: name.trim() } : undefined,
       });
+      toast({ title: "Invitation sent", description: email.trim() });
       setEmail(""); setName("");
       onClose();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to send invitation";
+      toast({ title: "Failed", description: msg, variant: "destructive" });
     } finally {
       setIsPending(false);
     }

@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
+import { inviteUser } from "@/services/inviteUser";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -161,23 +162,12 @@ function UserFormDialog({ user, open, onClose, onSaved }: UserFormProps) {
           });
         }
       } else {
-        // New user — send invite via existing invite-user function
-        const res = await supabase.functions.invoke("invite-user", {
-          body: {
-            email: email.trim(),
-            role: permTier === "tier1" ? "admin" : "moderator",
-            redirectUrl: `${window.location.origin}/set-password`,
-            metadata: { full_name: fullName.trim() },
-          },
-          headers: { Authorization: `Bearer ${token}` },
+        // New user — send invite via centralized service
+        await inviteUser({
+          email: email.trim(),
+          role: permTier === "tier1" ? "admin" : "moderator",
+          metadata: { full_name: fullName.trim() },
         });
-        if (res.error) {
-          let msg = res.error.message;
-          try { msg = (await (res.error as any).context?.json?.())?.error ?? msg; } catch { /* keep msg */ }
-          throw new Error(msg);
-        }
-        const inviteBody = res.data as any;
-        if (inviteBody?.error) throw new Error(inviteBody.error);
 
         // Wait briefly then update profile with extra fields
         setTimeout(async () => {

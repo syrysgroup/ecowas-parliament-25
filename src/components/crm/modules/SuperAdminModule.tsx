@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthContext";
 import type { AppRole } from "@/contexts/AuthContext";
+import { inviteUser } from "@/services/inviteUser";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -1373,28 +1374,13 @@ export default function SuperAdminModule({ onNavigate }: { onNavigate?: (s: stri
     if (!inviteEmail.trim()) return;
     setSending(true);
     try {
-      const { error: _inviteRefreshErr } = await supabase.auth.refreshSession();
-      if (_inviteRefreshErr) {
-        toast({ title: "Session expired", description: "Please reload the page and log in again.", variant: "destructive" });
-        setSending(false);
-        return;
-      }
-      const res = await supabase.functions.invoke("invite-user", {
-        body: { email: inviteEmail.trim(), role: inviteRole, redirectUrl: `${window.location.origin}/set-password` },
-      });
-      if (res.error) {
-        // Try to surface the actual error message from the edge function body
-        let msg = "Edge Function error";
-        try { msg = (await (res.error as any).context?.json?.())?.error ?? res.error.message; } catch { msg = res.error.message; }
-        throw new Error(msg);
-      }
-      const body = res.data as any;
-      if (body?.error) throw new Error(body.error);
+      await inviteUser({ email: inviteEmail.trim(), role: inviteRole });
       toast({ title: "Invitation sent", description: `${inviteEmail} — ${inviteRole}` });
       setInviteEmail("");
       loadData();
-    } catch (err: any) {
-      toast({ title: "Failed to send invitation", description: err.message, variant: "destructive" });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to send invitation";
+      toast({ title: "Failed to send invitation", description: msg, variant: "destructive" });
     } finally { setSending(false); }
   };
 
@@ -1543,34 +1529,15 @@ export default function SuperAdminModule({ onNavigate }: { onNavigate?: (s: stri
   };
 
   const sendBulkInvites = async () => {
-    if (!session) {
-      toast({ title: "Session expired", description: "Please reload the page and log in again.", variant: "destructive" });
-      return;
-    }
     const valid = bulkParsed.filter(r => r.valid);
     setBulkProgress({ done: 0, total: valid.length, errors: [] });
     setBulkSending(true);
-    // Refresh session once before the loop so the SDK's internal token is fresh.
-    const { error: _bulkRefreshErr } = await supabase.auth.refreshSession();
-    if (_bulkRefreshErr) {
-      toast({ title: "Session expired", description: "Please reload the page and log in again.", variant: "destructive" });
-      setBulkSending(false);
-      return;
-    }
     for (const row of valid) {
       try {
-        const res = await supabase.functions.invoke("invite-user", {
-          body: { email: row.email, role: row.role, redirectUrl: `${window.location.origin}/set-password` },
-        });
-        if (res.error) {
-          let msg = "Edge Function error";
-          try { msg = (await (res.error as any).context?.json?.())?.error ?? res.error.message; } catch { msg = res.error.message; }
-          throw new Error(msg);
-        }
-        const body = res.data as any;
-        if (body?.error) throw new Error(body.error);
-      } catch (e: any) {
-        setBulkProgress(prev => ({ ...prev, errors: [...prev.errors, `${row.email}: ${e.message}`] }));
+        await inviteUser({ email: row.email, role: row.role });
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : "Unknown error";
+        setBulkProgress(prev => ({ ...prev, errors: [...prev.errors, `${row.email}: ${msg}`] }));
       } finally {
         setBulkProgress(prev => ({ ...prev, done: prev.done + 1 }));
       }
