@@ -202,13 +202,10 @@ function EmailConfigTab({ userId }: { userId?: string }) {
     try {
       // Save current config first so test uses latest values
       await handleSave();
-      // functions.invoke() uses getSession() internally (not the setAuth() path used by
-      // DB calls), so we must pass the token explicitly to guarantee a fresh JWT is sent.
-      const { data: { session: liveSession } } = await supabase.auth.getSession();
-      const smtpToken = liveSession?.access_token;
-      if (!smtpToken) { toast({ title: "Session expired", description: "Please reload and log in again.", variant: "destructive" }); return; }
+      // refreshSession() updates the SDK's internal token so invoke() picks it up automatically.
+      const { error: _smtpRefreshErr } = await supabase.auth.refreshSession();
+      if (_smtpRefreshErr) { toast({ title: "Session expired", description: "Please reload and log in again.", variant: "destructive" }); return; }
       const res = await supabase.functions.invoke("test-smtp", {
-        headers: { Authorization: `Bearer ${smtpToken}` },
       });
       const body = res.data as any;
       if (body?.success) {
@@ -1376,18 +1373,13 @@ export default function SuperAdminModule({ onNavigate }: { onNavigate?: (s: stri
     if (!inviteEmail.trim()) return;
     setSending(true);
     try {
-      // refreshSession() makes a server round-trip to obtain a guaranteed-fresh JWT.
-      // getSession() alone returns the cached token which may be expired in v2.99.x,
-      // causing the edge function to reject with 401 even when the user is still logged in.
-      const { data: refreshData, error: refreshErr } = await supabase.auth.refreshSession();
-      const inviteToken = refreshData?.session?.access_token;
-      if (refreshErr || !inviteToken) {
+      const { error: _inviteRefreshErr } = await supabase.auth.refreshSession();
+      if (_inviteRefreshErr) {
         toast({ title: "Session expired", description: "Please reload the page and log in again.", variant: "destructive" });
         setSending(false);
         return;
       }
       const res = await supabase.functions.invoke("invite-user", {
-        headers: { Authorization: `Bearer ${inviteToken}` },
         body: { email: inviteEmail.trim(), role: inviteRole, redirectUrl: `${window.location.origin}/set-password` },
       });
       if (res.error) {
@@ -1461,15 +1453,13 @@ export default function SuperAdminModule({ onNavigate }: { onNavigate?: (s: stri
   const resendInvitation = async (invId: string, email: string) => {
     setResendingId(invId);
     try {
-      const { data: refreshData, error: refreshErr } = await supabase.auth.refreshSession();
-      const resendToken = refreshData?.session?.access_token;
-      if (refreshErr || !resendToken) {
+      const { error: _resendRefreshErr } = await supabase.auth.refreshSession();
+      if (_resendRefreshErr) {
         toast({ title: "Session expired", description: "Please reload and log in again.", variant: "destructive" });
         setResendingId(null);
         return;
       }
       const res = await supabase.functions.invoke("resend-invite", {
-        headers: { Authorization: `Bearer ${resendToken}` },
         body: { invitation_id: invId },
       });
       if (res.error) {
@@ -1560,12 +1550,9 @@ export default function SuperAdminModule({ onNavigate }: { onNavigate?: (s: stri
     const valid = bulkParsed.filter(r => r.valid);
     setBulkProgress({ done: 0, total: valid.length, errors: [] });
     setBulkSending(true);
-    // Fetch token once before the loop — avoids repeated async overhead per row
-    // and ensures all rows use the same fresh JWT rather than relying on
-    // functions.invoke()'s internal getSession() which may return stale tokens.
-    const { data: refreshDataB, error: refreshErrB } = await supabase.auth.refreshSession();
-    const bulkToken = refreshDataB?.session?.access_token;
-    if (refreshErrB || !bulkToken) {
+    // Refresh session once before the loop so the SDK's internal token is fresh.
+    const { error: _bulkRefreshErr } = await supabase.auth.refreshSession();
+    if (_bulkRefreshErr) {
       toast({ title: "Session expired", description: "Please reload the page and log in again.", variant: "destructive" });
       setBulkSending(false);
       return;
@@ -1573,7 +1560,6 @@ export default function SuperAdminModule({ onNavigate }: { onNavigate?: (s: stri
     for (const row of valid) {
       try {
         const res = await supabase.functions.invoke("invite-user", {
-          headers: { Authorization: `Bearer ${bulkToken}` },
           body: { email: row.email, role: row.role, redirectUrl: `${window.location.origin}/set-password` },
         });
         if (res.error) {
@@ -1612,15 +1598,13 @@ export default function SuperAdminModule({ onNavigate }: { onNavigate?: (s: stri
     }
     setDeleting(true);
     try {
-      const { data: refreshDataD, error: refreshErrD } = await supabase.auth.refreshSession();
-      const deleteToken = refreshDataD?.session?.access_token;
-      if (refreshErrD || !deleteToken) {
+      const { error: _deleteRefreshErr } = await supabase.auth.refreshSession();
+      if (_deleteRefreshErr) {
         toast({ title: "Session expired", description: "Please reload and log in again.", variant: "destructive" });
         setDeleting(false);
         return;
       }
       const res = await supabase.functions.invoke("delete-user", {
-        headers: { Authorization: `Bearer ${deleteToken}` },
         body: { user_ids: [deleteTarget.id] },
       });
       if (res.error) {
@@ -1672,9 +1656,8 @@ export default function SuperAdminModule({ onNavigate }: { onNavigate?: (s: stri
   // ── Create User (direct, no invite email) ────────────────────────────────
   const handleCreateUser = async () => {
     if (!createEmail.trim() || !createPassword) return;
-    const { data: refreshData, error: refreshErr } = await supabase.auth.refreshSession();
-    const token = refreshData?.session?.access_token;
-    if (refreshErr || !token) {
+    const { error: _createRefreshErr } = await supabase.auth.refreshSession();
+    if (_createRefreshErr) {
       toast({ title: "Session expired", description: "Please reload and log in again.", variant: "destructive" });
       return;
     }
@@ -1682,7 +1665,6 @@ export default function SuperAdminModule({ onNavigate }: { onNavigate?: (s: stri
     setCreateResult(null);
     try {
       const res = await supabase.functions.invoke("create-user", {
-        headers: { Authorization: `Bearer ${token}` },
         body: {
           email: createEmail.trim(),
           password: createPassword,
@@ -1714,16 +1696,14 @@ export default function SuperAdminModule({ onNavigate }: { onNavigate?: (s: stri
   // ── Admin reset password ──────────────────────────────────────────────────
   const handleAdminResetPassword = async () => {
     if (!resetTarget || !resetPassword) return;
-    const { data: refreshData, error: refreshErr } = await supabase.auth.refreshSession();
-    const token = refreshData?.session?.access_token;
-    if (refreshErr || !token) {
+    const { error: _resetRefreshErr } = await supabase.auth.refreshSession();
+    if (_resetRefreshErr) {
       toast({ title: "Session expired", description: "Please reload and log in again.", variant: "destructive" });
       return;
     }
     setResettingPw(true);
     try {
       const res = await supabase.functions.invoke("admin-reset-password", {
-        headers: { Authorization: `Bearer ${token}` },
         body: { target_user_id: resetTarget.id, new_password: resetPassword, force_password_change: resetForce },
       });
       if (res.error) {
