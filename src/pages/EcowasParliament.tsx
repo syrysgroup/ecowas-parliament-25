@@ -27,8 +27,8 @@ const SOCIAL_ICONS = [
 // ─── Stats ────────────────────────────────────────────────────────────────────
 const STATS = [
   { icon: <Calendar className="h-7 w-7" />, value: "2000", label: "Year Founded", sub: "16 November 2000" },
-  { icon: <Globe className="h-7 w-7" />,    value: "15",   label: "Member States", sub: "West African Nations" },
-  { icon: <Users className="h-7 w-7" />,    value: "115",  label: "Parliamentary Seats", sub: "Representing the Region" },
+  { icon: <Globe className="h-7 w-7" />,    value: "12",   label: "Member States", sub: "West African Nations" },
+  { icon: <Users className="h-7 w-7" />,    value: "95",  label: "Parliamentary Seats", sub: "Representing the Region" },
 ];
 
 // ─── Mandate pillars ──────────────────────────────────────────────────────────
@@ -54,7 +54,7 @@ export default function EcowasParliament() {
   const { get } = useSiteSettings();
 
   const socialLinks = SOCIAL_ICONS.map(s => ({ ...s, url: get(s.key, "") })).filter(s => s.url);
-  const website = "www.ecowasparliamentinitiatives.org";
+  const website = "www.parl.ecowas.int";
 
   return (
     <Layout>
