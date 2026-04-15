@@ -1,5 +1,5 @@
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { useEffect, lazy, Suspense, useState, useRef, ReactNode } from "react";
+import { useEffect, useCallback, lazy, Suspense, useState, useRef, ReactNode } from "react";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { getModulesForRoles } from "@/components/crm/crmModules";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -63,10 +63,12 @@ export default function CRMDashboard() {
   // ── Prevent spinner flash on token refresh — only block on true initial load ──
   const hasLoadedOnceRef = useRef(false);
 
-  const navigateSection = (s: string) => {
+  // Stable reference so useCRMTour's startTour callback doesn't recreate on every render,
+  // which was causing the tour autoStart effect to fire in a loop.
+  const navigateSection = useCallback((s: string) => {
     s === "" ? setParams({}) : setParams({ section: s });
     window.scrollTo(0, 0);
-  };
+  }, [setParams]);
 
   // Add newly-visited sections to the mounted set
   useEffect(() => {
