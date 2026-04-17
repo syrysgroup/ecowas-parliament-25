@@ -98,11 +98,12 @@ const Footer = () => {
             <a href="https://parl.ecowas.int" target="_blank" rel="noreferrer" className="text-xs text-muted-foreground hover:text-primary transition-colors">
               {t("footer.officialSite")} ↗
             </a>
-            {user ? (
-              <Link to="/crm" className="text-xs font-medium px-3 py-1.5 rounded-md border border-border text-foreground/70 hover:text-primary hover:border-primary transition-colors">{t("footer.dashboard")}</Link>
-            ) : (
-              <Link to="/auth" className="text-xs font-medium px-3 py-1.5 rounded-md border border-border text-foreground/70 hover:text-primary hover:border-primary transition-colors">{t("footer.signIn")}</Link>
-            )}
+            <a
+              href="https://admin.ecowasparliamentinitiatives.org"
+              className="text-xs font-medium px-3 py-1.5 rounded-md border border-border text-foreground/70 hover:text-primary hover:border-primary transition-colors"
+            >
+              {user ? t("footer.dashboard") : t("footer.signIn")}
+            </a>
           </div>
         </div>
       </div>

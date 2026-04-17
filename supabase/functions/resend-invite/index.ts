@@ -89,7 +89,7 @@ Deno.serve(async (req) => {
     }
 
     // Re-send the auth invite email
-    const siteUrl = Deno.env.get("SITE_URL") ?? "https://ecowasparliamentinitiatives.org";
+    const siteUrl = Deno.env.get("SITE_URL") ?? "https://admin.ecowasparliamentinitiatives.org";
     const { error: authErr2 } = await serviceClient.auth.admin.inviteUserByEmail(invitation.email, {
       redirectTo: `${siteUrl}/set-password`,
       data: { role: invitation.role },

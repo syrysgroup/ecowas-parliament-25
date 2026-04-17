@@ -76,7 +76,7 @@ export default function CompleteProfile() {
 
       // 3. If already complete, go straight to the right destination
       if (data?.full_name && data?.title && data?.country && data?.organisation) {
-        navigate(sponsorUser ? "/sponsor-dashboard" : "/crm", { replace: true });
+        navigate(sponsorUser ? "/sponsor-dashboard" : "/", { replace: true });
         return;
       }
 

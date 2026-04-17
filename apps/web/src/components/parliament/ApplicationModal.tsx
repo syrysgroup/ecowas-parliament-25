@@ -56,7 +56,7 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
 
   const requireAuth = () => {
     onOpenChange(false);
-    navigate("/auth");
+    window.location.href = "https://admin.ecowasparliamentinitiatives.org/auth";
   };
 
   const handleApply = async (event: React.FormEvent) => {

@@ -112,7 +112,7 @@ const ROUTES = [
   { path:"/auth",                label:"Authentication",             access:"public",      icon:Lock       },
   { path:"/admin/users",         label:"User Management",            access:"admin+",      icon:Users      },
   { path:"/sponsor-dashboard",   label:"Sponsor Dashboard",          access:"sponsor",     icon:Star       },
-  { path:"/crm",                 label:"CRM (all staff)",            access:"admin+",      icon:LayoutDashboard },
+  { path:"/",                    label:"CRM (all staff)",            access:"admin+",      icon:LayoutDashboard },
 ];
 
 // ─── Stat card ────────────────────────────────────────────────────────────────

@@ -26,16 +26,16 @@ async function getRoleBasedRedirect(userId: string, from: string | null): Promis
 
   const isPrivilegedPath =
     from?.startsWith("/admin/users") ||
-    from?.startsWith("/crm") ||
+    from?.startsWith("/") ||
     from?.startsWith("/sponsor-dashboard");
   const hasPrivilegedRole = roles.some(r =>
     ["super_admin", "admin", "moderator", "sponsor"].includes(r)
   );
   if (from && from !== "/auth" && (!isPrivilegedPath || hasPrivilegedRole)) return from;
 
-  if (roles.includes("super_admin")) return "/crm?section=super-admin";
-  if (roles.includes("admin"))       return "/crm";
-  if (roles.includes("moderator"))   return "/crm";
+  if (roles.includes("super_admin")) return "/?section=super-admin";
+  if (roles.includes("admin"))       return "/";
+  if (roles.includes("moderator"))   return "/";
   if (roles.includes("sponsor"))     return "/sponsor-dashboard";
   return "/";
 }

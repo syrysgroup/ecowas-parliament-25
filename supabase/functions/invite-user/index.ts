@@ -38,7 +38,7 @@ const BodySchema = z.object({
     .optional(),
 });
 
-const SITE_URL = "https://www.ecowasparliamentinitiatives.org";
+const SITE_URL = "https://admin.ecowasparliamentinitiatives.org";
 
 Deno.serve(async (req) => {
   // ✅ Handle CORS preflight

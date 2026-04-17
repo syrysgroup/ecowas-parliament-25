@@ -32,7 +32,7 @@ Deno.serve(async (req) => {
     }
 
     const serviceClient = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-    const origin = req.headers.get("origin") || "https://ecowasparliamentinitiatives.org";
+    const origin = req.headers.get("origin") || "https://admin.ecowasparliamentinitiatives.org";
 
     // Generate password reset link (expires in 24h by default)
     const { data: linkData, error: linkErr } = await serviceClient.auth.admin.generateLink({

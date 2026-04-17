@@ -456,15 +456,27 @@ export default function UserManagement() {
 
   const handleDelete = async (u: AdminUser) => {
     const token = await getToken();
-    // Remove email account if exists
-    if (u.has_email_account) {
+    // Remove email account first if exists
+    if (u.has_email_account && u.email_address) {
       await supabase.functions.invoke("delete-email-account", {
         body: { userId: u.id, emailAddress: u.email_address },
         headers: { Authorization: `Bearer ${token}` },
       });
     }
-    await (supabase as any).from("user_roles").delete().eq("user_id", u.id);
-    await (supabase as any).from("profiles").delete().eq("id", u.id);
+    // Delete auth user (cascades to profiles, roles, invitations, etc.)
+    const res = await supabase.functions.invoke("delete-user", {
+      body: { user_ids: [u.id] },
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.error) {
+      toast({ title: "Delete failed", description: res.error.message, variant: "destructive" });
+      return;
+    }
+    const result = res.data?.results?.[0];
+    if (result && !result.success) {
+      toast({ title: "Delete failed", description: result.error ?? "Unknown error", variant: "destructive" });
+      return;
+    }
     toast({ title: "User deleted" });
     loadData();
   };

@@ -45,10 +45,7 @@ function AccessDenied() {
         </p>
         <div className="mt-6 flex flex-col gap-2">
           <Button asChild variant="default" size="sm">
-            <Link to="/crm">Go to your dashboard</Link>
-          </Button>
-          <Button asChild variant="ghost" size="sm">
-            <Link to="/">Return to home</Link>
+            <Link to="/">Go to your dashboard</Link>
           </Button>
         </div>
       </div>
