@@ -1,201 +1,146 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
-import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
-  "Content-Type": "application/json",
 };
 
-const BodySchema = z.object({
-  email: z.string().email(),
-  role: z.enum([
-    "super_admin",
-    "admin",
-    "moderator",
-    "sponsor",
-    "media",
-    "project_director",
-    "programme_lead",
-    "website_editor",
-    "marketing_manager",
-    "communications_officer",
-    "finance_coordinator",
-    "logistics_coordinator",
-    "sponsor_manager",
-    "consultant",
-  ]),
-  redirectUrl: z.string().url().optional(),
-  metadata: z
-    .object({
-      full_name: z.string().optional(),
-      title: z.string().optional(),
-      organisation: z.string().optional(),
-      bio: z.string().optional(),
-      avatar_url: z.string().optional(),
-    })
-    .optional(),
-});
-
-const SITE_URL = "https://admin.ecowasparliamentinitiatives.org";
-
 Deno.serve(async (req) => {
-  // ✅ Handle CORS preflight
+  // Handle CORS preflight
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response("ok", { headers: corsHeaders });
   }
 
   try {
-    console.log("🚀 Invite function triggered");
-
-    // ✅ GET AUTH HEADER
+    // ─────────────────────────────────────────────
+    // 1. Validate Authorization header
+    // ─────────────────────────────────────────────
     const authHeader = req.headers.get("Authorization");
-    console.log("AUTH HEADER:", authHeader);
 
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: "Missing auth header" }), {
-        status: 401,
-        headers: corsHeaders,
-      });
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return new Response(
+        JSON.stringify({ error: "Missing or invalid Authorization header" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
-    // ✅ USER CLIENT (VALIDATES JWT)
-    const supabaseUser = createClient(
+    // ─────────────────────────────────────────────
+    // 2. Create client as caller (for auth check)
+    // ─────────────────────────────────────────────
+    const callerClient = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_ANON_KEY")!,
       {
         global: {
           headers: { Authorization: authHeader },
         },
-        auth: {
-          persistSession: false,
-        },
       }
     );
 
     const {
-      data: { user },
-      error: userError,
-    } = await supabaseUser.auth.getUser();
+      data: { user: callerUser },
+      error: callerError,
+    } = await callerClient.auth.getUser();
 
-    console.log("USER:", user);
-    console.log("USER ERROR:", userError);
-
-    if (userError || !user) {
-      return new Response(JSON.stringify({ error: "Unauthorized user" }), {
-        status: 401,
-        headers: corsHeaders,
-      });
+    if (callerError || !callerUser) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized: invalid user" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
-    const userId = user.id;
+    // ─────────────────────────────────────────────
+    // 3. Check role (SUPER IMPORTANT)
+    // ─────────────────────────────────────────────
+    const callerRole = callerUser.app_metadata?.role;
 
-    // ✅ ROLE CHECK (RPC)
-    const { data: roleCheck, error: roleError } = await supabaseUser.rpc(
-      "has_role",
-      {
-        _user_id: userId,
-        _role: "super_admin",
-      }
-    );
+    const allowedRoles = ["super_admin", "admin"]; // standardize this
 
-    if (roleError || !roleCheck) {
-      return new Response(JSON.stringify({ error: "Forbidden (not super admin)" }), {
-        status: 403,
-        headers: corsHeaders,
-      });
+    if (!allowedRoles.includes(callerRole)) {
+      return new Response(
+        JSON.stringify({
+          error: `Access denied. Your role '${callerRole}' is not allowed.`,
+        }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
-    // ✅ PARSE BODY
-    const parsed = BodySchema.safeParse(await req.json());
+    // ─────────────────────────────────────────────
+    // 4. Parse request body
+    // ─────────────────────────────────────────────
+    const body = await req.json();
+    const { email, role, redirectUrl, metadata } = body;
 
-    if (!parsed.success) {
-      return new Response(JSON.stringify(parsed.error.flatten()), {
-        status: 400,
-        headers: corsHeaders,
-      });
+    if (!email || !role) {
+      return new Response(
+        JSON.stringify({ error: "email and role are required" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
-    const { email, role, redirectUrl, metadata } = parsed.data;
+    // ─────────────────────────────────────────────
+    // 5. Create ADMIN client (service role)
+    // ─────────────────────────────────────────────
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
-    // ✅ SERVICE ROLE CLIENT (ADMIN ACTIONS)
-    const serviceClient = createClient(
+    if (!serviceKey) {
+      return new Response(
+        JSON.stringify({
+          error: "Missing SUPABASE_SERVICE_ROLE_KEY in environment",
+        }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const adminClient = createClient(
       Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+      serviceKey
     );
 
-    // 🧹 Clean old invites
-    await serviceClient
-      .from("invitations")
-      .delete()
-      .eq("email", email)
-      .eq("role", role);
-
-    // 📝 Insert new invite
-    const { error: insertErr } = await serviceClient
-      .from("invitations")
-      .insert({
-        email,
-        role,
-        invited_by: userId,
-        metadata: metadata ?? null,
-      });
-
-    if (insertErr) {
-      console.error("INSERT ERROR:", insertErr);
-
-      return new Response(JSON.stringify({ error: insertErr.message }), {
-        status: 400,
-        headers: corsHeaders,
-      });
-    }
-
-    // 🚀 SEND INVITE EMAIL
-    const destination =
-      redirectUrl ??
-      `${Deno.env.get("SITE_URL") ?? SITE_URL}/set-password`;
-
-    const { error: inviteError } =
-      await serviceClient.auth.admin.inviteUserByEmail(email, {
-        redirectTo: destination,
-        data: { role, ...metadata },
+    // ─────────────────────────────────────────────
+    // 6. Invite user
+    // ─────────────────────────────────────────────
+    const { data, error: inviteError } =
+      await adminClient.auth.admin.inviteUserByEmail(email, {
+        redirectTo:
+          redirectUrl ??
+          `${req.headers.get("origin") || "http://localhost:3000"}/set-password`,
+        data: {
+          role, // stored in app_metadata
+          ...metadata,
+        },
       });
 
     if (inviteError) {
-      console.error("INVITE ERROR:", inviteError);
+      console.error("Invite error:", inviteError);
 
-      // rollback
-      await serviceClient
-        .from("invitations")
-        .delete()
-        .eq("email", email);
-
-      return new Response(JSON.stringify({ error: inviteError.message }), {
-        status: 400,
-        headers: corsHeaders,
-      });
+      return new Response(
+        JSON.stringify({ error: inviteError.message }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
+    // ─────────────────────────────────────────────
+    // 7. Success response
+    // ─────────────────────────────────────────────
     return new Response(
       JSON.stringify({
         success: true,
-        message: `Invitation sent to ${email}`,
+        message: "User invited successfully",
+        user: data?.user,
       }),
-      {
-        status: 200,
-        headers: corsHeaders,
-      }
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
+
   } catch (err) {
-    console.error("FATAL ERROR:", err);
+    console.error("Unexpected error:", err);
 
     return new Response(
-      JSON.stringify({ error: "Internal server error" }),
-      {
-        status: 500,
-        headers: corsHeaders,
-      }
+      JSON.stringify({
+        error: err instanceof Error ? err.message : "Internal server error",
+      }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
