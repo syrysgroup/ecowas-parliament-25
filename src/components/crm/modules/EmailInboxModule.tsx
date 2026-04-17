@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { sendNotification } from "@/lib/sendNotification";
 import { format, parseISO, formatDistanceToNowStrict } from "date-fns";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
@@ -1138,7 +1139,13 @@ export default function EmailInboxModule() {
       const { data, error } = await supabase.functions.invoke("sync-emails", { headers: { Authorization: `Bearer ${session?.access_token}` } });
       if (error || data?.error) { toast({ title: "Sync failed", description: error?.message ?? data?.error, variant: "destructive" }); return; }
       const count = data?.newEmailCount ?? 0;
-      if (count > 0) toast({ title: `${count} new email${count > 1 ? "s" : ""} received` });
+      if (count > 0) {
+        toast({ title: `${count} new email${count > 1 ? "s" : ""} received` });
+        sendNotification(user!.id, "new_email", {
+          sender: "CRM Sync",
+          subject: `${count} new email${count > 1 ? "s" : ""} received`,
+        });
+      }
       invalidateEmails();
     } catch (err: any) { toast({ title: "Sync failed", description: err.message, variant: "destructive" }); }
     finally { setSyncing(false); }

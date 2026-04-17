@@ -29,7 +29,7 @@ async function getZohoToken(): Promise<string> {
 }
 
 // ── Notification templates ────────────────────────────────────────────────────
-type NotificationType = "new_email" | "new_task" | "upcoming_event" | "invitation_accepted";
+type NotificationType = "new_email" | "new_task" | "upcoming_event" | "invitation_accepted" | "new_message";
 
 interface NotificationPayload {
   sender?: string;
@@ -95,6 +95,16 @@ function buildNotificationHtml(type: NotificationType, payload: NotificationPayl
             <p style="margin-top:16px">You can now collaborate with them in the CRM.</p>
           </div>${footer}`,
       };
+    case "new_message":
+      return {
+        subject: `New message from ${payload.sender ?? "someone"}`,
+        body: `${header}
+          <div style="padding:32px;font-family:Arial,sans-serif;color:#333">
+            <h2 style="margin:0 0 16px;color:#1a3c34">New Message</h2>
+            <p><strong>${payload.sender ?? "Someone"}</strong> sent you a new message in the CRM.</p>
+            <p style="margin-top:20px">Log in to view and reply.</p>
+          </div>${footer}`,
+      };
     default:
       return { subject: "Notification", body: `${header}<div style="padding:32px">You have a new notification.</div>${footer}` };
   }
@@ -149,6 +159,26 @@ Deno.serve(async (req) => {
 
     if (!profile?.notification_email) {
       return new Response(JSON.stringify({ skipped: true, reason: "No notification_email set" }), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Check user notification preferences (default to true if no row exists)
+    const prefColumn: Record<NotificationType, string> = {
+      new_message:        "notify_new_message",
+      new_email:          "notify_new_message",
+      new_task:           "notify_task_assign",
+      upcoming_event:     "notify_event_remind",
+      invitation_accepted: "notify_invite_accept",
+    };
+    const { data: prefs } = await serviceClient
+      .from("user_notification_prefs")
+      .select(prefColumn[type])
+      .eq("user_id", user_id)
+      .single();
+    // If row missing or pref is explicitly false, skip
+    if (prefs && prefs[prefColumn[type]] === false) {
+      return new Response(JSON.stringify({ skipped: true, reason: "Notification type disabled by user" }), {
         status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }

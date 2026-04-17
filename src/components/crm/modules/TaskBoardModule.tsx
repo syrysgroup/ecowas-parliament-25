@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { sendNotification } from "@/lib/sendNotification";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const COLUMNS = [
@@ -273,6 +274,9 @@ function CreateTaskDialog({ open, onClose, profiles }: {
         due_date: dueDate || null,
         status: "todo",
       });
+      if (assigneeId && assigneeId !== user!.id) {
+        sendNotification(assigneeId, "new_task", { task_title: title });
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["crm-tasks"] });

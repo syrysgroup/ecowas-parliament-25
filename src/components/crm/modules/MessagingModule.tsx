@@ -5,6 +5,7 @@ import { useAuthContext } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { format, parseISO, isToday, isYesterday, formatDistanceToNowStrict } from "date-fns";
 import { DEFAULT_AVATAR } from "@/lib/constants";
+import { sendNotification } from "@/lib/sendNotification";
 import {
   Send, Search, Plus, Users, MoreVertical, ArrowLeft,
   CheckCheck, Check, UserPlus, Trash2, LogOut,
@@ -564,6 +565,9 @@ function CreateTaskDialog({
         assignee_id: assigneeId, channel_id: channelId, created_by: userId,
       }).select().single();
       if (error) throw error;
+      if (assigneeId && assigneeId !== userId) {
+        sendNotification(assigneeId, "new_task", { task_title: title.trim() });
+      }
       toast({ title: "Task created" });
       onCreated(data as GroupTask);
       onClose();
@@ -882,6 +886,9 @@ export default function MessagingModule() {
         await (supabase as any).from("direct_messages").insert({ sender_id: user.id, recipient_id: view.peerId, body: body.trim() });
         qc.invalidateQueries({ queryKey: ["messages", "dm", view.peerId] });
         qc.invalidateQueries({ queryKey: ["dm-conversations"] });
+        sendNotification(view.peerId, "new_message", {
+          sender: user.user_metadata?.full_name ?? user.email ?? "Someone",
+        });
       }
       setBody("");
       setShowMentions(false);

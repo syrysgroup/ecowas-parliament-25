@@ -9,7 +9,6 @@
  *  - Badge slot for count/notification overlays
  */
 
-import { useMemo } from "react";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 export type AvatarSize   = "xs" | "sm" | "md" | "lg" | "xl";
@@ -57,30 +56,6 @@ const STATUS_COLOR: Record<AvatarStatus, string> = {
   none:    "hidden",
 };
 
-// ── Deterministic initials colour (8 options) ─────────────────────────────────
-const PALETTE = [
-  "bg-[#696cff] text-white",  // purple
-  "bg-[#03c3ec] text-white",  // cyan
-  "bg-[#71dd37] text-white",  // green
-  "bg-[#ffab00] text-white",  // amber
-  "bg-[#ff3e1d] text-white",  // red
-  "bg-[#6f42c1] text-white",  // violet
-  "bg-[#20c997] text-white",  // teal
-  "bg-[#fd7e14] text-white",  // orange
-];
-
-function hashName(name: string): number {
-  let h = 0;
-  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) & 0xffffffff;
-  return Math.abs(h);
-}
-
-function getInitials(name: string): string {
-  const parts = name.trim().split(/\s+/);
-  if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-  return name.slice(0, 2).toUpperCase();
-}
-
 // ── Component ─────────────────────────────────────────────────────────────────
 export default function CRMAvatar({
   src,
@@ -91,29 +66,19 @@ export default function CRMAvatar({
   badge,
   className = "",
 }: CRMAvatarProps) {
-  const s   = SIZE[size];
-  const sh  = SHAPE[shape];
-  const pal = useMemo(() => PALETTE[hashName(name || "?") % PALETTE.length], [name]);
-  const ini = useMemo(() => name ? getInitials(name) : "?", [name]);
+  const s  = SIZE[size];
+  const sh = SHAPE[shape];
 
   return (
     <span className={`relative inline-flex shrink-0 ${s.wh} ${className}`}>
-      {/* Image or initials */}
-      {src ? (
-        <img
-          src={src}
-          alt={name}
-          className={`${s.wh} ${sh} object-cover`}
-          loading="lazy"
-          onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
-        />
-      ) : (
-        <span
-          className={`${s.wh} ${sh} ${pal} flex items-center justify-center font-bold select-none`}
-        >
-          <span className={s.text}>{ini}</span>
-        </span>
-      )}
+      {/* Image — falls back to logo on missing src or load error */}
+      <img
+        src={src || "/images/logo/logo.png"}
+        alt={name || "avatar"}
+        className={`${s.wh} ${sh} object-cover`}
+        loading="lazy"
+        onError={e => { (e.target as HTMLImageElement).src = "/images/logo/logo.png"; }}
+      />
 
       {/* Status dot */}
       {status !== "none" && (

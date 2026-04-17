@@ -102,6 +102,7 @@ function ProfileSettings() {
       const { data: urlData } = supabase.storage.from("public").getPublicUrl(path);
       const url = `${urlData.publicUrl}?t=${Date.now()}`;
       await (supabase as any).from("profiles").update({ avatar_url: url }).eq("id", user.id);
+      await supabase.auth.updateUser({ data: { avatar_url: url } });
       setAvatarUrl(url);
       qc.invalidateQueries({ queryKey: ["profile", user.id] });
       toast({ title: "Avatar updated" });
@@ -188,6 +189,7 @@ function ProfileSettings() {
               onClick={async () => {
                 if (!urlValue.trim() || !user?.id) return;
                 await (supabase as any).from("profiles").update({ avatar_url: urlValue.trim() }).eq("id", user.id);
+                await supabase.auth.updateUser({ data: { avatar_url: urlValue.trim() } });
                 setAvatarUrl(urlValue.trim());
                 setShowUrlInput(false);
                 setUrlValue("");
