@@ -1,7 +1,6 @@
 import { Link } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import AnimatedSection from "@/components/shared/AnimatedSection";
-import SponsorPlaceholderLogo from "@/components/shared/SponsorPlaceholderLogo";
 import ProgrammeSponsorMarquee from "@/components/shared/ProgrammeSponsorMarquee";
 import ProgrammeSponsorsFooter from "@/components/shared/ProgrammeSponsorsFooter";
 import FlagImg from "@/components/shared/FlagImg";
@@ -275,10 +274,12 @@ const InnovatorsChallenge = () => {
         </div>
       </section>
 
-      <ProgrammeSponsorsFooter programme="innovators" tiers={[
-        { label: "Programme Partners", sponsors },
-        { label: "Institutional Partners", sponsors: [{ name: "ECOWAS Commission" }, { name: "AWALCO" }] },
-      ]} />
+      <ProgrammeSponsorsFooter
+        programme="innovators"
+        tiers={[
+          { label: "Institutional Partners", sponsors: [{ name: "ECOWAS Commission" }, { name: "AWALCO" }] },
+        ]}
+      />
     </Layout>
   );
 };

@@ -146,7 +146,12 @@ function ProfileSettings() {
       <Section title="Avatar" icon={Camera}>
         <div className="flex items-center gap-4">
           <div className="relative w-16 h-16 rounded-xl bg-crm-surface border border-crm-border overflow-hidden shrink-0">
-            <img src={displayAvatar} alt="" className="w-full h-full object-cover" />
+            <img
+              src={displayAvatar}
+              alt=""
+              className="w-full h-full object-cover"
+              onError={e => { (e.target as HTMLImageElement).src = DEFAULT_AVATAR; }}
+            />
             {uploading && (
               <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                 <Loader2 size={16} className="text-white animate-spin" />

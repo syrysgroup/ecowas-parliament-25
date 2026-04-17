@@ -61,10 +61,14 @@ export default function ProtectedRoute({
   allowedRoles = ["super_admin", "admin", "moderator"],
   bare,
 }: ProtectedRouteProps) {
-  const { user, loading, rolesLoading, hasRole } = useAuthContext();
+  const { user, loading, rolesLoading, hasRole, roles } = useAuthContext();
   const location = useLocation();
 
-  if (loading || rolesLoading) {
+  // Show loading only during the initial session check, or the very first roles
+  // fetch (when roles haven't been populated at all yet). Subsequent background
+  // re-fetches (e.g. token refresh) run silently — we already have roles, so
+  // there's no need to flash the "Verifying access" screen.
+  if (loading || (rolesLoading && roles.length === 0)) {
     return <LoadingShell bare={bare} />;
   }
 

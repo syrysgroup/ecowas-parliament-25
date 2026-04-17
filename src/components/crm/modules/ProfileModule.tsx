@@ -41,7 +41,13 @@ function ProfileBanner({
       <div className="px-6 pb-5 pt-0 -mt-12 flex flex-col sm:flex-row items-center sm:items-end gap-4">
         {/* Avatar */}
         <div className="relative w-24 h-24 rounded-xl bg-crm-card border-4 border-crm-card overflow-hidden shadow-xl flex-shrink-0">
-          <img src={displayAvatar} alt="" className="w-full h-full object-cover" loading="lazy" />
+          <img
+            src={displayAvatar}
+            alt=""
+            className="w-full h-full object-cover"
+            loading="lazy"
+            onError={e => { (e.target as HTMLImageElement).src = DEFAULT_AVATAR; }}
+          />
           <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity gap-1">
             <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading}
               className="p-1.5 rounded-full bg-black/40 hover:bg-black/60 transition-colors" title={t("crm.profile.uploadAvatar")}>

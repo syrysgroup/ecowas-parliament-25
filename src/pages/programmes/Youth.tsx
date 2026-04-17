@@ -21,17 +21,31 @@ interface SponsorRow {
 const Youth = () => {
   const { t } = useTranslation();
 
-  const { data: sponsors = [] } = useQuery<SponsorRow[]>({
-    queryKey: ["sponsors-youth-inline"],
+  const { data: innovatorsSponsors = [] } = useQuery<SponsorRow[]>({
+    queryKey: ["sponsors-youth-innovators-inline"],
     queryFn: async () => {
       const { data } = await (supabase as any)
         .from("sponsors")
         .select("id, name, slug, logo_url")
         .eq("is_published", true)
-        .contains("programmes", ["youth"])
+        .contains("programmes", ["innovators"])
         .order("sort_order")
         .limit(6);
+      return data ?? [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
+  const { data: smartSponsors = [] } = useQuery<SponsorRow[]>({
+    queryKey: ["sponsors-youth-smart-inline"],
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("sponsors")
+        .select("id, name, slug, logo_url")
+        .eq("is_published", true)
+        .contains("programmes", ["smart"])
+        .order("sort_order")
+        .limit(6);
       return data ?? [];
     },
     staleTime: 5 * 60 * 1000,
@@ -79,10 +93,10 @@ const Youth = () => {
                 </Link>
               </Button>
 
-              {/* LEFT SPONSORS */}
-              {sponsors.length > 0 && (
+              {/* LEFT SPONSORS — Innovators Challenge */}
+              {innovatorsSponsors.length > 0 && (
                 <div className="grid grid-cols-3 gap-3 place-items-center max-w-xs mx-auto">
-                  {sponsors.slice(0, 3).map((s) => (
+                  {innovatorsSponsors.slice(0, 3).map((s) => (
                     <Link
                       key={s.id}
                       to={`/sponsors/${s.slug}`}
@@ -134,10 +148,10 @@ const Youth = () => {
                 </Link>
               </Button>
 
-              {/* RIGHT SPONSORS */}
-              {sponsors.length > 3 && (
+              {/* RIGHT SPONSORS — SMART Challenge */}
+              {smartSponsors.length > 0 && (
                 <div className="grid grid-cols-3 gap-3 place-items-center max-w-xs mx-auto">
-                  {sponsors.slice(3, 6).map((s) => (
+                  {smartSponsors.slice(0, 3).map((s) => (
                     <Link
                       key={s.id}
                       to={`/sponsors/${s.slug}`}

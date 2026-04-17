@@ -114,17 +114,19 @@ function avatarColor(seed: string) {
 // ─── Avatar ───────────────────────────────────────────────────────────────────
 function Av({ name, url, size = 40, emoji }: { name: string; url?: string | null; size?: number; emoji?: string }) {
   const sz = `${size}px`;
-  if (url) return <img src={url} alt="" className="rounded-full object-cover shrink-0" style={{ width: sz, height: sz }} />;
   if (emoji) return (
     <div className="rounded-full flex items-center justify-center shrink-0 text-lg" style={{ width: sz, height: sz, background: "#1a2e1a" }}>
       {emoji}
     </div>
   );
   return (
-    <div className="rounded-full flex items-center justify-center shrink-0 text-white font-bold text-[13px]"
-      style={{ width: sz, height: sz, background: avatarColor(name), fontSize: size < 32 ? 10 : 13 }}>
-      {initials(name)}
-    </div>
+    <img
+      src={url || "/images/logo/logo.png"}
+      alt={name || "avatar"}
+      className="rounded-full object-cover shrink-0"
+      style={{ width: sz, height: sz }}
+      onError={e => { (e.target as HTMLImageElement).src = "/images/logo/logo.png"; }}
+    />
   );
 }
 
