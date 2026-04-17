@@ -45,97 +45,115 @@ function useNotifications() {
     queryFn: async () => {
       const items: NotifItem[] = [];
 
-      // Unread inbox messages
-      const msgRes = await (supabase as any)
-        .from("crm_messages")
-        .select("id, subject, body, sent_at, is_read")
-        .eq("to_user_id", user!.id)
-        .eq("is_read", false)
-        .eq("is_archived", false)
-        .order("sent_at", { ascending: false })
-        .limit(5);
+      // ── Unread inbox messages ────────────────────────────────────────────────
+      // Each source is fetched independently so a single failing table doesn't
+      // wipe out notifications from the other sources.
+      try {
+        const msgRes = await (supabase as any)
+          .from("crm_messages")
+          .select("id, subject, body, sent_at, is_read")
+          .eq("to_user_id", user!.id)
+          .eq("is_read", false)
+          .eq("is_archived", false)
+          .order("sent_at", { ascending: false })
+          .limit(5);
 
-      (msgRes.data ?? []).forEach((m: any) => {
-        items.push({
-          id: `msg-${m.id}`,
-          type: "message",
-          title: "New message",
-          body: m.subject || "(No subject)",
-          time: m.sent_at,
-          read: false,
-          sourceId: m.id,
+        (msgRes.data ?? []).forEach((m: any) => {
+          items.push({
+            id: `msg-${m.id}`,
+            type: "message",
+            title: "New message",
+            body: m.subject || "(No subject)",
+            time: m.sent_at,
+            read: false,
+            sourceId: m.id,
+          });
         });
-      });
+      } catch {
+        // crm_messages unavailable — skip silently
+      }
 
-      // Tasks assigned to me (created in last 48h, not yet read)
-      const now = new Date();
-      const since = new Date(now.getTime() - 48 * 60 * 60 * 1000).toISOString();
-      const taskRes = await (supabase as any)
-        .from("tasks")
-        .select("id, title, created_at")
-        .eq("assignee_id", user!.id)
-        .gte("created_at", since)
-        .order("created_at", { ascending: false })
-        .limit(3);
-
-      (taskRes.data ?? []).forEach((t: any) => {
-        items.push({
-          id: `task-${t.id}`,
-          type: "task",
-          title: "Task assigned",
-          body: t.title,
-          time: t.created_at,
-          read: false,
-          sourceId: t.id,
-        });
-      });
-
-      // Events today created by this user or in next 2 hours
-      const nowTs = new Date();
-      const todayEnd = new Date();
-      todayEnd.setHours(23, 59, 59, 999);
-
-      const evtRes = await (supabase as any)
-        .from("crm_calendar_events")
-        .select("id, title, start_time, created_by")
-        .or(`created_by.eq.${user!.id},is_global.eq.true`)
-        .gte("start_time", nowTs.toISOString())
-        .lte("start_time", todayEnd.toISOString())
-        .order("start_time", { ascending: true })
-        .limit(3);
-
-      (evtRes.data ?? []).forEach((e: any) => {
-        items.push({
-          id: `evt-${e.id}`,
-          type: "event",
-          title: "Event today",
-          body: e.title,
-          time: e.start_time,
-          read: false,
-          sourceId: e.id,
-        });
-      });
-
-      // Pending applications (admin/moderator only)
-      if (isAdmin) {
-        const appRes = await (supabase as any)
-          .from("applications")
-          .select("id, country, created_at")
-          .eq("status", "pending")
+      // ── Tasks assigned to me (created in last 48 h) ──────────────────────────
+      try {
+        const now = new Date();
+        const since = new Date(now.getTime() - 48 * 60 * 60 * 1000).toISOString();
+        const taskRes = await (supabase as any)
+          .from("tasks")
+          .select("id, title, created_at")
+          .eq("assignee_id", user!.id)
+          .gte("created_at", since)
           .order("created_at", { ascending: false })
           .limit(3);
 
-        (appRes.data ?? []).forEach((a: any) => {
+        (taskRes.data ?? []).forEach((t: any) => {
           items.push({
-            id: `app-${a.id}`,
-            type: "application",
-            title: "Pending application",
-            body: `From ${a.country || "unknown country"}`,
-            time: a.created_at,
+            id: `task-${t.id}`,
+            type: "task",
+            title: "Task assigned",
+            body: t.title,
+            time: t.created_at,
             read: false,
-            sourceId: a.id,
+            sourceId: t.id,
           });
         });
+      } catch {
+        // tasks unavailable — skip silently
+      }
+
+      // ── Events today ─────────────────────────────────────────────────────────
+      try {
+        const nowTs = new Date();
+        const todayEnd = new Date();
+        todayEnd.setHours(23, 59, 59, 999);
+
+        const evtRes = await (supabase as any)
+          .from("crm_calendar_events")
+          .select("id, title, start_time, created_by")
+          .or(`created_by.eq.${user!.id},is_global.eq.true`)
+          .gte("start_time", nowTs.toISOString())
+          .lte("start_time", todayEnd.toISOString())
+          .order("start_time", { ascending: true })
+          .limit(3);
+
+        (evtRes.data ?? []).forEach((e: any) => {
+          items.push({
+            id: `evt-${e.id}`,
+            type: "event",
+            title: "Event today",
+            body: e.title,
+            time: e.start_time,
+            read: false,
+            sourceId: e.id,
+          });
+        });
+      } catch {
+        // calendar events unavailable — skip silently
+      }
+
+      // ── Pending applications (admin / moderator only) ─────────────────────────
+      if (isAdmin) {
+        try {
+          const appRes = await (supabase as any)
+            .from("applications")
+            .select("id, country, created_at")
+            .eq("status", "pending")
+            .order("created_at", { ascending: false })
+            .limit(3);
+
+          (appRes.data ?? []).forEach((a: any) => {
+            items.push({
+              id: `app-${a.id}`,
+              type: "application",
+              title: "Pending application",
+              body: `From ${a.country || "unknown country"}`,
+              time: a.created_at,
+              read: false,
+              sourceId: a.id,
+            });
+          });
+        } catch {
+          // applications unavailable — skip silently
+        }
       }
 
       // Sort newest first
@@ -143,7 +161,9 @@ function useNotifications() {
       return items;
     },
     enabled: !!user?.id,
-    refetchInterval: 60_000, // refresh every minute
+    refetchInterval: 60_000,  // refresh every minute
+    retry: 0,                 // ✅ don't hammer Supabase on network blips;
+                              //    the 60-second interval will retry naturally
   });
 }
 
@@ -188,9 +208,7 @@ function NotificationBell({ onNavigate }: { onNavigate: (s: string) => void }) {
 
   const handleNotifClick = (n: NotifItem) => {
     setOpen(false);
-    // Dismiss locally
     setDismissed(prev => new Set(prev).add(n.id));
-    // Mark message as read in DB
     if (n.type === "message" && n.sourceId) {
       markMessageRead.mutate(n.sourceId);
       onNavigate("email-inbox");

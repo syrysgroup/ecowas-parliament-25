@@ -2,7 +2,14 @@ import { useState, useEffect } from "react";
 import type { AppRole } from "@/contexts/AuthContext";
 import { inviteUser, type InviteUserResult } from "@/services/inviteUser";
 import { InviteForm } from "./InviteForm";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 
@@ -75,6 +82,11 @@ export function InviteUserModal({
       <DialogContent className="bg-crm-card border-crm-border text-crm-text max-w-sm">
         <DialogHeader>
           <DialogTitle className="text-sm font-semibold text-crm-text">{title}</DialogTitle>
+          {/* ✅ DialogDescription is required by Radix UI for accessibility.
+              sr-only keeps it invisible in the UI while satisfying the a11y contract. */}
+          <DialogDescription className="sr-only">
+            Enter an email address and assign a role to send an invitation.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="py-1">
