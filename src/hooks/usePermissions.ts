@@ -1,3 +1,4 @@
+import { useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthContext";
@@ -27,16 +28,18 @@ export function usePermissions() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const check = (module: string, action: "can_view" | "can_create" | "can_edit" | "can_delete") => {
-    if (isSuperAdmin) return true;
-    return permissions.some(p => p.module === module && p[action]);
-  };
+  const check = useCallback(
+    (module: string, action: "can_view" | "can_create" | "can_edit" | "can_delete") => {
+      if (isSuperAdmin) return true;
+      return permissions.some(p => p.module === module && p[action]);
+    },
+    [isSuperAdmin, permissions]
+  );
 
-  return {
-    canView: (module: string) => check(module, "can_view"),
-    canCreate: (module: string) => check(module, "can_create"),
-    canEdit: (module: string) => check(module, "can_edit"),
-    canDelete: (module: string) => check(module, "can_delete"),
-    permissions,
-  };
+  const canView   = useCallback((module: string) => check(module, "can_view"),   [check]);
+  const canCreate = useCallback((module: string) => check(module, "can_create"), [check]);
+  const canEdit   = useCallback((module: string) => check(module, "can_edit"),   [check]);
+  const canDelete = useCallback((module: string) => check(module, "can_delete"), [check]);
+
+  return { canView, canCreate, canEdit, canDelete, permissions };
 }

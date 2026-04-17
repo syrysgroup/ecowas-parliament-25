@@ -40,6 +40,6 @@ export const flagMap: Record<string, string> = {
  * falls back to the local bundled PNG otherwise.
  */
 export const getFlagSrc = (countryName: string, dbUrl?: string | null): string => {
-  if (dbUrl) return dbUrl;
+  if (dbUrl && /^https?:\/\//.test(dbUrl)) return dbUrl;
   return flagMap[countryName] ?? "";
 };

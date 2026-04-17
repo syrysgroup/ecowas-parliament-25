@@ -62,7 +62,7 @@ const CountriesSection = () => {
         >
           {doubled.map((country, i) => {
             // ✅ FIX: use flag OR fallback
-            const flagSrc = country.flag || getFlagSrc(country.name);
+            const flagSrc = getFlagSrc(country.name, country.flag);
 
             return (
               <div

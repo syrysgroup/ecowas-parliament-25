@@ -8,6 +8,8 @@ import { useTranslation } from "@/lib/i18n";
 import parliament25Logo from "@/assets/parliament-25-logo.png";
 import innovatorsBg from "@/assets/youth-innovators-bg.jpg";
 import smartBg from "@/assets/youth-smart-bg.jpg";
+import ProgrammeSponsorMarquee from "@/components/shared/ProgrammeSponsorMarquee";
+import ProgrammeSponsorsFooter from "@/components/shared/ProgrammeSponsorsFooter";
 
 interface SponsorRow {
   id: string;
@@ -20,13 +22,13 @@ const Youth = () => {
   const { t } = useTranslation();
 
   const { data: sponsors = [] } = useQuery<SponsorRow[]>({
-    queryKey: ["sponsors-youth"],
+    queryKey: ["sponsors-youth-inline"],
     queryFn: async () => {
       const { data } = await (supabase as any)
         .from("sponsors")
         .select("id, name, slug, logo_url")
         .eq("is_published", true)
-        .contains("programmes", ["Youth Innovation"])
+        .contains("programmes", ["youth"])
         .order("sort_order")
         .limit(6);
 
@@ -35,11 +37,10 @@ const Youth = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const visibleSponsors = sponsors.filter(s => s.logo_url);
-
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
+      <ProgrammeSponsorMarquee programme="youth" />
 
       <section className="relative flex-1 flex flex-col overflow-hidden">
         {/* BACK BUTTON */}
@@ -79,31 +80,28 @@ const Youth = () => {
               </Button>
 
               {/* LEFT SPONSORS */}
-              {visibleSponsors.length > 0 && (
+              {sponsors.length > 0 && (
                 <div className="grid grid-cols-3 gap-3 place-items-center max-w-xs mx-auto">
-                  {visibleSponsors.slice(0, 3).map((s) => (
+                  {sponsors.slice(0, 3).map((s) => (
                     <Link
                       key={s.id}
                       to={`/sponsors/${s.slug}`}
                       className="flex items-center justify-center w-full"
                     >
                       <div className="h-20 w-full flex items-center justify-center">
-                        <img
-                          src={s.logo_url!}
-                          alt=""
-                          loading="lazy"
-                          decoding="async"
-                          className="
-                            max-h-16
-                            max-w-full
-                            object-contain
-                            opacity-90
-                            transition-all
-                            duration-300
-                            hover:scale-105
-                            hover:opacity-100
-                          "
-                        />
+                        {s.logo_url ? (
+                          <img
+                            src={s.logo_url}
+                            alt={s.name}
+                            loading="lazy"
+                            decoding="async"
+                            className="max-h-16 max-w-full object-contain opacity-90 transition-all duration-300 hover:scale-105 hover:opacity-100"
+                          />
+                        ) : (
+                          <span className="text-[10px] font-semibold text-primary-foreground/80 uppercase tracking-wider text-center leading-tight">
+                            {s.name}
+                          </span>
+                        )}
                       </div>
                     </Link>
                   ))}
@@ -137,31 +135,28 @@ const Youth = () => {
               </Button>
 
               {/* RIGHT SPONSORS */}
-              {visibleSponsors.length > 0 && (
+              {sponsors.length > 3 && (
                 <div className="grid grid-cols-3 gap-3 place-items-center max-w-xs mx-auto">
-                  {visibleSponsors.slice(3, 6).map((s) => (
+                  {sponsors.slice(3, 6).map((s) => (
                     <Link
                       key={s.id}
                       to={`/sponsors/${s.slug}`}
                       className="flex items-center justify-center w-full"
                     >
                       <div className="h-20 w-full flex items-center justify-center">
-                        <img
-                          src={s.logo_url!}
-                          alt=""
-                          loading="lazy"
-                          decoding="async"
-                          className="
-                            max-h-16
-                            max-w-full
-                            object-contain
-                            opacity-90
-                            transition-all
-                            duration-300
-                            hover:scale-105
-                            hover:opacity-100
-                          "
-                        />
+                        {s.logo_url ? (
+                          <img
+                            src={s.logo_url}
+                            alt={s.name}
+                            loading="lazy"
+                            decoding="async"
+                            className="max-h-16 max-w-full object-contain opacity-90 transition-all duration-300 hover:scale-105 hover:opacity-100"
+                          />
+                        ) : (
+                          <span className="text-[10px] font-semibold text-accent-foreground/80 uppercase tracking-wider text-center leading-tight">
+                            {s.name}
+                          </span>
+                        )}
                       </div>
                     </Link>
                   ))}
@@ -184,6 +179,8 @@ const Youth = () => {
 
         </div>
       </section>
+
+      <ProgrammeSponsorsFooter programme="youth" />
     </div>
   );
 };

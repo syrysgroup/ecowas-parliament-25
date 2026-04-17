@@ -103,15 +103,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        // TOKEN_REFRESHED: session/roles haven't changed — skip all state updates to
+        // prevent the re-render cascade that causes the "verifying access" glitch on tab switch.
+        // INITIAL_SESSION: getSession() above already handled this — skip to avoid double-fire.
+        if (event === "TOKEN_REFRESHED" || event === "INITIAL_SESSION") return;
+
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
-
-        // TOKEN_REFRESHED: the user's identity and roles haven't changed — skip the
-        // unnecessary DB round-trip that would set rolesLoading and re-render every
-        // consumer (the main source of the "verifying access" glitch on tab switch).
-        // INITIAL_SESSION: roles are already fetched by the getSession() call above.
-        if (event === "TOKEN_REFRESHED" || event === "INITIAL_SESSION") return;
 
         if (session?.user) {
           fetchRoles(session.user.id);
