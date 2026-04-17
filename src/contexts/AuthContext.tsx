@@ -2,6 +2,7 @@ import {
   createContext,
   useContext,
   useEffect,
+  useRef,
   useState,
   useCallback,
   ReactNode,
@@ -69,6 +70,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading,      setLoading]      = useState(true);
   const [rolesLoading, setRolesLoading] = useState(false);
 
+  // Tracks which userId's roles have already been loaded this session.
+  // Used to deduplicate fetchRoles calls caused by Supabase firing SIGNED_IN
+  // for background session recovery (via _recoverAndRefresh), which is distinct
+  // from TOKEN_REFRESHED and can't be filtered by event name alone.
+  const rolesLoadedForRef = useRef<string | null>(null);
+
   const fetchRoles = useCallback(async (userId: string) => {
     setRolesLoading(true);
     try {
@@ -79,6 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (!error && data) {
         setRoles(data.map((r: { role: string }) => r.role as AppRole));
+        rolesLoadedForRef.current = userId;
       } else {
         setRoles([]);
       }
@@ -103,20 +111,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        // TOKEN_REFRESHED: session/roles haven't changed — skip all state updates to
-        // prevent the re-render cascade that causes the "verifying access" glitch on tab switch.
-        // INITIAL_SESSION: getSession() above already handled this — skip to avoid double-fire.
+        // TOKEN_REFRESHED / INITIAL_SESSION: no auth state change, skip entirely.
         if (event === "TOKEN_REFRESHED" || event === "INITIAL_SESSION") return;
 
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
-
         if (session?.user) {
-          fetchRoles(session.user.id);
-        } else {
+          setSession(session);
+          setUser(session.user);
+          setLoading(false);
+
+          // SIGNED_IN can fire for both a genuine login AND for background session
+          // recovery (Supabase's _recoverAndRefresh). Only fetch roles when we
+          // haven't already loaded them for this exact user — this prevents the
+          // rolesLoading flash that causes "Verifying access" to reappear.
+          if (rolesLoadedForRef.current !== session.user.id) {
+            fetchRoles(session.user.id);
+          }
+        } else if (event === "SIGNED_OUT") {
+          // Explicit sign-out: clear everything and reset the dedup ref.
+          setSession(null);
+          setUser(null);
+          setLoading(false);
           setRoles([]);
+          rolesLoadedForRef.current = null;
         }
+        // Any other event with a null session (intermediate Supabase state) is
+        // intentionally ignored — we keep existing roles/user to avoid flashing.
       }
     );
 
