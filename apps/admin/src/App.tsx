@@ -165,7 +165,7 @@ const App = () => (
               }/>
 
               {/* CRM — all staff + sponsor roles (served at root) */}
-              <Route path="/" element={
+              <Route path="/:section?" element={
                 <ProtectedRoute allowedRoles={[
                   "super_admin", "admin", "moderator", "sponsor", "media",
                    "project_director", "programme_lead", "website_editor",
@@ -216,7 +216,7 @@ const App = () => (
               }/>
 
               {/* Super Admin Settings — handled inside CRM Super Admin Hub */}
-              <Route path="/admin/settings" element={<Navigate to="/?section=super-admin" replace />} />
+              <Route path="/admin/settings" element={<Navigate to="/super-admin" replace />} />
 
               {/* 403 */}
               <Route path="/403" element={<Forbidden />} />

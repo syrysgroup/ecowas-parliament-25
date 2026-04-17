@@ -1,4 +1,4 @@
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useCallback, lazy, Suspense, useState, useRef, ReactNode } from "react";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { getModulesForRoles } from "@/components/crm/crmModules";
@@ -50,12 +50,10 @@ function ModuleLoader() {
 }
 
 export default function CRMDashboard() {
-  const [params, setParams] = useSearchParams();
+  const { section = "" } = useParams<{ section?: string }>();
   const { user, roles, loading, rolesLoading, isSuperAdmin } = useAuthContext();
   const navigate = useNavigate();
   const { canView } = usePermissions();
-
-  const section = params.get("section") ?? "";
 
   // ── Keep-alive: track which sections have been mounted so they stay in the DOM ──
   const [mountedSections, setMountedSections] = useState<Set<string>>(() => new Set([section]));
@@ -66,9 +64,9 @@ export default function CRMDashboard() {
   // Stable reference so useCRMTour's startTour callback doesn't recreate on every render,
   // which was causing the tour autoStart effect to fire in a loop.
   const navigateSection = useCallback((s: string) => {
-    s === "" ? setParams({}) : setParams({ section: s });
+    navigate(s === "" ? "/" : `/${s}`);
     window.scrollTo(0, 0);
-  }, [setParams]);
+  }, [navigate]);
 
   // Add newly-visited sections to the mounted set
   useEffect(() => {
@@ -100,9 +98,9 @@ export default function CRMDashboard() {
     if (loading || rolesLoading || roles.length === 0) return;
     if (section === "") return;
     const allowed = getModulesForRoles(roles).some(m => m.section === section);
-    if (!allowed) { setParams({}); return; }
+    if (!allowed) { navigate("/", { replace: true }); return; }
     if (!isSuperAdmin && !canView(section)) {
-      setParams({});
+      navigate("/", { replace: true });
     }
   }, [section, roles, loading, rolesLoading, isSuperAdmin, canView]);
 

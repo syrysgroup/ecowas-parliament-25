@@ -144,7 +144,7 @@ export default function CompleteProfile() {
       await supabase.auth.updateUser({ data: { full_name: fullName.trim() } });
 
       setPageState("success");
-      setTimeout(() => navigate(isSponsor ? "/sponsor-dashboard" : "/crm", { replace: true }), 2000);
+      setTimeout(() => navigate(isSponsor ? "/sponsor-dashboard" : "/", { replace: true }), 2000);
     } catch (err: any) {
       setError(err.message || "Failed to save profile. Please try again.");
       setPageState("form");

@@ -33,7 +33,7 @@ async function getRoleBasedRedirect(userId: string, from: string | null): Promis
   );
   if (from && from !== "/auth" && (!isPrivilegedPath || hasPrivilegedRole)) return from;
 
-  if (roles.includes("super_admin")) return "/?section=super-admin";
+  if (roles.includes("super_admin")) return "/super-admin";
   if (roles.includes("admin"))       return "/";
   if (roles.includes("moderator"))   return "/";
   if (roles.includes("sponsor"))     return "/sponsor-dashboard";
