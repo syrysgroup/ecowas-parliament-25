@@ -491,8 +491,9 @@ function NotificationSettings() {
   const [notificationEmail, setNotificationEmail] = useState("");
   const [savingEmail, setSavingEmail] = useState(false);
   const [prefs, setPrefs] = useState({
-    notify_new_message: true, notify_task_assign: true,
-    notify_event_remind: true, notify_app_pending: true, notify_invite_accept: true,
+    notify_new_message: true,
+    notify_task_assigned: true,
+    notify_event_reminder: true,
   });
 
   useEffect(() => {
@@ -504,13 +505,15 @@ function NotificationSettings() {
   const { isLoading } = useQuery({
     queryKey: ["crm-notif-settings", user?.id],
     queryFn: async () => {
-      const res = await (supabase as any).from("user_notification_prefs").select("*").eq("user_id", user!.id).maybeSingle();
+      const res = await (supabase as any)
+        .from("user_notification_prefs")
+        .select("notify_new_message, notify_task_assigned, notify_event_reminder")
+        .eq("user_id", user!.id)
+        .maybeSingle();
       if (res.data) setPrefs({
-        notify_new_message: res.data.notify_new_message ?? true,
-        notify_task_assign: res.data.notify_task_assign ?? true,
-        notify_event_remind: res.data.notify_event_remind ?? true,
-        notify_app_pending: res.data.notify_app_pending ?? true,
-        notify_invite_accept: res.data.notify_invite_accept ?? true,
+        notify_new_message:    res.data.notify_new_message    ?? true,
+        notify_task_assigned:  res.data.notify_task_assigned  ?? true,
+        notify_event_reminder: res.data.notify_event_reminder ?? true,
       });
       return res.data;
     },
@@ -520,7 +523,10 @@ function NotificationSettings() {
   const qc = useQueryClient();
   const save = useMutation({
     mutationFn: async () => {
-      await (supabase as any).from("user_notification_prefs").upsert({ user_id: user!.id, ...prefs }, { onConflict: "user_id" });
+      await (supabase as any).from("user_notification_prefs").upsert(
+        { user_id: user!.id, ...prefs },
+        { onConflict: "user_id" }
+      );
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["crm-notif-settings"] }); toast({ title: "Preferences saved" }); },
     onError: (err: any) => toast({ title: "Failed", description: err.message, variant: "destructive" }),
@@ -538,11 +544,9 @@ function NotificationSettings() {
 
   const toggle = (k: keyof typeof prefs) => setPrefs(prev => ({ ...prev, [k]: !prev[k] }));
   const items = [
-    { key: "notify_new_message" as const, label: "New message received", desc: "CRM inbox message or reply" },
-    { key: "notify_task_assign" as const, label: "Task assigned to me", desc: "When a task is created or reassigned" },
-    { key: "notify_event_remind" as const, label: "Upcoming event reminder", desc: "Events starting in 24 hours" },
-    { key: "notify_app_pending" as const, label: "New pending application", desc: "Application submitted for review" },
-    { key: "notify_invite_accept" as const, label: "Invitation accepted", desc: "Team member accepted invite" },
+    { key: "notify_new_message"    as const, label: "New message or email",    desc: "CRM inbox message, reply, or incoming email" },
+    { key: "notify_task_assigned"  as const, label: "Task assigned to me",     desc: "When a task is created or reassigned to you" },
+    { key: "notify_event_reminder" as const, label: "Upcoming event reminder", desc: "Events starting within the next 24 hours" },
   ];
 
   return (

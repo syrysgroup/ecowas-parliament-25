@@ -31,17 +31,18 @@ const ALL_ROLES: AppRole[] = [
   "media",
 ];
 
-// ─── Avatar initials helper ───────────────────────────────────────────────────
-function initials(name: string) {
-  return name.split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase();
-}
+// ─── Avatar helper ────────────────────────────────────────────────────────────
+const DEFAULT_AVATAR = "/images/logo/logo.png";
 
-function Avatar({ name, size = "sm" }: { name: string; size?: "sm" | "md" }) {
-  const sz = size === "md" ? "w-9 h-9 text-[13px]" : "w-7 h-7 text-[11px]";
+function Avatar({ name, src, size = "sm" }: { name: string; src?: string | null; size?: "sm" | "md" }) {
+  const sz = size === "md" ? "w-9 h-9" : "w-7 h-7";
   return (
-    <div className={`${sz} rounded-full bg-emerald-950 border border-emerald-800 flex items-center justify-center font-semibold text-emerald-400 shrink-0`}>
-      {initials(name || "?")}
-    </div>
+    <img
+      src={src || DEFAULT_AVATAR}
+      alt={name}
+      className={`${sz} rounded-full object-cover shrink-0`}
+      onError={e => { (e.target as HTMLImageElement).src = DEFAULT_AVATAR; }}
+    />
   );
 }
 
@@ -277,7 +278,7 @@ function UsersWithRole({
               key={u.user_id}
               className="flex items-center gap-2.5 p-2 rounded-lg bg-crm-surface/40 border border-crm-border/50 group"
             >
-              <Avatar name={u.full_name} size="sm" />
+              <Avatar name={u.full_name} src={u.avatar_url} size="sm" />
               <div className="flex-1 min-w-0">
                 <p className="text-[12px] font-medium text-crm-text truncate">{u.full_name}</p>
                 {u.title && <p className="text-[10px] text-crm-text-faint truncate">{u.title}</p>}

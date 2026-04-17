@@ -165,11 +165,11 @@ Deno.serve(async (req) => {
 
     // Check user notification preferences (default to true if no row exists)
     const prefColumn: Record<NotificationType, string> = {
-      new_message:        "notify_new_message",
-      new_email:          "notify_new_message",
-      new_task:           "notify_task_assign",
-      upcoming_event:     "notify_event_remind",
-      invitation_accepted: "notify_invite_accept",
+      new_message:         "notify_new_message",
+      new_email:           "notify_new_message",
+      new_task:            "notify_task_assigned",
+      upcoming_event:      "notify_event_reminder",
+      invitation_accepted: "notify_new_message",   // re-uses message pref; no dedicated column
     };
     const { data: prefs } = await serviceClient
       .from("user_notification_prefs")

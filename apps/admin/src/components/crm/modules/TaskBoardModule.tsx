@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { sendNotification } from "@/lib/sendNotification";
+import { DEFAULT_AVATAR } from "@/lib/constants";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const COLUMNS = [
@@ -68,9 +69,12 @@ function TaskCard({ task, onStatusChange, canUpdateStatus, isAdmin, onEdit, onDe
         <div className="flex items-center justify-between">
           {task.assignee ? (
             <div className="flex items-center gap-1.5">
-              <div className="w-5 h-5 rounded-full bg-crm-border flex items-center justify-center text-[9px] font-bold text-emerald-400 uppercase">
-                {task.assignee.full_name?.charAt(0) ?? "?"}
-              </div>
+              <img
+                src={task.assignee.avatar_url || DEFAULT_AVATAR}
+                alt={task.assignee.full_name ?? ""}
+                className="w-5 h-5 rounded-full object-cover shrink-0"
+                onError={e => { (e.target as HTMLImageElement).src = DEFAULT_AVATAR; }}
+              />
               <span className="text-[10px] text-crm-text-muted truncate max-w-[80px]">
                 {task.assignee.full_name?.split(" ")[0]}
               </span>

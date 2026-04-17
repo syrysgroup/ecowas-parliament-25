@@ -11,7 +11,7 @@ const corsHeaders = {
  * Intended to be called on a pg_cron schedule (every hour).
  * Finds calendar events starting between 23 and 25 hours from now,
  * then calls send-notification for each event creator who has
- * notify_event_remind enabled and a notification_email set.
+ * notify_event_reminder enabled and a notification_email set.
  */
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });

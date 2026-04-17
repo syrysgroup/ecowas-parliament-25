@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthContext";
 import type { AppRole } from "@/contexts/AuthContext";
 import { inviteUser } from "@/services/inviteUser";
+import { DEFAULT_AVATAR } from "@/lib/constants";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -1012,10 +1013,13 @@ function TeamMembersTab() {
           <div className="divide-y divide-crm-border">
             {members.map(m => (
               <div key={m.id} className={`flex items-center gap-3 px-4 py-3 hover:bg-crm-surface transition-colors ${!m.is_active ? "opacity-50" : ""}`}>
-                <div className="w-9 h-9 rounded-full overflow-hidden bg-crm-border flex items-center justify-center flex-shrink-0">
-                  {m.avatar_url
-                    ? <img src={m.avatar_url} alt="" className="w-full h-full object-cover" />
-                    : <span className="text-sm font-bold text-emerald-400 uppercase">{m.full_name[0]}</span>}
+                <div className="w-9 h-9 rounded-full overflow-hidden bg-crm-border flex-shrink-0">
+                  <img
+                    src={m.avatar_url || DEFAULT_AVATAR}
+                    alt=""
+                    className="w-full h-full object-cover"
+                    onError={e => { (e.target as HTMLImageElement).src = DEFAULT_AVATAR; }}
+                  />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-[12.5px] font-semibold text-crm-text">{m.full_name}</p>
@@ -1051,10 +1055,13 @@ function TeamMembersTab() {
             <div className="px-5 py-4 space-y-3">
               {/* Avatar */}
               <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-full overflow-hidden bg-crm-surface border border-crm-border flex items-center justify-center flex-shrink-0">
-                  {form.avatar_url
-                    ? <img src={form.avatar_url} alt="" className="w-full h-full object-cover" />
-                    : <Users size={20} className="text-crm-text-dim" />}
+                <div className="w-16 h-16 rounded-full overflow-hidden bg-crm-surface border border-crm-border flex-shrink-0">
+                  <img
+                    src={form.avatar_url || DEFAULT_AVATAR}
+                    alt=""
+                    className="w-full h-full object-cover"
+                    onError={e => { (e.target as HTMLImageElement).src = DEFAULT_AVATAR; }}
+                  />
                 </div>
                 <div>
                   <button onClick={() => avatarRef.current?.click()} disabled={uploading}
