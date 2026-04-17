@@ -256,9 +256,11 @@ function EditUserDialog({ target, isSuperAdmin, onClose, onSaved }: {
     setTesting(true);
     setTestResult(null);
     try {
-      await supabase.auth.refreshSession();
+      const { data: _testRefreshData } = await supabase.auth.refreshSession();
+      const _testToken = _testRefreshData?.session?.access_token;
       const res = await supabase.functions.invoke("validate-email-credentials", {
         body: { email: emailCfg.smtp_user, password: emailCfg.smtp_password, target_user_id: target.id },
+        ...(_testToken ? { headers: { Authorization: `Bearer ${_testToken}` } } : {}),
       });
       const result = res.data as { valid: boolean; error?: string };
       setTestResult(result);
@@ -775,8 +777,9 @@ export default function PeopleModule() {
 
   const handleCreateUser = async () => {
     if (!createEmail.trim() || createPassword.length < 8) return;
-    const { error: _refreshErr2 } = await supabase.auth.refreshSession();
-    if (_refreshErr2) {
+    const { data: _refreshData2, error: _refreshErr2 } = await supabase.auth.refreshSession();
+    const _token2 = _refreshData2?.session?.access_token;
+    if (_refreshErr2 || !_token2) {
       toast({ title: "Session expired", description: "Please reload and log in again.", variant: "destructive" });
       return;
     }
@@ -791,6 +794,7 @@ export default function PeopleModule() {
           full_name: createName.trim() || undefined,
           force_password_change: createForceChg,
         },
+        headers: { Authorization: `Bearer ${_token2}` },
       });
       if (res.error) {
         let msg = "Edge Function error";
@@ -890,9 +894,16 @@ export default function PeopleModule() {
     }
     setDeletingId(userId);
     try {
-      await supabase.auth.refreshSession();
+      const { data: _delRefreshData } = await supabase.auth.refreshSession();
+      const _delToken = _delRefreshData?.session?.access_token;
+      if (!_delToken) {
+        toast({ title: "Session expired", description: "Please reload and log in again.", variant: "destructive" });
+        setDeletingId(null);
+        return;
+      }
       const res = await supabase.functions.invoke("delete-user", {
         body: { user_ids: [userId] },
+        headers: { Authorization: `Bearer ${_delToken}` },
       });
       if (res.error) throw new Error(res.error.message);
       const results = (res.data?.results ?? []) as { success: boolean; error?: string }[];

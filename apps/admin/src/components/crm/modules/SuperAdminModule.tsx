@@ -205,9 +205,11 @@ function EmailConfigTab({ userId }: { userId?: string }) {
       // Save current config first so test uses latest values
       await handleSave();
       // refreshSession() updates the SDK's internal token so invoke() picks it up automatically.
-      const { error: _smtpRefreshErr } = await supabase.auth.refreshSession();
-      if (_smtpRefreshErr) { toast({ title: "Session expired", description: "Please reload and log in again.", variant: "destructive" }); return; }
+      const { data: _smtpRefreshData, error: _smtpRefreshErr } = await supabase.auth.refreshSession();
+      const _smtpToken = _smtpRefreshData?.session?.access_token;
+      if (_smtpRefreshErr || !_smtpToken) { toast({ title: "Session expired", description: "Please reload and log in again.", variant: "destructive" }); return; }
       const res = await supabase.functions.invoke("test-smtp", {
+        headers: { Authorization: `Bearer ${_smtpToken}` },
       });
       const body = res.data as any;
       if (body?.success) {
@@ -1446,14 +1448,16 @@ export default function SuperAdminModule({ onNavigate }: { onNavigate?: (s: stri
   const resendInvitation = async (invId: string, email: string) => {
     setResendingId(invId);
     try {
-      const { error: _resendRefreshErr } = await supabase.auth.refreshSession();
-      if (_resendRefreshErr) {
+      const { data: _resendRefreshData, error: _resendRefreshErr } = await supabase.auth.refreshSession();
+      const _resendToken = _resendRefreshData?.session?.access_token;
+      if (_resendRefreshErr || !_resendToken) {
         toast({ title: "Session expired", description: "Please reload and log in again.", variant: "destructive" });
         setResendingId(null);
         return;
       }
       const res = await supabase.functions.invoke("resend-invite", {
         body: { invitation_id: invId },
+        headers: { Authorization: `Bearer ${_resendToken}` },
       });
       if (res.error) {
         let msg = "Edge Function error";
@@ -1572,14 +1576,16 @@ export default function SuperAdminModule({ onNavigate }: { onNavigate?: (s: stri
     }
     setDeleting(true);
     try {
-      const { error: _deleteRefreshErr } = await supabase.auth.refreshSession();
-      if (_deleteRefreshErr) {
+      const { data: _deleteRefreshData, error: _deleteRefreshErr } = await supabase.auth.refreshSession();
+      const _deleteToken = _deleteRefreshData?.session?.access_token;
+      if (_deleteRefreshErr || !_deleteToken) {
         toast({ title: "Session expired", description: "Please reload and log in again.", variant: "destructive" });
         setDeleting(false);
         return;
       }
       const res = await supabase.functions.invoke("delete-user", {
         body: { user_ids: [deleteTarget.id] },
+        headers: { Authorization: `Bearer ${_deleteToken}` },
       });
       if (res.error) {
         let msg = "Edge Function error";
@@ -1630,8 +1636,9 @@ export default function SuperAdminModule({ onNavigate }: { onNavigate?: (s: stri
   // ── Create User (direct, no invite email) ────────────────────────────────
   const handleCreateUser = async () => {
     if (!createEmail.trim() || !createPassword) return;
-    const { error: _createRefreshErr } = await supabase.auth.refreshSession();
-    if (_createRefreshErr) {
+    const { data: _createRefreshData, error: _createRefreshErr } = await supabase.auth.refreshSession();
+    const _createToken = _createRefreshData?.session?.access_token;
+    if (_createRefreshErr || !_createToken) {
       toast({ title: "Session expired", description: "Please reload and log in again.", variant: "destructive" });
       return;
     }
@@ -1646,6 +1653,7 @@ export default function SuperAdminModule({ onNavigate }: { onNavigate?: (s: stri
           full_name: createName.trim() || undefined,
           force_password_change: createForceChange,
         },
+        headers: { Authorization: `Bearer ${_createToken}` },
       });
       if (res.error) {
         let msg = "Edge Function error";
@@ -1670,8 +1678,9 @@ export default function SuperAdminModule({ onNavigate }: { onNavigate?: (s: stri
   // ── Admin reset password ──────────────────────────────────────────────────
   const handleAdminResetPassword = async () => {
     if (!resetTarget || !resetPassword) return;
-    const { error: _resetRefreshErr } = await supabase.auth.refreshSession();
-    if (_resetRefreshErr) {
+    const { data: _resetRefreshData, error: _resetRefreshErr } = await supabase.auth.refreshSession();
+    const _resetToken = _resetRefreshData?.session?.access_token;
+    if (_resetRefreshErr || !_resetToken) {
       toast({ title: "Session expired", description: "Please reload and log in again.", variant: "destructive" });
       return;
     }
@@ -1679,6 +1688,7 @@ export default function SuperAdminModule({ onNavigate }: { onNavigate?: (s: stri
     try {
       const res = await supabase.functions.invoke("admin-reset-password", {
         body: { target_user_id: resetTarget.id, new_password: resetPassword, force_password_change: resetForce },
+        headers: { Authorization: `Bearer ${_resetToken}` },
       });
       if (res.error) {
         let msg = "Edge Function error";
