@@ -1,18 +1,14 @@
-import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes, useLocation, Navigate } from "react-router-dom";
-import { useEffect, useRef } from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
+import { useEffect } from "react";
 import { ThemeProvider } from "next-themes";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { I18nProvider } from "@/lib/i18n";
-import { AuthProvider, useAuthContext } from "@/contexts/AuthContext";
-import { usePresence } from "@/hooks/usePresence";
-import { useFavicon } from "@/hooks/useFavicon";
+import { AuthProvider } from "@/contexts/AuthContext";
 import { GlobalSettingsProvider } from "@/contexts/GlobalSettingsContext";
 import ProtectedRoute from "@/components/admin/ProtectedRoute";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 
 // Existing pages
 import Index from "./pages/Index";
@@ -57,17 +53,9 @@ import UserManagement from "./pages/admin/UserManagement";
 // Sponsor dashboard
 import SponsorDashboard from "./pages/SponsorDashboard";
 
-// CRM
-import CRMDashboard from "./pages/CRMDashboard";
-
 // Institutional pages
 import EcowasParliament from "./pages/EcowasParliament";
 
-// New feature pages
-import DashboardCRM from "./pages/DashboardCRM";
-import EmailPage from "./pages/apps/Email";
-import CustomerListPage from "./pages/apps/CustomerList";
-import AdminSettings from "./pages/admin/Settings";
 import Forbidden from "./pages/Forbidden";
 
 const queryClient = new QueryClient({
@@ -86,92 +74,11 @@ function ScrollToTop() {
   return null;
 }
 
-// ── Global background email watcher ─────────────────────────────────────────
-// Runs always — even when the email tab is NOT open.
-// Uses Supabase Realtime to detect new rows in the emails table and fires
-// both an in-app toast and a browser Push Notification (if permission granted).
-function EmailNotificationWatcher() {
-  const { user } = useAuthContext();
-  const qc = useQueryClient();
-  const { toast } = useToast();
-  const accountIdRef = useRef<string | null>(null);
-
-  // Step 1 — resolve the user's email account id once
+// Redirect /crm to the admin subdomain
+function CrmRedirect() {
   useEffect(() => {
-    if (!user?.id) return;
-    (supabase as any)
-      .from("email_accounts")
-      .select("id")
-      .eq("user_id", user.id)
-      .eq("is_active", true)
-      .maybeSingle()
-      .then(({ data }: any) => {
-        if (data?.id) accountIdRef.current = data.id;
-      });
-  }, [user?.id]);
-
-  // Step 2 — request browser notification permission once user is logged in
-  useEffect(() => {
-    if (!user?.id) return;
-    if ("Notification" in window && Notification.permission === "default") {
-      Notification.requestPermission();
-    }
-  }, [user?.id]);
-
-  // Step 3 — subscribe to new email inserts globally
-  useEffect(() => {
-    if (!user?.id) return;
-
-    const channel = supabase
-      .channel(`global-email-watcher-${user.id}`)
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "emails" },
-        (payload) => {
-          const email = payload.new as any;
-          // Only care about incoming emails (not sent/drafts the user just composed)
-          if (email.folder === "sent" || email.folder === "drafts") return;
-          // Only notify if it belongs to this user's account
-          if (accountIdRef.current && email.account_id !== accountIdRef.current) return;
-
-          const sender = email.from_name || email.from_address || "Someone";
-          const subject = email.subject || "(No subject)";
-
-          // In-app toast notification
-          toast({
-            title: `📩 New email from ${sender}`,
-            description: subject,
-          });
-
-          // Browser Push Notification — works even when tab is in background
-          if ("Notification" in window && Notification.permission === "granted") {
-            try {
-              new Notification(`New email from ${sender}`, {
-                body: subject,
-                icon: "/favicon.png",
-                tag: `email-${email.id}`,   // deduplicates if same email fires twice
-              });
-            } catch { /**/ }
-          }
-
-          // Refresh email list and unread counts in any mounted query
-          qc.invalidateQueries({ queryKey: ["emails"] });
-          qc.invalidateQueries({ queryKey: ["email-unread-counts"] });
-          qc.invalidateQueries({ queryKey: ["email-inbox-unread"] });
-        }
-      )
-      .subscribe();
-
-    return () => { supabase.removeChannel(channel); };
-  }, [user?.id, qc, toast]);
-
-  return null;
-}
-
-function PresenceTracker() {
-  const { user } = useAuthContext();
-  usePresence(user?.id);
-  useFavicon();
+    window.location.replace("https://admin.ecowasparliamentinitiatives.org/crm");
+  }, []);
   return null;
 }
 
@@ -186,8 +93,6 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <ScrollToTop />
-            <PresenceTracker />
-            <EmailNotificationWatcher />
             <Routes>
               {/* Public pages */}
               <Route path="/"                   element={<Index />}          />
@@ -255,52 +160,9 @@ const App = () => (
                 </ProtectedRoute>
               }/>
 
-              {/* CRM — all staff + sponsor roles */}
-              <Route path="/crm" element={
-                <ProtectedRoute allowedRoles={[
-                  "super_admin", "admin", "moderator", "sponsor", "media",
-                   "project_director", "programme_lead", "website_editor",
-                  "marketing_manager", "communications_officer",
-                  "finance_coordinator", "logistics_coordinator",
-                  "sponsor_manager", "consultant",
-                ]} bare>
-                  <CRMDashboard />
-                </ProtectedRoute>
-              }/>
-
-              {/* CRM Analytics Dashboard */}
-              <Route path="/dashboards/crm" element={
-                <ProtectedRoute allowedRoles={["super_admin", "admin", "project_director", "programme_lead"]}>
-                  <DashboardCRM />
-                </ProtectedRoute>
-              }/>
-
-              {/* Email App */}
-              <Route path="/apps/email" element={
-                <ProtectedRoute allowedRoles={["super_admin", "admin", "communications_officer", "marketing_manager", "project_director"]}>
-                  <EmailPage />
-                </ProtectedRoute>
-              }/>
-              <Route path="/apps/email/:folder" element={
-                <ProtectedRoute allowedRoles={["super_admin", "admin", "communications_officer", "marketing_manager", "project_director"]}>
-                  <EmailPage />
-                </ProtectedRoute>
-              }/>
-              <Route path="/apps/email/label/:label" element={
-                <ProtectedRoute allowedRoles={["super_admin", "admin", "communications_officer", "marketing_manager", "project_director"]}>
-                  <EmailPage />
-                </ProtectedRoute>
-              }/>
-
-              {/* Customer Management */}
-              <Route path="/apps/ecommerce/customers" element={
-                <ProtectedRoute allowedRoles={["super_admin", "admin", "sponsor_manager", "project_director"]}>
-                  <CustomerListPage />
-                </ProtectedRoute>
-              }/>
-
-              {/* Super Admin Settings — merged into CRM Super Admin Hub */}
-              <Route path="/admin/settings" element={<Navigate to="/crm?section=super-admin" replace />} />
+              {/* CRM — redirect to admin subdomain */}
+              <Route path="/crm" element={<CrmRedirect />} />
+              <Route path="/crm/*" element={<CrmRedirect />} />
 
               {/* 403 */}
               <Route path="/403" element={<Forbidden />} />
