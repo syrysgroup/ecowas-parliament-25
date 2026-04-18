@@ -1,145 +1,99 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
 Deno.serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
 
   try {
-    // ─────────────────────────────────────────────
-    // 1. Validate Authorization header
-    // ─────────────────────────────────────────────
+    // ── 1. Verify caller is a logged-in user (same pattern as send-email) ──────
     const authHeader = req.headers.get("Authorization");
-
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    if (!authHeader?.startsWith("Bearer ")) {
       return new Response(
-        JSON.stringify({ error: "Missing or invalid Authorization header" }),
+        JSON.stringify({ error: "Unauthorized" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // ─────────────────────────────────────────────
-    // 2. Create client as caller (for auth check)
-    // ─────────────────────────────────────────────
-    const callerClient = createClient(
+    const anonClient = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_ANON_KEY")!,
-      {
-        global: {
-          headers: { Authorization: authHeader },
-        },
-      }
+      { global: { headers: { Authorization: authHeader } } }
     );
 
-    const {
-      data: { user: callerUser },
-      error: callerError,
-    } = await callerClient.auth.getUser();
-
-    if (callerError || !callerUser) {
+    const { data: { user }, error: authErr } = await anonClient.auth.getUser();
+    if (authErr || !user) {
       return new Response(
-        JSON.stringify({ error: "Unauthorized: invalid user" }),
+        JSON.stringify({ error: "Unauthorized" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // ─────────────────────────────────────────────
-    // 3. Check role (SUPER IMPORTANT)
-    // ─────────────────────────────────────────────
-    const callerRole = callerUser.app_metadata?.role;
-
-    const allowedRoles = ["super_admin", "admin"]; // standardize this
-
-    if (!allowedRoles.includes(callerRole)) {
-      return new Response(
-        JSON.stringify({
-          error: `Access denied. Your role '${callerRole}' is not allowed.`,
-        }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // ─────────────────────────────────────────────
-    // 4. Parse request body
-    // ─────────────────────────────────────────────
+    // ── 2. Parse body — role is optional, defaults to "staff" ─────────────────
     const body = await req.json();
-    const { email, role, redirectUrl, metadata } = body;
+    const email: string = body.email?.trim();
+    const role: string  = body.role?.trim() || "staff";
+    const redirectUrl: string =
+      body.redirectUrl ??
+      `${req.headers.get("origin") || "https://admin.ecowasparliamentinitiatives.org"}/set-password`;
+    const metadata = body.metadata ?? {};
 
-    if (!email || !role) {
+    if (!email) {
       return new Response(
-        JSON.stringify({ error: "email and role are required" }),
+        JSON.stringify({ error: "email is required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // ─────────────────────────────────────────────
-    // 5. Create ADMIN client (service role)
-    // ─────────────────────────────────────────────
-    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-
-    if (!serviceKey) {
-      return new Response(
-        JSON.stringify({
-          error: "Missing SUPABASE_SERVICE_ROLE_KEY in environment",
-        }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const adminClient = createClient(
+    // ── 3. Use service role key to invite ─────────────────────────────────────
+    const serviceClient = createClient(
       Deno.env.get("SUPABASE_URL")!,
-      serviceKey
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // ─────────────────────────────────────────────
-    // 6. Invite user
-    // ─────────────────────────────────────────────
-    const { data, error: inviteError } =
-      await adminClient.auth.admin.inviteUserByEmail(email, {
-        redirectTo:
-          redirectUrl ??
-          `${req.headers.get("origin") || "http://localhost:3000"}/set-password`,
+    const { data, error: inviteError } = await serviceClient.auth.admin.inviteUserByEmail(
+      email,
+      {
+        redirectTo: redirectUrl,
         data: {
-          role, // stored in app_metadata
+          role,
           ...metadata,
         },
-      });
+      }
+    );
 
     if (inviteError) {
       console.error("Invite error:", inviteError);
-
       return new Response(
         JSON.stringify({ error: inviteError.message }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // ─────────────────────────────────────────────
-    // 7. Success response
-    // ─────────────────────────────────────────────
+    // ── 4. Seed user_roles table so the app picks up the role immediately ──────
+    if (data?.user?.id) {
+      await serviceClient
+        .from("user_roles")
+        .upsert({ user_id: data.user.id, role }, { onConflict: "user_id" })
+        .then(({ error: roleErr }) => {
+          if (roleErr) console.warn("user_roles upsert warning:", roleErr.message);
+        });
+    }
+
     return new Response(
-      JSON.stringify({
-        success: true,
-        message: "User invited successfully",
-        user: data?.user,
-      }),
+      JSON.stringify({ success: true, message: "Invitation sent" }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
   } catch (err) {
     console.error("Unexpected error:", err);
-
     return new Response(
-      JSON.stringify({
-        error: err instanceof Error ? err.message : "Internal server error",
-      }),
+      JSON.stringify({ error: err instanceof Error ? err.message : "Internal server error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

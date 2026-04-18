@@ -1,82 +1,61 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { AppRole } from "@/contexts/AuthContext";
 
-// ── Types ──────────────────────────────────────────────────────────────────────
-
-export interface InviteUserMetadata {
-  full_name?: string;
-  title?: string;
-  organisation?: string;
-  bio?: string;
-  avatar_url?: string;
-}
-
 export interface InviteUserPayload {
   email: string;
-  role: AppRole;
+  role?: AppRole;          // optional — edge function defaults to "staff"
   redirectUrl?: string;
-  metadata?: InviteUserMetadata;
+  metadata?: {
+    full_name?: string;
+    title?: string;
+    organisation?: string;
+  };
 }
 
 export interface InviteUserResult {
-  actionLink?: string;
+  success: boolean;
 }
-
-// ── Error extraction ───────────────────────────────────────────────────────────
-// Handles three error shapes produced by supabase.functions.invoke():
-//   1. res.error.context.json()  — FunctionsHttpError with a JSON body
-//   2. res.error.message         — network-level or non-JSON edge function error
-//   3. res.data.error            — 2xx response but edge function returned an error field
-
-export async function extractInviteError(
-  res: { error?: unknown; data?: unknown }
-): Promise<string | null> {
-  if (res.error) {
-    const err = res.error as {
-      message?: string;
-      context?: { json?: () => Promise<{ error?: string }> };
-    };
-    let msg: string = err.message ?? "Unknown error";
-    try {
-      const json = await err.context?.json?.();
-      msg = json?.error ?? msg;
-    } catch { /* keep msg */ }
-    return msg;
-  }
-  const body = res.data as { error?: string } | null | undefined;
-  if (body?.error) return body.error;
-  return null;
-}
-
-// ── Public API ─────────────────────────────────────────────────────────────────
 
 export async function inviteUser(payload: InviteUserPayload): Promise<InviteUserResult> {
-  // Verify the session is alive before calling the edge function.
-  // Do NOT extract the token manually — the Supabase JS SDK automatically
-  // attaches both the `Authorization: Bearer <access_token>` header AND the
-  // required `apikey` header when you call functions.invoke().
-  // Passing a manual `headers: { Authorization }` block overrides the SDK's
-  // default header bundle and strips the `apikey` header, which causes a 401.
+  // Confirm we have an active session before calling.
   const { data: sessionData } = await supabase.auth.getSession();
-
   if (!sessionData?.session) {
     throw new Error("Session expired. Please reload and log in again.");
   }
 
-  const res = await supabase.functions.invoke("invite-user", {
+  // functions.invoke() automatically attaches Authorization + apikey from
+  // the active session — do NOT pass a custom headers block.
+  const { data, error } = await supabase.functions.invoke("invite-user", {
     body: {
-      email: payload.email,
-      role: payload.role,
-      redirectUrl: payload.redirectUrl ?? `${window.location.origin}/set-password`,
+      email: payload.email.trim(),
+      role: payload.role ?? "staff",
+      redirectUrl:
+        payload.redirectUrl ?? `${window.location.origin}/set-password`,
       ...(payload.metadata ? { metadata: payload.metadata } : {}),
     },
-    // ✅ No custom `headers` here — the SDK injects Authorization + apikey
-    //    automatically from the active session.
   });
 
-  const errorMsg = await extractInviteError(res);
-  if (errorMsg) throw new Error(errorMsg);
+  // Unwrap edge-function-level errors (returned as 4xx with JSON body)
+  if (error) {
+    // FunctionsHttpError carries the response body in error.context
+    const ctx = (error as any)?.context;
+    if (ctx?.json) {
+      try {
+        const json = await ctx.json();
+        throw new Error(json?.error ?? error.message ?? "Invite failed");
+      } catch (parseErr) {
+        if (parseErr instanceof Error && parseErr.message !== error.message) {
+          throw parseErr;
+        }
+      }
+    }
+    throw new Error((error as any).message ?? "Invite failed");
+  }
 
-  const body = res.data as { actionLink?: string } | null | undefined;
-  return { actionLink: body?.actionLink };
+  // Unwrap application-level errors (2xx but function returned { error: "..." })
+  if (data?.error) {
+    throw new Error(data.error);
+  }
+
+  return { success: true };
 }
