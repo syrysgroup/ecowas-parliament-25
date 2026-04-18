@@ -79,13 +79,13 @@ function SidebarContent({
         ${showLabels ? "min-h-[72px] px-3 justify-between" : "h-16 px-2 justify-center"}
       `}>
         {showLabels ? (
-          /* Expanded: prominent ECOWAS Parliament branding */
+          /* Expanded: prominent ECOWAS Parliament Initiatives branding */
           <div className="flex items-center gap-3 min-w-0 flex-1 py-3">
             {/* White background logo container — ECOWAS logo requires white bg */}
             <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-white shadow-[0_2px_12px_rgba(0,0,0,0.18)] border border-black/8 flex items-center justify-center overflow-hidden">
               <img
                 src="/images/logo/logo.png"
-                alt="ECOWAS Parliament"
+                alt="ECOWAS Parliament Initiatives"
                 className="w-9 h-9 object-contain"
                 onError={(e) => {
                   const el = e.target as HTMLImageElement;
@@ -97,7 +97,7 @@ function SidebarContent({
             </div>
             <div className="min-w-0">
               <span className="text-[12.5px] font-bold text-foreground block leading-tight truncate">
-                ECOWAS Parliament
+                ECOWAS Parliament Initiatives
               </span>
               <span className="text-[10px] text-muted-foreground block leading-tight truncate">
                 25th Anniversary Initiative

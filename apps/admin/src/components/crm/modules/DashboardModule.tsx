@@ -181,7 +181,7 @@ function WelcomeBanner({ name, onNavigate, roles, isSuperAdmin, isAdmin }: {
 
       <div className="relative z-10 flex flex-col md:flex-row md:items-center gap-4">
         <div className="flex items-center gap-3 md:gap-4 shrink-0">
-          <img src="/images/logo/logo.png" alt="ECOWAS Parliament" className="h-14 md:h-16 object-contain drop-shadow-lg" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+          <img src="/images/logo/logo.png" alt="ECOWAS Parliament Initiatives" className="h-14 md:h-16 object-contain drop-shadow-lg" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
           <div className="h-10 w-px bg-primary-foreground/20 hidden md:block" />
         </div>
 

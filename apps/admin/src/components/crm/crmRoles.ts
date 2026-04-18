@@ -80,6 +80,16 @@ export const CRM_ROLE_META: Record<AppRole, RoleMeta> = {
     colour: "text-cyan-400", bgColour: "bg-cyan-950", borderColour: "border-cyan-700",
     tier: 3,
   },
+  budget_officer: {
+    label: "Budget Officer", shortLabel: "BO",
+    colour: "text-lime-400", bgColour: "bg-lime-950", borderColour: "border-lime-700",
+    tier: 2,
+  },
+  staff: {
+    label: "Staff", shortLabel: "ST",
+    colour: "text-slate-400", bgColour: "bg-slate-950", borderColour: "border-slate-700",
+    tier: 3,
+  },
 };
 
 // All roles that get full CRM staff access (not sponsor-only)
@@ -87,14 +97,17 @@ export const CRM_STAFF_ROLES: AppRole[] = [
   "super_admin", "admin", "moderator", "project_director", "programme_lead",
   "website_editor", "marketing_manager", "communications_officer",
   "finance_coordinator", "logistics_coordinator", "sponsor_manager", "consultant",
+  "budget_officer", "staff",
 ];
 
 // Roles that can create/manage tasks
 export const TASK_CREATE_ROLES: AppRole[] = [
   "super_admin", "admin", "project_director", "programme_lead", "logistics_coordinator",
+  "budget_officer",
 ];
 
 // Roles that can create calendar events
 export const CALENDAR_CREATE_ROLES: AppRole[] = [
   "super_admin", "admin", "project_director", "programme_lead", "logistics_coordinator",
+  "budget_officer",
 ];

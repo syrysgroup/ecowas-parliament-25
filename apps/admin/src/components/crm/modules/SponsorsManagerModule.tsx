@@ -242,7 +242,7 @@ function SponsorDialog({ open, onClose, sponsor }: { open: boolean; onClose: () 
           <div className="flex items-center justify-between bg-crm-surface border border-crm-border rounded-lg px-3 py-2">
             <div>
               <p className="text-[12px] text-crm-text">Sponsor of ECOWAS Parliament Initiatives</p>
-              <p className="text-[10px] text-crm-text-dim mt-0.5">Mark this sponsor as supporting ECOWAS Parliament directly</p>
+              <p className="text-[10px] text-crm-text-dim mt-0.5">Mark this sponsor as supporting ECOWAS Parliament Initiatives directly</p>
             </div>
             <Switch checked={isEcowas} onCheckedChange={setIsEcowas} />
           </div>

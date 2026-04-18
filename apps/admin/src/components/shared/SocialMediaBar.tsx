@@ -45,7 +45,7 @@ const SocialMediaBar = ({ variant = "full", showParliamentLink = true, className
       </div>
       {showParliamentLink && variant === "full" && (
         <p className="text-xs text-muted-foreground mt-2">
-          Official ECOWAS Parliament:{" "}
+          Official ECOWAS Parliament Initiatives:{" "}
           <a href="https://parl.ecowas.int" target="_blank" rel="noreferrer" className="underline hover:text-primary">
             parl.ecowas.int
           </a>

@@ -89,6 +89,7 @@ const ALL_STAFF: AppRole[] = [
   "super_admin", "admin", "moderator", "project_director", "programme_lead",
   "website_editor", "marketing_manager", "communications_officer",
   "finance_coordinator", "logistics_coordinator", "sponsor_manager", "consultant",
+  "budget_officer", "staff",
 ];
 
 const TIER_2_AND_SPONSOR: AppRole[] = [...ALL_STAFF, "sponsor"];

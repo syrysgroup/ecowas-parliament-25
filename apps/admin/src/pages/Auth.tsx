@@ -164,12 +164,12 @@ export default function Auth() {
           <div className="bg-white backdrop-blur-sm rounded-3xl p-6 lg:p-10 border border-primary-foreground/10">
             <img
               src={ecowasLogo}
-              alt="ECOWAS Parliament"
+              alt="ECOWAS Parliament Initiatives"
               className="h-24 sm:h-32 lg:h-44 xl:h-52 w-auto drop-shadow-2xl"
             />
           </div>
           <h1 className="mt-6 text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-black text-primary-foreground tracking-tight">
-            ECOWAS Parliament Initiative
+            ECOWAS Parliament Initiatives
           </h1>
           <p className="mt-2 text-sm lg:text-base text-primary-foreground/70 max-w-xs lg:max-w-sm">
             ECOWAS of the Peoples: Peace and Prosperity for All

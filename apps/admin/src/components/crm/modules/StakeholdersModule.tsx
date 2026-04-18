@@ -90,7 +90,7 @@ function StakeholderDialog({ open, onClose, stakeholder }: { open: boolean; onCl
           <div className="space-y-1">
             <Label className="text-[11px] text-crm-text-dim">Title / Role</Label>
             <Input value={title} onChange={e => setTitle(e.target.value)}
-              placeholder="Speaker of the ECOWAS Parliament"
+              placeholder="Speaker of the ECOWAS Parliament Initiatives"
               className="bg-crm-surface border-crm-border text-crm-text text-xs h-8" />
           </div>
           <div className="grid grid-cols-2 gap-3">

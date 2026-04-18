@@ -1,5 +1,5 @@
 /**
- * CRMTour — Role-aware guided tour for the ECOWAS Parliament CRM.
+ * CRMTour — Role-aware guided tour for the ECOWAS Parliament Initiatives CRM.
  */
 
 import { useEffect, useCallback, useRef } from "react";
@@ -27,7 +27,7 @@ interface TourStep {
 
 const STEPS: TourStep[] = [
   {
-    title: "Welcome to the ECOWAS Parliament CRM 🌍",
+    title: "Welcome to the ECOWAS Parliament Initiatives CRM 🌍",
     text: "This guided tour introduces your workspace. Use the buttons below to move through each step.",
     placement: "center",
   },

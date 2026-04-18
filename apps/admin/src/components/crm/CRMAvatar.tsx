@@ -1,5 +1,5 @@
 /**
- * CRMAvatar — Universal avatar component for the ECOWAS Parliament CRM.
+ * CRMAvatar — Universal avatar component for the ECOWAS Parliament Initiatives CRM.
  *
  * Features:
  *  - Photo or initials fallback with deterministic colour

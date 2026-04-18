@@ -82,10 +82,10 @@ export default function SetPassword() {
       <div className="hidden lg:flex lg:w-1/2 flex-col items-center justify-center p-12 gap-8">
         <div className="bg-white/10 backdrop-blur-sm rounded-3xl p-10 flex flex-col items-center gap-6 border border-white/20">
           <div className="bg-white rounded-full p-4 shadow-2xl">
-            <img src={ecowasLogo} alt="ECOWAS Parliament Initiative" className="h-20 w-20 object-contain" width={80} height={80} decoding="async" fetchPriority="high" />
+            <img src={ecowasLogo} alt="ECOWAS Parliament Initiatives" className="h-20 w-20 object-contain" width={80} height={80} decoding="async" fetchPriority="high" />
           </div>
           <div className="text-center">
-            <h1 className="text-3xl font-black text-white tracking-tight">ECOWAS Parliament Initiative</h1>
+            <h1 className="text-3xl font-black text-white tracking-tight">ECOWAS Parliament Initiatives</h1>
             <p className="text-white/70 mt-2 text-sm font-medium">CRM Portal — Account Setup</p>
           </div>
           <div className="w-16 h-0.5 bg-white/30 rounded" />
@@ -120,7 +120,7 @@ export default function SetPassword() {
           {/* Mobile logo */}
           <div className="flex justify-center mb-8 lg:hidden">
             <div className="bg-white rounded-full p-3 shadow-xl">
-              <img src={ecowasLogo} alt="ECOWAS Parliament Initiative" className="h-12 w-12 object-contain" width={48} height={48} decoding="async" fetchPriority="high" />
+              <img src={ecowasLogo} alt="ECOWAS Parliament Initiatives" className="h-12 w-12 object-contain" width={48} height={48} decoding="async" fetchPriority="high" />
             </div>
           </div>
 
@@ -261,7 +261,7 @@ export default function SetPassword() {
           </div>
 
           <p className="text-white/30 text-[10px] text-center mt-6">
-            © {new Date().getFullYear()} ECOWAS Parliament Initiative. All rights reserved.
+            © {new Date().getFullYear()} ECOWAS Parliament Initiatives. All rights reserved.
           </p>
         </div>
       </div>

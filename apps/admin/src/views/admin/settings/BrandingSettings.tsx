@@ -16,7 +16,7 @@ const BrandingSettings = () => {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const branding = settings.branding as { primary_color?: string; logo_url?: string; favicon_url?: string } ?? {};
-  const appName = settings.app_name as string ?? "ECOWAS Parliament CRM";
+  const appName = settings.app_name as string ?? "ECOWAS Parliament Initiatives CRM";
 
   const [name, setName] = useState(appName);
   const [color, setColor] = useState(branding.primary_color ?? "#008000");

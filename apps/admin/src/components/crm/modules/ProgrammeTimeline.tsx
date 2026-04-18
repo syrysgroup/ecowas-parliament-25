@@ -131,7 +131,7 @@ const PILLARS: PillarTimeline[] = [
       { id: "p1", title: "Country Nominations", description: "Each of 15 member states nominates 5 young delegates.", date: "Jan 2026", status: "complete", kpi: "75 delegates nominated" },
       { id: "p2", title: "Pre-Parliament Training", description: "Virtual orientation on parliamentary procedure and debate.", date: "Feb 2026", status: "complete", deliverable: "Training Certificates" },
       { id: "p3", title: "Agenda Setting", description: "Delegates propose and vote on bills for the parliamentary session.", date: "Mar 2026", status: "complete", deliverable: "Agenda Document" },
-      { id: "p4", title: "Parliamentary Session", description: "3-day youth parliament session in the ECOWAS Parliament chamber.", date: "Apr 2026", status: "active", deliverable: "Hansard Record", kpi: "Live-streamed to 50,000+ viewers" },
+      { id: "p4", title: "Parliamentary Session", description: "3-day youth parliament session in the ECOWAS Parliament Initiatives chamber.", date: "Apr 2026", status: "active", deliverable: "Hansard Record", kpi: "Live-streamed to 50,000+ viewers" },
       { id: "p5", title: "Communiqué & Resolutions", description: "Formal adoption and publication of youth parliament resolutions.", date: "Apr 2026", status: "upcoming", deliverable: "Resolutions Document" },
       { id: "p6", title: "Legacy Programme", description: "Connect alumni into a regional youth governance network.", date: "Jun 2026", status: "upcoming", deliverable: "Network Launch" },
     ],

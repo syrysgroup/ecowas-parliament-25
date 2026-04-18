@@ -25,7 +25,9 @@ export type AppRole =
   | "finance_coordinator"
   | "logistics_coordinator"
   | "sponsor_manager"
-  | "consultant";
+  | "consultant"
+  | "budget_officer"
+  | "staff";
 
 export interface AuthContextValue {
   user:                 User | null;
@@ -41,6 +43,8 @@ export interface AuthContextValue {
   isProjectDirector:    boolean;
   isFinanceCoordinator: boolean;
   isSponsorManager:     boolean;
+  isBudgetOfficer:      boolean;
+  isStaff:              boolean;
   hasRole:              (role: AppRole) => boolean;
   signOut:              () => Promise<void>;
   refreshRoles:         () => Promise<void>;
@@ -61,6 +65,8 @@ const CRM_STAFF_ROLES: AppRole[] = [
   "logistics_coordinator",
   "sponsor_manager",
   "consultant",
+  "budget_officer",
+  "staff",
 ];
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -151,6 +157,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isProjectDirector  = hasRole("project_director") || isAdmin;
   const isFinanceCoordinator = hasRole("finance_coordinator") || isSuperAdmin;
   const isSponsorManager   = hasRole("sponsor_manager") || isSuperAdmin;
+  const isBudgetOfficer    = hasRole("budget_officer") || isSuperAdmin;
+  const isStaff            = hasRole("staff");
 
   const signOut = async () => {
     await supabase.auth.signOut();
@@ -161,6 +169,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user, session, roles, loading, rolesLoading,
     isSuperAdmin, isAdmin, isModerator, isSponsor,
     isCRMStaff, isProjectDirector, isFinanceCoordinator, isSponsorManager,
+    isBudgetOfficer, isStaff,
     hasRole, signOut, refreshRoles,
   };
 

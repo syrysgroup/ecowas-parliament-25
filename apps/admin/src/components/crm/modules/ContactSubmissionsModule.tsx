@@ -39,7 +39,7 @@ function buildMailtoLink(s: Submission): string {
   // Message format from Contact.tsx: "[enquiryType] Subject\nMessage body"
   const prefixMatch = s.message?.match(/^\[([^\]]+)\]\s*/);
   const enquiryType = prefixMatch?.[1] ?? "Enquiry";
-  const subjectLine = `Re: Your ${enquiryType} Enquiry – ECOWAS Parliament`;
+  const subjectLine = `Re: Your ${enquiryType} Enquiry – ECOWAS Parliament Initiatives`;
   const date = format(parseISO(s.created_at), "d MMMM yyyy 'at' HH:mm");
   const body = [
     `Dear ${s.name ?? "Sir/Madam"},`,

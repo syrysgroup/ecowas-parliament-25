@@ -2372,6 +2372,8 @@ export type Database = {
         | "logistics_coordinator"
         | "sponsor_manager"
         | "consultant"
+        | "budget_officer"
+        | "staff"
     }
     CompositeTypes: {
       [_ in never]: never

@@ -146,7 +146,7 @@ const SECTION_TEMPLATES: Record<string, { label: string; fields: { key: string; 
     label: "Anniversary Section — Stats Grid",
     fields: [
       { key: "stat1_value", label: "Stat 1 Value (e.g. 25)", type: "text" },
-      { key: "stat1_label", label: "Stat 1 Label (e.g. Years of ECOWAS Parliament)", type: "text" },
+      { key: "stat1_label", label: "Stat 1 Label (e.g. Years of ECOWAS Parliament Initiatives)", type: "text" },
       { key: "stat2_value", label: "Stat 2 Value (e.g. 12)", type: "text" },
       { key: "stat2_label", label: "Stat 2 Label", type: "text" },
       { key: "stat3_value", label: "Stat 3 Value (e.g. 7)", type: "text" },

@@ -12,7 +12,7 @@ type Props = {
   alt?: string;
 };
 
-export default function AppLogo({ size = "md", variant = "auto", alt = "ECOWAS Parliament" }: Props) {
+export default function AppLogo({ size = "md", variant = "auto", alt = "ECOWAS Parliament Initiatives" }: Props) {
   const { width, height, className } = sizeMap[size];
   const src =
     variant === "dark"

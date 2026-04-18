@@ -235,7 +235,7 @@ function EmailConfigTab({ userId }: { userId?: string }) {
       setImapPort(String(smtp.imap_port ?? 993));
       setSslEnabled(smtp.ssl_enabled !== false);
       setUsername(smtp.username ?? "");
-      setFromName(smtp.from_name ?? "ECOWAS Parliament CRM");
+      setFromName(smtp.from_name ?? "ECOWAS Parliament Initiatives CRM");
       setFromEmail(smtp.from_email ?? "noreply@ecowas.int");
     }
   }, [smtp]);
@@ -563,7 +563,7 @@ function BrandingTab({ userId }: { userId?: string }) {
           <div className="flex-1 space-y-3">
             <div className="space-y-1.5">
               <Label className="text-[11px] text-crm-text-muted">Site Name</Label>
-              <Input value={values.site_name ?? ""} onChange={e => set("site_name", e.target.value)} className={inputCls} placeholder="ECOWAS Parliament 25th Anniversary" />
+              <Input value={values.site_name ?? ""} onChange={e => set("site_name", e.target.value)} className={inputCls} placeholder="ECOWAS Parliament Initiatives 25th Anniversary" />
             </div>
             <div className="space-y-1.5">
               <Label className="text-[11px] text-crm-text-muted">Logo URL (or upload above)</Label>
@@ -733,7 +733,7 @@ function BrandingTab({ userId }: { userId?: string }) {
               )}
               <div className="p-3 bg-crm-surface">
                 <p className="text-[10px] text-crm-text-dim uppercase tracking-wider mb-0.5">ecowasparliamentinitiatives.org</p>
-                <p className="text-[12px] font-semibold text-crm-text truncate">{values.site_name || "ECOWAS Parliament"}</p>
+                <p className="text-[12px] font-semibold text-crm-text truncate">{values.site_name || "ECOWAS Parliament Initiatives"}</p>
                 <p className="text-[11px] text-crm-text-muted mt-0.5 line-clamp-2">{values.og_description || "No description set."}</p>
               </div>
             </div>
@@ -1082,7 +1082,7 @@ function TeamMembersTab() {
               {[
                 { key: "full_name", label: "Full Name *", placeholder: "Dr. Amina Ibrahim" },
                 { key: "title", label: "Title / Role", placeholder: "Secretary General" },
-                { key: "organisation", label: "Organisation", placeholder: "ECOWAS Parliament" },
+                { key: "organisation", label: "Organisation", placeholder: "ECOWAS Parliament Initiatives" },
               ].map(({ key, label, placeholder }) => (
                 <div key={key} className="space-y-1.5">
                   <Label className="text-[11px] text-crm-text-muted">{label}</Label>
@@ -3012,7 +3012,7 @@ export default function SuperAdminModule({ onNavigate }: { onNavigate?: (s: stri
                     value={globalSettings.app_name ?? ""}
                     onChange={e => setGlobalSettings(prev => ({ ...prev, app_name: e.target.value }))}
                     className="bg-crm-surface border-crm-border text-crm-text text-[12px] h-9 flex-1"
-                    placeholder="ECOWAS Parliament CRM"
+                    placeholder="ECOWAS Parliament Initiatives CRM"
                   />
                   <Button size="sm" onClick={() => saveGlobalSetting("app_name", globalSettings.app_name ?? "")}
                     className="text-[11px] h-9 gap-1.5">
@@ -3117,7 +3117,7 @@ export default function SuperAdminModule({ onNavigate }: { onNavigate?: (s: stri
             </h3>
             <div className="space-y-2">
               {[
-                { label:"Platform",      value:"ECOWAS Parliament 25th Anniversary" },
+                { label:"Platform",      value:"ECOWAS Parliament Initiatives 25th Anniversary" },
                 { label:"Auth provider", value:"Supabase (email + password)"        },
                 { label:"Role system",   value:"PostgreSQL ENUM + RLS policies"     },
                 { label:"Invite method", value:"Supabase Edge Function — invite-user"},
