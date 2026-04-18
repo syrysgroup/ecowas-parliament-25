@@ -147,6 +147,7 @@ export const CRM_MODULES: CRMModule[] = [
       "super_admin", "admin", "project_director", "programme_lead",
       "website_editor", "communications_officer", "finance_coordinator",
       "logistics_coordinator", "sponsor_manager", "moderator", "consultant",
+      "budget_officer", "staff",
     ],
     isStub: false,
     group: "WORKSPACE",
