@@ -42,8 +42,8 @@ const EMPTY_EMAIL_SETTINGS: UserEmailSettings = {
 const ADMIN_ASSIGNABLE_ROLES: AppRole[] = [
   "admin", "moderator", "project_director", "programme_lead",
   "website_editor", "marketing_manager", "communications_officer",
-  "finance_coordinator", "logistics_coordinator", "sponsor_manager",
-  "consultant", "sponsor",
+  "finance_coordinator", "budget_officer", "logistics_coordinator", "sponsor_manager",
+  "consultant", "staff", "sponsor",
 ];
 const SUPER_ADMIN_ASSIGNABLE_ROLES: AppRole[] = ["super_admin", ...ADMIN_ASSIGNABLE_ROLES];
 

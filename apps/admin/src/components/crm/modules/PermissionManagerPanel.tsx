@@ -19,8 +19,8 @@ export const PERM_MODULES = [
 export const PERM_ROLES = [
   "admin", "moderator", "project_director", "programme_lead",
   "website_editor", "marketing_manager", "communications_officer",
-  "finance_coordinator", "logistics_coordinator", "sponsor_manager",
-  "consultant", "sponsor", "media",
+  "finance_coordinator", "budget_officer", "logistics_coordinator", "sponsor_manager",
+  "consultant", "staff", "sponsor", "media",
 ] as const;
 
 export const ACTIONS = ["can_view", "can_create", "can_edit", "can_delete"] as const;

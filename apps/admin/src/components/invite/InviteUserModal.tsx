@@ -16,8 +16,8 @@ import { useToast } from "@/hooks/use-toast";
 const SUPER_ADMIN_ASSIGNABLE_ROLES: AppRole[] = [
   "super_admin", "admin", "moderator", "project_director", "programme_lead",
   "website_editor", "marketing_manager", "communications_officer",
-  "finance_coordinator", "logistics_coordinator", "sponsor_manager",
-  "consultant", "sponsor", "media",
+  "finance_coordinator", "budget_officer", "logistics_coordinator", "sponsor_manager",
+  "consultant", "staff", "sponsor", "media",
 ];
 
 export interface InviteUserModalProps {
