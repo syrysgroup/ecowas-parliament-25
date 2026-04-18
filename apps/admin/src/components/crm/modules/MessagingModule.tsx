@@ -94,6 +94,15 @@ function relTime(iso: string) {
   return format(d, "dd/MM/yy");
 }
 
+function formatPresence(info: { online: boolean; last_seen_at: string } | undefined): string {
+  if (!info) return "Offline";
+  if (info.online) return "Online";
+  const d = parseISO(info.last_seen_at);
+  if (isToday(d))     return `Last seen today at ${format(d, "h:mm a")}`;
+  if (isYesterday(d)) return `Last seen yesterday at ${format(d, "h:mm a")}`;
+  return `Last seen ${format(d, "d MMM 'at' h:mm a")}`;
+}
+
 function dayLabel(iso: string) {
   const d = parseISO(iso);
   if (isToday(d)) return "Today";
@@ -173,8 +182,8 @@ function renderMentions(body: string): React.ReactNode {
   });
 }
 
-function Bubble({ msg, isOwn, showSender, onAvatarClick }: {
-  msg: Message; isOwn: boolean; showSender: boolean; onAvatarClick?: () => void;
+function Bubble({ msg, isOwn, showSender, onAvatarClick, isSending = false }: {
+  msg: Message; isOwn: boolean; showSender: boolean; onAvatarClick?: () => void; isSending?: boolean;
 }) {
   return (
     <div className={`flex items-end gap-2 ${isOwn ? "flex-row-reverse" : ""} group`}>
@@ -218,11 +227,13 @@ function Bubble({ msg, isOwn, showSender, onAvatarClick }: {
         <div className={`flex items-center gap-1 mt-0.5 px-1 ${isOwn ? "flex-row-reverse" : ""}`}>
           <span className="text-[9px] text-crm-text-faint">{format(parseISO(msg.sent_at), "h:mm a")}</span>
           {isOwn && (
-            msg.read_at
-              ? <CheckCheck size={11} className="text-emerald-400" />
-              : msg.delivered_at
-                ? <CheckCheck size={11} className="text-crm-text-faint" />
-                : <Check size={11} className="text-crm-text-faint" />
+            isSending
+              ? <Check size={11} className="text-crm-text-faint" title="Sending…" />
+              : msg.read_at
+                ? <CheckCheck size={11} className="text-blue-400" title="Seen" />
+                : msg.delivered_at
+                  ? <CheckCheck size={11} className="text-crm-text-faint" title="Delivered" />
+                  : <Check size={11} className="text-crm-text-faint" title="Sent" />
           )}
         </div>
       </div>
@@ -699,6 +710,7 @@ export default function MessagingModule() {
   const [view, setView] = useState<ChatView | null>(null);
   const [body, setBody] = useState("");
   const [sending, setSending] = useState(false);
+  const [optimisticMsg, setOptimisticMsg] = useState<Message | null>(null);
   const [mentionQuery, setMentionQuery] = useState("");
   const [showMentions, setShowMentions] = useState(false);
   const [search, setSearch] = useState("");
@@ -880,23 +892,35 @@ export default function MessagingModule() {
   const handleSend = async () => {
     if (!body.trim() || !user?.id || !view) return;
     setSending(true);
+    // Optimistic bubble — shows single grey tick while insert is in flight
+    const trimmedBody = body.trim();
+    setOptimisticMsg({
+      id: `opt-${Date.now()}`,
+      sender_id: user.id,
+      body: trimmedBody,
+      sent_at: new Date().toISOString(),
+    });
+    setBody("");
+    setShowMentions(false);
     try {
       if (view.type === "group") {
-        await (supabase as any).from("channel_messages").insert({ channel_id: view.id, sender_id: user.id, body: body.trim() });
+        await (supabase as any).from("channel_messages").insert({ channel_id: view.id, sender_id: user.id, body: trimmedBody });
         qc.invalidateQueries({ queryKey: ["messages", "group", view.id] });
       } else {
-        await (supabase as any).from("direct_messages").insert({ sender_id: user.id, recipient_id: view.peerId, body: body.trim() });
+        await (supabase as any).from("direct_messages").insert({ sender_id: user.id, recipient_id: view.peerId, body: trimmedBody });
         qc.invalidateQueries({ queryKey: ["messages", "dm", view.peerId] });
         qc.invalidateQueries({ queryKey: ["dm-conversations"] });
         sendNotification(view.peerId, "new_message", {
           sender: user.user_metadata?.full_name ?? user.email ?? "Someone",
         });
       }
-      setBody("");
-      setShowMentions(false);
     } catch (err: any) {
+      setBody(trimmedBody); // restore body on error
       toast({ title: "Send failed", description: err.message, variant: "destructive" });
-    } finally { setSending(false); }
+    } finally {
+      setSending(false);
+      setOptimisticMsg(null);
+    }
   };
 
   const handleLeaveGroup = async () => {
@@ -1036,7 +1060,14 @@ export default function MessagingModule() {
                         {item.time && <span className="text-[10px] text-crm-text-faint shrink-0">{item.time}</span>}
                       </div>
                       <div className="flex items-center justify-between gap-1">
-                        <p className="text-[11px] text-crm-text-faint truncate">{item.sub}</p>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[11px] text-crm-text-faint truncate">{item.sub}</p>
+                          {!item.online && presence[item.id]?.last_seen_at && (
+                            <p className="text-[9px] text-crm-text-faint/70 truncate mt-0.5">
+                              {formatPresence(presence[item.id])}
+                            </p>
+                          )}
+                        </div>
                         {(item.unread ?? 0) > 0 && (
                           <span className="shrink-0 min-w-[18px] h-[18px] rounded-full bg-emerald-600 text-white text-[9px] font-bold flex items-center justify-center px-1">
                             {item.unread}
@@ -1105,7 +1136,7 @@ export default function MessagingModule() {
                   <p className="text-[10px] text-crm-text-faint">
                     {view.type === "group"
                       ? `${members.length} members${groupTasks.filter(t => t.status !== "done").length > 0 ? ` · ${groupTasks.filter(t => t.status !== "done").length} open task${groupTasks.filter(t => t.status !== "done").length > 1 ? "s" : ""}` : ""}`
-                      : presence[activeDmPeer?.peerId ?? ""]?.online ? "Online" : "Offline"
+                      : formatPresence(presence[activeDmPeer?.peerId ?? ""])
                     }
                   </p>
                 </div>
@@ -1145,9 +1176,20 @@ export default function MessagingModule() {
                     </div>
                   </div>
                 ))}
-                {messages.length === 0 && (
+                {messages.length === 0 && !optimisticMsg && (
                   <div className="flex flex-col items-center justify-center h-40 gap-2 text-center">
                     <p className="text-[12px] text-crm-text-faint">No messages yet. Say hello! 👋</p>
+                  </div>
+                )}
+                {/* Optimistic message — single tick while insert is in flight */}
+                {optimisticMsg && (
+                  <div className="mt-1.5">
+                    <Bubble
+                      msg={optimisticMsg}
+                      isOwn={true}
+                      showSender={false}
+                      isSending={true}
+                    />
                   </div>
                 )}
                 <div ref={endRef} />

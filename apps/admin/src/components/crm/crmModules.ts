@@ -351,7 +351,7 @@ export const CRM_MODULES: CRMModule[] = [
     label: "Contact Forms",
     icon: Contact,
     section: "contact-submissions",
-    allowedRoles: ["super_admin", "admin"],
+    allowedRoles: ALL_STAFF,
     isStub: false,
     group: "MARKETING",
   },
