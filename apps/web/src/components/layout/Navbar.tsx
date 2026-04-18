@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Menu, X, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,18 @@ const Navbar = () => {
   const [langOpen, setLangOpen] = useState(false);
   const dropTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const langTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const navRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (navRef.current && !navRef.current.contains(e.target as Node)) {
+        setOpenDrop(null);
+        setLangOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
   const navLinks = [
     { label: t("nav.home"), to: "/" },
@@ -95,7 +107,7 @@ const Navbar = () => {
           </Link>
 
           {/* Desktop nav */}
-          <div className="hidden xl:flex items-center gap-1">
+          <div ref={navRef} className="hidden xl:flex items-center gap-1">
             {navLinks.map((link) => {
               if (!link.children) {
                 return (
@@ -128,6 +140,7 @@ const Navbar = () => {
                   }}
                 >
                   <button
+                    onClick={() => setOpenDrop(v => v === link.label ? null : link.label)}
                     className={`flex items-center gap-1 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
                       link.children.some(c => isActive(c.to))
                         ? "text-primary bg-primary/8"
@@ -143,6 +156,7 @@ const Navbar = () => {
                         <Link
                           key={child.to}
                           to={child.to}
+                          onClick={() => setOpenDrop(null)}
                           className={`block px-3 py-2 text-sm rounded-lg transition-colors ${
                             isActive(child.to)
                               ? "text-primary bg-primary/5"

@@ -87,6 +87,8 @@ const ROLE_CONFIG: Partial<Record<AppRole, {
   logistics_coordinator:{ label:"Logistics Coordinator",icon:Settings, badge:"text-cyan-400 bg-cyan-950 border-cyan-800",        desc:"Coordinates 15-country delegation logistics, events, and task assignments." },
   sponsor_manager:      { label:"Sponsor Manager",      icon:Handshake,badge:"text-amber-400 bg-amber-950 border-amber-800",     desc:"Manages all sponsor and partner relationships, metrics, and documents." },
   consultant:           { label:"Consultant",           icon:Clock,    badge:"text-slate-400 bg-slate-900 border-slate-700",      desc:"Time-limited access to assigned tasks and linked documents only. Auto-expires." },
+  budget_officer:       { label:"Budget Officer",       icon:Activity, badge:"text-lime-400 bg-lime-950 border-lime-800",           desc:"Manages budget tracking and financial oversight." },
+  staff:                { label:"Staff",                icon:Users,    badge:"text-zinc-400 bg-zinc-900 border-zinc-700",            desc:"General staff access — baseline permissions across the CRM." },
 };
 
 // ─── Routes map ───────────────────────────────────────────────────────────────
@@ -1481,12 +1483,26 @@ export default function SuperAdminModule({ onNavigate }: { onNavigate?: (s: stri
   };
 
   // ── Revoke / delete invitation ────────────────────────────────────────────
-  const revokeInvitation = async (invId: string, isAccepted: boolean) => {
-    const label = isAccepted ? "Delete this accepted invitation?" : "Revoke this pending invitation?";
-    if (!confirm(label)) return;
+  const revokeInvitation = async (invId: string) => {
+    if (!confirm("Revoke this pending invitation?")) return;
     try {
-      await (supabase as any).from("invitations").delete().eq("id", invId);
-      toast({ title: isAccepted ? "Invitation deleted" : "Invitation revoked" });
+      const { data: rd, error: re } = await supabase.auth.refreshSession();
+      const token = rd?.session?.access_token;
+      if (re || !token) {
+        toast({ title: "Session expired", description: "Please reload and log in again.", variant: "destructive" });
+        return;
+      }
+      const res = await supabase.functions.invoke("delete-invite", {
+        body: { invitation_ids: [invId] },
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.error) {
+        let msg = "Edge Function error";
+        try { msg = (await (res.error as any).context?.json?.())?.error ?? res.error.message; } catch { msg = res.error.message; }
+        throw new Error(msg);
+      }
+      if (res.data?.error) throw new Error(res.data.error);
+      toast({ title: "Invitation revoked" });
       loadData();
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
@@ -2688,7 +2704,7 @@ export default function SuperAdminModule({ onNavigate }: { onNavigate?: (s: stri
                                 );
                               })()}
                               <button
-                                onClick={() => revokeInvitation(inv.id, !!inv.accepted_at)}
+                                onClick={() => revokeInvitation(inv.id)}
                                 className="text-crm-text-faint hover:text-red-400 p-1 transition-colors"
                                 title="Revoke invitation"
                               >

@@ -1,12 +1,10 @@
 import { useEffect, useState } from "react";
-import { ChevronLeft, ChevronRight, LogOut, Menu } from "lucide-react";
+import { ChevronLeft, ChevronRight, LogOut } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { getModulesForRoles, MODULE_GROUPS, type ModuleGroup } from "./crmModules";
 import { CRM_ROLE_META } from "./crmRoles";
 import { supabase } from "@/integrations/supabase/client";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 const STORAGE_KEY = "crm_sidebar_collapsed";
 
@@ -20,15 +18,11 @@ function SidebarContent({
   onNavigate,
   collapsed,
   setCollapsed,
-  isMobile,
-  onItemClick,
 }: {
   activeSection: string;
   onNavigate: (section: string) => void;
   collapsed: boolean;
   setCollapsed: (v: boolean) => void;
-  isMobile: boolean;
-  onItemClick?: () => void;
 }) {
   const { user, roles, signOut } = useAuthContext();
 
@@ -64,12 +58,7 @@ function SidebarContent({
     modules: visibleModules.filter(m => m.group === group),
   })).filter(g => g.modules.length > 0);
 
-  const handleNav = (section: string) => {
-    onNavigate(section);
-    onItemClick?.();
-  };
-
-  const showLabels = isMobile || !collapsed;
+  const showLabels = !collapsed;
 
   return (
     <div className="flex flex-col h-full">
@@ -123,7 +112,7 @@ function SidebarContent({
             />
           </div>
         )}
-        {showLabels && !isMobile && (
+        {showLabels && (
           <button
             onClick={() => setCollapsed(true)}
             className="text-muted-foreground hover:text-foreground transition-colors p-1.5 rounded-lg hover:bg-muted/50 flex-shrink-0"
@@ -135,7 +124,7 @@ function SidebarContent({
       </div>
 
       {/* Collapsed expand button */}
-      {collapsed && !isMobile && (
+      {collapsed && (
         <button
           onClick={() => setCollapsed(false)}
           className="mx-auto mt-3 text-muted-foreground hover:text-foreground transition-colors p-1.5 rounded-lg hover:bg-muted/50"
@@ -175,8 +164,8 @@ function SidebarContent({
                     style={{ animationDelay: `${(gi * 4 + mi) * 30}ms` }}
                   >
                     <button
-                      onClick={() => handleNav(mod.section)}
-                      title={collapsed && !isMobile ? mod.label : undefined}
+                      onClick={() => onNavigate(mod.section)}
+                      title={collapsed ? mod.label : undefined}
                       className={`
                         relative w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left
                         transition-all duration-150 ease-out group
@@ -184,7 +173,7 @@ function SidebarContent({
                           ? "bg-[hsl(var(--ecowas-green)/0.12)] dark:bg-[hsl(var(--ecowas-green)/0.15)] text-[hsl(var(--ecowas-green))] font-semibold border-l-[3px] border-[hsl(var(--ecowas-green))] pl-[7px] shadow-[inset_0_0_12px_hsl(var(--ecowas-green)/0.08)]"
                           : "text-muted-foreground hover:text-foreground hover:bg-[hsl(var(--ecowas-green)/0.06)] dark:hover:bg-white/5 border-l-[3px] border-transparent"
                         }
-                        ${collapsed && !isMobile ? "justify-center" : ""}
+                        ${collapsed ? "justify-center" : ""}
                       `}
                     >
                       <Icon
@@ -203,7 +192,7 @@ function SidebarContent({
                       )}
                       {/* Email unread badge */}
                       {mod.section === "email-inbox" && emailUnreadCount > 0 && (
-                        collapsed && !isMobile ? (
+                        collapsed ? (
                           <span className="absolute top-0.5 right-0.5 w-2.5 h-2.5 rounded-full bg-destructive animate-bounce-in" />
                         ) : showLabels ? (
                           <span className="ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-destructive/15 border border-destructive/30 text-destructive flex-shrink-0 animate-bounce-in">
@@ -226,7 +215,7 @@ function SidebarContent({
         bg-gradient-to-t
         from-[hsl(var(--ecowas-green)/0.07)] to-transparent
         dark:from-[hsl(152,40%,4%)] dark:to-transparent
-        ${collapsed && !isMobile ? "flex justify-center" : ""}
+        ${collapsed ? "flex justify-center" : ""}
       `}>
         {showLabels ? (
           <div className="space-y-2">
@@ -269,8 +258,6 @@ function SidebarContent({
 }
 
 export default function CRMSidebar({ activeSection, onNavigate }: CRMSidebarProps) {
-  const isMobile = useIsMobile();
-  const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(() => {
     try { return localStorage.getItem(STORAGE_KEY) === "true"; }
     catch { return false; }
@@ -281,33 +268,6 @@ export default function CRMSidebar({ activeSection, onNavigate }: CRMSidebarProp
     catch { /* ignore */ }
   }, [collapsed]);
 
-  // Mobile: Sheet drawer
-  if (isMobile) {
-    return (
-      <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-        <SheetTrigger asChild>
-          <button
-            className="fixed top-3 left-3 z-50 p-2 rounded-xl bg-card/90 backdrop-blur-lg border border-border shadow-lg text-foreground hover:bg-muted transition-colors md:hidden"
-            aria-label="Open menu"
-          >
-            <Menu size={20} />
-          </button>
-        </SheetTrigger>
-        <SheetContent side="left" className="w-[280px] p-0 bg-[hsl(var(--sidebar-background))] dark:bg-gradient-to-b dark:from-[hsl(152,30%,8%)] dark:via-[hsl(152,25%,6%)] dark:to-[hsl(152,20%,4%)] border-r border-crm-border/40">
-          <SidebarContent
-            activeSection={activeSection}
-            onNavigate={onNavigate}
-            collapsed={false}
-            setCollapsed={() => {}}
-            isMobile
-            onItemClick={() => setMobileOpen(false)}
-          />
-        </SheetContent>
-      </Sheet>
-    );
-  }
-
-  // Desktop/Tablet: persistent sidebar
   return (
     <aside
       className={`
@@ -324,13 +284,8 @@ export default function CRMSidebar({ activeSection, onNavigate }: CRMSidebarProp
         onNavigate={onNavigate}
         collapsed={collapsed}
         setCollapsed={setCollapsed}
-        isMobile={false}
       />
     </aside>
   );
 }
 
-// Export mobile trigger for use in header
-export function MobileMenuTrigger({ onOpen }: { onOpen: () => void }) {
-  return null; // handled internally via Sheet now
-}

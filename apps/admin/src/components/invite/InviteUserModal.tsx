@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import type { AppRole } from "@/contexts/AuthContext";
 
 export interface InviteUserModalProps {
   open: boolean;
@@ -30,6 +31,7 @@ export function InviteUserModal({
   const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
+  const [role, setRole] = useState<AppRole>("staff");
   const [loading, setLoading] = useState(false);
   const submittingRef = useRef(false);
 
@@ -38,6 +40,7 @@ export function InviteUserModal({
     if (open) {
       setEmail("");
       setName("");
+      setRole("staff");
     }
   }, [open]);
 
@@ -49,7 +52,7 @@ export function InviteUserModal({
     try {
       const result = await inviteUser({
         email: email.trim(),
-        // No role sent — edge function defaults to "staff"
+        role,
         metadata: name.trim() ? { full_name: name.trim() } : undefined,
       });
 
@@ -77,8 +80,7 @@ export function InviteUserModal({
             {title}
           </DialogTitle>
           <DialogDescription className="sr-only">
-            Enter an email address to send an invitation. The user will be
-            assigned the Staff role and can be promoted later.
+            Enter an email address and role to send an invitation.
           </DialogDescription>
         </DialogHeader>
 
@@ -86,8 +88,10 @@ export function InviteUserModal({
           <InviteForm
             email={email}
             name={name}
+            role={role}
             onEmailChange={setEmail}
             onNameChange={setName}
+            onRoleChange={setRole}
             onSubmit={handleSubmit}
             loading={loading}
             showNameField={showNameField}

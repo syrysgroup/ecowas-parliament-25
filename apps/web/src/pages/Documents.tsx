@@ -109,7 +109,7 @@ const Documents = () => {
                         </div>
 
                         {/* Language tabs */}
-                        <div className="flex items-center gap-1 mb-3">
+                        <div className="flex items-center flex-wrap gap-1 mb-3">
                           <Globe className="h-3.5 w-3.5 text-muted-foreground mr-1" />
                           {doc.versions.map(v => (
                             <button
@@ -125,11 +125,24 @@ const Documents = () => {
                             </button>
                           ))}
                         </div>
+
+                        {/* View button — inline on sm+, below on mobile */}
+                        <Button
+                          variant="default"
+                          size="sm"
+                          className="gap-1 w-full sm:hidden"
+                          onClick={() => setViewerDoc({ title: `${doc.title} (${lang})`, url: activeVersion.url })}
+                        >
+                          <Eye className="h-4 w-4" />
+                          View Document
+                        </Button>
                       </div>
+
+                      {/* View button — hidden on mobile, shown on sm+ */}
                       <Button
                         variant="default"
                         size="sm"
-                        className="flex-shrink-0 gap-1"
+                        className="flex-shrink-0 gap-1 hidden sm:flex"
                         onClick={() => setViewerDoc({ title: `${doc.title} (${lang})`, url: activeVersion.url })}
                       >
                         <Eye className="h-4 w-4" />

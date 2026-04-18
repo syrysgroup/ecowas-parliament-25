@@ -251,6 +251,20 @@
 .safe-area-top    { padding-top: env(safe-area-inset-top, 0px); }
 .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
 
+/* ─── Mobile CRM ─── */
+@keyframes tab-pop {
+  0%   { transform: scaleX(0); opacity: 0; }
+  60%  { transform: scaleX(1.15); opacity: 1; }
+  100% { transform: scaleX(1); opacity: 1; }
+}
+.animate-tab-pop { animation: tab-pop 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+
+.glass-card {
+  background: hsl(var(--crm-card) / 0.85);
+  backdrop-filter: blur(12px) saturate(1.4);
+  -webkit-backdrop-filter: blur(12px) saturate(1.4);
+}
+
 /* Shepherd tour overrides */
 .shepherd-element {
   z-index: 9999 !important;

@@ -114,13 +114,13 @@ const HeroSection = () => {
 
           <div className="flex justify-center animate-slide-up" style={{ animationDelay: "0.6s" }}>
             <div className="relative">
-              <div className="absolute inset-0 w-[280px] h-[280px] md:w-[340px] md:h-[340px] rounded-full border-2 border-white/10 scale-[1.15] mx-auto" />
-              <div className="absolute inset-0 w-[280px] h-[280px] md:w-[340px] md:h-[340px] rounded-full border border-white/5 scale-[1.3] mx-auto" />
-              <div className="w-[280px] h-[280px] md:w-[340px] md:h-[340px] rounded-full bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center shadow-[0_0_80px_hsl(152_100%_26%/0.2)]">
+              <div className="absolute inset-0 w-[220px] h-[220px] sm:w-[280px] sm:h-[280px] md:w-[340px] md:h-[340px] rounded-full border-2 border-white/10 scale-[1.15] mx-auto" />
+              <div className="absolute inset-0 w-[220px] h-[220px] sm:w-[280px] sm:h-[280px] md:w-[340px] md:h-[340px] rounded-full border border-white/5 scale-[1.3] mx-auto" />
+              <div className="w-[220px] h-[220px] sm:w-[280px] sm:h-[280px] md:w-[340px] md:h-[340px] rounded-full bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center shadow-[0_0_80px_hsl(152_100%_26%/0.2)]">
                 <img
                   src={ecowasLogo}
                   alt={t("hero.ecowasParliament")}
-                  className="h-55 w-55 md:h-60 md:w-60 object-contain animate-float drop-shadow-[0_0_40px_hsl(152_100%_26%/0.3)]"
+                  className="h-40 w-40 sm:h-52 sm:w-52 md:h-60 md:w-60 object-contain animate-float drop-shadow-[0_0_40px_hsl(152_100%_26%/0.3)]"
                   width={240}
                   height={240}
                 />
@@ -133,9 +133,9 @@ const HeroSection = () => {
           </div>
         </div>
 
-        <div className="flex justify-center flex-wrap gap-0 bg-primary-foreground/[0.03] border border-primary-foreground/10 rounded-2xl px-7 py-5 mt-14 animate-slide-up" style={{ animationDelay: "1.1s" }}>
+        <div className="grid grid-cols-2 sm:flex sm:justify-center sm:flex-wrap gap-0 bg-primary-foreground/[0.03] border border-primary-foreground/10 rounded-2xl px-3 sm:px-7 py-5 mt-14 animate-slide-up" style={{ animationDelay: "1.1s" }}>
           {stats.map((stat, i) => (
-            <div key={stat.label} className="text-center px-7 relative">
+            <div key={stat.label} className="text-center px-3 sm:px-7 py-2 sm:py-0 relative">
               {i < stats.length - 1 && (
                 <div className="absolute right-0 top-[15%] h-[70%] w-px bg-primary-foreground/10 hidden sm:block" />
               )}
