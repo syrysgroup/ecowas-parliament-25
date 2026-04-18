@@ -12,8 +12,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import {
   Mail, Users, Loader2, Plus, Pencil, Trash2, RefreshCw,
-  ShieldOff, KeyRound, Search, Crown, ShieldCheck, Eye, Shield,
-  CheckCircle2, XCircle,
+  ShieldOff, KeyRound, Search, CheckCircle2, XCircle,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -27,23 +26,9 @@ const PERMISSION_TIERS: Record<PermissionTier, { label: string; colour: string; 
 };
 
 const DEPARTMENTS = [
-  "Civic Education",
-  "Youth Parliament",
-  "Youth Innovation",
-  "Women's Forum",
-  "Trade & SME",
-  "Communications",
-  "Finance",
-  "Logistics",
-  "Marketing",
-  "Operations",
+  "Civic Education", "Youth Parliament", "Youth Innovation", "Women's Forum",
+  "Trade & SME", "Communications", "Finance", "Logistics", "Marketing", "Operations",
 ];
-
-const APP_ROLES = [
-  "super_admin", "admin", "moderator", "project_director", "programme_lead",
-  "website_editor", "marketing_manager", "communications_officer",
-  "finance_coordinator", "logistics_coordinator", "sponsor_manager", "consultant", "sponsor",
-] as const;
 
 interface AdminUser {
   id: string;
@@ -71,7 +56,6 @@ interface UserFormProps {
 }
 
 function UserFormDialog({ user, open, onClose, onSaved }: UserFormProps) {
-  const { user: currentUser } = useAuth();
   const { toast } = useToast();
   const isEdit = !!user;
   const fileRef = useRef<HTMLInputElement>(null);
@@ -85,7 +69,7 @@ function UserFormDialog({ user, open, onClose, onSaved }: UserFormProps) {
   const [assignEmail, setAssignEmail]     = useState(user?.has_email_account ?? false);
   const [emailPrefix, setEmailPrefix]     = useState<string>(() => {
     if (user?.email_address) return user.email_address.split("@")[0];
-    return fullName.toLowerCase().replace(/\s+/g, ".").replace(/[^a-z.]/g, "");
+    return "";
   });
   const [avatarFile, setAvatarFile]       = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(user?.avatar_url ?? null);
@@ -107,20 +91,14 @@ function UserFormDialog({ user, open, onClose, onSaved }: UserFormProps) {
     setAvatarPreview(URL.createObjectURL(file));
   };
 
-  const getToken = async () => {
-    const { data } = await supabase.auth.getSession();
-    return data?.session?.access_token;
-  };
-
   const handleSave = async () => {
-    if (!fullName.trim() || !email.trim()) {
+    if (!fullName.trim() || (!isEdit && !email.trim())) {
       toast({ title: "Required fields missing", description: "Full name and email are required.", variant: "destructive" });
       return;
     }
     setSaving(true);
 
     try {
-      const token = await getToken();
       let avatarUrl = user?.avatar_url ?? null;
 
       // Upload avatar if changed
@@ -137,63 +115,75 @@ function UserFormDialog({ user, open, onClose, onSaved }: UserFormProps) {
       }
 
       if (isEdit) {
-        // Update profile
+        // ── Update existing profile ──────────────────────────────────────────
         await (supabase as any).from("profiles").update({
-          full_name: fullName.trim(),
-          job_title: jobTitle.trim() || null,
-          phone: phone.trim() || null,
+          full_name:       fullName.trim(),
+          job_title:       jobTitle.trim() || null,
+          phone:           phone.trim() || null,
           permission_tier: permTier,
           departments,
-          avatar_url: avatarUrl,
+          avatar_url:      avatarUrl,
         }).eq("id", user!.id);
 
-        // Handle email account changes
+        // Handle email account toggle
         if (assignEmail && !user!.has_email_account) {
+          // ✅ No manual Authorization header — SDK injects it automatically
           await supabase.functions.invoke("create-email-account", {
             body: { userId: user!.id, emailPrefix, displayName: fullName.trim() },
-            headers: { Authorization: `Bearer ${token}` },
           });
           toast({ title: "Email account created", description: `${emailPrefix}@ecowasparliamentinitiatives.org` });
         } else if (!assignEmail && user!.has_email_account) {
           await supabase.functions.invoke("delete-email-account", {
             body: { userId: user!.id, emailAddress: user!.email_address },
-            headers: { Authorization: `Bearer ${token}` },
           });
         }
+
       } else {
-        // New user — send invite via centralized service
+        // ── Invite new user ──────────────────────────────────────────────────
+        // Role defaults to "staff" — admin can promote later.
+        // inviteUser() uses functions.invoke() without a manual auth header,
+        // so the SDK injects Authorization + apikey correctly.
         await inviteUser({
           email: email.trim(),
-          role: permTier === "tier1" ? "admin" : "moderator",
           metadata: { full_name: fullName.trim() },
         });
 
-        // Wait briefly then update profile with extra fields
+        // After invite, backfill the extra profile fields once the profile row exists
         setTimeout(async () => {
-          const { data: profile } = await (supabase as any).from("profiles").select("id").eq("email", email.trim()).single();
+          const { data: profile } = await (supabase as any)
+            .from("profiles")
+            .select("id")
+            .eq("email", email.trim())
+            .single();
+
           if (profile?.id) {
             await (supabase as any).from("profiles").update({
-              full_name: fullName.trim(),
-              job_title: jobTitle.trim() || null,
-              phone: phone.trim() || null,
+              full_name:       fullName.trim(),
+              job_title:       jobTitle.trim() || null,
+              phone:           phone.trim() || null,
               permission_tier: permTier,
               departments,
-              avatar_url: avatarUrl,
+              avatar_url:      avatarUrl,
             }).eq("id", profile.id);
 
             if (assignEmail && emailPrefix) {
               await supabase.functions.invoke("create-email-account", {
                 body: { userId: profile.id, emailPrefix, displayName: fullName.trim() },
-                headers: { Authorization: `Bearer ${token}` },
               });
             }
           }
         }, 2000);
       }
 
-      toast({ title: isEdit ? "User updated" : "Invitation sent", description: isEdit ? `${fullName} has been updated.` : `Invite sent to ${email}.` });
+      toast({
+        title: isEdit ? "User updated" : "Invitation sent",
+        description: isEdit
+          ? `${fullName} has been updated.`
+          : `Invite sent to ${email}. They'll be assigned the Staff role and can be promoted later.`,
+      });
       onSaved();
       onClose();
+
     } catch (err: any) {
       toast({ title: "Error", description: err.message || "Failed to save user", variant: "destructive" });
     } finally {
@@ -205,11 +195,13 @@ function UserFormDialog({ user, open, onClose, onSaved }: UserFormProps) {
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-base font-bold">{isEdit ? "Edit User" : "Invite New User"}</DialogTitle>
+          <DialogTitle className="text-base font-bold">
+            {isEdit ? "Edit User" : "Invite New User"}
+          </DialogTitle>
           <DialogDescription>
             {isEdit
               ? "Update this user's profile and access settings."
-              : "Send an invitation email. The user will set their password via the link."}
+              : "Send an invitation email. The user will set their password via the link and be assigned the Staff role."}
           </DialogDescription>
         </DialogHeader>
 
@@ -229,7 +221,7 @@ function UserFormDialog({ user, open, onClose, onSaved }: UserFormProps) {
               <button onClick={() => fileRef.current?.click()} className="text-xs text-primary hover:underline font-medium">
                 Upload photo
               </button>
-              <p className="text-[11px] text-muted-foreground mt-0.5">JPG or PNG, max 2MB. Stored in profile-photos bucket.</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">JPG or PNG, max 2MB.</p>
               <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
             </div>
           </div>
@@ -263,9 +255,7 @@ function UserFormDialog({ user, open, onClose, onSaved }: UserFormProps) {
           <div className="space-y-1.5">
             <Label className="text-xs font-semibold">Permission Level</Label>
             <Select value={permTier} onValueChange={v => setPermTier(v as PermissionTier)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
+              <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 {(Object.entries(PERMISSION_TIERS) as [PermissionTier, typeof PERMISSION_TIERS[PermissionTier]][]).map(([k, v]) => (
                   <SelectItem key={k} value={k}>
@@ -274,6 +264,11 @@ function UserFormDialog({ user, open, onClose, onSaved }: UserFormProps) {
                 ))}
               </SelectContent>
             </Select>
+            {!isEdit && (
+              <p className="text-[11px] text-muted-foreground">
+                Permission level is saved to the profile. The CRM role will default to <strong>Staff</strong> and can be promoted in the CRM later.
+              </p>
+            )}
           </div>
 
           {/* Departments */}
@@ -324,7 +319,7 @@ function UserFormDialog({ user, open, onClose, onSaved }: UserFormProps) {
           {!isEdit && (
             <div className="rounded-lg bg-muted/40 border border-border p-3">
               <p className="text-xs text-muted-foreground">
-                <strong>Password flow:</strong> An invitation email will be sent to the user. They click the link to set their own password privately. The link expires in 24 hours. You will never see their password.
+                <strong>Password flow:</strong> An invitation email will be sent. The user clicks the link to set their own password. The link expires in 24 hours. You will never see their password.
               </p>
             </div>
           )}
@@ -379,10 +374,10 @@ function ConfirmDialog({
 export default function UserManagement() {
   const { user: currentUser } = useAuth();
   const { toast } = useToast();
-  const [users, setUsers]         = useState<AdminUser[]>([]);
-  const [loading, setLoading]     = useState(true);
-  const [search, setSearch]       = useState("");
-  const [formOpen, setFormOpen]   = useState(false);
+  const [users, setUsers]           = useState<AdminUser[]>([]);
+  const [loading, setLoading]       = useState(true);
+  const [search, setSearch]         = useState("");
+  const [formOpen, setFormOpen]     = useState(false);
   const [editTarget, setEditTarget] = useState<AdminUser | null>(null);
   const [confirmAction, setConfirmAction] = useState<{
     type: "suspend" | "delete" | "reset";
@@ -419,55 +414,44 @@ export default function UserManagement() {
     (emailAcctsRes.data ?? []).forEach((a: any) => emailMap.set(a.user_id, a.email_address));
 
     setUsers((profilesRes.data ?? []).map((p: any) => ({
-      id: p.id,
-      email: p.email,
-      full_name: p.full_name,
-      job_title: p.job_title,
-      phone: p.phone,
-      country: p.country,
-      avatar_url: p.avatar_url,
-      permission_tier: p.permission_tier ?? null,
-      departments: p.departments ?? [],
-      status: p.status ?? "active",
+      id:               p.id,
+      email:            p.email,
+      full_name:        p.full_name,
+      job_title:        p.job_title,
+      phone:            p.phone,
+      country:          p.country,
+      avatar_url:       p.avatar_url,
+      permission_tier:  p.permission_tier ?? null,
+      departments:      p.departments ?? [],
+      status:           p.status ?? "active",
       has_email_account: p.has_email_account ?? false,
-      email_address: emailMap.get(p.id) ?? null,
-      roles: rolesMap.get(p.id) ?? [],
-      created_at: p.created_at,
+      email_address:    emailMap.get(p.id) ?? null,
+      roles:            rolesMap.get(p.id) ?? [],
+      created_at:       p.created_at,
     })));
 
     setLoading(false);
   };
 
-  const getToken = async () => {
-    const { data } = await supabase.auth.getSession();
-    return data?.session?.access_token;
-  };
-
   const handleSuspend = async (u: AdminUser) => {
     const newStatus = u.status === "active" ? "suspended" : "active";
     await (supabase as any).from("profiles").update({ status: newStatus }).eq("id", u.id);
-    if (newStatus === "suspended") {
-      // Sign out all sessions
-      await (supabase as any).auth.admin?.signOut?.(u.id, "others");
-    }
     toast({ title: newStatus === "suspended" ? "User suspended" : "User reactivated" });
     loadData();
   };
 
   const handleDelete = async (u: AdminUser) => {
-    const token = await getToken();
-    // Remove email account first if exists
+    // ✅ No manual Authorization header — SDK injects it automatically
     if (u.has_email_account && u.email_address) {
       await supabase.functions.invoke("delete-email-account", {
         body: { userId: u.id, emailAddress: u.email_address },
-        headers: { Authorization: `Bearer ${token}` },
       });
     }
-    // Delete auth user (cascades to profiles, roles, invitations, etc.)
+
     const res = await supabase.functions.invoke("delete-user", {
       body: { user_ids: [u.id] },
-      headers: { Authorization: `Bearer ${token}` },
     });
+
     if (res.error) {
       toast({ title: "Delete failed", description: res.error.message, variant: "destructive" });
       return;
@@ -482,12 +466,13 @@ export default function UserManagement() {
   };
 
   const handleForceReset = async (u: AdminUser) => {
-    const token = await getToken();
     const emailAddr = u.has_email_account && u.email_address ? u.email_address : u.email;
+
+    // ✅ No manual Authorization header — SDK injects it automatically
     const res = await supabase.functions.invoke("send-invite", {
       body: { userId: u.id, emailAddress: emailAddr },
-      headers: { Authorization: `Bearer ${token}` },
     });
+
     if (res.error) {
       toast({ title: "Error", description: res.error.message, variant: "destructive" });
     } else {
@@ -527,10 +512,10 @@ export default function UserManagement() {
           {/* Stats bar */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { label: "Total users",    value: users.length,                                          icon: Users,        colour: "bg-primary/10 text-primary"          },
-              { label: "Active",         value: users.filter(u => u.status === "active").length,       icon: CheckCircle2, colour: "bg-emerald-50 text-emerald-700"       },
-              { label: "Suspended",      value: users.filter(u => u.status === "suspended").length,    icon: XCircle,      colour: "bg-red-50 text-red-700"               },
-              { label: "Email accounts", value: users.filter(u => u.has_email_account).length,         icon: Mail,         colour: "bg-blue-50 text-blue-700"             },
+              { label: "Total users",    value: users.length,                                       icon: Users,        colour: "bg-primary/10 text-primary"        },
+              { label: "Active",         value: users.filter(u => u.status === "active").length,    icon: CheckCircle2, colour: "bg-emerald-50 text-emerald-700"     },
+              { label: "Suspended",      value: users.filter(u => u.status === "suspended").length, icon: XCircle,      colour: "bg-red-50 text-red-700"             },
+              { label: "Email accounts", value: users.filter(u => u.has_email_account).length,      icon: Mail,         colour: "bg-blue-50 text-blue-700"           },
             ].map(s => {
               const Icon = s.icon;
               return (
@@ -715,21 +700,21 @@ export default function UserManagement() {
         <ConfirmDialog
           open
           title={
-            confirmAction.type === "delete" ? "Delete User" :
+            confirmAction.type === "delete"  ? "Delete User" :
             confirmAction.type === "suspend" ? (confirmAction.user.status === "active" ? "Suspend User" : "Reactivate User") :
             "Force Password Reset"
           }
           description={
             confirmAction.type === "delete"
-              ? `Permanently delete ${confirmAction.user.full_name || confirmAction.user.email}? This will remove all their data and deactivate their email account.`
+              ? `Permanently delete ${confirmAction.user.full_name || confirmAction.user.email}? This cannot be undone.`
               : confirmAction.type === "suspend"
               ? confirmAction.user.status === "active"
-                ? `Suspend ${confirmAction.user.full_name || confirmAction.user.email}? They will be signed out immediately and cannot log in.`
+                ? `Suspend ${confirmAction.user.full_name || confirmAction.user.email}? They will be signed out immediately.`
                 : `Reactivate ${confirmAction.user.full_name || confirmAction.user.email}? They will be able to log in again.`
-              : `Send a password reset link to ${confirmAction.user.full_name || confirmAction.user.email}? Their current password will be invalidated.`
+              : `Send a password reset link to ${confirmAction.user.full_name || confirmAction.user.email}?`
           }
           confirmLabel={
-            confirmAction.type === "delete" ? "Delete" :
+            confirmAction.type === "delete"  ? "Delete" :
             confirmAction.type === "suspend" ? (confirmAction.user.status === "active" ? "Suspend" : "Reactivate") :
             "Send Reset Link"
           }
