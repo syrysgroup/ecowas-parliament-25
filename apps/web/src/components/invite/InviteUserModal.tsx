@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { AppRole } from "@/contexts/AuthContext";
 import { inviteUser, type InviteUserResult } from "@/services/inviteUser";
 import { InviteForm } from "./InviteForm";
@@ -41,6 +41,7 @@ export function InviteUserModal({
   );
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
+  const submittingRef = useRef(false);
 
   // Reset form when the modal opens
   useEffect(() => {
@@ -52,6 +53,8 @@ export function InviteUserModal({
   }, [open, fixedRole, defaultRole, assignableRoles]);
 
   const handleSubmit = async () => {
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     setLoading(true);
     try {
       const result = await inviteUser({
@@ -66,6 +69,7 @@ export function InviteUserModal({
       const msg = err instanceof Error ? err.message : "Failed to send invitation";
       toast({ title: "Failed", description: msg, variant: "destructive" });
     } finally {
+      submittingRef.current = false;
       setLoading(false);
     }
   };

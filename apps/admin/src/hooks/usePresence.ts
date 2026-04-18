@@ -15,6 +15,12 @@ export function usePresence(userId: string | undefined) {
 
     const upsertPresence = async (online: boolean) => {
       try {
+        // Skip the write if the session has already been cleared — attempting
+        // an authenticated upsert without a valid JWT produces a 401 and
+        // pollutes the console (most visible during signOut cleanup).
+        const { data: sd } = await supabase.auth.getSession();
+        if (!sd?.session) return;
+
         await (supabase as any).from("user_presence").upsert(
           { user_id: userId, is_online: online, last_seen_at: new Date().toISOString() },
           { onConflict: "user_id" }

@@ -51,12 +51,15 @@ export async function extractInviteError(
 // ── Public API ─────────────────────────────────────────────────────────────────
 
 export async function inviteUser(payload: InviteUserPayload): Promise<InviteUserResult> {
-  // getSession() returns the SDK's in-memory session which is kept fresh by
-  // autoRefreshToken — no extra network round-trip needed.
+  // Verify the session is alive before calling the edge function.
+  // Do NOT extract the token manually — the Supabase JS SDK automatically
+  // attaches both the `Authorization: Bearer <access_token>` header AND the
+  // required `apikey` header when you call functions.invoke().
+  // Passing a manual `headers: { Authorization }` block overrides the SDK's
+  // default header bundle and strips the `apikey` header, which causes a 401.
   const { data: sessionData } = await supabase.auth.getSession();
-  const token = sessionData?.session?.access_token;
 
-  if (!token) {
+  if (!sessionData?.session) {
     throw new Error("Session expired. Please reload and log in again.");
   }
 
@@ -67,7 +70,8 @@ export async function inviteUser(payload: InviteUserPayload): Promise<InviteUser
       redirectUrl: payload.redirectUrl ?? `${window.location.origin}/set-password`,
       ...(payload.metadata ? { metadata: payload.metadata } : {}),
     },
-    headers: { Authorization: `Bearer ${token}` },
+    // ✅ No custom `headers` here — the SDK injects Authorization + apikey
+    //    automatically from the active session.
   });
 
   const errorMsg = await extractInviteError(res);
