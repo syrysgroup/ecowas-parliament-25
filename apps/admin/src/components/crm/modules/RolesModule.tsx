@@ -24,9 +24,11 @@ const ALL_ROLES: AppRole[] = [
   "marketing_manager",
   "communications_officer",
   "finance_coordinator",
+  "budget_officer",
   "logistics_coordinator",
   "sponsor_manager",
   "consultant",
+  "staff",
   "sponsor",
   "media",
 ];
