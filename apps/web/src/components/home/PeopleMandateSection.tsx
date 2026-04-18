@@ -37,7 +37,7 @@ const PeopleMandateSection = () => {
               <div className="flex gap-3 flex-wrap pt-2">
                 <Button asChild className="gap-2">
                   <Link to="/ecowas-parliament">
-                    About ECOWAS Parliament <ArrowRight className="h-4 w-4" />
+                    About ECOWAS Parliament Initiatives <ArrowRight className="h-4 w-4" />
                   </Link>
                 </Button>
               </div>
@@ -48,13 +48,13 @@ const PeopleMandateSection = () => {
               <div className="overflow-hidden rounded-2xl shadow-xl border border-border">
                 <img
                   src={parliamentChamber}
-                  alt="ECOWAS Parliament during the 25th Anniversary ordinary session in Abuja"
+                  alt="ECOWAS Parliament Initiatives during the 25th Anniversary ordinary session in Abuja"
                   className="w-full aspect-[16/9] max-h-64 object-cover object-center"
                   loading="lazy"
                 />
               </div>
               <p className="text-muted-foreground text-xs mt-2 italic text-center">
-                ECOWAS Parliament during the 25th Anniversary ordinary session in Abuja
+                ECOWAS Parliament Initiatives during the 25th Anniversary ordinary session in Abuja
               </p>
             </div>
           </div>

@@ -229,7 +229,7 @@ export default function Contact() {
                 <h3 className="text-lg font-bold mb-4">{t("contact.web")}</h3>
                 <div className="space-y-3">
                   {[
-                    { icon: Globe, label: "ECOWAS Parliament (Official)", value: "parl.ecowas.int", href: "https://parl.ecowas.int" },
+                    { icon: Globe, label: "ECOWAS Parliament Initiatives (Official)", value: "parl.ecowas.int", href: "https://parl.ecowas.int" },
                     { icon: Globe, label: "Initiatives Website", value: "ecowasparliamentinitiatives.org", href: "https://ecowasparliamentinitiatives.org" },
                   ].map(s => {
                     const Icon = s.icon;

@@ -28,7 +28,7 @@ function computeTimeLeft(targetDate: Date): TimeLeft {
 
 // Fallback values if site_content is not yet seeded
 const FALLBACK_DATE = new Date("2026-04-15T09:00:00+01:00");
-const FALLBACK_NAME = "ECOWAS Parliament 25th Anniversary Ceremony — Abuja, Nigeria";
+const FALLBACK_NAME = "ECOWAS Parliament Initiatives 25th Anniversary Ceremony — Abuja, Nigeria";
 
 const CountdownTimer = () => {
   const { t } = useTranslation();

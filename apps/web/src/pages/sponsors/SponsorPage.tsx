@@ -161,7 +161,7 @@ export default function SponsorPage() {
               <span className="text-xs font-semibold uppercase tracking-wider text-white/50">In partnership with</span>
               <div className="flex items-center gap-4">
                 <div className="bg-white rounded-xl p-2 shadow-md">
-                  <img src={ecowasLogo} alt="ECOWAS Parliament" className="h-10 w-10 object-contain" loading="lazy" />
+                  <img src={ecowasLogo} alt="ECOWAS Parliament Initiatives" className="h-10 w-10 object-contain" loading="lazy" />
                 </div>
                 <div className="bg-white rounded-xl p-2 shadow-md">
                   <img src={parliament25Logo} alt="Parliament@25" className="h-10 w-10 object-contain" loading="lazy" />

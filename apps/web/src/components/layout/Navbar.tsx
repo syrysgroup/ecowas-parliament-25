@@ -30,7 +30,7 @@ const Navbar = () => {
       to: "/about",
       children: [
         { label: t("nav.about"), to: "/about" },
-        { label: "ECOWAS Parliament", to: "/ecowas-parliament" },
+        { label: "ECOWAS Parliament Initiatives", to: "/ecowas-parliament" },
       ],
     },
     {
@@ -83,13 +83,13 @@ const Navbar = () => {
             <div className="bg-muted rounded-full p-2 shadow-sm border-2 border-ecowas-green">
               <img
                 src={dbLogoUrl || ecowasLogo}
-                alt={dbSiteName || "ECOWAS Parliament"}
+                alt={dbSiteName || "ECOWAS Parliament Initiatives"}
                 className="h-12 w-12 object-contain"
                 width={48} height={48} decoding="async" fetchPriority="high"
               />
             </div>
             <div className="hidden sm:block">
-              <p className="text-sm font-bold text-foreground leading-tight">{dbSiteName || "ECOWAS Parliament"}</p>
+              <p className="text-sm font-bold text-foreground leading-tight">{dbSiteName || "ECOWAS Parliament Initiatives"}</p>
               <p className="text-[10px] text-muted-foreground leading-tight">Parlement de la CEDEAO</p>
             </div>
           </Link>

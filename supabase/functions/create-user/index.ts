@@ -20,7 +20,7 @@ const BodySchema = z.object({
   force_password_change: z.boolean().default(true),
 });
 
-const DEFAULT_ORG = "ECOWAS Parliament Initiative";
+const DEFAULT_ORG = "ECOWAS Parliament Initiatives";
 const SITE_URL    = "https://www.ecowasparliamentinitiatives.org";
 
 Deno.serve(async (req) => {

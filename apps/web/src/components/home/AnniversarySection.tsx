@@ -112,7 +112,7 @@ const AnniversarySection = () => {
                 <div className="bg-white rounded-full p-1.5 shadow-sm shrink-0">
                   <img
                     src={ecowasLogo}
-                    alt="ECOWAS Parliament"
+                    alt="ECOWAS Parliament Initiatives"
                     className="h-9 w-9 object-contain"
                     loading="lazy"
                     width={36}
@@ -121,7 +121,7 @@ const AnniversarySection = () => {
                   />
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-card-foreground">ECOWAS Parliament</p>
+                  <p className="text-sm font-bold text-card-foreground">ECOWAS Parliament Initiatives</p>
                   <p className="text-[11px] text-muted-foreground">Herbert Macaulay Way, Central Business District, P.M.B. 576, Abuja, Nigeria</p>
                 </div>
               </div>

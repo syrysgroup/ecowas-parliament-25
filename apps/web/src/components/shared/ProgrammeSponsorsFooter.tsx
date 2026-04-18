@@ -61,7 +61,7 @@ const ProgrammeSponsorsFooter = ({ programme, tiers: staticTiers, title = "Progr
     <section className="py-16 bg-muted/30">
       <div className="container">
         <AnimatedSection className="text-center mb-10">
-          <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">ECOWAS Parliament Initiative Sponsors</p>
+          <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">ECOWAS Parliament Initiatives Sponsors</p>
           <h2 className="text-2xl font-bold text-foreground">{title}</h2>
         </AnimatedSection>
         {tiers.map((tier, ti) => (

@@ -65,7 +65,7 @@ const objectives = [
   "Reach citizens through airports, schools, buses, and digital platforms",
   "Promote messages of regional unity and civic responsibility",
   "Launch the ECOWAS TV Game Show for civic education through entertainment",
-  "Build public understanding of the ECOWAS Parliament's role and impact",
+  "Build public understanding of the ECOWAS Parliament Initiatives's role and impact",
 ];
 
 const Civic = () => (

@@ -31,7 +31,7 @@ const ProgrammeSponsorMarquee = ({ programme, speed = 40 }: ProgrammeSponsorMarq
         <div className="inline-flex animate-marquee items-center" style={{ animationDuration: `${speed}s` }}>
           {[0, 1, 2, 3, 4].map(i => (
             <div key={i} className="inline-flex items-center gap-2.5 px-6">
-              <img src={parliament25Logo} alt="ECOWAS Parliament" className="h-10 w-auto object-contain" loading="lazy" />
+              <img src={parliament25Logo} alt="ECOWAS Parliament Initiatives" className="h-10 w-auto object-contain" loading="lazy" />
               <span className="w-px h-4 bg-border ml-3" />
             </div>
           ))}

@@ -74,7 +74,7 @@ export default function EcowasParliament() {
               <div className="rounded-full bg-white/10 backdrop-blur-sm border-2 border-white/30 p-4 shadow-2xl">
                 <img
                   src={ecowasLogo}
-                  alt="ECOWAS Parliament"
+                  alt="ECOWAS Parliament Initiatives"
                   className="h-24 w-24 object-contain"
                   loading="eager"
                 />
@@ -83,7 +83,7 @@ export default function EcowasParliament() {
 
             {/* Title */}
             <h1 className="text-5xl md:text-7xl font-black text-white tracking-tight leading-none">
-              ECOWAS Parliament
+              ECOWAS Parliament Initiatives
             </h1>
             <p className="text-lg md:text-xl text-white/70 font-light">
               The Voice of West Africa's People
@@ -139,7 +139,7 @@ export default function EcowasParliament() {
         <div className="container">
           <AnimatedSection className="text-center mb-10">
             <Badge variant="outline" className="mb-3">At a Glance</Badge>
-            <h2 className="text-2xl font-bold text-foreground">ECOWAS Parliament in Numbers</h2>
+            <h2 className="text-2xl font-bold text-foreground">ECOWAS Parliament Initiatives in Numbers</h2>
           </AnimatedSection>
           <div className="grid sm:grid-cols-3 gap-6 max-w-3xl mx-auto">
             {STATS.map((s, i) => (
@@ -177,13 +177,13 @@ export default function EcowasParliament() {
               <div className="relative overflow-hidden rounded-2xl">
                 <img
                   src={parliamentChamber}
-                  alt="ECOWAS Parliament Chamber"
+                  alt="ECOWAS Parliament Initiatives Chamber"
                   className="w-full aspect-[16/7] object-cover object-top rounded-2xl"
                   loading="lazy"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent rounded-2xl" />
                 <p className="absolute bottom-3 left-4 text-white/70 text-xs italic">
-                  ECOWAS Parliament — 25th Anniversary Ordinary Session, Abuja
+                  ECOWAS Parliament Initiatives — 25th Anniversary Ordinary Session, Abuja
                 </p>
               </div>
               <blockquote className="border-l-4 border-primary pl-5 text-muted-foreground italic text-base leading-relaxed">
@@ -219,7 +219,7 @@ export default function EcowasParliament() {
             <Badge variant="outline" className="mb-3">Parliamentary Structure</Badge>
             <h2 className="text-2xl md:text-3xl font-bold text-foreground">Standing Committees</h2>
             <p className="text-muted-foreground mt-2 max-w-xl mx-auto">
-              Specialist committees that drive ECOWAS Parliament's legislative and oversight work across the region.
+              Specialist committees that drive ECOWAS Parliament Initiatives's legislative and oversight work across the region.
             </p>
           </AnimatedSection>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl mx-auto">

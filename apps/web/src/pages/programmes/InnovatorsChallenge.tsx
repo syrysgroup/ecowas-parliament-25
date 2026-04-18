@@ -80,7 +80,7 @@ const InnovatorsChallenge = () => {
 
           <div className="max-w-2xl">
             <Badge className="bg-accent/20 text-accent border-accent/30 mb-4 animate-fade-in">
-              <Lightbulb className="h-3 w-3 mr-1" /> ECOWAS Parliament @25
+              <Lightbulb className="h-3 w-3 mr-1" /> ECOWAS Parliament Initiatives @25
             </Badge>
             <h1 className="text-4xl md:text-6xl font-black text-primary-foreground mb-6 animate-slide-up">
               Innovators<br />

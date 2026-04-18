@@ -23,7 +23,7 @@ const COUNTRIES = [
 function generateICS(event: any) {
   const fmt = (d: string) => new Date(d).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
   const ics = [
-    "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//ECOWAS Parliament//EN",
+    "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//ECOWAS Parliament Initiatives//EN",
     "BEGIN:VEVENT",
     `DTSTART:${fmt(event.date)}`,
     `DTEND:${fmt(event.end_date || event.date)}`,

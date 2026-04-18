@@ -146,7 +146,7 @@ export default function SponsorPortal() {
             </h1>
 
             <p className="mt-4 text-lg text-primary-foreground/70 max-w-2xl">
-              The ECOWAS Parliament 25th Anniversary Programme runs across all
+              The ECOWAS Parliament Initiatives 25th Anniversary Programme runs across all
               12 member states throughout 2026 — 40+ events, 7 programme
               pillars, and a combined audience reach exceeding 2.4 million.
             </p>

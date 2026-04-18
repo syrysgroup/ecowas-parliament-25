@@ -71,7 +71,7 @@ const SmartChallenge = () => {
               <BrainCircuit className="h-3 w-3 mr-1" /> Powered by SMARTq
             </Badge>
             <h1 className="text-4xl md:text-6xl font-black text-white mb-6 animate-slide-up">
-              ECOWAS Parliament<br />
+              ECOWAS Parliament Initiatives<br />
               <span className="text-[hsl(50,87%,45%)]">Smart Challenge</span>
             </h1>
             <p className="text-white/70 text-lg leading-relaxed mb-4 animate-slide-up" style={{ animationDelay: "0.2s" }}>

@@ -42,7 +42,7 @@ const honourees = [
 const objectives = [
   "Recognise and celebrate parliamentary excellence across ECOWAS Member States",
   "Inspire current and future legislators to strive for impactful governance",
-  "Celebrate 25 years of democratic governance in the ECOWAS Parliament",
+  "Celebrate 25 years of democratic governance in the ECOWAS Parliament Initiatives",
   "Strengthen institutional memory by documenting legislative achievements",
   "Foster a culture of accountability and service among elected representatives",
 ];
@@ -107,7 +107,7 @@ const Awards = () => (
         <AnimatedSection>
           <h2 className="text-2xl font-bold text-foreground mb-4">About the Awards</h2>
           <p className="text-muted-foreground leading-relaxed">
-            The AWALCO Parliamentary Awards honour serving and former members of the ECOWAS Parliament who have demonstrated exceptional leadership, legislative impact, and service to regional integration. Inaugurated as part of the 25th Anniversary celebrations, these awards recognise the individuals whose work has strengthened democratic governance, advanced the rights of citizens, and built bridges between the twelve Member States of the Community.
+            The AWALCO Parliamentary Awards honour serving and former members of the ECOWAS Parliament Initiatives who have demonstrated exceptional leadership, legislative impact, and service to regional integration. Inaugurated as part of the 25th Anniversary celebrations, these awards recognise the individuals whose work has strengthened democratic governance, advanced the rights of citizens, and built bridges between the twelve Member States of the Community.
           </p>
         </AnimatedSection>
       </div>

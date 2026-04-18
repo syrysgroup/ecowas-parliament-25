@@ -72,7 +72,7 @@ Deno.serve(async (req) => {
           <div style="font-family:sans-serif;max-width:600px;margin:0 auto">
             <div style="background:#008244;padding:24px;text-align:center">
               <h1 style="color:white;margin:0;font-size:22px">EP25 CRM</h1>
-              <p style="color:rgba(255,255,255,0.8);margin:8px 0 0">ECOWAS Parliament 25th Anniversary</p>
+              <p style="color:rgba(255,255,255,0.8);margin:8px 0 0">ECOWAS Parliament Initiatives 25th Anniversary</p>
             </div>
             <div style="padding:32px">
               <h2 style="color:#111;margin-top:0">Your account is ready</h2>

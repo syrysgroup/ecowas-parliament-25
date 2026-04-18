@@ -538,7 +538,7 @@ export const pt: Record<string, string> = {
   "instPartners.alliance.desc": "Uma organização dedicada à investigação económica baseada em evidências e à governação ética, apoiando o desenvolvimento de políticas e o fortalecimento institucional na região.",
 
   "common.ecowasParliament": "Parlamento da CEDEAO",
-  "common.parlementCedeao": "ECOWAS Parliament",
+  "common.parlementCedeao": "ECOWAS Parliament Initiatives",
   "common.programmeMandate2": "Mandato do Programa: {title}",
   "common.speakerName": "Exma. Hadja Mémounatou Ibrahima",
   "common.speakerRole": "Presidente do Parlamento da CEDEAO",
