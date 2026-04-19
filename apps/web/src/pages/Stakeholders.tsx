@@ -23,7 +23,7 @@ const Stakeholders = () => {
   const { data: leadership = [], isLoading: leadLoading } = useQuery<StakeholderProfile[]>({
     queryKey: ["stakeholder-profiles", "all-active"],
     queryFn: async () => {
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from("stakeholder_profiles")
         .select("*")
         .eq("is_active", true)

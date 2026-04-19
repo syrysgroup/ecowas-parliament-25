@@ -56,7 +56,7 @@ export default function CompleteProfile() {
       const metaRole = user.user_metadata?.role as string | undefined;
       let resolvedRole = metaRole;
       if (!resolvedRole) {
-        const { data: roleData } = await (supabase as any)
+        const { data: roleData } = await supabase
           .from("user_roles")
           .select("role")
           .eq("user_id", user.id)
@@ -68,7 +68,7 @@ export default function CompleteProfile() {
       setIsSponsor(sponsorUser);
 
       // 2. Load existing profile
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from("profiles")
         .select("full_name, title, country, organisation, bio, avatar_url")
         .eq("id", user.id)
@@ -127,7 +127,7 @@ export default function CompleteProfile() {
         }
       }
 
-      const { error: dbErr } = await (supabase as any)
+      const { error: dbErr } = await supabase
         .from("profiles")
         .update({
           full_name:    fullName.trim(),

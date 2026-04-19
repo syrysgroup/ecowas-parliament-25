@@ -12,7 +12,7 @@ const SpeakerSection = () => {
   const { data: speakerContent } = useQuery({
     queryKey: ["site-content", "speaker"],
     queryFn: async () => {
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from("site_content")
         .select("content")
         .eq("section_key", "speaker")

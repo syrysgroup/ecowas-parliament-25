@@ -20,7 +20,7 @@ const SponsorPlaceholderSection = () => {
   const { data: sponsors = [], isLoading } = useQuery<SponsorRow[]>({
     queryKey: ["sponsors-homepage"],
     queryFn: async () => {
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from("sponsors")
         .select("id, name, slug, logo_url, tier")
         .eq("is_published", true)

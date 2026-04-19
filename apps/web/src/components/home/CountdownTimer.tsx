@@ -36,7 +36,7 @@ const CountdownTimer = () => {
   const { data: content } = useQuery({
     queryKey: ["site-content", "countdown"],
     queryFn: async () => {
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from("site_content")
         .select("content")
         .eq("section_key", "countdown")

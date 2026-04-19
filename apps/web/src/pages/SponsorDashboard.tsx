@@ -19,7 +19,7 @@ export default function SponsorDashboard() {
     queryKey: ["sponsor-dashboard-record", user?.email],
     queryFn: async () => {
       if (!user?.email) return null;
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from("sponsors")
         .select("id, name, tier, programmes, slug, description, email")
         .eq("email", user.email)
@@ -37,7 +37,7 @@ export default function SponsorDashboard() {
   const { data: linkedEvents = [], isLoading: eventsLoading } = useQuery({
     queryKey: ["sponsor-dashboard-events", sponsor?.id],
     queryFn: async () => {
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from("events")
         .select("id, title, start_date, location, status")
         .order("start_date", { ascending: true })

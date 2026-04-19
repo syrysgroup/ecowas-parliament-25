@@ -42,7 +42,7 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
 
   useEffect(() => {
     const loadNominees = async () => {
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from("public_nominee_leaderboard")
         .select("id, full_name, country, bio, avatar_url, title, organisation, vote_count")
         .order("vote_count", { ascending: false })
@@ -65,7 +65,7 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
     if (!country || !motivation.trim()) return;
 
     setApplySubmitting(true);
-    const { error } = await (supabase as any).from("applications").insert({
+    const { error } = await supabase.from("applications").insert({
       user_id: user.id,
       country,
       motivation: motivation.trim(),
@@ -90,7 +90,7 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
     if (!searchQuery.trim()) return;
 
     setSearching(true);
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from("profiles")
       .select("id, full_name, country, avatar_url, bio, title, organisation")
       .eq("is_public", true)
@@ -112,7 +112,7 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
     if (!selectedNominee) return;
 
     setNominateSubmitting(true);
-    const { error } = await (supabase as any).from("nominations").insert({
+    const { error } = await supabase.from("nominations").insert({
       nominee_user_id: selectedNominee.id,
       nominator_user_id: user.id,
       country: selectedNominee.country,
@@ -137,7 +137,7 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
     if (!selectedVoteNominee) return;
 
     setVoteSubmitting(true);
-    const { error } = await (supabase as any).from("nomination_votes").insert({
+    const { error } = await supabase.from("nomination_votes").insert({
       nomination_id: selectedVoteNominee.id,
       voter_user_id: user.id,
     });

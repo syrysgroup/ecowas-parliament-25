@@ -21,7 +21,7 @@ const ImplementingPartnersSection = () => {
   const { data: partners = [] } = useQuery<PartnerRow[]>({
     queryKey: ["partners-public", "implementing"],
     queryFn: async () => {
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from("partners")
         .select(
           "id, name, slug, logo_url, description, lead_name, lead_role"

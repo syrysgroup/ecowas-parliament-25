@@ -21,7 +21,7 @@ export function GlobalSettingsProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const fetchSettings = useCallback(async () => {
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from("global_settings")
       .select("key, value");
     if (!error && data) {
@@ -38,7 +38,7 @@ export function GlobalSettingsProvider({ children }: { children: ReactNode }) {
     fetchSettings();
 
     // Subscribe to realtime changes
-    const channel = (supabase as any)
+    const channel = supabase
       .channel("global_settings_changes")
       .on(
         "postgres_changes",
@@ -48,18 +48,18 @@ export function GlobalSettingsProvider({ children }: { children: ReactNode }) {
       .subscribe();
 
     return () => {
-      (supabase as any).removeChannel(channel);
+      supabase.removeChannel(channel);
     };
   }, [fetchSettings]);
 
   const updateSetting = useCallback(async (key: string, value: any) => {
     const { data: { user } } = await supabase.auth.getUser();
-    await (supabase as any)
+    await supabase
       .from("global_settings")
       .upsert({ key, value, updated_by: user?.id, updated_at: new Date().toISOString() }, { onConflict: "key" });
 
     // Log audit action
-    await (supabase as any).from("admin_audit_log").insert({
+    await supabase.from("admin_audit_log").insert({
       action: `updated_setting:${key}`,
       performed_by: user?.id,
       details: { key, value },

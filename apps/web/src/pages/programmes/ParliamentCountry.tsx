@@ -49,9 +49,9 @@ export default function ParliamentCountry() {
   useEffect(() => {
     const load = async () => {
       const [countriesRes, nomineesRes, repsRes] = await Promise.all([
-        (supabase as any).from("countries").select("name, flag, seats").eq("name", countryName).single(),
-        (supabase as any).from("public_nominee_leaderboard").select("id, full_name, country, bio, avatar_url, title, organisation, vote_count").eq("country", countryName).order("vote_count", { ascending: false }),
-        (supabase as any).from("public_representatives").select("id, country, full_name, short_bio, manifesto_summary, headshot_url, avatar_url, title, organisation, featured").eq("country", countryName),
+        supabase.from("countries").select("name, flag, seats").eq("name", countryName).single(),
+        supabase.from("public_nominee_leaderboard").select("id, full_name, country, bio, avatar_url, title, organisation, vote_count").eq("country", countryName).order("vote_count", { ascending: false }),
+        supabase.from("public_representatives").select("id, country, full_name, short_bio, manifesto_summary, headshot_url, avatar_url, title, organisation, featured").eq("country", countryName),
       ]);
 
       if (countriesRes.data) setCountryInfo(countriesRes.data);

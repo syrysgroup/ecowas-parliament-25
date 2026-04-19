@@ -2,6 +2,8 @@ import AnimatedSection from "@/components/shared/AnimatedSection";
 import SponsorPlaceholderLogo from "@/components/shared/SponsorPlaceholderLogo";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Link } from "react-router-dom";
+import { Handshake } from "lucide-react";
 
 interface ProgrammeSponsorsFooterProps {
   programme?: string;
@@ -55,7 +57,29 @@ const ProgrammeSponsorsFooter = ({ programme, tiers: staticTiers, title = "Progr
     }));
   })();
 
-  if (tiers.length === 0) return null;
+  if (tiers.length === 0) return (
+    <section className="py-16 bg-muted/30">
+      <div className="container max-w-xl mx-auto text-center">
+        <AnimatedSection>
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-emerald-50 dark:bg-emerald-950 mb-4">
+            <Handshake size={24} className="text-emerald-600 dark:text-emerald-400" />
+          </div>
+          <h2 className="text-xl font-bold text-foreground mb-2">Become a Programme Sponsor</h2>
+          <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
+            Partner with ECOWAS Parliament Initiatives to support this programme and gain visibility
+            across West Africa's most prestigious parliamentary platform.
+          </p>
+          <Link
+            to="/contact"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold transition-colors"
+          >
+            <Handshake size={15} />
+            Partner With Us
+          </Link>
+        </AnimatedSection>
+      </div>
+    </section>
+  );
 
   return (
     <section className="py-16 bg-muted/30">

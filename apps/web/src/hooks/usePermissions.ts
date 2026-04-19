@@ -18,7 +18,7 @@ export function usePermissions() {
     queryKey: ["role-permissions", roles],
     queryFn: async () => {
       if (!roles.length) return [];
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from("role_permissions")
         .select("module, can_view, can_create, can_edit, can_delete")
         .in("role", roles);

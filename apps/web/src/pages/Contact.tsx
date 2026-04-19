@@ -48,7 +48,7 @@ export default function Contact() {
   const { data: contactInfo, isLoading } = useQuery<ContactContent | null>({
     queryKey: ["site-content", "contact_info"],
     queryFn: async () => {
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from("site_content")
         .select("content")
         .eq("section_key", "contact_info")
@@ -67,7 +67,7 @@ export default function Contact() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await (supabase as any).from("contact_submissions").insert({
+      await supabase.from("contact_submissions").insert({
         name: form.name,
         email: form.email,
         phone: form.phone || null,

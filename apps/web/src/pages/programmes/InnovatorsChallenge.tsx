@@ -274,12 +274,7 @@ const InnovatorsChallenge = () => {
         </div>
       </section>
 
-      <ProgrammeSponsorsFooter
-        programme="innovators"
-        tiers={[
-          { label: "Institutional Partners", sponsors: [{ name: "ECOWAS Commission" }, { name: "AWALCO" }] },
-        ]}
-      />
+      <ProgrammeSponsorsFooter programme="innovators" />
     </Layout>
   );
 };

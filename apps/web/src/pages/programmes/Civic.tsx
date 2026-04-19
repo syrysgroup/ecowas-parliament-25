@@ -264,10 +264,7 @@ const Civic = () => (
         </AnimatedSection>
       </div>
     </section>
-    <ProgrammeSponsorsFooter programme="civic" tiers={[
-      { label: "Programme Partners", sponsors: [{ name: "EU Delegation ECOWAS" }] },
-      { label: "Institutional Partners", sponsors: [{ name: "ECOWAS Commission" }, { name: "AWALCO" }] },
-    ]} />
+    <ProgrammeSponsorsFooter programme="civic" />
   </Layout>
 );
 

@@ -9,7 +9,7 @@ import ApplicationModal from "@/components/parliament/ApplicationModal";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Calendar, MapPin, Trophy, Users, Vote, Crown, FileText, Lightbulb, Heart, Megaphone, Globe, Sparkles } from "lucide-react";
+import { ArrowLeft, MapPin, Trophy, Users, Vote, Crown, FileText, Heart, Megaphone, Globe, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import parliamentHero from "@/assets/parliament-hero-clean.jpg";
 import ecowasLogo from "@/assets/ecowas-parliament-logo.png";
@@ -95,10 +95,10 @@ const Parliament = () => {
   useEffect(() => {
     const loadData = async () => {
       const [countriesRes, nomineesRes, representativesRes, applicationsRes] = await Promise.all([
-        (supabase as any).from("countries").select("name, flag, seats").order("sort_order"),
-        (supabase as any).from("public_nominee_leaderboard").select("id, full_name, country, bio, avatar_url, title, organisation, vote_count").order("vote_count", { ascending: false }).limit(8),
-        (supabase as any).from("public_representatives").select("id, country, full_name, short_bio, manifesto_summary, headshot_url, avatar_url, title, organisation, featured").limit(50),
-        (supabase as any).from("applications").select("country, status"),
+        supabase.from("countries").select("name, flag, seats").order("sort_order"),
+        supabase.from("public_nominee_leaderboard").select("id, full_name, country, bio, avatar_url, title, organisation, vote_count").order("vote_count", { ascending: false }).limit(8),
+        supabase.from("public_representatives").select("id, country, full_name, short_bio, manifesto_summary, headshot_url, avatar_url, title, organisation, featured").limit(50),
+        supabase.from("applications").select("country, status"),
       ]);
       if (countriesRes.data?.length) setCountries(countriesRes.data);
       setNominees(nomineesRes.data ?? []);
@@ -412,10 +412,7 @@ const Parliament = () => {
         </div>
       </section>
 
-      <ProgrammeSponsorsFooter programme="parliament" tiers={[
-        { label: "Programme Partners", sponsors: [{ name: "EU Delegation ECOWAS" }] },
-        { label: "Institutional Partners", sponsors: [{ name: "ECOWAS Commission" }, { name: "AWALCO" }] },
-      ]} />
+      <ProgrammeSponsorsFooter programme="parliament" />
       <ApplicationModal open={modalOpen} onOpenChange={setModalOpen} />
     </Layout>
   );

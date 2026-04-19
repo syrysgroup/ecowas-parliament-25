@@ -19,7 +19,7 @@ const InstitutionalPartnersSection = () => {
   const { data: institutionalPartners = [] } = useQuery<PartnerRow[]>({
     queryKey: ["partners-public", "institutional"],
     queryFn: async () => {
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from("partners")
         .select("id, name, slug, description, logo_url")
         .eq("partner_type", "institutional")

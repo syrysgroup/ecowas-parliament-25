@@ -16,6 +16,9 @@ interface MobileCRMLayoutProps {
 // Modules with full-height drag surfaces — hide FAB to avoid overlap
 const FAB_HIDDEN_SECTIONS = new Set(["cms", "tasks", "email-inbox", "comms"]);
 
+// Modules that need edge-to-edge width (no horizontal padding)
+const EDGE_TO_EDGE_SECTIONS = new Set(["cms", "tasks", "email-inbox", "comms", "calendar"]);
+
 export default function MobileCRMLayout({ activeSection, onNavigate, children }: MobileCRMLayoutProps) {
   const [moreOpen, setMoreOpen] = useState(false);
   const { roles, signOut } = useAuthContext();
@@ -40,7 +43,7 @@ export default function MobileCRMLayout({ activeSection, onNavigate, children }:
 
       {/* Scrollable module content */}
       <main
-        className="flex-1 overflow-y-auto overscroll-contain relative"
+        className={`flex-1 overflow-y-auto overscroll-contain relative ${EDGE_TO_EDGE_SECTIONS.has(activeSection) ? "" : "px-4 pt-3"}`}
         style={{
           paddingBottom: "calc(64px + env(safe-area-inset-bottom, 8px))",
           backgroundImage: "radial-gradient(circle, hsl(var(--border)) 1px, transparent 1px)",

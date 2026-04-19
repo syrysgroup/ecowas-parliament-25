@@ -206,7 +206,10 @@ export function NotificationBell({ onNavigate }: { onNavigate: (s: string) => vo
   const handleToggle = () => {
     if (!open && ref.current) {
       const rect = ref.current.getBoundingClientRect();
-      setDropdownPos({ top: rect.bottom + 8, right: window.innerWidth - rect.right });
+      const dropW = Math.min(340, window.innerWidth - 16);
+      const rawRight = window.innerWidth - rect.right;
+      const clampedRight = Math.max(8, Math.min(rawRight, window.innerWidth - dropW - 8));
+      setDropdownPos({ top: rect.bottom + 8, right: clampedRight });
     }
     setOpen(v => !v);
     setSelected(new Set());
@@ -234,8 +237,8 @@ export function NotificationBell({ onNavigate }: { onNavigate: (s: string) => vo
       {open && createPortal(
         <div
           ref={dropdownRef}
-          className="fixed w-[340px] bg-crm-card border border-crm-border rounded-xl shadow-2xl shadow-black/70 z-[9999] overflow-hidden animate-in slide-in-from-top-2 fade-in duration-150"
-          style={{ top: dropdownPos.top, right: dropdownPos.right }}
+          className="fixed bg-crm-card border border-crm-border rounded-xl shadow-2xl shadow-black/70 z-[9999] overflow-hidden animate-in slide-in-from-top-2 fade-in duration-150"
+          style={{ top: dropdownPos.top, right: dropdownPos.right, width: Math.min(340, window.innerWidth - 16) }}
         >
           <div className="flex items-center justify-between px-4 pt-3 pb-2 border-b border-crm-border/60">
             <div className="flex items-center gap-2">

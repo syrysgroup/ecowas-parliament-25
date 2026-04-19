@@ -22,7 +22,7 @@ const AnniversarySection = () => {
   const { data: content, isLoading } = useQuery<StatContent | null>({
     queryKey: ["site-content", "anniversary_stats"],
     queryFn: async () => {
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from("site_content")
         .select("content")
         .eq("section_key", "anniversary_stats")

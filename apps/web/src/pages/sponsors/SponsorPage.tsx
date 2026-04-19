@@ -34,7 +34,7 @@ export default function SponsorPage() {
   const { data: sponsor, isLoading } = useQuery({
     queryKey: ["sponsor", slug],
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("sponsors")
         .select("id, name, slug, acronym, about, description, tier, website, email, programmes, logo_url")
         .eq("slug", slug!)

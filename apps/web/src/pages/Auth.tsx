@@ -17,7 +17,7 @@ type AuthMode = "signin" | "forgot" | "reset_sent";
 
 // ─── Role-based redirect ──────────────────────────────────────────────────────
 async function getRoleBasedRedirect(userId: string, from: string | null): Promise<string> {
-  const { data } = await (supabase as any)
+  const { data } = await supabase
     .from("user_roles")
     .select("role")
     .eq("user_id", userId);

@@ -20,7 +20,7 @@ const EventsSection = () => {
   const { data: events = [] } = useQuery({
     queryKey: ["homepage-events"],
     queryFn: async () => {
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from("events")
         .select("id, title, date, location, tag, tag_color, registration_type, registration_url, is_published")
         .eq("is_published", true)

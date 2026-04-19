@@ -24,7 +24,7 @@ const Youth = () => {
   const { data: innovatorsSponsors = [] } = useQuery<SponsorRow[]>({
     queryKey: ["sponsors-youth-innovators-inline"],
     queryFn: async () => {
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from("sponsors")
         .select("id, name, slug, logo_url")
         .eq("is_published", true)
@@ -39,7 +39,7 @@ const Youth = () => {
   const { data: smartSponsors = [] } = useQuery<SponsorRow[]>({
     queryKey: ["sponsors-youth-smart-inline"],
     queryFn: async () => {
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from("sponsors")
         .select("id, name, slug, logo_url")
         .eq("is_published", true)

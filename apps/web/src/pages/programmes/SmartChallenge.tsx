@@ -375,12 +375,7 @@ const SmartChallenge = () => {
         </div>
       </section>
 
-      <ProgrammeSponsorsFooter
-        programme="smart"
-        tiers={[
-          { label: "Institutional Partners", sponsors: [{ name: "ECOWAS Commission" }, { name: "AWALCO" }] },
-        ]}
-      />
+      <ProgrammeSponsorsFooter programme="smart" />
     </Layout>
   );
 };

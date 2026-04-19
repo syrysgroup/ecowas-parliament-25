@@ -28,7 +28,7 @@ const PartnerPage = () => {
   const { data: partner, isLoading } = useQuery({
     queryKey: ["partner", slug],
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("partners")
         .select("id, name, slug, description, long_description, partner_type, website, lead_name, lead_role, lead_image_url, logo_url, social_links")
         .eq("slug", slug!)

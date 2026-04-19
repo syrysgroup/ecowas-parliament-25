@@ -1,9 +1,10 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Megaphone, Plus, Pencil, Trash2, Send, Clock, CheckCircle2, Play, Users, BarChart2 } from "lucide-react";
+import { Megaphone, Plus, Pencil, Trash2, Send, Clock, CheckCircle2, Play, Users, BarChart2, Sparkles, Link2, Copy, Check, ExternalLink, Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthContext";
-import { format, parseISO, subDays, startOfWeek } from "date-fns";
+import { format, parseISO, startOfWeek } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -167,6 +168,185 @@ function CampaignDialog({ open, onClose, campaign }: {
   );
 }
 
+// ─── UTM Link Generator ───────────────────────────────────────────────────────
+function UTMGenerator() {
+  const [baseUrl, setBaseUrl] = useState("https://ecowasparliamentinitiatives.org");
+  const [source, setSource]   = useState("");
+  const [medium, setMedium]   = useState("");
+  const [campaign, setCampaign] = useState("");
+  const [content, setContent]   = useState("");
+  const [copied, setCopied]     = useState(false);
+
+  const utmUrl = useMemo(() => {
+    if (!baseUrl || !source || !medium || !campaign) return "";
+    const params = new URLSearchParams();
+    if (source)   params.set("utm_source",   source.trim());
+    if (medium)   params.set("utm_medium",   medium.trim());
+    if (campaign) params.set("utm_campaign", campaign.trim());
+    if (content)  params.set("utm_content",  content.trim());
+    return `${baseUrl.replace(/\/$/, "")}?${params.toString()}`;
+  }, [baseUrl, source, medium, campaign, content]);
+
+  const copy = useCallback(() => {
+    if (!utmUrl) return;
+    navigator.clipboard.writeText(utmUrl).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }, [utmUrl]);
+
+  const inputCls = "bg-crm-surface border-crm-border text-crm-text text-[12px] h-8";
+
+  return (
+    <div className="bg-crm-card border border-crm-border rounded-xl p-4 space-y-3">
+      <div className="flex items-center gap-2 mb-1">
+        <Link2 size={13} className="text-blue-400" />
+        <p className="text-[12px] font-semibold text-crm-text">UTM Link Generator</p>
+      </div>
+      <div className="grid sm:grid-cols-2 gap-2">
+        <div className="space-y-1 sm:col-span-2">
+          <Label className="text-[10px] text-crm-text-muted">Base URL</Label>
+          <Input value={baseUrl} onChange={e => setBaseUrl(e.target.value)} placeholder="https://..." className={inputCls} />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-[10px] text-crm-text-muted">Source *</Label>
+          <Input value={source} onChange={e => setSource(e.target.value)} placeholder="newsletter, twitter, facebook…" className={inputCls} />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-[10px] text-crm-text-muted">Medium *</Label>
+          <Input value={medium} onChange={e => setMedium(e.target.value)} placeholder="email, social, cpc…" className={inputCls} />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-[10px] text-crm-text-muted">Campaign *</Label>
+          <Input value={campaign} onChange={e => setCampaign(e.target.value)} placeholder="parliament-2025" className={inputCls} />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-[10px] text-crm-text-muted">Content (optional)</Label>
+          <Input value={content} onChange={e => setContent(e.target.value)} placeholder="banner-top, cta-button…" className={inputCls} />
+        </div>
+      </div>
+      {utmUrl && (
+        <div className="flex items-center gap-2 bg-crm-surface border border-crm-border rounded-lg px-3 py-2">
+          <p className="flex-1 text-[10px] font-mono text-emerald-400 truncate">{utmUrl}</p>
+          <button onClick={copy} className="flex items-center gap-1 text-[10px] text-crm-text-muted hover:text-crm-text transition-colors flex-shrink-0">
+            {copied ? <Check size={11} className="text-emerald-400" /> : <Copy size={11} />}
+            {copied ? "Copied" : "Copy"}
+          </button>
+          <a href={utmUrl} target="_blank" rel="noopener noreferrer" className="text-crm-text-dim hover:text-crm-text transition-colors flex-shrink-0">
+            <ExternalLink size={11} />
+          </a>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── AI Content Generator ────────────────────────────────────────────────────
+function AIContentTool() {
+  const [task, setTask]       = useState<string>("campaign_copy");
+  const [keyword, setKeyword] = useState("");
+  const [audience, setAudience] = useState("");
+  const [programme, setProgramme] = useState("");
+  const [result, setResult]   = useState("");
+  const [loading, setLoading] = useState(false);
+  const [copied, setCopied]   = useState(false);
+  const { toast } = useToast();
+
+  const generate = async () => {
+    setLoading(true);
+    setResult("");
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) throw new Error("Not authenticated");
+
+      const res = await supabase.functions.invoke("ai-content", {
+        headers: { Authorization: `Bearer ${token}` },
+        body: {
+          task,
+          context: {
+            keywords: keyword || undefined,
+            audience: audience || undefined,
+            programme: programme || undefined,
+            campaign_type: task === "email_subject" ? "email" : "social",
+          },
+        },
+      });
+      if (res.error) throw res.error;
+      setResult(res.data?.content ?? "");
+    } catch (e: any) {
+      toast({ title: "AI generation failed", description: e.message, variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const copy = () => {
+    navigator.clipboard.writeText(result).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  const TASKS = [
+    { value: "campaign_copy",       label: "Campaign copy" },
+    { value: "email_subject",       label: "Email subject lines" },
+    { value: "meta_description",    label: "SEO meta description" },
+    { value: "og_description",      label: "Social share description" },
+    { value: "keyword_suggestions", label: "Keyword suggestions" },
+  ];
+
+  const PROGRAMMES = ["parliament", "trade", "youth", "women", "civic", "culture", "awards", "smart", "innovators"];
+
+  return (
+    <div className="bg-crm-card border border-crm-border rounded-xl p-4 space-y-3">
+      <div className="flex items-center gap-2">
+        <Sparkles size={13} className="text-violet-400" />
+        <p className="text-[12px] font-semibold text-crm-text">AI Content Generator</p>
+        <span className="text-[9px] px-1.5 py-0.5 rounded bg-violet-950 border border-violet-800 text-violet-400 font-mono">Claude AI</span>
+      </div>
+      <div className="grid sm:grid-cols-2 gap-2">
+        <div className="space-y-1">
+          <Label className="text-[10px] text-crm-text-muted">Generate</Label>
+          <select value={task} onChange={e => setTask(e.target.value)} className="w-full bg-crm-surface border border-crm-border rounded-md px-2 py-1.5 text-[12px] text-crm-text h-8">
+            {TASKS.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+          </select>
+        </div>
+        <div className="space-y-1">
+          <Label className="text-[10px] text-crm-text-muted">Programme (optional)</Label>
+          <select value={programme} onChange={e => setProgramme(e.target.value)} className="w-full bg-crm-surface border border-crm-border rounded-md px-2 py-1.5 text-[12px] text-crm-text h-8">
+            <option value="">All programmes</option>
+            {PROGRAMMES.map(p => <option key={p} value={p}>{p.charAt(0).toUpperCase() + p.slice(1)}</option>)}
+          </select>
+        </div>
+        <div className="space-y-1">
+          <Label className="text-[10px] text-crm-text-muted">Focus keyword</Label>
+          <Input value={keyword} onChange={e => setKeyword(e.target.value)} placeholder="ECOWAS Parliament, youth governance…" className="bg-crm-surface border-crm-border text-crm-text text-[12px] h-8" />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-[10px] text-crm-text-muted">Target audience</Label>
+          <Input value={audience} onChange={e => setAudience(e.target.value)} placeholder="West African youth, sponsors…" className="bg-crm-surface border-crm-border text-crm-text text-[12px] h-8" />
+        </div>
+      </div>
+      <Button size="sm" onClick={generate} disabled={loading} className="text-[11px] gap-1.5 h-8 bg-violet-700 hover:bg-violet-600">
+        {loading ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+        {loading ? "Generating…" : "Generate with AI"}
+      </Button>
+      {result && (
+        <div className="relative">
+          <pre className="text-[11px] text-crm-text whitespace-pre-wrap bg-crm-surface border border-crm-border rounded-lg p-3 leading-relaxed font-sans">
+            {result}
+          </pre>
+          <button onClick={copy} className="absolute top-2 right-2 flex items-center gap-1 text-[10px] text-crm-text-muted hover:text-crm-text bg-crm-card border border-crm-border rounded px-1.5 py-0.5 transition-colors">
+            {copied ? <Check size={9} className="text-emerald-400" /> : <Copy size={9} />}
+            {copied ? "Copied" : "Copy"}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Main ──────────────────────────────────────────────────────────────────────
 export default function MarketingModule() {
   const { isAdmin } = useAuthContext();
@@ -299,6 +479,12 @@ export default function MarketingModule() {
             <p className="text-[10px] text-crm-text-faint italic">No subscriber data yet</p>
           )}
         </div>
+      </div>
+
+      {/* Marketing Tools */}
+      <div className="grid lg:grid-cols-2 gap-4">
+        <UTMGenerator />
+        <AIContentTool />
       </div>
 
       {/* Summary chips */}

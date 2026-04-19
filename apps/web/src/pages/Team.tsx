@@ -27,7 +27,7 @@ const Team = () => {
   const { data: profileMembers = [], isLoading: loadingProfiles } = useQuery<TeamMember[]>({
     queryKey: ["team-members-profiles"],
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("profiles")
         .select("id, full_name, title, organisation, avatar_url, bio")
         .eq("show_on_website", true)
@@ -41,7 +41,7 @@ const Team = () => {
   const { data: manualMembers = [], isLoading: loadingManual } = useQuery<TeamMember[]>({
     queryKey: ["team-members-manual"],
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("team_members")
         .select("id, full_name, title, organisation, avatar_url, bio, display_order, category")
         .eq("is_active", true)

@@ -5,7 +5,7 @@ export function useSiteSettings() {
   const { data: settings = {} } = useQuery<Record<string, string>>({
     queryKey: ["site-settings"],
     queryFn: async () => {
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from("site_settings")
         .select("key, value");
       const map: Record<string, string> = {};

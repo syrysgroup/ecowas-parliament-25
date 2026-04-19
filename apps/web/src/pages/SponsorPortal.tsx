@@ -47,7 +47,7 @@ export default function SponsorPortal() {
   const { data: currentSponsors = [] } = useQuery({
     queryKey: ["sponsors-public"],
     queryFn: async () => {
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from("sponsors")
         .select("id, name, slug, tier, logo_url")
         .eq("is_published", true)
@@ -67,7 +67,7 @@ export default function SponsorPortal() {
   const { data: implementingPartners = [] } = useQuery({
     queryKey: ["partners-public", "implementing"],
     queryFn: async () => {
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from("partners")
         .select(
           "id, name, slug, logo_url, description, lead_name, lead_role"
@@ -92,7 +92,7 @@ export default function SponsorPortal() {
   const { data: statsContent } = useQuery({
     queryKey: ["site-content", "sponsor_portal_stats"],
     queryFn: async () => {
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from("site_content")
         .select("content")
         .eq("section_key", "sponsor_portal_stats")

@@ -5,7 +5,7 @@ export function useSiteContent(sectionKey: string) {
   return useQuery({
     queryKey: ["site-content", sectionKey],
     queryFn: async () => {
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from("site_content")
         .select("content")
         .eq("section_key", sectionKey)
