@@ -14,6 +14,7 @@ import CalendarModule     from "@/components/crm/modules/CalendarModule";
 import TeamModule         from "@/components/crm/modules/TeamModule";
 import PeopleModule       from "@/components/crm/modules/PeopleModule";
 import ParliamentOpsModule from "@/components/crm/modules/ParliamentOpsModule";
+import ParliamentContentModule from "@/components/crm/modules/ParliamentContentModule";
 import SponsorMetricsModule from "@/components/crm/modules/SponsorMetricsModule";
 import DocumentsModule    from "@/components/crm/modules/DocumentsModule";
 import SuperAdminModule   from "@/components/crm/modules/SuperAdminModule";
@@ -124,7 +125,8 @@ export default function CRMDashboard() {
       case "calendar":        return <CalendarModule />;
       case "team":            return <TeamModule />;
       case "people":          return <PeopleModule />;
-      case "parliament-ops":  return <ParliamentOpsModule />;
+      case "parliament-ops":      return <ParliamentOpsModule />;
+      case "parliament-content":  return <ParliamentContentModule />;
       case "sponsor-metrics": return <SponsorMetricsModule />;
       case "documents":       return <DocumentsModule />;
       case "comms":           return <Suspense fallback={<ModuleLoader />}><MessagingModule /></Suspense>;

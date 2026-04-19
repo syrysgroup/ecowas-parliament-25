@@ -31,6 +31,7 @@ import {
   User,
   Crown,
   Search,
+  Scroll,
 } from "lucide-react";
 
 export type ModuleGroup =
@@ -52,6 +53,7 @@ export type ModuleId =
   | "team"
   | "people"
   | "parliament-ops"
+  | "parliament-content"
   | "sponsor-metrics"
   | "analytics"
   | "finance"
@@ -397,6 +399,15 @@ export const CRM_MODULES: CRMModule[] = [
     icon: ShieldCheck,
     section: "parliament-ops",
     allowedRoles: ["super_admin", "admin", "moderator"],
+    isStub: false,
+    group: "ADMINISTRATION",
+  },
+  {
+    id: "parliament-content",
+    label: "Parliament Content",
+    icon: Scroll,
+    section: "parliament-content",
+    allowedRoles: ["super_admin", "admin", "communications_officer"],
     isStub: false,
     group: "ADMINISTRATION",
   },

@@ -111,17 +111,21 @@ export function useNotifications() {
     retry: 0,
   });
 
+  const subGen = useRef(0);
+
   useEffect(() => {
     if (!user?.id) return;
+    const gen = ++subGen.current;
+    const pfx = `${user.id.slice(0, 8)}-${gen}`;
     const invalidate = () => qc.invalidateQueries({ queryKey: ["crm-notifications", user.id] });
     const channels = [
-      supabase.channel("notif-crm-messages").on("postgres_changes" as any, { event: "INSERT", schema: "public", table: "crm_messages", filter: `to_user_id=eq.${user.id}` }, invalidate).subscribe(),
-      supabase.channel("notif-tasks").on("postgres_changes" as any, { event: "INSERT", schema: "public", table: "tasks", filter: `assignee_id=eq.${user.id}` }, invalidate).on("postgres_changes" as any, { event: "UPDATE", schema: "public", table: "tasks", filter: `assignee_id=eq.${user.id}` }, invalidate).subscribe(),
-      supabase.channel("notif-events").on("postgres_changes" as any, { event: "INSERT", schema: "public", table: "crm_calendar_events" }, invalidate).subscribe(),
-      supabase.channel("notif-reads").on("postgres_changes" as any, { event: "INSERT", schema: "public", table: "notification_reads", filter: `user_id=eq.${user.id}` }, invalidate).subscribe(),
+      supabase.channel(`notif-crm-messages-${pfx}`).on("postgres_changes" as any, { event: "INSERT", schema: "public", table: "crm_messages", filter: `to_user_id=eq.${user.id}` }, invalidate).subscribe(),
+      supabase.channel(`notif-tasks-${pfx}`).on("postgres_changes" as any, { event: "INSERT", schema: "public", table: "tasks", filter: `assignee_id=eq.${user.id}` }, invalidate).on("postgres_changes" as any, { event: "UPDATE", schema: "public", table: "tasks", filter: `assignee_id=eq.${user.id}` }, invalidate).subscribe(),
+      supabase.channel(`notif-events-${pfx}`).on("postgres_changes" as any, { event: "INSERT", schema: "public", table: "crm_calendar_events" }, invalidate).subscribe(),
+      supabase.channel(`notif-reads-${pfx}`).on("postgres_changes" as any, { event: "INSERT", schema: "public", table: "notification_reads", filter: `user_id=eq.${user.id}` }, invalidate).subscribe(),
     ];
     if (isAdmin) {
-      channels.push(supabase.channel("notif-applications").on("postgres_changes" as any, { event: "INSERT", schema: "public", table: "applications" }, invalidate).subscribe());
+      channels.push(supabase.channel(`notif-applications-${pfx}`).on("postgres_changes" as any, { event: "INSERT", schema: "public", table: "applications" }, invalidate).subscribe());
     }
     return () => { channels.forEach(ch => supabase.removeChannel(ch)); };
   }, [user?.id, isAdmin, qc]);

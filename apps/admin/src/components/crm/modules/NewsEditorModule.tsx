@@ -19,6 +19,8 @@ interface NewsRow {
   content: string | null; cover_image_url: string | null; author_id: string | null;
   status: string; published_at: string | null; created_at: string;
   external_links?: { title: string; url: string }[];
+  source_doc?: string | null;
+  fact_checked?: boolean;
 }
 
 const PAGE_SIZE = 20;
@@ -36,6 +38,8 @@ function ArticleDialog({ open, onClose, article }: { open: boolean; onClose: () 
   const [coverUrl, setCoverUrl] = useState(article?.cover_image_url ?? "");
   const [status, setStatus] = useState(article?.status ?? "draft");
   const [uploading, setUploading] = useState(false);
+  const [sourceDoc, setSourceDoc] = useState(article?.source_doc ?? "");
+  const [factChecked, setFactChecked] = useState(article?.fact_checked ?? false);
   const [externalLinks, setExternalLinks] = useState<{ title: string; url: string }[]>(
     article?.external_links ?? []
   );
@@ -59,11 +63,17 @@ function ArticleDialog({ open, onClose, article }: { open: boolean; onClose: () 
     mutationFn: async () => {
       const wasNotPublished = !article?.published_at || article?.status !== "published";
       const isNowPublished  = status === "published";
+      // Require source document before publishing
+      if (isNowPublished && !sourceDoc.trim()) {
+        throw new Error("Source document is required before publishing. Add a source reference below.");
+      }
       const payload: any = {
         title, slug: slug || title.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, ""),
         excerpt: excerpt || null, content: content || null, cover_image_url: coverUrl || null,
         status, updated_at: new Date().toISOString(),
         external_links: externalLinks.filter(l => l.url.trim()),
+        source_doc: sourceDoc.trim() || null,
+        fact_checked: factChecked,
         ...(isNowPublished && wasNotPublished ? { published_at: new Date().toISOString() } : {}),
       };
       if (isEdit) await supabase.from("news_articles").update(payload).eq("id", article.id);
@@ -137,6 +147,25 @@ function ArticleDialog({ open, onClose, article }: { open: boolean; onClose: () 
                 </button>
               </div>
             ))}
+          </div>
+
+          {/* Editorial: source doc + fact-check */}
+          <div className="space-y-2.5 bg-crm-surface border border-crm-border rounded-lg p-3">
+            <p className="text-[10px] font-mono text-crm-text-dim uppercase tracking-wide font-semibold">Editorial</p>
+            <div className="space-y-1">
+              <Label className="text-[11px] text-crm-text-dim flex items-center gap-1">
+                Source Document
+                {status === "published" && <span className="text-red-400 text-[9px] font-normal">(required to publish)</span>}
+              </Label>
+              <Input value={sourceDoc} onChange={e => setSourceDoc(e.target.value)}
+                placeholder="URL or filename of source document / press release"
+                className="bg-crm-card border-crm-border text-crm-text text-xs h-8" />
+            </div>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <Checkbox checked={factChecked} onCheckedChange={v => setFactChecked(!!v)}
+                className="border-crm-border" />
+              <span className="text-[11px] text-crm-text-muted">Fact-checked before publishing</span>
+            </label>
           </div>
 
           <div className="flex gap-2">

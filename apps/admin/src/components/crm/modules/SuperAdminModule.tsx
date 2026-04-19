@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import SecretsVaultTab from "./superadmin/SecretsVaultTab";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -68,7 +69,7 @@ interface EmailSig {
 
 type Tab = "overview" | "users" | "invitations" | "website" | "activity" | "routes"
          | "countries" | "team-members" | "signatures"
-         | "settings" | "email-config" | "branding";
+         | "settings" | "email-config" | "branding" | "secrets";
 
 // ─── Role config ──────────────────────────────────────────────────────────────
 const ROLE_CONFIG: Partial<Record<AppRole, {
@@ -1816,6 +1817,7 @@ export default function SuperAdminModule({ onNavigate }: { onNavigate?: (s: stri
     { id:"routes",       label:"Site Routes",     icon:Globe },
     { id:"email-config", label:"Email Config",    icon:Mail },
     { id:"branding",     label:"Branding & Site", icon:Palette },
+    { id:"secrets",      label:"Secrets Vault",   icon:KeyRound },
     { id:"settings",     label:"Settings",        icon:Settings },
   ];
 
@@ -3025,8 +3027,10 @@ export default function SuperAdminModule({ onNavigate }: { onNavigate?: (s: stri
       {tab === "signatures" && <SignaturesTab />}
 
       {/* ══ EMAIL CONFIG ══ */}
+      {/* ══ EMAIL CONFIG ══ */}
       {tab === "email-config" && <EmailConfigTab userId={user?.id} />}
       {tab === "branding" && <BrandingTab userId={user?.id} />}
+      {tab === "secrets" && <SecretsVaultTab userId={user?.id} />}
 
       {/* ══ SETTINGS ══ */}
       {tab === "settings" && (
