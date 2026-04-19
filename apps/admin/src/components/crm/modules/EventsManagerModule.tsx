@@ -106,10 +106,10 @@ function EventDialog({ open, onClose, event }: { open: boolean; onClose: () => v
       };
 
       if (isEdit) {
-        await (supabase as any).from("events").update(payload).eq("id", event.id);
+        await supabase.from("events").update(payload).eq("id", event.id);
 
         // Sync title/date change to any matching global calendar event
-        await (supabase as any).from("crm_calendar_events")
+        await supabase.from("crm_calendar_events")
           .update({
             title,
             description: description || null,
@@ -121,13 +121,13 @@ function EventDialog({ open, onClose, event }: { open: boolean; onClose: () => v
           .like("title", `%${event.title ?? title}%`);
 
       } else {
-        await (supabase as any).from("events").insert(payload);
+        await supabase.from("events").insert(payload);
 
         // Auto-add to the global CRM calendar so every user sees it immediately
         if (isPublished) {
           const { data: { user: authUser } } = await supabase.auth.getUser();
           if (authUser) {
-            await (supabase as any).from("crm_calendar_events").insert({
+            await supabase.from("crm_calendar_events").insert({
               title,
               description: description
                 ? description
@@ -334,7 +334,7 @@ export default function EventsManagerModule() {
   const { data: events = [], isLoading } = useQuery<EventRow[]>({
     queryKey: ["events-manager"],
     queryFn: async () => {
-      const { data } = await (supabase as any).from("events").select("*").order("date", { ascending: false });
+      const { data } = await supabase.from("events").select("*").order("date", { ascending: false });
       return data ?? [];
     },
   });
@@ -350,20 +350,20 @@ export default function EventsManagerModule() {
   const paged = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
   const deleteEvent = useMutation({
-    mutationFn: async (id: string) => { await (supabase as any).from("events").delete().eq("id", id); },
+    mutationFn: async (id: string) => { await supabase.from("events").delete().eq("id", id); },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["events-manager"] }); setConfirmDeleteId(null); toast("Event deleted"); },
   });
 
   const togglePublish = useMutation({
     mutationFn: async ({ id, published }: { id: string; published: boolean }) => {
-      await (supabase as any).from("events").update({ is_published: published }).eq("id", id);
+      await supabase.from("events").update({ is_published: published }).eq("id", id);
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["events-manager"] }); toast("Updated"); },
   });
 
   const bulkDelete = useMutation({
     mutationFn: async () => {
-      await Promise.all([...selectedIds].map(id => (supabase as any).from("events").delete().eq("id", id)));
+      await Promise.all([...selectedIds].map(id => supabase.from("events").delete().eq("id", id)));
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["events-manager"] });
@@ -374,7 +374,7 @@ export default function EventsManagerModule() {
 
   const bulkPublish = useMutation({
     mutationFn: async (publish: boolean) => {
-      await Promise.all([...selectedIds].map(id => (supabase as any).from("events").update({ is_published: publish }).eq("id", id)));
+      await Promise.all([...selectedIds].map(id => supabase.from("events").update({ is_published: publish }).eq("id", id)));
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["events-manager"] });

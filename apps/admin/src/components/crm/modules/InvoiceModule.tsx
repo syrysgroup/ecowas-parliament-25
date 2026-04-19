@@ -99,7 +99,7 @@ function InvoiceFormDialog({
   useQuery({
     queryKey: ["invoice-items-edit", invoice?.id],
     queryFn: async () => {
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from("invoice_items")
         .select("id, description, quantity, unit_price, amount")
         .eq("invoice_id", invoice!.id)
@@ -136,14 +136,14 @@ function InvoiceFormDialog({
       let invoiceId = invoice?.id;
 
       if (isEdit) {
-        const { error } = await (supabase as any).from("invoices").update(payload).eq("id", invoiceId);
+        const { error } = await supabase.from("invoices").update(payload).eq("id", invoiceId);
         if (error) throw error;
         // Replace all items
-        await (supabase as any).from("invoice_items").delete().eq("invoice_id", invoiceId);
+        await supabase.from("invoice_items").delete().eq("invoice_id", invoiceId);
       } else {
         // Get next invoice number
-        const { data: numData } = await (supabase as any).rpc("next_invoice_number");
-        const { data: newInv, error } = await (supabase as any)
+        const { data: numData } = await supabase.rpc("next_invoice_number");
+        const { data: newInv, error } = await supabase
           .from("invoices")
           .insert({ ...payload, invoice_number: numData ?? `INV-${Date.now()}`, created_by: user?.id })
           .select("id").single();
@@ -154,7 +154,7 @@ function InvoiceFormDialog({
       // Insert items
       const validItems = items.filter(it => it.description.trim());
       if (validItems.length > 0) {
-        const { error: itemErr } = await (supabase as any).from("invoice_items").insert(
+        const { error: itemErr } = await supabase.from("invoice_items").insert(
           validItems.map((it, i) => ({
             invoice_id: invoiceId, description: it.description.trim(),
             quantity: Number(it.quantity), unit_price: Number(it.unit_price),
@@ -349,7 +349,7 @@ function InvoicePreview({ invoice, onClose }: { invoice: Invoice; onClose: () =>
   const { data: items = [] } = useQuery({
     queryKey: ["invoice-items-preview", invoice.id],
     queryFn: async () => {
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from("invoice_items")
         .select("id, description, quantity, unit_price, amount")
         .eq("invoice_id", invoice.id)
@@ -497,7 +497,7 @@ export default function InvoiceModule() {
   const { data: invoices = [], isLoading } = useQuery<Invoice[]>({
     queryKey: ["invoices"],
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("invoices")
         .select("*")
         .order("created_at", { ascending: false });
@@ -508,7 +508,7 @@ export default function InvoiceModule() {
 
   const deleteInvoice = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await (supabase as any).from("invoices").delete().eq("id", id);
+      const { error } = await supabase.from("invoices").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -521,7 +521,7 @@ export default function InvoiceModule() {
 
   const updateStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
-      const { error } = await (supabase as any).from("invoices").update({ status }).eq("id", id);
+      const { error } = await supabase.from("invoices").update({ status }).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["invoices"] }),

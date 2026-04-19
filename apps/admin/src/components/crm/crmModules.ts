@@ -30,6 +30,7 @@ import {
   FileText,
   User,
   Crown,
+  Search,
 } from "lucide-react";
 
 export type ModuleGroup =
@@ -71,6 +72,7 @@ export type ModuleId =
   | "stakeholders-mgmt"
   | "media-kit-mgmt"
   | "invoices"
+  | "seo"
   | "profile"
   | "super-admin";
 
@@ -327,6 +329,16 @@ export const CRM_MODULES: CRMModule[] = [
     icon: FileText,
     section: "invoices",
     allowedRoles: ["super_admin", "admin", "finance_coordinator", "budget_officer"],
+    isStub: false,
+    group: "ANALYTICS & FINANCE",
+  },
+
+  {
+    id: "seo",
+    label: "SEO",
+    icon: Search,
+    section: "seo",
+    allowedRoles: ["super_admin", "admin", "website_editor", "marketing_manager"],
     isStub: false,
     group: "ANALYTICS & FINANCE",
   },

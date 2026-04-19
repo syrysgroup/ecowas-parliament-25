@@ -83,9 +83,9 @@ function EventFormSheet({
         is_global: isGlobal,
       };
       if (isEdit) {
-        await (supabase as any).from("crm_calendar_events").update(payload).eq("id", event.id);
+        await supabase.from("crm_calendar_events").update(payload).eq("id", event.id);
       } else {
-        await (supabase as any).from("crm_calendar_events").insert({ ...payload, created_by: user!.id });
+        await supabase.from("crm_calendar_events").insert({ ...payload, created_by: user!.id });
       }
       qc.invalidateQueries({ queryKey: ["crm-calendar"] });
       qc.invalidateQueries({ queryKey: ["crm-upcoming-events"] });
@@ -241,7 +241,7 @@ export default function CalendarModule() {
   const { data: events = [], isLoading } = useQuery({
     queryKey: ["crm-calendar", format(currentDate, "yyyy-MM")],
     queryFn: async () => {
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from("crm_calendar_events")
         .select("*")
         .or(`created_by.eq.${user!.id},is_global.eq.true`)
@@ -254,7 +254,7 @@ export default function CalendarModule() {
 
   const deleteEvent = useMutation({
     mutationFn: async (id: string) => {
-      await (supabase as any).from("crm_calendar_events").delete().eq("id", id);
+      await supabase.from("crm_calendar_events").delete().eq("id", id);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["crm-calendar"] });

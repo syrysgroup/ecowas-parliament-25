@@ -29,14 +29,14 @@ function SidebarContent({
   const { data: emailUnreadCount = 0 } = useQuery<number>({
     queryKey: ["email-inbox-unread", user?.id],
     queryFn: async () => {
-      const acctRes = await (supabase as any)
+      const acctRes = await supabase
         .from("email_accounts")
         .select("id")
         .eq("user_id", user!.id)
         .eq("is_active", true)
         .single();
       if (!acctRes.data?.id) return 0;
-      const { count } = await (supabase as any)
+      const { count } = await supabase
         .from("emails")
         .select("id", { count: "exact", head: true })
         .eq("account_id", acctRes.data.id)

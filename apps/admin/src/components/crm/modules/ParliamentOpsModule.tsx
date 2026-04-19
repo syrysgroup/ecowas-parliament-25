@@ -25,7 +25,7 @@ export default function ParliamentOpsModule() {
   const { data: applications = [], isLoading: loadingApps } = useQuery<QueueItem[]>({
     queryKey: ["parliament-applications"],
     queryFn: async () => {
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from("applications")
         .select("id, country, created_at, status, profiles!inner(full_name)")
         .order("created_at", { ascending: false })
@@ -43,7 +43,7 @@ export default function ParliamentOpsModule() {
   const { data: nominations = [], isLoading: loadingNoms } = useQuery<QueueItem[]>({
     queryKey: ["parliament-nominations"],
     queryFn: async () => {
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from("public_nominee_leaderboard")
         .select("id, full_name, country, created_at, vote_count")
         .order("vote_count", { ascending: false })
@@ -55,7 +55,7 @@ export default function ParliamentOpsModule() {
   const { data: representatives = [], isLoading: loadingReps } = useQuery<QueueItem[]>({
     queryKey: ["parliament-representatives"],
     queryFn: async () => {
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from("public_representatives")
         .select("id, full_name, country, verified_at")
         .order("verified_at", { ascending: false })
@@ -71,14 +71,14 @@ export default function ParliamentOpsModule() {
 
   const updateApplicationStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
-      await (supabase as any).from("applications").update({ status }).eq("id", id);
+      await supabase.from("applications").update({ status }).eq("id", id);
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["parliament-applications"] }),
   });
 
   const removeDelegate = useMutation({
     mutationFn: async (id: string) => {
-      await (supabase as any).from("public_representatives").delete().eq("id", id);
+      await supabase.from("public_representatives").delete().eq("id", id);
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["parliament-representatives"] }),
   });

@@ -67,9 +67,9 @@ function BudgetItemDialog({
         notes: notes || null,
       };
       if (isEdit) {
-        await (supabase as any).from("budget_items").update(payload).eq("id", item.id);
+        await supabase.from("budget_items").update(payload).eq("id", item.id);
       } else {
-        await (supabase as any).from("budget_items").insert({ ...payload, created_by: user!.id });
+        await supabase.from("budget_items").insert({ ...payload, created_by: user!.id });
       }
     },
     onSuccess: () => {
@@ -176,7 +176,7 @@ function BudgetList() {
   const { data = [], isLoading, error } = useQuery<BudgetItem[]>({
     queryKey: ["budget-items"],
     queryFn: async () => {
-      const res = await (supabase as any)
+      const res = await supabase
         .from("budget_items")
         .select("id, title, category, amount, type, status, notes, created_at, creator:profiles!budget_items_created_by_fkey(full_name)")
         .order("created_at", { ascending: false });
@@ -197,7 +197,7 @@ function BudgetList() {
 
   const deleteItem = useMutation({
     mutationFn: async (id: string) => {
-      await (supabase as any).from("budget_items").delete().eq("id", id);
+      await supabase.from("budget_items").delete().eq("id", id);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["budget-items"] });
@@ -361,7 +361,7 @@ function SignOffsTab() {
   const { data = [], isLoading } = useQuery<BudgetItem[]>({
     queryKey: ["budget-items"],
     queryFn: async () => {
-      const res = await (supabase as any)
+      const res = await supabase
         .from("budget_items")
         .select("id, title, category, amount, type, status, notes, created_at, creator:profiles!budget_items_created_by_fkey(full_name)")
         .eq("status", "pending")
@@ -377,7 +377,7 @@ function SignOffsTab() {
 
   const approve = useMutation({
     mutationFn: async (id: string) => {
-      await (supabase as any).from("budget_items").update({ status: "approved" }).eq("id", id);
+      await supabase.from("budget_items").update({ status: "approved" }).eq("id", id);
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["budget-items"] }),
   });

@@ -9,7 +9,7 @@ export function useFavicon() {
   useEffect(() => {
     (async () => {
       try {
-        const { data } = await (supabase as any)
+        const { data } = await supabase
           .from("site_settings")
           .select("value")
           .eq("key", "site_favicon_url")

@@ -21,7 +21,7 @@ export function usePresence(userId: string | undefined) {
         const { data: sd } = await supabase.auth.getSession();
         if (!sd?.session) return;
 
-        await (supabase as any).from("user_presence").upsert(
+        await supabase.from("user_presence").upsert(
           { user_id: userId, is_online: online, last_seen_at: new Date().toISOString() },
           { onConflict: "user_id" }
         );

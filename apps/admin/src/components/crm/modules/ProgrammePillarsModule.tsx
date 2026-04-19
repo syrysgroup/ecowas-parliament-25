@@ -57,10 +57,10 @@ function PillarDialog({ open, onClose, pillar }: { open: boolean; onClose: () =>
         updated_at: new Date().toISOString(),
       };
       if (isEdit) {
-        const { error } = await (supabase as any).from("programme_pillars").update(payload).eq("id", pillar.id);
+        const { error } = await supabase.from("programme_pillars").update(payload).eq("id", pillar.id);
         if (error) throw error;
       } else {
-        const { error } = await (supabase as any).from("programme_pillars").insert(payload);
+        const { error } = await supabase.from("programme_pillars").insert(payload);
         if (error) throw error;
       }
     },
@@ -159,7 +159,7 @@ export default function ProgrammePillarsModule() {
   const { data: pillars = [], isLoading } = useQuery<PillarRow[]>({
     queryKey: ["programme_pillars"],
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("programme_pillars")
         .select("*")
         .order("display_order");
@@ -170,7 +170,7 @@ export default function ProgrammePillarsModule() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await (supabase as any).from("programme_pillars").delete().eq("id", id);
+      const { error } = await supabase.from("programme_pillars").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {

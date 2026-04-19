@@ -21,11 +21,11 @@ export default function TeamModule() {
     queryKey: ["crm-team"],
     queryFn: async () => {
       const [profilesRes, rolesRes] = await Promise.all([
-        (supabase as any)
+        supabase
           .from("profiles")
           .select("id, full_name, email, country")
           .order("full_name", { ascending: true }),
-        (supabase as any)
+        supabase
           .from("user_roles")
           .select("user_id, role"),
       ]);

@@ -62,13 +62,13 @@ const UserManagementSettings = () => {
   const { data: profiles = [], isLoading } = useQuery({
     queryKey: ["admin-all-profiles"],
     queryFn: async () => {
-      const { data: profs, error: profErr } = await (supabase as any)
+      const { data: profs, error: profErr } = await supabase
         .from("profiles")
         .select("id, full_name, email, is_active")
         .order("full_name");
       if (profErr) throw profErr;
 
-      const { data: allRoles, error: roleErr } = await (supabase as any)
+      const { data: allRoles, error: roleErr } = await supabase
         .from("user_roles")
         .select("user_id, role");
       if (roleErr) throw roleErr;
@@ -90,7 +90,7 @@ const UserManagementSettings = () => {
   const { data: invitations = [], isLoading: invLoading } = useQuery({
     queryKey: ["admin-invitations"],
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("invitations")
         .select("id, email, role, created_at, accepted_at, expires_at, resent_at")
         .order("created_at", { ascending: false });
@@ -110,10 +110,10 @@ const UserManagementSettings = () => {
       // Remove old non-super_admin roles, add new one
       for (const old of oldRoles) {
         if (old === "super_admin") continue;
-        await (supabase as any).from("user_roles").delete().eq("user_id", userId).eq("role", old);
+        await supabase.from("user_roles").delete().eq("user_id", userId).eq("role", old);
       }
       if (newRole) {
-        await (supabase as any).from("user_roles").upsert(
+        await supabase.from("user_roles").upsert(
           { user_id: userId, role: newRole },
           { onConflict: "user_id,role" }
         );
@@ -125,7 +125,7 @@ const UserManagementSettings = () => {
 
   const toggleActive = useMutation({
     mutationFn: async ({ id, is_active }: { id: string; is_active: boolean }) => {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from("profiles")
         .update({ is_active })
         .eq("id", id);

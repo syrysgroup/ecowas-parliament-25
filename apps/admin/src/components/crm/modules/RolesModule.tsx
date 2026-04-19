@@ -221,7 +221,7 @@ function UsersWithRole({
   const { data: users = [], isLoading } = useQuery({
     queryKey: ["users-with-role", role],
     queryFn: async () => {
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from("user_roles")
         .select("user_id, profiles(full_name, avatar_url, title)")
         .eq("role", role);
@@ -236,7 +236,7 @@ function UsersWithRole({
 
   const handleRemove = async (userId: string, name: string) => {
     try {
-      await (supabase as any).from("user_roles").delete().eq("user_id", userId).eq("role", role);
+      await supabase.from("user_roles").delete().eq("user_id", userId).eq("role", role);
       qc.invalidateQueries({ queryKey: ["users-with-role", role] });
       qc.invalidateQueries({ queryKey: ["user-role-counts"] });
       toast({ title: `Removed ${CRM_ROLE_META[role].label} from ${name}` });
@@ -315,7 +315,7 @@ export default function RolesModule() {
   const { data: allPerms, isLoading: permsLoading } = useQuery({
     queryKey: ["all-role-permissions"],
     queryFn: async () => {
-      const { data } = await (supabase as any).from("role_permissions").select("*");
+      const { data } = await supabase.from("role_permissions").select("*");
       return data ?? [];
     },
   });
@@ -324,7 +324,7 @@ export default function RolesModule() {
   const { data: roleCounts = {} } = useQuery<Record<string, number>>({
     queryKey: ["user-role-counts"],
     queryFn: async () => {
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from("user_roles")
         .select("role");
       const counts: Record<string, number> = {};
@@ -392,8 +392,8 @@ export default function RolesModule() {
           can_edit: p.can_edit ?? false, can_delete: p.can_delete ?? false,
         };
       });
-      await (supabase as any).from("role_permissions").delete().eq("role", selectedRole);
-      await (supabase as any).from("role_permissions").insert(upserts);
+      await supabase.from("role_permissions").delete().eq("role", selectedRole);
+      await supabase.from("role_permissions").insert(upserts);
       qc.invalidateQueries({ queryKey: ["all-role-permissions"] });
       qc.invalidateQueries({ queryKey: ["role-permissions"] });
       toast({ title: `Permissions saved for ${CRM_ROLE_META[selectedRole].label}` });

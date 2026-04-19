@@ -57,9 +57,9 @@ function PageDialog({ open, onClose, page }: {
         updated_at: new Date().toISOString(),
       };
       if (isEdit) {
-        await (supabase as any).from("cms_pages").update(payload).eq("id", page.id);
+        await supabase.from("cms_pages").update(payload).eq("id", page.id);
       } else {
-        await (supabase as any).from("cms_pages").insert(payload);
+        await supabase.from("cms_pages").insert(payload);
       }
     },
     onSuccess: () => {
@@ -139,7 +139,7 @@ export default function CMSModule() {
   const { data = [], isLoading } = useQuery<CmsPage[]>({
     queryKey: ["cms-pages"],
     queryFn: async () => {
-      const res = await (supabase as any)
+      const res = await supabase
         .from("cms_pages")
         .select("id, slug, title, content, status, updated_at, editor:profiles!cms_pages_last_edited_by_fkey(full_name)")
         .order("updated_at", { ascending: false });
@@ -155,7 +155,7 @@ export default function CMSModule() {
 
   const deletePage = useMutation({
     mutationFn: async (id: string) => {
-      await (supabase as any).from("cms_pages").delete().eq("id", id);
+      await supabase.from("cms_pages").delete().eq("id", id);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["cms-pages"] });
@@ -165,7 +165,7 @@ export default function CMSModule() {
 
   const advanceStatus = useMutation({
     mutationFn: async ({ id, next }: { id: string; next: CmsPage["status"] }) => {
-      await (supabase as any).from("cms_pages").update({ status: next }).eq("id", id);
+      await supabase.from("cms_pages").update({ status: next }).eq("id", id);
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["cms-pages"] }),
   });

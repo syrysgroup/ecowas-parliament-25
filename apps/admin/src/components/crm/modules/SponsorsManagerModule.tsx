@@ -52,7 +52,7 @@ function ProgrammeSelect({ selected, onChange }: { selected: string[]; onChange:
   const { data: pillars = [] } = useQuery<ProgrammePillar[]>({
     queryKey: ["programme_pillars_active"],
     queryFn: async () => {
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from("programme_pillars")
         .select("id, slug, emoji, route, title")
         .eq("is_active", true)
@@ -154,10 +154,10 @@ function SponsorDialog({ open, onClose, sponsor }: { open: boolean; onClose: () 
         updated_at: new Date().toISOString(),
       };
       if (isEdit) {
-        const { error } = await (supabase as any).from("sponsors").update(payload).eq("id", sponsor.id);
+        const { error } = await supabase.from("sponsors").update(payload).eq("id", sponsor.id);
         if (error) throw error;
       } else {
-        const { error } = await (supabase as any).from("sponsors").insert(payload);
+        const { error } = await supabase.from("sponsors").insert(payload);
         if (error) throw error;
       }
     },
@@ -324,10 +324,10 @@ function PartnerDialog({ open, onClose, partner }: { open: boolean; onClose: () 
         is_published: isPublished, updated_at: new Date().toISOString(),
       };
       if (isEdit) {
-        const { error } = await (supabase as any).from("partners").update(payload).eq("id", partner.id);
+        const { error } = await supabase.from("partners").update(payload).eq("id", partner.id);
         if (error) throw error;
       } else {
-        const { error } = await (supabase as any).from("partners").insert(payload);
+        const { error } = await supabase.from("partners").insert(payload);
         if (error) throw error;
       }
     },
@@ -458,12 +458,12 @@ export default function SponsorsManagerModule() {
 
   const { data: sponsors = [], isLoading: loadingS } = useQuery<SponsorRow[]>({
     queryKey: ["sponsors-manager"],
-    queryFn: async () => { const { data } = await (supabase as any).from("sponsors").select("*").order("sort_order"); return data ?? []; },
+    queryFn: async () => { const { data } = await supabase.from("sponsors").select("*").order("sort_order"); return data ?? []; },
   });
 
   const { data: partners = [], isLoading: loadingP } = useQuery<PartnerRow[]>({
     queryKey: ["partners-manager"],
-    queryFn: async () => { const { data } = await (supabase as any).from("partners").select("*").order("sort_order"); return data ?? []; },
+    queryFn: async () => { const { data } = await supabase.from("partners").select("*").order("sort_order"); return data ?? []; },
   });
 
   const filteredSponsors = sponsors.filter(s => !search || s.name.toLowerCase().includes(search.toLowerCase()));
@@ -478,7 +478,7 @@ export default function SponsorsManagerModule() {
   const someSelected = activeList.some(item => selectedIds.has(item.id)) && !allSelected;
 
   const deleteSponsor = useMutation({
-    mutationFn: async (id: string) => { await (supabase as any).from("sponsors").delete().eq("id", id); },
+    mutationFn: async (id: string) => { await supabase.from("sponsors").delete().eq("id", id); },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["sponsors-manager"] });
       qc.invalidateQueries({ queryKey: ["sponsors-public"] });
@@ -488,7 +488,7 @@ export default function SponsorsManagerModule() {
   });
 
   const deletePartner = useMutation({
-    mutationFn: async (id: string) => { await (supabase as any).from("partners").delete().eq("id", id); },
+    mutationFn: async (id: string) => { await supabase.from("partners").delete().eq("id", id); },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["partners-manager"] });
       qc.invalidateQueries({ queryKey: ["partners-public"] });
@@ -499,14 +499,14 @@ export default function SponsorsManagerModule() {
 
   const toggleSponsorPublish = useMutation({
     mutationFn: async ({ id, published }: { id: string; published: boolean }) => {
-      await (supabase as any).from("sponsors").update({ is_published: published }).eq("id", id);
+      await supabase.from("sponsors").update({ is_published: published }).eq("id", id);
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["sponsors-manager"] }); qc.invalidateQueries({ queryKey: ["sponsors-public"] }); },
   });
 
   const togglePartnerPublish = useMutation({
     mutationFn: async ({ id, published }: { id: string; published: boolean }) => {
-      await (supabase as any).from("partners").update({ is_published: published }).eq("id", id);
+      await supabase.from("partners").update({ is_published: published }).eq("id", id);
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["partners-manager"] }); qc.invalidateQueries({ queryKey: ["partners-public"] }); },
   });
@@ -514,7 +514,7 @@ export default function SponsorsManagerModule() {
   const bulkDelete = useMutation({
     mutationFn: async () => {
       const table = tab === "sponsors" ? "sponsors" : "partners";
-      await Promise.all([...selectedIds].map(id => (supabase as any).from(table).delete().eq("id", id)));
+      await Promise.all([...selectedIds].map(id => supabase.from(table).delete().eq("id", id)));
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: [tab === "sponsors" ? "sponsors-manager" : "partners-manager"] });
@@ -526,7 +526,7 @@ export default function SponsorsManagerModule() {
   const bulkPublish = useMutation({
     mutationFn: async () => {
       const table = tab === "sponsors" ? "sponsors" : "partners";
-      await Promise.all([...selectedIds].map(id => (supabase as any).from(table).update({ is_published: true }).eq("id", id)));
+      await Promise.all([...selectedIds].map(id => supabase.from(table).update({ is_published: true }).eq("id", id)));
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: [tab === "sponsors" ? "sponsors-manager" : "partners-manager"] });
@@ -539,7 +539,7 @@ export default function SponsorsManagerModule() {
   const bulkUnpublish = useMutation({
     mutationFn: async () => {
       const table = tab === "sponsors" ? "sponsors" : "partners";
-      await Promise.all([...selectedIds].map(id => (supabase as any).from(table).update({ is_published: false }).eq("id", id)));
+      await Promise.all([...selectedIds].map(id => supabase.from(table).update({ is_published: false }).eq("id", id)));
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: [tab === "sponsors" ? "sponsors-manager" : "partners-manager"] });

@@ -40,7 +40,7 @@ export default function PermissionManagerPanel({ onNavigateToRoles }: Props) {
   const { data, isLoading } = useQuery({
     queryKey: ["all-role-permissions"],
     queryFn: async () => {
-      const { data } = await (supabase as any).from("role_permissions").select("*");
+      const { data } = await supabase.from("role_permissions").select("*");
       return data ?? [];
     },
   });
@@ -106,9 +106,9 @@ export default function PermissionManagerPanel({ onNavigateToRoles }: Props) {
         }
       }
       for (const role of PERM_ROLES) {
-        await (supabase as any).from("role_permissions").delete().eq("role", role);
+        await supabase.from("role_permissions").delete().eq("role", role);
       }
-      await (supabase as any).from("role_permissions").insert(upserts);
+      await supabase.from("role_permissions").insert(upserts);
       qc.invalidateQueries({ queryKey: ["all-role-permissions"] });
       qc.invalidateQueries({ queryKey: ["role-permissions"] });
       toast({ title: "Permissions saved" });

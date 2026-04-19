@@ -1,5 +1,6 @@
-import React, { ReactNode, useState } from "react";
+import { ReactNode, useState } from "react";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { useNotifications } from "../CRMNotifications";
 import CRMTour from "../CRMTour";
 import MobileTopBar from "./MobileTopBar";
 import MobileBottomNav from "./MobileBottomNav";
@@ -12,18 +13,24 @@ interface MobileCRMLayoutProps {
   children: ReactNode;
 }
 
-// Modules that use a full-height drag surface — hide FAB to avoid overlap
+// Modules with full-height drag surfaces — hide FAB to avoid overlap
 const FAB_HIDDEN_SECTIONS = new Set(["cms", "tasks", "email-inbox", "comms"]);
 
 export default function MobileCRMLayout({ activeSection, onNavigate, children }: MobileCRMLayoutProps) {
   const [moreOpen, setMoreOpen] = useState(false);
   const { roles, signOut } = useAuthContext();
+
+  // Single source of truth for notifications — shared with TopBar bell and bottom nav badge
+  const { data: notifData } = useNotifications();
+  const readIds = notifData?.readIds ?? new Set<string>();
+  const unreadMessages = (notifData?.items ?? []).filter(n => !readIds.has(n.id) && n.type === "message").length;
+
   const showFAB = !FAB_HIDDEN_SECTIONS.has(activeSection);
 
   return (
     <div
       className="flex flex-col bg-crm text-crm-text overflow-hidden"
-      style={{ height: "100dvh" }}
+      style={{ height: "100dvh", minHeight: "-webkit-fill-available" }}
     >
       {/* Animated gradient accent — 3px top edge */}
       <div className="h-[3px] flex-shrink-0 bg-gradient-to-r from-primary via-emerald-400 to-primary/40 animate-gradient-shift" />
@@ -40,10 +47,7 @@ export default function MobileCRMLayout({ activeSection, onNavigate, children }:
           backgroundSize: "24px 24px",
         }}
       >
-        <div
-          key={activeSection}
-          className="animate-fade-in relative z-10 w-full min-h-full"
-        >
+        <div key={activeSection} className="animate-fade-in relative z-10 w-full min-h-full">
           {children}
         </div>
       </main>
@@ -59,6 +63,7 @@ export default function MobileCRMLayout({ activeSection, onNavigate, children }:
         onNavigate={onNavigate}
         roles={roles}
         onMoreOpen={() => setMoreOpen(true)}
+        unreadMessages={unreadMessages}
       />
 
       {/* More drawer */}
@@ -71,7 +76,6 @@ export default function MobileCRMLayout({ activeSection, onNavigate, children }:
         onSignOut={signOut}
       />
 
-      {/* CRM Tour */}
       <CRMTour onNavigate={onNavigate} autoStart />
     </div>
   );

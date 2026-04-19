@@ -2258,6 +2258,66 @@ export type Database = {
         }
         Relationships: []
       }
+      seo_pages: {
+        Row: {
+          id: string
+          page_path: string
+          title: string | null
+          meta_description: string | null
+          og_title: string | null
+          og_description: string | null
+          focus_keyword: string | null
+          canonical_url: string | null
+          noindex: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          id?: string
+          page_path: string
+          title?: string | null
+          meta_description?: string | null
+          og_title?: string | null
+          og_description?: string | null
+          focus_keyword?: string | null
+          canonical_url?: string | null
+          noindex?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          id?: string
+          page_path?: string
+          title?: string | null
+          meta_description?: string | null
+          og_title?: string | null
+          og_description?: string | null
+          focus_keyword?: string | null
+          canonical_url?: string | null
+          noindex?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      notification_reads: {
+        Row: {
+          user_id: string
+          notif_id: string
+          read_at: string
+        }
+        Insert: {
+          user_id: string
+          notif_id: string
+          read_at?: string
+        }
+        Update: {
+          user_id?: string
+          notif_id?: string
+          read_at?: string
+        }
+        Relationships: []
+      }
       user_presence: {
         Row: {
           is_online: boolean

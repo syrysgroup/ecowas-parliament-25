@@ -42,9 +42,9 @@ export default function AnalyticsModule() {
 
   // Tasks by status
   const { data: taskStats } = useQuery({
-    queryKey: ["analytics-tasks"],
+    queryKey: ["analytics-tasks", range],
     queryFn: async () => {
-      const res = await (supabase as any).from("tasks").select("status, created_at");
+      const res = await supabase.from("tasks").select("status, created_at").gte("created_at", since);
       if (res.error) return { byStatus: [], velocity: [] };
       const rows: { status: string; created_at: string }[] = res.data ?? [];
       const byStatus = Object.entries(
@@ -69,7 +69,7 @@ export default function AnalyticsModule() {
   const { data: msgData } = useQuery({
     queryKey: ["analytics-messages", range],
     queryFn: async () => {
-      const res = await (supabase as any)
+      const res = await supabase
         .from("crm_messages")
         .select("sent_at")
         .gte("sent_at", since);
@@ -87,7 +87,7 @@ export default function AnalyticsModule() {
   const { data: appStats } = useQuery({
     queryKey: ["analytics-apps"],
     queryFn: async () => {
-      const res = await (supabase as any).from("applications").select("status");
+      const res = await supabase.from("applications").select("status");
       if (res.error) return [];
       const counts: Record<string, number> = {};
       (res.data ?? []).forEach((r: any) => { counts[r.status] = (counts[r.status] ?? 0) + 1; });
@@ -95,15 +95,15 @@ export default function AnalyticsModule() {
     },
   });
 
-  // Team + event summary counts
+  // Team + event summary counts (profiles are all-time; rest filtered by range)
   const { data: counts } = useQuery({
-    queryKey: ["analytics-counts"],
+    queryKey: ["analytics-counts", range],
     queryFn: async () => {
       const [profiles, events, tasks, messages] = await Promise.all([
-        (supabase as any).from("profiles").select("id", { count: "exact", head: true }),
-        (supabase as any).from("events").select("id", { count: "exact", head: true }),
-        (supabase as any).from("tasks").select("id", { count: "exact", head: true }),
-        (supabase as any).from("crm_messages").select("id", { count: "exact", head: true }),
+        supabase.from("profiles").select("id", { count: "exact", head: true }),
+        supabase.from("events").select("id", { count: "exact", head: true }).gte("created_at", since),
+        supabase.from("tasks").select("id", { count: "exact", head: true }).gte("created_at", since),
+        supabase.from("crm_messages").select("id", { count: "exact", head: true }).gte("sent_at", since),
       ]);
       return {
         profiles: profiles.count ?? 0,

@@ -145,7 +145,7 @@ function usePresence() {
   const { data: raw = [] } = useQuery({
     queryKey: ["presence-map"],
     queryFn: async () => {
-      const { data } = await (supabase as any).from("user_presence").select("user_id, is_online, last_seen_at");
+      const { data } = await supabase.from("user_presence").select("user_id, is_online, last_seen_at");
       return data ?? [];
     },
     refetchInterval: 30_000,
@@ -153,7 +153,7 @@ function usePresence() {
   // Update own presence
   useEffect(() => {
     if (!user?.id) return;
-    const upsert = () => (supabase as any).from("user_presence").upsert({ user_id: user.id, is_online: true, last_seen_at: new Date().toISOString() }, { onConflict: "user_id" });
+    const upsert = () => supabase.from("user_presence").upsert({ user_id: user.id, is_online: true, last_seen_at: new Date().toISOString() }, { onConflict: "user_id" });
     upsert();
     const t = setInterval(upsert, 60_000);
     return () => clearInterval(t);
@@ -455,7 +455,7 @@ function CreateGroupDialog({
     if (!name.trim()) { toast({ title: "Enter a group name", variant: "destructive" }); return; }
     setCreating(true);
     try {
-      const { data: group, error } = await (supabase as any)
+      const { data: group, error } = await supabase
         .from("channels")
         .insert({ name: name.trim(), description: desc.trim() || null, type, created_by: userId, emoji })
         .select().single();
@@ -464,7 +464,7 @@ function CreateGroupDialog({
       // Add creator + selected members (no role column in channel_members — admin = channels.created_by)
       const memberRows = [{ channel_id: group.id, user_id: userId },
         ...Array.from(selected).map(uid => ({ channel_id: group.id, user_id: uid }))];
-      await (supabase as any).from("channel_members").insert(memberRows);
+      await supabase.from("channel_members").insert(memberRows);
 
       toast({ title: `Group "${group.name}" created` });
       onCreated(group.id);
@@ -573,7 +573,7 @@ function CreateTaskDialog({
     if (!title.trim()) { toast({ title: "Enter a task title", variant: "destructive" }); return; }
     setSaving(true);
     try {
-      const { data, error } = await (supabase as any).from("tasks").insert({
+      const { data, error } = await supabase.from("tasks").insert({
         title: title.trim(), priority, status: "todo",
         assignee_id: assigneeId, channel_id: channelId, created_by: userId,
       }).select().single();
@@ -648,7 +648,7 @@ function AddMemberDialog({
     setSaving(true);
     try {
       const rows = Array.from(selected).map(uid => ({ channel_id: channelId, user_id: uid, role: "member" }));
-      await (supabase as any).from("channel_members").insert(rows);
+      await supabase.from("channel_members").insert(rows);
       toast({ title: `Added ${selected.size} member${selected.size > 1 ? "s" : ""}` });
       onAdded();
       onClose();
@@ -725,7 +725,7 @@ export default function MessagingModule() {
   const { data: contacts = [] } = useQuery<Profile[]>({
     queryKey: ["msg-contacts"],
     queryFn: async () => {
-      const { data } = await (supabase as any).from("profiles")
+      const { data } = await supabase.from("profiles")
         .select("id, full_name, email, avatar_url, title").order("full_name");
       return (data ?? []).filter((p: Profile) => p.id !== user?.id);
     },
@@ -737,7 +737,7 @@ export default function MessagingModule() {
     queryKey: ["groups", user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from("channels")
         .select("*, channel_members(user_id)")
         .eq("is_archived", false)
@@ -757,7 +757,7 @@ export default function MessagingModule() {
     queryKey: ["group-members", activeGroupId],
     queryFn: async () => {
       if (!activeGroupId) return [];
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from("channel_members")
         .select("user_id, role, profiles(id, full_name, email, avatar_url, title)")
         .eq("channel_id", activeGroupId);
@@ -775,7 +775,7 @@ export default function MessagingModule() {
     queryKey: ["group-tasks", activeGroupId],
     queryFn: async () => {
       if (!activeGroupId) return [];
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from("tasks")
         .select("id, title, status, priority, assignee_id, profiles(id, full_name, avatar_url)")
         .eq("channel_id", activeGroupId)
@@ -795,7 +795,7 @@ export default function MessagingModule() {
     queryKey: ["dm-conversations", user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
-      const { data: msgs } = await (supabase as any).from("direct_messages")
+      const { data: msgs } = await supabase.from("direct_messages")
         .select("sender_id, recipient_id, body, sent_at, read_at")
         .or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`)
         .is("deleted_at", null)
@@ -812,7 +812,7 @@ export default function MessagingModule() {
         if (m.recipient_id === user.id && !m.read_at) unreadMap[peerId] = (unreadMap[peerId] ?? 0) + 1;
       }
       if (peerIds.size > 0) {
-        const { data: profiles } = await (supabase as any).from("profiles").select("id, full_name, avatar_url").in("id", Array.from(peerIds));
+        const { data: profiles } = await supabase.from("profiles").select("id, full_name, avatar_url").in("id", Array.from(peerIds));
         for (const p of (profiles ?? [])) {
           const dm = map.get(p.id);
           if (dm) { dm.peer_name = p.full_name; dm.peer_avatar = p.avatar_url; dm.unread = unreadMap[p.id] ?? 0; }
@@ -829,7 +829,7 @@ export default function MessagingModule() {
     queryFn: async () => {
       if (!view || !user?.id) return [];
       if (view.type === "group") {
-        const { data: rawMsgs } = await (supabase as any)
+        const { data: rawMsgs } = await supabase
           .from("channel_messages")
           .select("*, tasks(id, title, status, priority, assignee_id)")
           .eq("channel_id", view.id)
@@ -838,27 +838,27 @@ export default function MessagingModule() {
           .limit(200);
         if (rawMsgs?.length) {
           const sids = [...new Set(rawMsgs.map((m: any) => m.sender_id))];
-          const { data: profiles } = await (supabase as any).from("profiles").select("id, full_name, avatar_url").in("id", sids);
+          const { data: profiles } = await supabase.from("profiles").select("id, full_name, avatar_url").in("id", sids);
           const pm = new Map((profiles ?? []).map((p: any) => [p.id, p]));
           for (const m of rawMsgs) m.sender = pm.get(m.sender_id) ?? { full_name: "Unknown" };
         }
         // Update read receipt
-        (supabase as any).from("channel_read_receipts").upsert({ channel_id: view.id, user_id: user.id, last_read_at: new Date().toISOString() }, { onConflict: "channel_id,user_id" });
+        supabase.from("channel_read_receipts").upsert({ channel_id: view.id, user_id: user.id, last_read_at: new Date().toISOString() }, { onConflict: "channel_id,user_id" });
         return rawMsgs ?? [];
       } else {
-        const { data } = await (supabase as any).from("direct_messages")
+        const { data } = await supabase.from("direct_messages")
           .select("*")
           .or(`and(sender_id.eq.${user.id},recipient_id.eq.${view.peerId}),and(sender_id.eq.${view.peerId},recipient_id.eq.${user.id})`)
           .is("deleted_at", null).order("sent_at", { ascending: true }).limit(200);
         if (data?.length) {
           const sids = [...new Set(data.map((m: any) => m.sender_id))];
-          const { data: profiles } = await (supabase as any).from("profiles").select("id, full_name, avatar_url").in("id", sids);
+          const { data: profiles } = await supabase.from("profiles").select("id, full_name, avatar_url").in("id", sids);
           const pm = new Map((profiles ?? []).map((p: any) => [p.id, p]));
           for (const m of data) m.sender = pm.get(m.sender_id) ?? { full_name: "Unknown" };
           // Mark unread as read
           const unread = data.filter((m: any) => m.recipient_id === user.id && !m.read_at);
           if (unread.length > 0) {
-            (supabase as any).from("direct_messages").update({ read_at: new Date().toISOString(), delivered_at: new Date().toISOString() }).in("id", unread.map((m: any) => m.id));
+            supabase.from("direct_messages").update({ read_at: new Date().toISOString(), delivered_at: new Date().toISOString() }).in("id", unread.map((m: any) => m.id));
           }
         }
         return data ?? [];
@@ -880,13 +880,13 @@ export default function MessagingModule() {
     const col = view.type === "group" ? "channel_id" : null;
     const val = view.type === "group" ? view.id : null;
     const filter = col ? `${col}=eq.${val}` : undefined;
-    const sub = (supabase as any).channel(`msgs-${view.type}-${view.type === "group" ? view.id : view.peerId}`)
+    const sub = supabase.channel(`msgs-${view.type}-${view.type === "group" ? view.id : view.peerId}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table, ...(filter ? { filter } : {}) }, () => {
         qc.invalidateQueries({ queryKey: ["messages"] });
         qc.invalidateQueries({ queryKey: ["dm-conversations"] });
       })
       .subscribe();
-    return () => (supabase as any).removeChannel(sub);
+    return () => supabase.removeChannel(sub);
   }, [view?.type, view?.type === "group" ? view.id : view?.type === "dm" ? view.peerId : null]);
 
   const handleSend = async () => {
@@ -904,10 +904,10 @@ export default function MessagingModule() {
     setShowMentions(false);
     try {
       if (view.type === "group") {
-        await (supabase as any).from("channel_messages").insert({ channel_id: view.id, sender_id: user.id, body: trimmedBody });
+        await supabase.from("channel_messages").insert({ channel_id: view.id, sender_id: user.id, body: trimmedBody });
         qc.invalidateQueries({ queryKey: ["messages", "group", view.id] });
       } else {
-        await (supabase as any).from("direct_messages").insert({ sender_id: user.id, recipient_id: view.peerId, body: trimmedBody });
+        await supabase.from("direct_messages").insert({ sender_id: user.id, recipient_id: view.peerId, body: trimmedBody });
         qc.invalidateQueries({ queryKey: ["messages", "dm", view.peerId] });
         qc.invalidateQueries({ queryKey: ["dm-conversations"] });
         sendNotification(view.peerId, "new_message", {
@@ -925,7 +925,7 @@ export default function MessagingModule() {
 
   const handleLeaveGroup = async () => {
     if (!activeGroupId || !user?.id) return;
-    await (supabase as any).from("channel_members").delete().eq("channel_id", activeGroupId).eq("user_id", user.id);
+    await supabase.from("channel_members").delete().eq("channel_id", activeGroupId).eq("user_id", user.id);
     qc.invalidateQueries({ queryKey: ["groups"] });
     setView(null); setShowPanel(false); setMobileShowChat(false);
     toast({ title: "Left group" });
@@ -933,13 +933,13 @@ export default function MessagingModule() {
 
   const handleRemoveMember = async (userId: string) => {
     if (!activeGroupId) return;
-    await (supabase as any).from("channel_members").delete().eq("channel_id", activeGroupId).eq("user_id", userId);
+    await supabase.from("channel_members").delete().eq("channel_id", activeGroupId).eq("user_id", userId);
     refetchMembers();
     toast({ title: "Member removed" });
   };
 
   const handleUpdateTaskStatus = async (taskId: string, status: GroupTask["status"]) => {
-    await (supabase as any).from("tasks").update({ status }).eq("id", taskId);
+    await supabase.from("tasks").update({ status }).eq("id", taskId);
     refetchTasks();
     qc.invalidateQueries({ queryKey: ["task-board"] });
   };

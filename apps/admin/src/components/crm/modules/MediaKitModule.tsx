@@ -76,10 +76,10 @@ function MediaKitDialog({ open, onClose, item }: { open: boolean; onClose: () =>
         is_active: isActive,
       };
       if (isEdit) {
-        const { error } = await (supabase as any).from("media_kit_items").update(payload).eq("id", item.id);
+        const { error } = await supabase.from("media_kit_items").update(payload).eq("id", item.id);
         if (error) throw error;
       } else {
-        const { error } = await (supabase as any).from("media_kit_items").insert(payload);
+        const { error } = await supabase.from("media_kit_items").insert(payload);
         if (error) throw error;
       }
     },
@@ -184,7 +184,7 @@ function ItemList({ type, label }: { type: string; label: string }) {
   const { data: items = [], isLoading } = useQuery<MediaKitRow[]>({
     queryKey: ["media-kit-items", type],
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("media_kit_items")
         .select("*")
         .eq("type", type)
@@ -196,7 +196,7 @@ function ItemList({ type, label }: { type: string; label: string }) {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await (supabase as any).from("media_kit_items").delete().eq("id", id);
+      const { error } = await supabase.from("media_kit_items").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {

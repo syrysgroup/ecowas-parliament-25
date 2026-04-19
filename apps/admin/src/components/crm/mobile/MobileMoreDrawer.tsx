@@ -45,10 +45,7 @@ export default function MobileMoreDrawer({
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange} shouldScaleBackground={false}>
-      <DrawerContent className="bg-crm-card border-crm-border max-h-[88vh] flex flex-col">
-        {/* Custom handle */}
-        <div className="mx-auto mt-2 mb-1 w-10 h-1 rounded-full bg-crm-border flex-shrink-0" />
-
+      <DrawerContent className="bg-crm-card border-crm-border max-h-[88vh] flex flex-col [&>div:first-child]:bg-crm-border [&>div:first-child]:w-10 [&>div:first-child]:h-1">
         {/* Header */}
         <DrawerHeader className="px-4 pt-1 pb-2 border-b border-crm-border/50 flex-shrink-0">
           <div className="flex items-center justify-between">

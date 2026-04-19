@@ -16,17 +16,22 @@ Deno.serve(async (req) => {
       });
     }
 
-    const anonClient = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, {
-      global: { headers: { Authorization: authHeader } },
-    });
-    const { data: { user }, error: authErr } = await anonClient.auth.getUser();
+    const token = authHeader.slice(7);
+
+    // Use service client to verify the JWT — more reliable than anonClient.getUser()
+    // because it avoids an extra outbound network hop and works even when anon key
+    // restrictions are tight.
+    const serviceClient = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
+
+    const { data: { user }, error: authErr } = await serviceClient.auth.getUser(token);
     if (authErr || !user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    const serviceClient = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
     // Verify caller is super_admin
     const { data: roleCheck } = await serviceClient
@@ -55,7 +60,6 @@ Deno.serve(async (req) => {
 
     for (const userId of filtered) {
       try {
-        // 1. Fetch user data before deletion (email + display name for logging)
         const { data: authUser } = await serviceClient.auth.admin.getUserById(userId);
         const userEmail = authUser?.user?.email ?? "";
 
@@ -66,28 +70,17 @@ Deno.serve(async (req) => {
           .maybeSingle();
         const userName = profile?.full_name ?? userEmail;
 
-        // 2. Delete from auth.users — cascades to: profiles, channel_members,
-        //    channel_messages, direct_messages, email_accounts, crm_calendar_events,
-        //    admin_activity_logs, user_roles (once FK constraint is applied via migration)
         const { error: delErr } = await serviceClient.auth.admin.deleteUser(userId);
         if (delErr) {
           results.push({ id: userId, success: false, error: delErr.message });
           continue;
         }
 
-        // 3. Clean up ALL invitations for that email (both pending and accepted).
-        //    Accepted invitations should have been removed by the on-signup trigger,
-        //    but legacy rows or edge cases may leave them behind. Deleting all of them
-        //    allows the email to be re-invited cleanly without a unique constraint error.
+        // Clean up all invitations for that email so re-invite works cleanly
         if (userEmail) {
-          await serviceClient
-            .from("invitations")
-            .delete()
-            .eq("email", userEmail);
+          await serviceClient.from("invitations").delete().eq("email", userEmail);
         }
 
-        // 4. Log the deletion to the activity log
-        //    (actor's profile still exists — we're deleting a different user)
         await serviceClient.from("admin_activity_logs").insert({
           actor_user_id: user.id,
           action: "delete_user",

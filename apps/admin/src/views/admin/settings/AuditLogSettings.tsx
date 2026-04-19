@@ -22,7 +22,7 @@ const AuditLogSettings = () => {
   const { data, isLoading } = useQuery({
     queryKey: ["admin-audit-log", page],
     queryFn: async () => {
-      const { data, error, count } = await (supabase as any)
+      const { data, error, count } = await supabase
         .from("admin_audit_log")
         .select("*, profiles:performed_by(full_name, email)", { count: "exact" })
         .order("created_at", { ascending: false })

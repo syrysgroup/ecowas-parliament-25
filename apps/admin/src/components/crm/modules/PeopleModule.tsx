@@ -205,14 +205,14 @@ function EditUserDialog({ target, isSuperAdmin, onClose, onSaved }: {
   const { data: globalSmtp } = useQuery({
     queryKey: ["site-settings-smtp"],
     queryFn: async () => {
-      const { data } = await (supabase as any).from("site_settings").select("value").eq("key", "smtp").single();
+      const { data } = await supabase.from("site_settings").select("value").eq("key", "smtp").single();
       return (data?.value as Record<string, any>) ?? {};
     },
   });
 
   useEffect(() => {
     setLoadingProfile(true);
-    (supabase as any).from("profiles").select("title, organisation, bio, avatar_url, show_on_website")
+    supabase.from("profiles").select("title, organisation, bio, avatar_url, show_on_website")
       .eq("id", target.id).maybeSingle().then(({ data }: any) => {
         if (data) {
           setTitle(data.title ?? ""); setOrganisation(data.organisation ?? "");
@@ -226,7 +226,7 @@ function EditUserDialog({ target, isSuperAdmin, onClose, onSaved }: {
   useEffect(() => {
     if (!isSuperAdmin) return;
     setLoadingEmail(true);
-    (supabase as any).from("user_email_settings").select("*").eq("user_id", target.id)
+    supabase.from("user_email_settings").select("*").eq("user_id", target.id)
       .maybeSingle().then(({ data }: any) => {
         if (data) setEmailCfg({
           smtp_host: data.smtp_host ?? "", smtp_port: data.smtp_port ?? 587,
@@ -280,7 +280,7 @@ function EditUserDialog({ target, isSuperAdmin, onClose, onSaved }: {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const { error: profileErr } = await (supabase as any).from("profiles").update({
+      const { error: profileErr } = await supabase.from("profiles").update({
         full_name: fullName.trim(), country: country.trim(),
         title: title.trim() || null, organisation: organisation.trim() || null,
         bio: bio.trim() || null, avatar_url: avatarUrl || null, show_on_website: showOnWebsite,
@@ -288,7 +288,7 @@ function EditUserDialog({ target, isSuperAdmin, onClose, onSaved }: {
       if (profileErr) throw profileErr;
 
       if (isSuperAdmin) {
-        await (supabase as any).from("user_email_settings").upsert({
+        await supabase.from("user_email_settings").upsert({
           user_id: target.id, smtp_host: emailCfg.smtp_host.trim(),
           smtp_port: Number(emailCfg.smtp_port) || 587, smtp_user: emailCfg.smtp_user.trim(),
           smtp_password: emailCfg.smtp_password, imap_host: emailCfg.imap_host.trim(),
@@ -424,10 +424,10 @@ function TeamMemberDialog({ open, onClose, member }: {
         is_active: isActive, category,
       };
       if (isEdit) {
-        const { error } = await (supabase as any).from("team_members").update(payload).eq("id", member.id);
+        const { error } = await supabase.from("team_members").update(payload).eq("id", member.id);
         if (error) throw error;
       } else {
-        const { error } = await (supabase as any).from("team_members").insert(payload);
+        const { error } = await supabase.from("team_members").insert(payload);
         if (error) throw error;
       }
       qc.invalidateQueries({ queryKey: ["team-members-manual"] });
@@ -632,20 +632,20 @@ function WebsiteTeamTab({ qc, toast, isSuperAdmin, assignableRoles }: {
   const { data: teamMembers = [], isLoading } = useQuery<TeamMemberRow[]>({
     queryKey: ["team-members-manual"],
     queryFn: async () => {
-      const { data, error } = await (supabase as any).from("team_members").select("*").order("display_order");
+      const { data, error } = await supabase.from("team_members").select("*").order("display_order");
       if (error) throw error;
       return data ?? [];
     },
   });
 
   const toggleActive = async (id: string, current: boolean) => {
-    const { error } = await (supabase as any).from("team_members").update({ is_active: !current }).eq("id", id);
+    const { error } = await supabase.from("team_members").update({ is_active: !current }).eq("id", id);
     if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
     qc.invalidateQueries({ queryKey: ["team-members-manual"] });
   };
 
   const deleteRow = async (id: string) => {
-    const { error } = await (supabase as any).from("team_members").delete().eq("id", id);
+    const { error } = await supabase.from("team_members").delete().eq("id", id);
     if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
     qc.invalidateQueries({ queryKey: ["team-members-manual"] });
     setDeleteId(null);
@@ -821,10 +821,10 @@ export default function PeopleModule() {
     setLoading(true);
     try {
       const [profilesRes, rolesRes, invRes] = await Promise.all([
-        (supabase as any).from("profiles").select("id, email, full_name, country, created_at, show_on_website")
+        supabase.from("profiles").select("id, email, full_name, country, created_at, show_on_website")
           .order("created_at", { ascending: false }),
-        (supabase as any).from("user_roles").select("user_id, role"),
-        (supabase as any).from("invitations").select("id, email, role, created_at, accepted_at")
+        supabase.from("user_roles").select("user_id, role"),
+        supabase.from("invitations").select("id, email, role, created_at, accepted_at")
           .order("created_at", { ascending: false }),
       ]);
       const rolesMap = new Map<string, AppRole[]>();
@@ -851,8 +851,8 @@ export default function PeopleModule() {
       toast({ title: "Cannot remove your own super_admin role", variant: "destructive" }); return;
     }
     try {
-      if (action === "add") await (supabase as any).from("user_roles").insert({ user_id: targetId, role });
-      else await (supabase as any).from("user_roles").delete().eq("user_id", targetId).eq("role", role);
+      if (action === "add") await supabase.from("user_roles").insert({ user_id: targetId, role });
+      else await supabase.from("user_roles").delete().eq("user_id", targetId).eq("role", role);
       toast({ title: `Role ${action === "add" ? "granted" : "revoked"}` });
       loadData();
       if (targetId === user?.id) refreshRoles();
@@ -862,7 +862,7 @@ export default function PeopleModule() {
   };
 
   const revokeInvitation = async (invId: string) => {
-    await (supabase as any).from("invitations").delete().eq("id", invId);
+    await supabase.from("invitations").delete().eq("id", invId);
     toast({ title: "Invitation revoked" }); loadData();
   };
 
@@ -882,7 +882,7 @@ export default function PeopleModule() {
   };
 
   const handleToggleWebsite = async (userId: string, current: boolean) => {
-    await (supabase as any).from("profiles").update({ show_on_website: !current }).eq("id", userId);
+    await supabase.from("profiles").update({ show_on_website: !current }).eq("id", userId);
     toast({ title: !current ? "Now visible on Team page" : "Hidden" });
     qc.invalidateQueries({ queryKey: ["team-members"] }); loadData();
   };

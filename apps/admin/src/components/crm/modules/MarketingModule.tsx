@@ -1,15 +1,24 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Megaphone, Plus, Pencil, Trash2, Send, Clock, CheckCircle2, Play } from "lucide-react";
+import { Megaphone, Plus, Pencil, Trash2, Send, Clock, CheckCircle2, Play, Users, BarChart2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthContext";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, subDays, startOfWeek } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
+} from "recharts";
+
+const TOOLTIP_STYLE = {
+  contentStyle: { background: "hsl(var(--crm-card))", border: "1px solid hsl(var(--crm-border))", borderRadius: 8 },
+  labelStyle: { color: "hsl(var(--crm-text-muted))", fontSize: 10 },
+  itemStyle: { color: "hsl(var(--crm-text))", fontSize: 11 },
+};
 
 interface Campaign {
   id: string;
@@ -69,9 +78,9 @@ function CampaignDialog({ open, onClose, campaign }: {
         notes: notes || null,
       };
       if (isEdit) {
-        await (supabase as any).from("campaigns").update(payload).eq("id", campaign.id);
+        await supabase.from("campaigns").update(payload).eq("id", campaign.id);
       } else {
-        await (supabase as any).from("campaigns").insert({ ...payload, created_by: user!.id });
+        await supabase.from("campaigns").insert({ ...payload, created_by: user!.id });
       }
     },
     onSuccess: () => {
@@ -171,7 +180,7 @@ export default function MarketingModule() {
   const { data = [], isLoading } = useQuery<Campaign[]>({
     queryKey: ["campaigns"],
     queryFn: async () => {
-      const res = await (supabase as any)
+      const res = await supabase
         .from("campaigns")
         .select("id, title, type, status, target_audience, scheduled_at, notes, created_at, creator:profiles!campaigns_created_by_fkey(full_name)")
         .order("created_at", { ascending: false });
@@ -186,9 +195,36 @@ export default function MarketingModule() {
     },
   });
 
+  const { data: subscriberRows = [] } = useQuery({
+    queryKey: ["newsletter-subscribers-growth"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("newsletter_subscribers")
+        .select("created_at, status")
+        .order("created_at", { ascending: true });
+      return data ?? [];
+    },
+  });
+
+  const subscriberGrowth = useMemo(() => {
+    const weekMap: Record<string, number> = {};
+    subscriberRows.forEach((r: any) => {
+      const w = format(startOfWeek(parseISO(r.created_at)), "MMM d");
+      weekMap[w] = (weekMap[w] ?? 0) + 1;
+    });
+    let cumulative = 0;
+    return Object.entries(weekMap).slice(-12).map(([week, count]) => {
+      cumulative += count;
+      return { week, new: count, total: cumulative };
+    });
+  }, [subscriberRows]);
+
+  const activeSubscribers = subscriberRows.filter((r: any) => r.status === "active").length;
+  const totalSubscribers  = subscriberRows.length;
+
   const deleteCampaign = useMutation({
     mutationFn: async (id: string) => {
-      await (supabase as any).from("campaigns").delete().eq("id", id);
+      await supabase.from("campaigns").delete().eq("id", id);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["campaigns"] });
@@ -198,7 +234,7 @@ export default function MarketingModule() {
 
   const advanceStatus = useMutation({
     mutationFn: async ({ id, next }: { id: string; next: Campaign["status"] }) => {
-      await (supabase as any).from("campaigns").update({ status: next }).eq("id", id);
+      await supabase.from("campaigns").update({ status: next }).eq("id", id);
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["campaigns"] }),
   });
@@ -222,6 +258,47 @@ export default function MarketingModule() {
             <Plus size={13} /> New Campaign
           </Button>
         )}
+      </div>
+
+      {/* Analytics cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="bg-crm-card border border-crm-border rounded-xl p-4">
+          <div className="flex items-center gap-2 mb-1">
+            <Users size={12} className="text-emerald-400" />
+            <p className="text-[10px] uppercase tracking-widest text-crm-text-dim">Subscribers</p>
+          </div>
+          <p className="text-2xl font-bold text-crm-text">{totalSubscribers}</p>
+          <p className="text-[10px] text-emerald-400 mt-0.5">{activeSubscribers} active</p>
+        </div>
+        <div className="bg-crm-card border border-crm-border rounded-xl p-4">
+          <div className="flex items-center gap-2 mb-1">
+            <BarChart2 size={12} className="text-blue-400" />
+            <p className="text-[10px] uppercase tracking-widest text-crm-text-dim">Campaigns</p>
+          </div>
+          <p className="text-2xl font-bold text-crm-text">{data.length}</p>
+          <p className="text-[10px] text-blue-400 mt-0.5">{data.filter(c => c.status === "active").length} active</p>
+        </div>
+        <div className="bg-crm-card border border-crm-border rounded-xl p-4 col-span-2">
+          <p className="text-[10px] uppercase tracking-widest text-crm-text-dim mb-2">Subscriber growth (12 weeks)</p>
+          {subscriberGrowth.length > 0 ? (
+            <ResponsiveContainer width="100%" height={60}>
+              <AreaChart data={subscriberGrowth}>
+                <defs>
+                  <linearGradient id="sub-grad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%"  stopColor="#34d399" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#34d399" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <XAxis dataKey="week" hide />
+                <YAxis hide />
+                <Tooltip {...TOOLTIP_STYLE} />
+                <Area type="monotone" dataKey="total" stroke="#34d399" fill="url(#sub-grad)" strokeWidth={2} dot={false} name="Total subscribers" />
+              </AreaChart>
+            </ResponsiveContainer>
+          ) : (
+            <p className="text-[10px] text-crm-text-faint italic">No subscriber data yet</p>
+          )}
+        </div>
       </div>
 
       {/* Summary chips */}

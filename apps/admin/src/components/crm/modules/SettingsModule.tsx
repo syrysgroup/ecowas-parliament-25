@@ -70,7 +70,7 @@ function ProfileSettings() {
 
   useEffect(() => {
     if (!user?.id) return;
-    (supabase as any)
+    supabase
       .from("profiles")
       .select("full_name, title, organisation, country, bio, avatar_url, phone, linkedin_url, twitter_url")
       .eq("id", user.id)
@@ -101,7 +101,7 @@ function ProfileSettings() {
       if (error) throw error;
       const { data: urlData } = supabase.storage.from("public").getPublicUrl(path);
       const url = `${urlData.publicUrl}?t=${Date.now()}`;
-      await (supabase as any).from("profiles").update({ avatar_url: url }).eq("id", user.id);
+      await supabase.from("profiles").update({ avatar_url: url }).eq("id", user.id);
       await supabase.auth.updateUser({ data: { avatar_url: url } });
       setAvatarUrl(url);
       qc.invalidateQueries({ queryKey: ["profile", user.id] });
@@ -115,7 +115,7 @@ function ProfileSettings() {
     if (!user?.id) return;
     setSaving(true);
     try {
-      await (supabase as any).from("profiles").update({
+      await supabase.from("profiles").update({
         full_name: fullName, title, organisation, country,
         bio, phone, linkedin_url: linkedinUrl, twitter_url: twitterUrl,
       }).eq("id", user.id);
@@ -193,7 +193,7 @@ function ProfileSettings() {
               className="text-xs border-crm-border text-crm-text-muted shrink-0"
               onClick={async () => {
                 if (!urlValue.trim() || !user?.id) return;
-                await (supabase as any).from("profiles").update({ avatar_url: urlValue.trim() }).eq("id", user.id);
+                await supabase.from("profiles").update({ avatar_url: urlValue.trim() }).eq("id", user.id);
                 await supabase.auth.updateUser({ data: { avatar_url: urlValue.trim() } });
                 setAvatarUrl(urlValue.trim());
                 setShowUrlInput(false);
@@ -293,7 +293,7 @@ function EmailSettings() {
   // Load existing account
   useEffect(() => {
     if (!user?.id) return;
-    (supabase as any).from("email_accounts").select("email_address").eq("user_id", user.id).eq("is_active", true).single()
+    supabase.from("email_accounts").select("email_address").eq("user_id", user.id).eq("is_active", true).single()
       .then(({ data }: any) => {
         if (data?.email_address) {
           setEmail(data.email_address);
@@ -305,7 +305,7 @@ function EmailSettings() {
   const { data: smtpConfig } = useQuery({
     queryKey: ["site-settings-smtp"],
     queryFn: async () => {
-      const { data } = await (supabase as any).from("site_settings").select("value").eq("key", "smtp").single();
+      const { data } = await supabase.from("site_settings").select("value").eq("key", "smtp").single();
       return (data?.value as Record<string, any>) ?? {};
     },
   });
@@ -378,11 +378,11 @@ function EmailSettings() {
         imap_host: imapHost, imap_port: Number(imapPort),
         ssl_enabled: sslEnabled,
       };
-      const { data: existing } = await (supabase as any).from("site_settings").select("id").eq("key", "smtp").single();
+      const { data: existing } = await supabase.from("site_settings").select("id").eq("key", "smtp").single();
       if (existing) {
-        await (supabase as any).from("site_settings").update({ value, updated_by: user!.id, updated_at: new Date().toISOString() }).eq("key", "smtp");
+        await supabase.from("site_settings").update({ value, updated_by: user!.id, updated_at: new Date().toISOString() }).eq("key", "smtp");
       } else {
-        await (supabase as any).from("site_settings").insert({ key: "smtp", value, updated_by: user!.id });
+        await supabase.from("site_settings").insert({ key: "smtp", value, updated_by: user!.id });
       }
       qc.invalidateQueries({ queryKey: ["site-settings-smtp"] });
       toast({ title: "Server configuration saved and applied to all users" });
@@ -498,14 +498,14 @@ function NotificationSettings() {
 
   useEffect(() => {
     if (!user?.id) return;
-    (supabase as any).from("profiles").select("notification_email").eq("id", user.id).single()
+    supabase.from("profiles").select("notification_email").eq("id", user.id).single()
       .then(({ data }: any) => { if (data?.notification_email) setNotificationEmail(data.notification_email); });
   }, [user?.id]);
 
   const { isLoading } = useQuery({
     queryKey: ["crm-notif-settings", user?.id],
     queryFn: async () => {
-      const res = await (supabase as any)
+      const res = await supabase
         .from("user_notification_prefs")
         .select("notify_new_message, notify_task_assigned, notify_event_reminder")
         .eq("user_id", user!.id)
@@ -523,7 +523,7 @@ function NotificationSettings() {
   const qc = useQueryClient();
   const save = useMutation({
     mutationFn: async () => {
-      await (supabase as any).from("user_notification_prefs").upsert(
+      await supabase.from("user_notification_prefs").upsert(
         { user_id: user!.id, ...prefs },
         { onConflict: "user_id" }
       );
@@ -535,7 +535,7 @@ function NotificationSettings() {
   const saveNotificationEmail = async () => {
     setSavingEmail(true);
     try {
-      await (supabase as any).from("profiles").update({ notification_email: notificationEmail.trim() || null }).eq("id", user!.id);
+      await supabase.from("profiles").update({ notification_email: notificationEmail.trim() || null }).eq("id", user!.id);
       toast({ title: "Notification email saved" });
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
@@ -604,7 +604,7 @@ function SecuritySettings() {
 
   useEffect(() => {
     if (!user?.id) return;
-    (supabase as any).from("email_accounts").select("id").eq("user_id", user.id).eq("is_active", true).single()
+    supabase.from("email_accounts").select("id").eq("user_id", user.id).eq("is_active", true).single()
       .then(({ data }: any) => setHasEmailAcct(!!data));
   }, [user?.id]);
 
@@ -712,7 +712,7 @@ function SiteSettingsPanel() {
   const { data, isLoading } = useQuery({
     queryKey: ["site-settings-admin"],
     queryFn: async () => {
-      const { data } = await (supabase as any).from("site_settings").select("*");
+      const { data } = await supabase.from("site_settings").select("*");
       return data ?? [];
     },
   });
@@ -733,7 +733,7 @@ function SiteSettingsPanel() {
     setSaving(true);
     try {
       for (const [key, val] of Object.entries(values)) {
-        await (supabase as any).from("site_settings").update({
+        await supabase.from("site_settings").update({
           value: val,
           updated_at: new Date().toISOString(),
           updated_by: user!.id,

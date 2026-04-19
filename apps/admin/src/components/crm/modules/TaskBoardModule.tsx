@@ -268,7 +268,7 @@ function CreateTaskDialog({ open, onClose, profiles }: {
 
   const create = useMutation({
     mutationFn: async () => {
-      await (supabase as any).from("tasks").insert({
+      await supabase.from("tasks").insert({
         title,
         description: description || null,
         pillar,
@@ -351,7 +351,7 @@ function EditTaskDialog({ task, open, onClose, profiles }: {
 
   const update = useMutation({
     mutationFn: async () => {
-      await (supabase as any).from("tasks").update({
+      await supabase.from("tasks").update({
         title,
         description: description || null,
         pillar,
@@ -413,7 +413,7 @@ export default function TaskBoardModule() {
   const { data: tasks, isLoading } = useQuery({
     queryKey: ["crm-tasks", user?.id, roles],
     queryFn: async () => {
-      let q = (supabase as any)
+      let q = supabase
         .from("tasks")
         .select("*, assignee:profiles!assignee_id(id, full_name, avatar_url)")
         .order("created_at", { ascending: false });
@@ -430,7 +430,7 @@ export default function TaskBoardModule() {
   const { data: profiles = [] } = useQuery({
     queryKey: ["crm-profiles"],
     queryFn: async () => {
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from("profiles")
         .select("id, full_name")
         .order("full_name");
@@ -441,7 +441,7 @@ export default function TaskBoardModule() {
 
   const updateStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
-      await (supabase as any).from("tasks").update({ status }).eq("id", id);
+      await supabase.from("tasks").update({ status }).eq("id", id);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["crm-tasks"] });
@@ -452,7 +452,7 @@ export default function TaskBoardModule() {
 
   const deleteTask = useMutation({
     mutationFn: async (id: string) => {
-      await (supabase as any).from("tasks").delete().eq("id", id);
+      await supabase.from("tasks").delete().eq("id", id);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["crm-tasks"] });

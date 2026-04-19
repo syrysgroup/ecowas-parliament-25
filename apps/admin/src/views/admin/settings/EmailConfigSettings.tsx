@@ -64,7 +64,7 @@ const EmailConfigSettings = () => {
   const { data: accounts = [], isLoading } = useQuery<EmailAccountRow[]>({
     queryKey: ["admin-email-accounts"],
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("email_accounts")
         .select("id, user_id, email_address, is_active, last_synced_at, app_password, imap_valid, imap_validated_at")
         .order("created_at", { ascending: false });
@@ -72,7 +72,7 @@ const EmailConfigSettings = () => {
       const userIds = [...new Set((data ?? []).map((a: any) => a.user_id))];
       let profileMap: Record<string, ProfileOption> = {};
       if (userIds.length > 0) {
-        const { data: profiles } = await (supabase as any)
+        const { data: profiles } = await supabase
           .from("profiles")
           .select("id, full_name, email")
           .in("id", userIds);
@@ -86,7 +86,7 @@ const EmailConfigSettings = () => {
   const { data: profiles = [] } = useQuery<ProfileOption[]>({
     queryKey: ["all-profiles-for-email"],
     queryFn: async () => {
-      const { data } = await (supabase as any).from("profiles").select("id, full_name, email").order("full_name");
+      const { data } = await supabase.from("profiles").select("id, full_name, email").order("full_name");
       return data ?? [];
     },
     enabled: isSuperAdmin,
@@ -138,7 +138,7 @@ const EmailConfigSettings = () => {
 
   const handleToggleActive = async (acct: EmailAccountRow) => {
     try {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from("email_accounts")
         .update({ is_active: !acct.is_active })
         .eq("id", acct.id);

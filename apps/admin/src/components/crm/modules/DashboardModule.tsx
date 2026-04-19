@@ -248,7 +248,7 @@ function useDashboardStats(enabled: boolean) {
         supabase.from("profiles").select("id", { count: "exact", head: true }),
         supabase.from("invitations").select("id", { count: "exact", head: true }).is("accepted_at", null),
         supabase.from("sponsors").select("id", { count: "exact", head: true }).eq("is_published", true),
-        (supabase as any).from("tasks").select("id", { count: "exact", head: true }).neq("status", "done"),
+        supabase.from("tasks").select("id", { count: "exact", head: true }).neq("status", "done"),
       ]);
       return {
         users:   usersRes.count   ?? 0,

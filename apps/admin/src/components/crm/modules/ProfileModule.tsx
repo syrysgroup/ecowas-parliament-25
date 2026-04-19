@@ -191,9 +191,9 @@ export default function ProfileModule() {
     enabled: !!user?.id,
     queryFn: async () => {
       const [tasksRes, msgsRes, eventsRes] = await Promise.all([
-        (supabase as any).from("tasks").select("id", { count: "exact", head: true }).eq("assignee_id", user!.id).eq("status", "done"),
-        (supabase as any).from("crm_messages").select("id", { count: "exact", head: true }).or(`from_user_id.eq.${user!.id},to_user_id.eq.${user!.id}`),
-        (supabase as any).from("crm_calendar_events").select("id", { count: "exact", head: true }).eq("created_by", user!.id),
+        supabase.from("tasks").select("id", { count: "exact", head: true }).eq("assignee_id", user!.id).eq("status", "done"),
+        supabase.from("crm_messages").select("id", { count: "exact", head: true }).or(`from_user_id.eq.${user!.id},to_user_id.eq.${user!.id}`),
+        supabase.from("crm_calendar_events").select("id", { count: "exact", head: true }).eq("created_by", user!.id),
       ]);
       return {
         tasksDone: tasksRes.count ?? 0,
@@ -207,18 +207,18 @@ export default function ProfileModule() {
     if (!user?.id) return;
     setLoading(true);
     Promise.all([
-      (supabase as any)
+      supabase
         .from("profiles")
         .select("full_name, title, organisation, country, bio, avatar_url, show_on_website, created_at, phone, linkedin_url, twitter_url, notification_email, date_of_birth")
         .eq("id", user.id)
         .maybeSingle(),
-      (supabase as any)
+      supabase
         .from("email_accounts")
         .select("email_address")
         .eq("user_id", user.id)
         .eq("is_active", true)
         .maybeSingle(),
-      (supabase as any)
+      supabase
         .from("user_notification_prefs")
         .select("*")
         .eq("user_id", user.id)
@@ -275,7 +275,7 @@ export default function ProfileModule() {
     if (!user?.id) return;
     setSaving(true);
     try {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from("profiles")
         .update({
           full_name: fullName.trim(),
@@ -345,7 +345,7 @@ export default function ProfileModule() {
         notify_invite_accept: overrides?.notify_invite_accept ?? notifyInviteAccept,
         updated_at: new Date().toISOString(),
       };
-      const { error } = await (supabase as any).from("user_notification_prefs").upsert(prefs, { onConflict: "user_id" });
+      const { error } = await supabase.from("user_notification_prefs").upsert(prefs, { onConflict: "user_id" });
       if (error) throw error;
       toast({ title: "Notification preferences saved" });
     } catch (err: any) {

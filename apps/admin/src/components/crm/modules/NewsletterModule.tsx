@@ -19,7 +19,7 @@ export default function NewsletterModule() {
   const { data: subscribers = [], isLoading } = useQuery<Subscriber[]>({
     queryKey: ["newsletter-subscribers"],
     queryFn: async () => {
-      const { data } = await (supabase as any).from("newsletter_subscribers")
+      const { data } = await supabase.from("newsletter_subscribers")
         .select("*").order("subscribed_at", { ascending: false });
       return data ?? [];
     },
@@ -27,7 +27,7 @@ export default function NewsletterModule() {
 
   const unsubscribe = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from("newsletter_subscribers")
         .update({ unsubscribed_at: new Date().toISOString() })
         .eq("id", id);
@@ -38,7 +38,7 @@ export default function NewsletterModule() {
 
   const resubscribe = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from("newsletter_subscribers")
         .update({ unsubscribed_at: null })
         .eq("id", id);
@@ -49,7 +49,7 @@ export default function NewsletterModule() {
 
   const deleteSubscriber = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await (supabase as any).from("newsletter_subscribers").delete().eq("id", id);
+      const { error } = await supabase.from("newsletter_subscribers").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {

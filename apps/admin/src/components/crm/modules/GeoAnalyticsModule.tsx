@@ -58,7 +58,7 @@ export default function GeoAnalyticsModule() {
   const { data: visitors = [], refetch: refetchVisitors } = useQuery({
     queryKey: ["geo-visitors", range],
     queryFn: async () => {
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from("site_visitors")
         .select("*")
         .order("created_at", { ascending: false });
@@ -70,7 +70,7 @@ export default function GeoAnalyticsModule() {
   const { data: contacts = [], refetch: refetchContacts } = useQuery({
     queryKey: ["geo-contacts"],
     queryFn: async () => {
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from("contact_submissions")
         .select("*")
         .order("created_at", { ascending: false });
@@ -179,7 +179,17 @@ export default function GeoAnalyticsModule() {
       ? ((contacts.length / filteredVisitors.length) * 100).toFixed(2)
       : "0";
 
-  const bounceRate = "42.5"; // placeholder (needs session tracking improvement)
+  const bounceRate = useMemo(() => {
+    if (filteredVisitors.length === 0) return "0";
+    const sessionCounts: Record<string, number> = {};
+    filteredVisitors.forEach((v: any) => {
+      if (v.session_id) sessionCounts[v.session_id] = (sessionCounts[v.session_id] ?? 0) + 1;
+    });
+    const sessionList = Object.values(sessionCounts);
+    if (sessionList.length === 0) return "0";
+    const bounced = sessionList.filter(c => c === 1).length;
+    return ((bounced / sessionList.length) * 100).toFixed(1);
+  }, [filteredVisitors]);
 
   const tabs = [
     { id: "overview", label: "Overview", icon: Globe },

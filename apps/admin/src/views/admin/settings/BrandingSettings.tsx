@@ -69,12 +69,12 @@ const BrandingSettings = () => {
       if (type === "logo") {
         setLogoPreview(publicUrl);
         await updateSetting("branding", { ...branding, logo_url: publicUrl });
-        await (supabase as any).from("site_settings").upsert({ key: "site_logo_url", value: JSON.stringify(publicUrl) }, { onConflict: "key" });
+        await supabase.from("site_settings").upsert({ key: "site_logo_url", value: JSON.stringify(publicUrl) }, { onConflict: "key" });
         qc.invalidateQueries({ queryKey: ["site-settings"] });
        } else {
         setFaviconPreview(publicUrl);
         await updateSetting("branding", { ...branding, favicon_url: publicUrl });
-        await (supabase as any).from("site_settings").upsert({ key: "site_favicon_url", value: JSON.stringify(publicUrl) }, { onConflict: "key" });
+        await supabase.from("site_settings").upsert({ key: "site_favicon_url", value: JSON.stringify(publicUrl) }, { onConflict: "key" });
         qc.invalidateQueries({ queryKey: ["site-settings"] });
         updateFaviconLink(publicUrl);
       }
@@ -100,9 +100,9 @@ const BrandingSettings = () => {
   const handleSave = async () => {
     await updateSetting("app_name", name);
     await updateSetting("branding", { ...branding, primary_color: color, logo_url: logoPreview, favicon_url: faviconPreview });
-    await (supabase as any).from("site_settings").upsert({ key: "site_logo_url", value: JSON.stringify(logoPreview) }, { onConflict: "key" });
-    await (supabase as any).from("site_settings").upsert({ key: "site_name", value: JSON.stringify(name) }, { onConflict: "key" });
-    await (supabase as any).from("site_settings").upsert({ key: "site_favicon_url", value: JSON.stringify(faviconPreview) }, { onConflict: "key" });
+    await supabase.from("site_settings").upsert({ key: "site_logo_url", value: JSON.stringify(logoPreview) }, { onConflict: "key" });
+    await supabase.from("site_settings").upsert({ key: "site_name", value: JSON.stringify(name) }, { onConflict: "key" });
+    await supabase.from("site_settings").upsert({ key: "site_favicon_url", value: JSON.stringify(faviconPreview) }, { onConflict: "key" });
     qc.invalidateQueries({ queryKey: ["site-settings"] });
     if (faviconPreview) updateFaviconLink(faviconPreview);
     toast.success(t("crm.branding.saved"));

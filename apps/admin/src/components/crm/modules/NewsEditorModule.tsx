@@ -66,8 +66,8 @@ function ArticleDialog({ open, onClose, article }: { open: boolean; onClose: () 
         external_links: externalLinks.filter(l => l.url.trim()),
         ...(isNowPublished && wasNotPublished ? { published_at: new Date().toISOString() } : {}),
       };
-      if (isEdit) await (supabase as any).from("news_articles").update(payload).eq("id", article.id);
-      else await (supabase as any).from("news_articles").insert({ ...payload, author_id: user!.id });
+      if (isEdit) await supabase.from("news_articles").update(payload).eq("id", article.id);
+      else await supabase.from("news_articles").insert({ ...payload, author_id: user!.id });
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["news-editor"] });
@@ -173,7 +173,7 @@ export default function NewsEditorModule() {
   const { data: articles = [], isLoading } = useQuery<NewsRow[]>({
     queryKey: ["news-editor"],
     queryFn: async () => {
-      const { data } = await (supabase as any).from("news_articles").select("*").order("created_at", { ascending: false });
+      const { data } = await supabase.from("news_articles").select("*").order("created_at", { ascending: false });
       return data ?? [];
     },
   });
@@ -188,7 +188,7 @@ export default function NewsEditorModule() {
   const paged = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
   const deleteArticle = useMutation({
-    mutationFn: async (id: string) => { await (supabase as any).from("news_articles").delete().eq("id", id); },
+    mutationFn: async (id: string) => { await supabase.from("news_articles").delete().eq("id", id); },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["news-editor"] });
       qc.invalidateQueries({ queryKey: ["homepage-latest-news"] });
@@ -199,14 +199,14 @@ export default function NewsEditorModule() {
 
   const publish = useMutation({
     mutationFn: async (id: string) => {
-      await (supabase as any).from("news_articles").update({ status: "published", published_at: new Date().toISOString() }).eq("id", id);
+      await supabase.from("news_articles").update({ status: "published", published_at: new Date().toISOString() }).eq("id", id);
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["news-editor"] }); toast("Published"); },
   });
 
   const bulkDelete = useMutation({
     mutationFn: async () => {
-      await Promise.all([...selectedIds].map(id => (supabase as any).from("news_articles").delete().eq("id", id)));
+      await Promise.all([...selectedIds].map(id => supabase.from("news_articles").delete().eq("id", id)));
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["news-editor"] });
@@ -218,7 +218,7 @@ export default function NewsEditorModule() {
   const bulkPublish = useMutation({
     mutationFn: async () => {
       await Promise.all([...selectedIds].map(id =>
-        (supabase as any).from("news_articles").update({ status: "published", published_at: new Date().toISOString() }).eq("id", id)
+        supabase.from("news_articles").update({ status: "published", published_at: new Date().toISOString() }).eq("id", id)
       ));
     },
     onSuccess: () => {

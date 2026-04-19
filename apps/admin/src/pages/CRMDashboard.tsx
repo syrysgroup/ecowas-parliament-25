@@ -40,6 +40,7 @@ const SiteContentModule = lazy(() => import("@/components/crm/modules/SiteConten
 const ContactSubmissionsModule = lazy(() => import("@/components/crm/modules/ContactSubmissionsModule"));
 const NewsletterModule = lazy(() => import("@/components/crm/modules/NewsletterModule"));
 const MediaLibraryModule = lazy(() => import("@/components/crm/modules/MediaLibraryModule"));
+const SEOModule          = lazy(() => import("@/components/crm/modules/SEOModule"));
 
 function ModuleLoader() {
   return (
@@ -81,7 +82,7 @@ export default function CRMDashboard() {
   // Profile completion gate: only re-run when user ID changes, not on every token refresh
   useEffect(() => {
     if (loading || rolesLoading || !user?.id) return;
-    (supabase as any)
+    supabase
       .from("profiles")
       .select("full_name, title, country, organisation")
       .eq("id", user.id)
@@ -135,6 +136,7 @@ export default function CRMDashboard() {
       case "super-admin":     return <SuperAdminModule onNavigate={navigateSection} />;
       case "settings":        return <SettingsModule onNavigate={navigateSection} />;
       case "geo-analytics":   return <GeoAnalyticsModule />;
+      case "seo":             return <Suspense fallback={<ModuleLoader />}><SEOModule /></Suspense>;
       case "events-manager":  return <EventsManagerModule />;
       case "sponsors-partners": return <SponsorsManagerModule />;
       case "news-editor":     return <Suspense fallback={<ModuleLoader />}><NewsEditorModule /></Suspense>;

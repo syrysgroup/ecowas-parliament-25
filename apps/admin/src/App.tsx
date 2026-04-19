@@ -59,7 +59,7 @@ function EmailNotificationWatcher() {
   // Step 1 — resolve the user's email account id once
   useEffect(() => {
     if (!user?.id) return;
-    (supabase as any)
+    supabase
       .from("email_accounts")
       .select("id")
       .eq("user_id", user.id)

@@ -48,10 +48,10 @@ function StakeholderDialog({ open, onClose, stakeholder }: { open: boolean; onCl
         is_active: isActive,
       };
       if (isEdit) {
-        const { error } = await (supabase as any).from("stakeholder_profiles").update(payload).eq("id", stakeholder.id);
+        const { error } = await supabase.from("stakeholder_profiles").update(payload).eq("id", stakeholder.id);
         if (error) throw error;
       } else {
-        const { error } = await (supabase as any).from("stakeholder_profiles").insert(payload);
+        const { error } = await supabase.from("stakeholder_profiles").insert(payload);
         if (error) throw error;
       }
     },
@@ -140,7 +140,7 @@ export default function StakeholdersModule() {
   const { data: stakeholders = [], isLoading } = useQuery<StakeholderRow[]>({
     queryKey: ["stakeholder-profiles"],
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("stakeholder_profiles")
         .select("*")
         .order("display_order");
@@ -151,7 +151,7 @@ export default function StakeholdersModule() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await (supabase as any).from("stakeholder_profiles").delete().eq("id", id);
+      const { error } = await supabase.from("stakeholder_profiles").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {

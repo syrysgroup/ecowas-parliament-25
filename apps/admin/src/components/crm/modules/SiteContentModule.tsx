@@ -188,7 +188,7 @@ function SectionEditor({ section, onSaved }: { section: SiteContentRow; onSaved:
   const handleSave = async () => {
     setSaving(true);
     try {
-      await (supabase as any).from("site_content").update({
+      await supabase.from("site_content").update({
         content: values,
         updated_at: new Date().toISOString(),
         updated_by: user?.id,
@@ -205,7 +205,7 @@ function SectionEditor({ section, onSaved }: { section: SiteContentRow; onSaved:
   const handleDelete = async () => {
     setDeleting(true);
     try {
-      await (supabase as any).from("site_content").delete().eq("id", section.id);
+      await supabase.from("site_content").delete().eq("id", section.id);
       toast({ title: "Section deleted" });
       onSaved();
     } catch (err: any) {
@@ -278,7 +278,7 @@ export default function SiteContentModule() {
   const { data: sections = [], isLoading } = useQuery<SiteContentRow[]>({
     queryKey: ["site-content"],
     queryFn: async () => {
-      const { data } = await (supabase as any).from("site_content").select("*").order("section_key");
+      const { data } = await supabase.from("site_content").select("*").order("section_key");
       return data ?? [];
     },
   });
@@ -288,7 +288,7 @@ export default function SiteContentModule() {
       const template = SECTION_TEMPLATES[newKey];
       const defaultContent: Record<string, string> = {};
       if (template) template.fields.forEach(f => { defaultContent[f.key] = ""; });
-      await (supabase as any).from("site_content").insert({
+      await supabase.from("site_content").insert({
         section_key: newKey, content: defaultContent, updated_by: user?.id,
       });
     },

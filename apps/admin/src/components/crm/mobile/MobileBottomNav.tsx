@@ -1,20 +1,18 @@
-import React from "react";
 import type { AppRole } from "@/contexts/AuthContext";
 import { useMobileSections } from "./useMobileSections";
-import { useNotifications } from "../CRMNotifications";
 
 interface MobileBottomNavProps {
   activeSection: string;
   onNavigate: (section: string) => void;
   roles: AppRole[];
   onMoreOpen: () => void;
+  unreadMessages?: number;
 }
 
-export default function MobileBottomNav({ activeSection, onNavigate, roles, onMoreOpen }: MobileBottomNavProps) {
+export default function MobileBottomNav({
+  activeSection, onNavigate, roles, onMoreOpen, unreadMessages = 0,
+}: MobileBottomNavProps) {
   const tabs = useMobileSections(roles);
-  const { data } = useNotifications();
-  const readIds = data?.readIds ?? new Set<string>();
-  const unreadCount = (data?.items ?? []).filter(n => !readIds.has(n.id) && n.type === "message").length;
 
   const primarySections = tabs.filter(t => t.section !== null).map(t => t.section as string);
   const isMoreActive = activeSection !== "" && !primarySections.includes(activeSection);
@@ -30,7 +28,7 @@ export default function MobileBottomNav({ activeSection, onNavigate, roles, onMo
             ? activeSection === tab.section
             : isMoreActive;
           const Icon = tab.icon;
-          const badge = tab.id === "messages" ? unreadCount : 0;
+          const badge = tab.id === "messages" ? unreadMessages : 0;
 
           return (
             <button
@@ -43,24 +41,20 @@ export default function MobileBottomNav({ activeSection, onNavigate, roles, onMo
               `}
               aria-label={tab.label}
             >
-              {/* Active top indicator pill */}
               {isActive && (
                 <span className="absolute inset-x-3 top-0 h-0.5 rounded-b-full bg-[hsl(var(--ecowas-green))] animate-tab-pop" />
               )}
 
-              {/* Icon */}
               <Icon
                 size={22}
                 className={`transition-transform duration-150 ${isActive ? "scale-110" : "group-active:scale-95"}`}
                 strokeWidth={isActive ? 2.5 : 1.75}
               />
 
-              {/* Label */}
               <span className={`text-[10px] leading-none transition-opacity ${isActive ? "opacity-100 font-semibold" : "opacity-50 font-medium"}`}>
                 {tab.label}
               </span>
 
-              {/* Unread badge */}
               {badge > 0 && (
                 <span className="absolute top-1.5 left-1/2 translate-x-1 min-w-[14px] h-3.5 px-0.5 rounded-full bg-red-500 text-white text-[8px] font-bold flex items-center justify-center animate-bounce-in">
                   {badge > 99 ? "99+" : badge}

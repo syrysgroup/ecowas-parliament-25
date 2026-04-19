@@ -116,7 +116,7 @@ function UserFormDialog({ user, open, onClose, onSaved }: UserFormProps) {
 
       if (isEdit) {
         // ── Update existing profile ──────────────────────────────────────────
-        await (supabase as any).from("profiles").update({
+        await supabase.from("profiles").update({
           full_name:       fullName.trim(),
           job_title:       jobTitle.trim() || null,
           phone:           phone.trim() || null,
@@ -150,14 +150,14 @@ function UserFormDialog({ user, open, onClose, onSaved }: UserFormProps) {
 
         // After invite, backfill the extra profile fields once the profile row exists
         setTimeout(async () => {
-          const { data: profile } = await (supabase as any)
+          const { data: profile } = await supabase
             .from("profiles")
             .select("id")
             .eq("email", email.trim())
             .single();
 
           if (profile?.id) {
-            await (supabase as any).from("profiles").update({
+            await supabase.from("profiles").update({
               full_name:       fullName.trim(),
               job_title:       jobTitle.trim() || null,
               phone:           phone.trim() || null,
@@ -392,15 +392,15 @@ export default function UserManagement() {
     if (!currentUser) return;
     setLoading(true);
 
-    const { data: roleData } = await (supabase as any).from("user_roles").select("role").eq("user_id", currentUser.id);
+    const { data: roleData } = await supabase.from("user_roles").select("role").eq("user_id", currentUser.id);
     const myRoles = (roleData ?? []).map((r: any) => r.role);
     setIsSuperAdmin(myRoles.includes("super_admin"));
     setIsAdminUser(myRoles.includes("super_admin") || myRoles.includes("admin"));
 
     const [profilesRes, allRolesRes, emailAcctsRes] = await Promise.all([
-      (supabase as any).from("profiles").select("id, email, full_name, job_title, phone, country, avatar_url, permission_tier, departments, status, has_email_account, created_at").order("created_at", { ascending: false }),
-      (supabase as any).from("user_roles").select("user_id, role"),
-      (supabase as any).from("email_accounts").select("user_id, email_address, is_active").eq("is_active", true),
+      supabase.from("profiles").select("id, email, full_name, job_title, phone, country, avatar_url, permission_tier, departments, status, has_email_account, created_at").order("created_at", { ascending: false }),
+      supabase.from("user_roles").select("user_id, role"),
+      supabase.from("email_accounts").select("user_id, email_address, is_active").eq("is_active", true),
     ]);
 
     const rolesMap = new Map<string, string[]>();
@@ -435,7 +435,7 @@ export default function UserManagement() {
 
   const handleSuspend = async (u: AdminUser) => {
     const newStatus = u.status === "active" ? "suspended" : "active";
-    await (supabase as any).from("profiles").update({ status: newStatus }).eq("id", u.id);
+    await supabase.from("profiles").update({ status: newStatus }).eq("id", u.id);
     toast({ title: newStatus === "suspended" ? "User suspended" : "User reactivated" });
     loadData();
   };

@@ -87,7 +87,7 @@ function AddDocumentDialog({ open, onClose }: { open: boolean; onClose: () => vo
         fileSizeKb = Math.round(file.size / 1024);
       }
 
-      await (supabase as any).from("documents").insert({
+      await supabase.from("documents").insert({
         title,
         category: category || "General",
         file_type: fileType,
@@ -229,7 +229,7 @@ function EditDocumentDialog({ doc, open, onClose }: { doc: Doc; open: boolean; o
         fileSizeKb = Math.round(file.size / 1024);
       }
 
-      await (supabase as any).from("documents").update({
+      await supabase.from("documents").update({
         title,
         category: category || "General",
         file_type: fileType,
@@ -342,7 +342,7 @@ export default function DocumentsModule() {
   const { data, isLoading } = useQuery<Doc[] | null>({
     queryKey: ["crm-documents"],
     queryFn: async () => {
-      const res = await (supabase as any)
+      const res = await supabase
         .from("documents")
         .select("id, title, category, file_type, file_size_kb, restricted, file_url, language, created_at, uploader:profiles!documents_uploaded_by_fkey(full_name)")
         .order("created_at", { ascending: false })
@@ -367,7 +367,7 @@ export default function DocumentsModule() {
 
   const deleteDocument = useMutation({
     mutationFn: async (id: string) => {
-      await (supabase as any).from("documents").delete().eq("id", id);
+      await supabase.from("documents").delete().eq("id", id);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["crm-documents"] });

@@ -34,12 +34,12 @@ export default function EmailSignaturePanel() {
     setLoading(true);
 
     Promise.all([
-      (supabase as any)
+      supabase
         .from("email_signatures")
         .select("*")
         .eq("user_id", user.id)
         .maybeSingle(),
-      (supabase as any)
+      supabase
         .from("email_accounts")
         .select("email_address")
         .eq("user_id", user.id)
@@ -73,7 +73,7 @@ export default function EmailSignaturePanel() {
     if (!user?.id) return;
     setSaving(true);
     try {
-      const { error } = await (supabase as any).from("email_signatures").upsert(
+      const { error } = await supabase.from("email_signatures").upsert(
         {
           user_id: user.id,
           title: honorific || null,

@@ -112,7 +112,7 @@ function EditSponsorDialog({ sponsor, tier, open, onClose, onTierChange }: {
 
   const update = useMutation({
     mutationFn: async () => {
-      await (supabase as any).from("profiles")
+      await supabase.from("profiles")
         .update({ full_name: fullName, country })
         .eq("id", sponsor.id);
     },
@@ -182,7 +182,7 @@ export default function SponsorMetricsModule() {
   const { data: sponsors = [], isLoading } = useQuery<SponsorUser[]>({
     queryKey: ["crm-sponsors"],
     queryFn: async () => {
-      const rolesRes = await (supabase as any)
+      const rolesRes = await supabase
         .from("user_roles")
         .select("user_id")
         .eq("role", "sponsor");
@@ -190,7 +190,7 @@ export default function SponsorMetricsModule() {
       const ids: string[] = (rolesRes.data ?? []).map((r: any) => r.user_id);
       if (ids.length === 0) return [];
 
-      const profilesRes = await (supabase as any)
+      const profilesRes = await supabase
         .from("profiles")
         .select("id, full_name, email, country")
         .in("id", ids)
@@ -207,7 +207,7 @@ export default function SponsorMetricsModule() {
 
   const removeSponsorRole = useMutation({
     mutationFn: async (id: string) => {
-      await (supabase as any).from("user_roles")
+      await supabase.from("user_roles")
         .delete()
         .eq("user_id", id)
         .eq("role", "sponsor");

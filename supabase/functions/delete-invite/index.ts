@@ -16,12 +16,13 @@ Deno.serve(async (req) => {
       });
     }
 
-    const anonClient = createClient(
+    const token = authHeader.slice(7);
+    const serviceClient = createClient(
       Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: authHeader } } }
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
-    const { data: { user }, error: authErr } = await anonClient.auth.getUser();
+
+    const { data: { user }, error: authErr } = await serviceClient.auth.getUser(token);
     if (authErr || !user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -29,10 +30,13 @@ Deno.serve(async (req) => {
     }
 
     // Only super_admin can delete invitations
-    const { data: roleCheck } = await anonClient.rpc("has_role", {
-      _user_id: user.id,
-      _role: "super_admin",
-    });
+    const { data: roleCheck } = await serviceClient
+      .from("user_roles")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("role", "super_admin")
+      .maybeSingle();
+
     if (!roleCheck) {
       return new Response(JSON.stringify({ error: "Forbidden — super_admin required" }), {
         status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -45,11 +49,6 @@ Deno.serve(async (req) => {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    const serviceClient = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
 
     // Hard delete — service role bypasses RLS
     const { error: deleteErr, count } = await serviceClient

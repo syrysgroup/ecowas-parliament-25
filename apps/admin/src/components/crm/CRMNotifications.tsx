@@ -37,7 +37,7 @@ export function useNotifications() {
 
       let readIds = new Set<string>();
       try {
-        const { data: reads } = await (supabase as any)
+        const { data: reads } = await supabase
           .from("notification_reads")
           .select("notif_id")
           .eq("user_id", user!.id);
@@ -47,7 +47,7 @@ export function useNotifications() {
       }
 
       try {
-        const msgRes = await (supabase as any)
+        const msgRes = await supabase
           .from("crm_messages")
           .select("id, subject, body, sent_at, is_read")
           .eq("to_user_id", user!.id)
@@ -61,7 +61,7 @@ export function useNotifications() {
 
       try {
         const since = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
-        const taskRes = await (supabase as any)
+        const taskRes = await supabase
           .from("tasks")
           .select("id, title, created_at")
           .eq("assignee_id", user!.id)
@@ -76,7 +76,7 @@ export function useNotifications() {
       try {
         const todayEnd = new Date();
         todayEnd.setHours(23, 59, 59, 999);
-        const evtRes = await (supabase as any)
+        const evtRes = await supabase
           .from("crm_calendar_events")
           .select("id, title, start_time, created_by")
           .or(`created_by.eq.${user!.id},is_global.eq.true`)
@@ -91,7 +91,7 @@ export function useNotifications() {
 
       if (isAdmin) {
         try {
-          const appRes = await (supabase as any)
+          const appRes = await supabase
             .from("applications")
             .select("id, country, created_at")
             .eq("status", "pending")
@@ -115,15 +115,15 @@ export function useNotifications() {
     if (!user?.id) return;
     const invalidate = () => qc.invalidateQueries({ queryKey: ["crm-notifications", user.id] });
     const channels = [
-      (supabase as any).channel("notif-crm-messages").on("postgres_changes", { event: "INSERT", schema: "public", table: "crm_messages", filter: `to_user_id=eq.${user.id}` }, invalidate).subscribe(),
-      (supabase as any).channel("notif-tasks").on("postgres_changes", { event: "INSERT", schema: "public", table: "tasks", filter: `assignee_id=eq.${user.id}` }, invalidate).on("postgres_changes", { event: "UPDATE", schema: "public", table: "tasks", filter: `assignee_id=eq.${user.id}` }, invalidate).subscribe(),
-      (supabase as any).channel("notif-events").on("postgres_changes", { event: "INSERT", schema: "public", table: "crm_calendar_events" }, invalidate).subscribe(),
-      (supabase as any).channel("notif-reads").on("postgres_changes", { event: "INSERT", schema: "public", table: "notification_reads", filter: `user_id=eq.${user.id}` }, invalidate).subscribe(),
+      supabase.channel("notif-crm-messages").on("postgres_changes" as any, { event: "INSERT", schema: "public", table: "crm_messages", filter: `to_user_id=eq.${user.id}` }, invalidate).subscribe(),
+      supabase.channel("notif-tasks").on("postgres_changes" as any, { event: "INSERT", schema: "public", table: "tasks", filter: `assignee_id=eq.${user.id}` }, invalidate).on("postgres_changes" as any, { event: "UPDATE", schema: "public", table: "tasks", filter: `assignee_id=eq.${user.id}` }, invalidate).subscribe(),
+      supabase.channel("notif-events").on("postgres_changes" as any, { event: "INSERT", schema: "public", table: "crm_calendar_events" }, invalidate).subscribe(),
+      supabase.channel("notif-reads").on("postgres_changes" as any, { event: "INSERT", schema: "public", table: "notification_reads", filter: `user_id=eq.${user.id}` }, invalidate).subscribe(),
     ];
     if (isAdmin) {
-      channels.push((supabase as any).channel("notif-applications").on("postgres_changes", { event: "INSERT", schema: "public", table: "applications" }, invalidate).subscribe());
+      channels.push(supabase.channel("notif-applications").on("postgres_changes" as any, { event: "INSERT", schema: "public", table: "applications" }, invalidate).subscribe());
     }
-    return () => { channels.forEach(ch => (supabase as any).removeChannel(ch)); };
+    return () => { channels.forEach(ch => supabase.removeChannel(ch)); };
   }, [user?.id, isAdmin, qc]);
 
   return query;
@@ -165,12 +165,12 @@ export function NotificationBell({ onNavigate }: { onNavigate: (s: string) => vo
   const markRead = useCallback(async (ids: string[]) => {
     if (!user?.id || ids.length === 0) return;
     try {
-      await (supabase as any)
+      await supabase
         .from("notification_reads")
         .upsert(ids.map(notif_id => ({ user_id: user.id, notif_id })), { onConflict: "user_id,notif_id" });
       const msgIds = ids.filter(id => id.startsWith("msg-")).map(id => id.replace("msg-", ""));
       if (msgIds.length > 0) {
-        await (supabase as any).from("crm_messages").update({ is_read: true }).in("id", msgIds).eq("to_user_id", user.id);
+        await supabase.from("crm_messages").update({ is_read: true }).in("id", msgIds).eq("to_user_id", user.id);
       }
     } catch { /* ignore */ }
     qc.invalidateQueries({ queryKey: ["crm-notifications", user.id] });

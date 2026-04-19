@@ -159,6 +159,30 @@ function TabBtn({ label, icon: Icon, badge, active, onClick }: {
   );
 }
 
+// ─── Invite Countdown ─────────────────────────────────────────────────────────
+function getRemainingSeconds(expiresAt: string | null): number {
+  if (!expiresAt) return 0;
+  return Math.max(0, Math.floor((new Date(expiresAt).getTime() - Date.now()) / 1000));
+}
+
+function InviteCountdown({ expiresAt }: { expiresAt: string | null }) {
+  const [remaining, setRemaining] = useState(() => getRemainingSeconds(expiresAt));
+  useEffect(() => {
+    const id = setInterval(() => setRemaining(getRemainingSeconds(expiresAt)), 60_000);
+    return () => clearInterval(id);
+  }, [expiresAt]);
+  if (!expiresAt) return <span className="text-crm-text-faint text-[10px]">No expiry</span>;
+  if (remaining <= 0) return <span className="text-red-400 text-[10px] font-medium">Expired</span>;
+  const d = Math.floor(remaining / 86400);
+  const h = Math.floor((remaining % 86400) / 3600);
+  const m = Math.floor((remaining % 3600) / 60);
+  return (
+    <span className="text-amber-400 text-[10px] tabular-nums font-medium">
+      {d > 0 ? `${d}d ` : ""}{h > 0 ? `${h}h ` : ""}{m}m left
+    </span>
+  );
+}
+
 // ─── Email Config Tab ─────────────────────────────────────────────────────────
 function EmailConfigTab({ userId }: { userId?: string }) {
   const { toast } = useToast();
@@ -167,7 +191,7 @@ function EmailConfigTab({ userId }: { userId?: string }) {
   const { data: smtp = {} as Record<string, any>, isLoading } = useQuery({
     queryKey: ["site-settings-smtp"],
     queryFn: async () => {
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from("site_settings")
         .select("value")
         .eq("key", "smtp")
@@ -179,7 +203,7 @@ function EmailConfigTab({ userId }: { userId?: string }) {
   const { data: emailFormatData } = useQuery({
     queryKey: ["site-settings-email-format"],
     queryFn: async () => {
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from("site_settings")
         .select("value")
         .eq("key", "email_format")
@@ -263,13 +287,13 @@ function EmailConfigTab({ userId }: { userId?: string }) {
     setSavingFormat(true);
     try {
       const value = { template: emailTemplate.trim(), domain: emailDomain.trim() };
-      const { data: existing } = await (supabase as any).from("site_settings").select("id").eq("key", "email_format").maybeSingle();
+      const { data: existing } = await supabase.from("site_settings").select("id").eq("key", "email_format").maybeSingle();
       if (existing) {
-        await (supabase as any).from("site_settings")
+        await supabase.from("site_settings")
           .update({ value, updated_by: userId, updated_at: new Date().toISOString() })
           .eq("key", "email_format");
       } else {
-        await (supabase as any).from("site_settings")
+        await supabase.from("site_settings")
           .insert({ key: "email_format", value, updated_by: userId });
       }
       qc.invalidateQueries({ queryKey: ["site-settings-email-format"] });
@@ -292,15 +316,15 @@ function EmailConfigTab({ userId }: { userId?: string }) {
       };
       if (password) value.password_hint = "***";
 
-      const { data: existing } = await (supabase as any)
+      const { data: existing } = await supabase
         .from("site_settings").select("id").eq("key", "smtp").single();
 
       if (existing) {
-        await (supabase as any).from("site_settings")
+        await supabase.from("site_settings")
           .update({ value, updated_by: userId, updated_at: new Date().toISOString() })
           .eq("key", "smtp");
       } else {
-        await (supabase as any).from("site_settings")
+        await supabase.from("site_settings")
           .insert({ key: "smtp", value, updated_by: userId });
       }
       qc.invalidateQueries({ queryKey: ["site-settings-smtp"] });
@@ -314,7 +338,7 @@ function EmailConfigTab({ userId }: { userId?: string }) {
 
   const handleDelete = async () => {
     try {
-      await (supabase as any).from("site_settings").delete().eq("key", "smtp");
+      await supabase.from("site_settings").delete().eq("key", "smtp");
       qc.invalidateQueries({ queryKey: ["site-settings-smtp"] });
       setHost(""); setPort("587"); setUsername(""); setPassword("");
       setFromName(""); setFromEmail("");
@@ -486,7 +510,7 @@ function BrandingTab({ userId }: { userId?: string }) {
   const { isLoading } = useQuery({
     queryKey: ["site-settings-admin"],
     queryFn: async () => {
-      const { data } = await (supabase as any).from("site_settings").select("key, value");
+      const { data } = await supabase.from("site_settings").select("key, value");
       const map: Record<string, string> = {};
       (data ?? []).forEach((row: any) => {
         const val = row.value;
@@ -519,11 +543,11 @@ function BrandingTab({ userId }: { userId?: string }) {
     try {
       for (const key of ALL_KEYS) {
         if (values[key] !== undefined) {
-          const { data: existing } = await (supabase as any).from("site_settings").select("id").eq("key", key).maybeSingle();
+          const { data: existing } = await supabase.from("site_settings").select("id").eq("key", key).maybeSingle();
           if (existing) {
-            await (supabase as any).from("site_settings").update({ value: values[key], updated_by: userId, updated_at: new Date().toISOString() }).eq("key", key);
+            await supabase.from("site_settings").update({ value: values[key], updated_by: userId, updated_at: new Date().toISOString() }).eq("key", key);
           } else {
-            await (supabase as any).from("site_settings").insert({ key, value: values[key], updated_by: userId });
+            await supabase.from("site_settings").insert({ key, value: values[key], updated_by: userId });
           }
         }
       }
@@ -764,7 +788,7 @@ function CountriesTab() {
   const { data: countries = [], isLoading } = useQuery<Country[]>({
     queryKey: ["admin-countries"],
     queryFn: async () => {
-      const { data } = await (supabase as any).from("countries").select("*").order("sort_order");
+      const { data } = await supabase.from("countries").select("*").order("sort_order");
       return data ?? [];
     },
   });
@@ -787,9 +811,9 @@ function CountriesTab() {
         sort_order: Number(form.sort_order ?? 0),
       };
       if (editId === "new") {
-        await (supabase as any).from("countries").insert(payload);
+        await supabase.from("countries").insert(payload);
       } else {
-        await (supabase as any).from("countries").update(payload).eq("id", editId);
+        await supabase.from("countries").update(payload).eq("id", editId);
       }
       qc.invalidateQueries({ queryKey: ["admin-countries"] });
       toast({ title: editId === "new" ? "Country added" : "Country updated" });
@@ -803,7 +827,7 @@ function CountriesTab() {
     if (!confirm("Delete this country? This may break existing data references.")) return;
     setDeleting(id);
     try {
-      await (supabase as any).from("countries").delete().eq("id", id);
+      await supabase.from("countries").delete().eq("id", id);
       qc.invalidateQueries({ queryKey: ["admin-countries"] });
       toast({ title: "Country deleted" });
     } catch (err: any) {
@@ -926,7 +950,7 @@ function TeamMembersTab() {
   const { data: members = [], isLoading } = useQuery<TeamMemberRecord[]>({
     queryKey: ["admin-team-members"],
     queryFn: async () => {
-      const { data } = await (supabase as any).from("team_members").select("*").order("display_order");
+      const { data } = await supabase.from("team_members").select("*").order("display_order");
       return data ?? [];
     },
   });
@@ -965,9 +989,9 @@ function TeamMembersTab() {
         is_active: form.is_active !== false,
       };
       if (editId === "new") {
-        await (supabase as any).from("team_members").insert(payload);
+        await supabase.from("team_members").insert(payload);
       } else {
-        await (supabase as any).from("team_members").update(payload).eq("id", editId);
+        await supabase.from("team_members").update(payload).eq("id", editId);
       }
       qc.invalidateQueries({ queryKey: ["admin-team-members"] });
       toast({ title: editId === "new" ? "Member added" : "Member updated" });
@@ -981,7 +1005,7 @@ function TeamMembersTab() {
     if (!confirm("Remove this team member from the public page?")) return;
     setDeleting(id);
     try {
-      await (supabase as any).from("team_members").delete().eq("id", id);
+      await supabase.from("team_members").delete().eq("id", id);
       qc.invalidateQueries({ queryKey: ["admin-team-members"] });
       toast({ title: "Member removed" });
     } catch (err: any) {
@@ -1135,8 +1159,8 @@ function SignaturesTab() {
     queryKey: ["admin-signatures"],
     queryFn: async () => {
       const [sigsRes, profilesRes] = await Promise.all([
-        (supabase as any).from("email_signatures").select("*").order("created_at", { ascending: false }),
-        (supabase as any).from("profiles").select("id, full_name, email"),
+        supabase.from("email_signatures").select("*").order("created_at", { ascending: false }),
+        supabase.from("profiles").select("id, full_name, email"),
       ]);
       const profileMap: Record<string, any> = {};
       (profilesRes.data ?? []).forEach((p: any) => { profileMap[p.id] = p; });
@@ -1159,7 +1183,7 @@ function SignaturesTab() {
     if (!confirm("Delete this email signature?")) return;
     setDeleting(id);
     try {
-      await (supabase as any).from("email_signatures").delete().eq("id", id);
+      await supabase.from("email_signatures").delete().eq("id", id);
       qc.invalidateQueries({ queryKey: ["admin-signatures"] });
       toast({ title: "Signature deleted" });
     } catch (err: any) {
@@ -1312,12 +1336,12 @@ export default function SuperAdminModule({ onNavigate }: { onNavigate?: (s: stri
     setLoading(true);
     try {
       const [profilesRes, rolesRes, invRes, actRes, auditRes, gsRes] = await Promise.all([
-        (supabase as any).from("profiles").select("id, email, full_name, country, created_at, show_on_website, title, organisation, is_active").order("created_at", { ascending: false }),
-        (supabase as any).from("user_roles").select("user_id, role"),
-        (supabase as any).from("invitations").select("id, email, role, invited_by, created_at, accepted_at, expires_at, resent_at").is("accepted_at", null).order("created_at", { ascending: false }),
-        (supabase as any).from("admin_activity_logs").select("id, action, entity_type, details, created_at, profiles!actor_user_id(full_name, email)").order("created_at", { ascending: false }).limit(200),
-        (supabase as any).from("admin_audit_log").select("id, action, performed_by, target_user, details, created_at").order("created_at", { ascending: false }).limit(200),
-        (supabase as any).from("global_settings").select("key, value"),
+        supabase.from("profiles").select("id, email, full_name, country, created_at, show_on_website, title, organisation, is_active").order("created_at", { ascending: false }),
+        supabase.from("user_roles").select("user_id, role"),
+        supabase.from("invitations").select("id, email, role, invited_by, created_at, accepted_at, expires_at, resent_at").is("accepted_at", null).order("created_at", { ascending: false }),
+        supabase.from("admin_activity_logs").select("id, action, entity_type, details, created_at, profiles!actor_user_id(full_name, email)").order("created_at", { ascending: false }).limit(200),
+        supabase.from("admin_audit_log").select("id, action, performed_by, target_user, details, created_at").order("created_at", { ascending: false }).limit(200),
+        supabase.from("global_settings").select("key, value"),
       ]);
 
       const rolesMap = new Map<string, AppRole[]>();
@@ -1327,17 +1351,26 @@ export default function SuperAdminModule({ onNavigate }: { onNavigate?: (s: stri
         rolesMap.set(r.user_id, arr);
       });
 
-      setUsers((profilesRes.data ?? []).map((p: any) => ({
-        id: p.id, email: p.email ?? "", full_name: p.full_name ?? "",
-        country: p.country ?? "", created_at: p.created_at,
-        roles: rolesMap.get(p.id) ?? [],
-        show_on_website: p.show_on_website ?? false,
-        title: p.title ?? null, organisation: p.organisation ?? null,
-        is_active: p.is_active !== false,
-      })));
-
       const invData: Invitation[] = invRes.data ?? [];
       setInvitations(invData);
+
+      // Emails with a pending (not yet accepted) invitation — these users were created
+      // in auth.users by inviteUserByEmail but haven't set their password yet.
+      // Exclude them from the Users tab so they only appear under Invitations.
+      const pendingEmails = new Set(
+        invData.filter(i => !i.accepted_at).map(i => i.email.toLowerCase())
+      );
+
+      setUsers((profilesRes.data ?? [])
+        .filter((p: any) => !pendingEmails.has((p.email ?? "").toLowerCase()))
+        .map((p: any) => ({
+          id: p.id, email: p.email ?? "", full_name: p.full_name ?? "",
+          country: p.country ?? "", created_at: p.created_at,
+          roles: rolesMap.get(p.id) ?? [],
+          show_on_website: p.show_on_website ?? false,
+          title: p.title ?? null, organisation: p.organisation ?? null,
+          is_active: p.is_active !== false,
+        })));
 
       // Seed cooldowns from DB
       const seeded: Record<string, number> = {};
@@ -1403,12 +1436,12 @@ export default function SuperAdminModule({ onNavigate }: { onNavigate?: (s: stri
     }
     try {
       if (action === "add") {
-        await (supabase as any).from("user_roles").insert({ user_id: targetUserId, role });
+        await supabase.from("user_roles").insert({ user_id: targetUserId, role });
       } else {
-        await (supabase as any).from("user_roles").delete().eq("user_id", targetUserId).eq("role", role);
+        await supabase.from("user_roles").delete().eq("user_id", targetUserId).eq("role", role);
       }
       // Log activity
-      await (supabase as any).from("admin_activity_logs").insert({
+      await supabase.from("admin_activity_logs").insert({
         actor_user_id: user!.id,
         action: action === "add" ? "role_granted" : "role_revoked",
         entity_type: "user_role",
@@ -1426,7 +1459,7 @@ export default function SuperAdminModule({ onNavigate }: { onNavigate?: (s: stri
   // ── Toggle show on website ─────────────────────────────────────────────────
   const toggleShowOnWebsite = async (targetUserId: string, newVal: boolean) => {
     try {
-      await (supabase as any).from("profiles").update({ show_on_website: newVal }).eq("id", targetUserId);
+      await supabase.from("profiles").update({ show_on_website: newVal }).eq("id", targetUserId);
       toast({ title: newVal ? "Added to Team page" : "Removed from Team page" });
       setUsers(prev => prev.map(u => u.id === targetUserId ? { ...u, show_on_website: newVal } : u));
       qc.invalidateQueries({ queryKey: ["website-team"] });
@@ -1439,7 +1472,7 @@ export default function SuperAdminModule({ onNavigate }: { onNavigate?: (s: stri
   // ── Update profile field inline ──────────────────────────────────────────
   const updateProfileField = async (targetUserId: string, field: string, value: string) => {
     try {
-      await (supabase as any).from("profiles").update({ [field]: value }).eq("id", targetUserId);
+      await supabase.from("profiles").update({ [field]: value }).eq("id", targetUserId);
       setUsers(prev => prev.map(u => u.id === targetUserId ? { ...u, [field]: value } : u));
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
@@ -1512,10 +1545,10 @@ export default function SuperAdminModule({ onNavigate }: { onNavigate?: (s: stri
   // ── Toggle user active/suspended ─────────────────────────────────────────
   const toggleUserActive = async (targetId: string, active: boolean) => {
     try {
-      await (supabase as any).from("profiles").update({ is_active: active }).eq("id", targetId);
+      await supabase.from("profiles").update({ is_active: active }).eq("id", targetId);
       setUsers(prev => prev.map(u => u.id === targetId ? { ...u, is_active: active } : u));
       toast({ title: active ? "User reactivated" : "User suspended" });
-      await (supabase as any).from("admin_activity_logs").insert({
+      await supabase.from("admin_activity_logs").insert({
         actor_user_id: user!.id,
         action: active ? "user_reactivated" : "user_suspended",
         entity_type: "user", entity_id: targetId,
@@ -1528,7 +1561,7 @@ export default function SuperAdminModule({ onNavigate }: { onNavigate?: (s: stri
 
   // ── Save global_setting ───────────────────────────────────────────────────
   const saveGlobalSetting = async (key: string, value: any) => {
-    await (supabase as any).from("global_settings")
+    await supabase.from("global_settings")
       .upsert({ key, value, updated_by: user?.id }, { onConflict: "key" });
     setGlobalSettings(prev => ({ ...prev, [key]: value }));
   };
@@ -2666,13 +2699,18 @@ export default function SuperAdminModule({ onNavigate }: { onNavigate?: (s: stri
                           <td className="px-4 py-3 text-[10px] text-crm-text-muted whitespace-nowrap">
                             {new Date(inv.created_at).toLocaleDateString()}
                           </td>
-                          <td className="px-4 py-3 text-[10px] text-crm-text-muted whitespace-nowrap">
-                            {inv.expires_at ? new Date(inv.expires_at).toLocaleDateString() : "—"}
+                          <td className="px-4 py-3 whitespace-nowrap">
+                            <InviteCountdown expiresAt={inv.expires_at} />
+                            {inv.expires_at && (
+                              <div className="text-[9px] text-crm-text-faint mt-0.5">
+                                {new Date(inv.expires_at).toLocaleDateString()}
+                              </div>
+                            )}
                           </td>
                           <td className="px-4 py-3">
                             {isExpired ? (
                               <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-red-950 border border-red-800 text-red-400 w-fit whitespace-nowrap">
-                                <AlertTriangle size={9} /> Token Expired
+                                <AlertTriangle size={9} /> Expired
                               </span>
                             ) : (
                               <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-amber-950 border border-amber-800 text-amber-400 w-fit whitespace-nowrap">

@@ -69,7 +69,7 @@ export default function ContactSubmissionsModule() {
   const { data: submissions = [], isLoading } = useQuery<Submission[]>({
     queryKey: ["contact-submissions"],
     queryFn: async () => {
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from("contact_submissions")
         .select("*, assignee:profiles!assigned_to(id, full_name, email)")
         .order("created_at", { ascending: false })
@@ -85,7 +85,7 @@ export default function ContactSubmissionsModule() {
   const { data: profiles = [] } = useQuery<Profile[]>({
     queryKey: ["all-profiles-brief"],
     queryFn: async () => {
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from("profiles")
         .select("id, full_name, email")
         .order("full_name");
@@ -96,7 +96,7 @@ export default function ContactSubmissionsModule() {
 
   const patchSubmission = useMutation({
     mutationFn: async ({ id, patch }: { id: string; patch: Record<string, unknown> }) => {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from("contact_submissions")
         .update(patch)
         .eq("id", id);
@@ -107,7 +107,7 @@ export default function ContactSubmissionsModule() {
 
   const deleteSubmission = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await (supabase as any).from("contact_submissions").delete().eq("id", id);
+      const { error } = await supabase.from("contact_submissions").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {

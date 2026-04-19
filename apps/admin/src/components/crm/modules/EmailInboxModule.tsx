@@ -149,7 +149,7 @@ function useContactSearch(query: string, userId: string | undefined) {
     queryKey: ["email-contacts-search", query, userId],
     queryFn: async () => {
       if (!userId || !query) return [];
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from("email_contacts")
         .select("id, email_address, display_name, contact_count")
         .eq("user_id", userId)
@@ -303,7 +303,7 @@ function ComposeModal({ account, replyTo, replyToAll, forwardOf, onClose, onSent
   const { data: templates = [] } = useQuery<EmailTemplate[]>({
     queryKey: ["email-templates", userId],
     queryFn: async () => {
-      const { data } = await (supabase as any).from("email_templates").select("id,name,subject,body_html").eq("user_id", userId).order("created_at", { ascending: false });
+      const { data } = await supabase.from("email_templates").select("id,name,subject,body_html").eq("user_id", userId).order("created_at", { ascending: false });
       return data ?? [];
     },
     enabled: !!userId,
@@ -312,7 +312,7 @@ function ComposeModal({ account, replyTo, replyToAll, forwardOf, onClose, onSent
   // Build initial body with full branded HTML signature
   useEffect(() => {
     if (!userId) return;
-    (supabase as any).from("email_signatures").select("title,full_name,department,mobile,email,website,tagline,is_active").eq("user_id", userId).maybeSingle()
+    supabase.from("email_signatures").select("title,full_name,department,mobile,email,website,tagline,is_active").eq("user_id", userId).maybeSingle()
       .then(({ data }: any) => {
         let sig = "";
         if (data?.is_active) {
@@ -398,7 +398,7 @@ function ComposeModal({ account, replyTo, replyToAll, forwardOf, onClose, onSent
         if (zohoDraftId) {
           await supabase.functions.invoke("update-email", { body: { action: "delete", email_id: draftId }, headers: { Authorization: `Bearer ${token}` } }).catch(() => {});
         } else {
-          await (supabase as any).from("emails").delete().eq("id", draftId);
+          await supabase.from("emails").delete().eq("id", draftId);
         }
       }
       toast({ title: "Email sent" });
@@ -455,10 +455,10 @@ function ComposeModal({ account, replyTo, replyToAll, forwardOf, onClose, onSent
       };
       let cid = draftId;
       if (cid) {
-        await (supabase as any).from("emails").update(row).eq("id", cid);
+        await supabase.from("emails").update(row).eq("id", cid);
       } else {
         cid = generateId();
-        await (supabase as any).from("emails").insert({ id: cid, ...row });
+        await supabase.from("emails").insert({ id: cid, ...row });
         setDraftId(cid);
       }
       const dr = await supabase.functions.invoke("save-draft", {
@@ -468,7 +468,7 @@ function ComposeModal({ account, replyTo, replyToAll, forwardOf, onClose, onSent
       if (dr.data?.zoho_draft_message_id) {
         const nid = dr.data.zoho_draft_message_id;
         setZohoDraftId(nid);
-        await (supabase as any).from("emails").update({ zoho_message_id: nid }).eq("id", cid);
+        await supabase.from("emails").update({ zoho_message_id: nid }).eq("id", cid);
       }
       toast({ title: "Draft saved" });
       qc.invalidateQueries({ queryKey: ["emails"] });
@@ -506,10 +506,10 @@ function ComposeModal({ account, replyTo, replyToAll, forwardOf, onClose, onSent
       try {
         let cid = capturedDraftId;
         if (cid) {
-          await (supabase as any).from("emails").update(row).eq("id", cid);
+          await supabase.from("emails").update(row).eq("id", cid);
         } else {
           cid = generateId();
-          await (supabase as any).from("emails").insert({ id: cid, ...row });
+          await supabase.from("emails").insert({ id: cid, ...row });
           setDraftId(cid);
         }
         qc.invalidateQueries({ queryKey: ["emails"] });
@@ -543,9 +543,9 @@ function ComposeModal({ account, replyTo, replyToAll, forwardOf, onClose, onSent
       };
       // Fire-and-forget — close is instant
       if (draftId) {
-        (supabase as any).from("emails").update(row).eq("id", cid);
+        supabase.from("emails").update(row).eq("id", cid);
       } else {
-        (supabase as any).from("emails").insert({ id: cid, ...row });
+        supabase.from("emails").insert({ id: cid, ...row });
       }
       qc.invalidateQueries({ queryKey: ["emails"] });
     }
@@ -560,7 +560,7 @@ function ComposeModal({ account, replyTo, replyToAll, forwardOf, onClose, onSent
 
   const saveAsTemplate = async () => {
     if (!templateName.trim() || !userId) return;
-    await (supabase as any).from("email_templates").insert({ user_id: userId, name: templateName.trim(), subject, body_html: getBodyHtml() });
+    await supabase.from("email_templates").insert({ user_id: userId, name: templateName.trim(), subject, body_html: getBodyHtml() });
     qc.invalidateQueries({ queryKey: ["email-templates"] });
     setSaveTemplateMode(false);
     setTemplateName("");
@@ -774,7 +774,7 @@ function EmailDetailPane({ email, onBack, onReply, onReplyAll, onForward, onStar
 
   // Load label assignments
   useEffect(() => {
-    (supabase as any).from("email_label_assignments").select("label_id").eq("email_id", email.id)
+    supabase.from("email_label_assignments").select("label_id").eq("email_id", email.id)
       .then(({ data }: any) => setAssignedLabelIds((data ?? []).map((r: any) => r.label_id)));
   }, [email.id]);
 
@@ -807,10 +807,10 @@ function EmailDetailPane({ email, onBack, onReply, onReplyAll, onForward, onStar
   const toggleLabel = async (labelId: string) => {
     const has = assignedLabelIds.includes(labelId);
     if (has) {
-      await (supabase as any).from("email_label_assignments").delete().eq("email_id", email.id).eq("label_id", labelId);
+      await supabase.from("email_label_assignments").delete().eq("email_id", email.id).eq("label_id", labelId);
       setAssignedLabelIds(p => p.filter(id => id !== labelId));
     } else {
-      await (supabase as any).from("email_label_assignments").insert({ email_id: email.id, label_id: labelId });
+      await supabase.from("email_label_assignments").insert({ email_id: email.id, label_id: labelId });
       setAssignedLabelIds(p => [...p, labelId]);
     }
     qc.invalidateQueries({ queryKey: ["email-label-assignments"] });
@@ -1023,7 +1023,7 @@ export default function EmailInboxModule() {
   const { data: account } = useQuery<EmailAccount | null>({
     queryKey: ["email-account", user?.id],
     queryFn: async () => {
-      const res = await (supabase as any).from("email_accounts").select("id,email_address,display_name").eq("user_id", user!.id).eq("is_active", true).single();
+      const res = await supabase.from("email_accounts").select("id,email_address,display_name").eq("user_id", user!.id).eq("is_active", true).single();
       return res.data ?? null;
     },
     enabled: !!user?.id,
@@ -1044,9 +1044,9 @@ export default function EmailInboxModule() {
     queryKey: ["emails", account?.id, activeFolder, activeLabelId],
     queryFn: async () => {
       if (!account) return [];
-      let q = (supabase as any).from("emails").select("*").eq("account_id", account.id).order("sent_at", { ascending: false }).limit(150);
+      let q = supabase.from("emails").select("*").eq("account_id", account.id).order("sent_at", { ascending: false }).limit(150);
       if (activeLabelId) {
-        const { data: assignments } = await (supabase as any).from("email_label_assignments").select("email_id").eq("label_id", activeLabelId);
+        const { data: assignments } = await supabase.from("email_label_assignments").select("email_id").eq("label_id", activeLabelId);
         const ids = (assignments ?? []).map((r: any) => r.email_id);
         if (ids.length === 0) return [];
         q = q.in("id", ids);
@@ -1076,7 +1076,7 @@ export default function EmailInboxModule() {
     queryKey: ["email-unread-counts", account?.id],
     queryFn: async () => {
       if (!account) return {};
-      const res = await (supabase as any).from("emails").select("folder").eq("account_id", account.id).eq("is_read", false).neq("folder", "sent").neq("folder", "trash");
+      const res = await supabase.from("emails").select("folder").eq("account_id", account.id).eq("is_read", false).neq("folder", "sent").neq("folder", "trash");
       const map: Record<string, number> = {};
       for (const row of (res.data ?? [])) map[row.folder] = (map[row.folder] ?? 0) + 1;
       return map;
@@ -1088,7 +1088,7 @@ export default function EmailInboxModule() {
   const { data: labels = [] } = useQuery<EmailLabel[]>({
     queryKey: ["email-labels", user?.id],
     queryFn: async () => {
-      const { data } = await (supabase as any).from("email_labels").select("id,name,color").eq("user_id", user!.id).order("created_at", { ascending: true });
+      const { data } = await supabase.from("email_labels").select("id,name,color").eq("user_id", user!.id).order("created_at", { ascending: true });
       return data ?? [];
     },
     enabled: !!user?.id,
@@ -1124,7 +1124,7 @@ export default function EmailInboxModule() {
   const moveEmail   = useMutation({ mutationFn: ({ id, folderId, folderName }: { id: string; folderId: string; folderName: string }) => invokeUpdateEmail("move", id, { folder_id: folderId, folder_name: folderName }), onSuccess: () => { setSelectedEmail(null); qc.invalidateQueries({ queryKey: ["emails"] }); } });
 
   const archiveEmail = async (id: string) => {
-    await (supabase as any).from("emails").update({ is_archived: true, folder: "archive" }).eq("id", id);
+    await supabase.from("emails").update({ is_archived: true, folder: "archive" }).eq("id", id);
     setSelectedEmail(null);
     invalidateEmails();
     toast({ title: "Archived" });
@@ -1224,14 +1224,14 @@ export default function EmailInboxModule() {
   // ── Label CRUD ─────────────────────────────────────────────────────────────
   const createLabel = async () => {
     if (!newLabelName.trim() || !user) return;
-    await (supabase as any).from("email_labels").insert({ user_id: user.id, name: newLabelName.trim(), color: newLabelColor });
+    await supabase.from("email_labels").insert({ user_id: user.id, name: newLabelName.trim(), color: newLabelColor });
     qc.invalidateQueries({ queryKey: ["email-labels"] });
     setNewLabelName(""); setCreatingLabel(false);
     toast({ title: "Label created" });
   };
 
   const deleteLabel = async (id: string) => {
-    await (supabase as any).from("email_labels").delete().eq("id", id);
+    await supabase.from("email_labels").delete().eq("id", id);
     qc.invalidateQueries({ queryKey: ["email-labels"] });
     if (activeLabelId === id) setActiveLabelId(null);
   };
@@ -1286,7 +1286,7 @@ export default function EmailInboxModule() {
   const handleBulkArchive = async () => {
     setBulkOperating(true);
     try {
-      await (supabase as any).from("emails").update({ is_archived: true, folder: "archive" }).in("id", Array.from(selectedIds));
+      await supabase.from("emails").update({ is_archived: true, folder: "archive" }).in("id", Array.from(selectedIds));
       setSelectedIds(new Set()); invalidateEmails();
       toast({ title: `${selectedIds.size} email${selectedIds.size > 1 ? "s" : ""} archived` });
     } catch (err: any) { toast({ title: "Failed", description: err.message, variant: "destructive" }); }
