@@ -128,7 +128,7 @@ export function useNotifications() {
       channels.push(supabase.channel(`notif-applications-${pfx}`).on("postgres_changes" as any, { event: "INSERT", schema: "public", table: "applications" }, invalidate).subscribe());
     }
     return () => { channels.forEach(ch => supabase.removeChannel(ch)); };
-  }, [user?.id, isAdmin, qc]);
+  }, [user?.id, isAdmin]);
 
   return query;
 }

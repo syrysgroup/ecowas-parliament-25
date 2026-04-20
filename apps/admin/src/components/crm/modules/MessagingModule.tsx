@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
 import { CRM_ROLE_META } from "../crmRoles";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -700,12 +701,191 @@ function AddMemberDialog({
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
+// ─── WhatsApp Broadcast Panel ────────────────────────────────────────────────
+function WhatsAppBroadcastPanel() {
+  const { toast } = useToast();
+  const [contentId, setContentId] = useState("");
+  const [language, setLanguage] = useState<"en" | "fr" | "pt">("en");
+  const [sending, setSending] = useState(false);
+
+  const { data: approved = [] } = useQuery({
+    queryKey: ["approved-parliament-content"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("parliament_content" as any)
+        .select("id, title, status")
+        .in("status", ["approved", "published"])
+        .order("updated_at", { ascending: false })
+        .limit(30);
+      return (data ?? []) as Array<{ id: string; title: string; status: string }>;
+    },
+  });
+
+  async function handleSend() {
+    if (!contentId) { toast({ title: "Select content first", variant: "destructive" }); return; }
+    setSending(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await supabase.functions.invoke("send-whatsapp", {
+        body: { content_id: contentId, language },
+        headers: { Authorization: `Bearer ${session?.access_token}` },
+      });
+      if (res.error) throw res.error;
+      const d = res.data as { success: boolean; sent: number; failed: number; message?: string };
+      toast({ title: d.message ?? `Sent to ${d.sent} subscribers`, description: d.failed ? `${d.failed} failed` : undefined });
+    } catch (e: any) {
+      toast({ title: "Send failed", description: e.message, variant: "destructive" });
+    }
+    setSending(false);
+  }
+
+  return (
+    <div className="p-6 max-w-xl space-y-5">
+      <div>
+        <p className="text-[15px] font-semibold text-crm-text">WhatsApp Broadcast</p>
+        <p className="text-[12px] text-crm-text-muted mt-1">Send approved parliament content to WhatsApp subscribers. Requires <span className="font-mono text-amber-400">WHATSAPP_ACCESS_TOKEN</span> in Secrets Vault.</p>
+      </div>
+      <div className="space-y-3">
+        <div className="space-y-1.5">
+          <label className="text-[11px] font-mono text-crm-text-muted uppercase tracking-wide">Content</label>
+          <select
+            value={contentId}
+            onChange={e => setContentId(e.target.value)}
+            className="w-full bg-crm-surface border border-crm-border rounded-lg px-3 py-2 text-[13px] text-crm-text focus:outline-none focus:ring-1 focus:ring-emerald-700"
+          >
+            <option value="">— Select approved/published content —</option>
+            {approved.map(c => (
+              <option key={c.id} value={c.id}>{c.title} [{c.status}]</option>
+            ))}
+          </select>
+        </div>
+        <div className="space-y-1.5">
+          <label className="text-[11px] font-mono text-crm-text-muted uppercase tracking-wide">Language</label>
+          <div className="flex gap-2">
+            {(["en", "fr", "pt"] as const).map(l => (
+              <button key={l} onClick={() => setLanguage(l)}
+                className={`text-[11px] font-mono px-4 py-1.5 rounded-lg border transition-colors ${language === l ? "bg-emerald-950 border-emerald-800 text-emerald-300" : "border-crm-border text-crm-text-muted hover:text-crm-text"}`}>
+                {l.toUpperCase()}
+              </button>
+            ))}
+          </div>
+        </div>
+        <Button onClick={handleSend} disabled={sending || !contentId}
+          className="bg-emerald-700 hover:bg-emerald-600 text-white text-[13px] gap-2">
+          {sending ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+          {sending ? "Sending…" : "Send Broadcast"}
+        </Button>
+      </div>
+      <div className="bg-crm-surface border border-crm-border rounded-lg p-4 space-y-2">
+        <p className="text-[10px] font-mono text-crm-text-faint uppercase tracking-wide">3 Meta-Approved Templates</p>
+        {["SESSION_SUMMARY", "WEEKLY_DIGEST", "URGENT_UPDATE"].map(t => (
+          <p key={t} className="text-[11px] font-mono text-amber-400">• {t}</p>
+        ))}
+        <p className="text-[11px] text-crm-text-faint mt-2">Templates must be submitted to and approved by Meta before use. The weekly digest sends automatically every Friday at 4PM WAT.</p>
+      </div>
+    </div>
+  );
+}
+
+// ─── Telegram Broadcast Panel ─────────────────────────────────────────────────
+function TelegramBroadcastPanel() {
+  const { toast } = useToast();
+  const [contentId, setContentId] = useState("");
+  const [languages, setLanguages] = useState<Set<"en" | "fr" | "pt">>(new Set(["en", "fr", "pt"]));
+  const [sending, setSending] = useState(false);
+
+  const { data: approved = [] } = useQuery({
+    queryKey: ["approved-parliament-content"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("parliament_content" as any)
+        .select("id, title, status")
+        .in("status", ["approved", "published"])
+        .order("updated_at", { ascending: false })
+        .limit(30);
+      return (data ?? []) as Array<{ id: string; title: string; status: string }>;
+    },
+  });
+
+  function toggleLang(l: "en" | "fr" | "pt") {
+    setLanguages(prev => {
+      const next = new Set(prev);
+      next.has(l) ? next.delete(l) : next.add(l);
+      return next;
+    });
+  }
+
+  async function handleSend() {
+    if (!contentId) { toast({ title: "Select content first", variant: "destructive" }); return; }
+    if (!languages.size) { toast({ title: "Select at least one language", variant: "destructive" }); return; }
+    setSending(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await supabase.functions.invoke("send-telegram", {
+        body: { content_id: contentId, languages: Array.from(languages) },
+        headers: { Authorization: `Bearer ${session?.access_token}` },
+      });
+      if (res.error) throw res.error;
+      const d = res.data as { success: boolean; results: Array<{ language: string; ok: boolean; error?: string }> };
+      const ok = d.results.filter(r => r.ok).length;
+      toast({ title: `Telegram: ${ok}/${d.results.length} channels posted` });
+    } catch (e: any) {
+      toast({ title: "Send failed", description: e.message, variant: "destructive" });
+    }
+    setSending(false);
+  }
+
+  return (
+    <div className="p-6 max-w-xl space-y-5">
+      <div>
+        <p className="text-[15px] font-semibold text-crm-text">Telegram Channel Post</p>
+        <p className="text-[12px] text-crm-text-muted mt-1">Post to EN/FR/PT Telegram channels. Requires <span className="font-mono text-blue-400">TELEGRAM_BOT_TOKEN</span> and channel IDs in Secrets Vault.</p>
+      </div>
+      <div className="space-y-3">
+        <div className="space-y-1.5">
+          <label className="text-[11px] font-mono text-crm-text-muted uppercase tracking-wide">Content</label>
+          <select
+            value={contentId}
+            onChange={e => setContentId(e.target.value)}
+            className="w-full bg-crm-surface border border-crm-border rounded-lg px-3 py-2 text-[13px] text-crm-text focus:outline-none focus:ring-1 focus:ring-blue-700"
+          >
+            <option value="">— Select approved/published content —</option>
+            {approved.map(c => (
+              <option key={c.id} value={c.id}>{c.title} [{c.status}]</option>
+            ))}
+          </select>
+        </div>
+        <div className="space-y-1.5">
+          <label className="text-[11px] font-mono text-crm-text-muted uppercase tracking-wide">Channels</label>
+          <div className="flex gap-2">
+            {(["en", "fr", "pt"] as const).map(l => (
+              <button key={l} onClick={() => toggleLang(l)}
+                className={`text-[11px] font-mono px-4 py-1.5 rounded-lg border transition-colors ${languages.has(l) ? "bg-blue-950 border-blue-800 text-blue-300" : "border-crm-border text-crm-text-muted hover:text-crm-text"}`}>
+                {l.toUpperCase()}
+              </button>
+            ))}
+          </div>
+        </div>
+        <Button onClick={handleSend} disabled={sending || !contentId || !languages.size}
+          className="bg-blue-700 hover:bg-blue-600 text-white text-[13px] gap-2">
+          {sending ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+          {sending ? "Sending…" : "Post to Channels"}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+type ModuleTab = "chat" | "whatsapp" | "telegram";
+
 export default function MessagingModule() {
   const { user } = useAuthContext();
   const { toast } = useToast();
   const qc = useQueryClient();
   const presence = usePresence();
   const endRef = useRef<HTMLDivElement>(null);
+
+  const [moduleTab, setModuleTab] = useState<ModuleTab>("chat");
 
   const [view, setView] = useState<ChatView | null>(null);
   const [body, setBody] = useState("");
@@ -971,8 +1151,34 @@ export default function MessagingModule() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-3.5rem)] -m-3 md:-m-6 overflow-hidden bg-crm-card border border-crm-border rounded-xl">
+    <div className="flex flex-col h-[calc(100vh-3.5rem)] -m-3 md:-m-6 overflow-hidden bg-crm-card border border-crm-border rounded-xl">
 
+      {/* ── Module tab bar ── */}
+      <div className="flex items-center gap-0 border-b border-crm-border px-4 bg-crm-card shrink-0">
+        {([
+          { id: "chat",      label: "Chat",               icon: MessageSquare },
+          { id: "whatsapp",  label: "WhatsApp Broadcast", icon: Send },
+          { id: "telegram",  label: "Telegram Channels",  icon: Send },
+        ] as const).map(({ id, label, icon: Icon }) => (
+          <button key={id} onClick={() => setModuleTab(id)}
+            className={`flex items-center gap-1.5 text-[11px] font-mono py-3 px-4 border-b-2 transition-colors ${
+              moduleTab === id
+                ? id === "whatsapp" ? "border-emerald-500 text-emerald-400"
+                  : id === "telegram" ? "border-blue-500 text-blue-400"
+                  : "border-amber-500 text-amber-400"
+                : "border-transparent text-crm-text-faint hover:text-crm-text-muted"
+            }`}>
+            <Icon size={11} />
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {moduleTab === "whatsapp" && <WhatsAppBroadcastPanel />}
+      {moduleTab === "telegram" && <TelegramBroadcastPanel />}
+
+      {/* ── Chat UI (hidden when other tabs active) ── */}
+      <div className={`flex flex-1 overflow-hidden ${moduleTab !== "chat" ? "hidden" : ""}`}>
       {/* ── Sidebar ── */}
       <div className={`flex-col w-full md:w-[320px] md:max-w-[320px] shrink-0 border-r border-crm-border
         absolute md:relative inset-0 z-10 md:z-auto bg-crm-card
@@ -1352,6 +1558,7 @@ export default function MessagingModule() {
           />
         </>
       )}
+      </div>{/* end chat wrapper */}
     </div>
   );
 }

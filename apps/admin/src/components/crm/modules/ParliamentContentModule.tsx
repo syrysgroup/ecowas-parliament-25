@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import {
   Upload, FileText, CheckCircle2, AlertCircle, Loader2,
   Eye, ChevronDown, ChevronUp, Globe, MessageSquare, Twitter,
-  BarChart2, Clock, CheckSquare, Archive,
+  BarChart2, Clock, CheckSquare, Archive, Send,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -271,6 +271,41 @@ function ContentRow({ item, onRefresh }: { item: ParliamentContent; onRefresh: (
     onRefresh();
   }
 
+  async function sendToWhatsApp(language: "en" | "fr" | "pt") {
+    setUpdating(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await supabase.functions.invoke("send-whatsapp", {
+        body: { content_id: item.id, language },
+        headers: { Authorization: `Bearer ${session?.access_token}` },
+      });
+      if (res.error) throw res.error;
+      const d = res.data as { success: boolean; sent: number; failed: number };
+      toast({ title: `WhatsApp ${language.toUpperCase()} sent`, description: `${d.sent} delivered${d.failed ? `, ${d.failed} failed` : ""}` });
+    } catch (e: any) {
+      toast({ title: "WhatsApp send failed", description: e.message, variant: "destructive" });
+    }
+    setUpdating(false);
+  }
+
+  async function sendToTelegram(languages: ("en" | "fr" | "pt")[]) {
+    setUpdating(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await supabase.functions.invoke("send-telegram", {
+        body: { content_id: item.id, languages },
+        headers: { Authorization: `Bearer ${session?.access_token}` },
+      });
+      if (res.error) throw res.error;
+      const d = res.data as { success: boolean; results: Array<{ language: string; ok: boolean }> };
+      const ok = d.results.filter(r => r.ok).length;
+      toast({ title: `Telegram sent to ${ok}/${d.results.length} channel${d.results.length > 1 ? "s" : ""}` });
+    } catch (e: any) {
+      toast({ title: "Telegram send failed", description: e.message, variant: "destructive" });
+    }
+    setUpdating(false);
+  }
+
   return (
     <div className="bg-crm-card border border-crm-border rounded-lg overflow-hidden">
       {/* Row header */}
@@ -332,6 +367,26 @@ function ContentRow({ item, onRefresh }: { item: ParliamentContent; onRefresh: (
                 className="text-crm-text-faint hover:text-crm-text-muted text-[10px] h-7 px-2">
                 Archive
               </Button>
+            )}
+            {(item.status === "approved" || item.status === "published") && (
+              <>
+                <div className="w-px h-4 bg-crm-border mx-1" />
+                <Button size="sm" onClick={() => sendToWhatsApp("en")} disabled={updating || !item.whatsapp_en}
+                  title={item.whatsapp_en ? "Send WhatsApp EN" : "No WhatsApp EN content — run AI first"}
+                  className="bg-emerald-950 hover:bg-emerald-900 text-emerald-300 border border-emerald-800 text-[10px] h-7 px-3 gap-1.5">
+                  <Send size={9} /> WA EN
+                </Button>
+                <Button size="sm" onClick={() => sendToWhatsApp("fr")} disabled={updating || !item.whatsapp_fr}
+                  title={item.whatsapp_fr ? "Send WhatsApp FR" : "No WhatsApp FR content — run AI first"}
+                  className="bg-emerald-950 hover:bg-emerald-900 text-emerald-300 border border-emerald-800 text-[10px] h-7 px-3 gap-1.5">
+                  <Send size={9} /> WA FR
+                </Button>
+                <Button size="sm" onClick={() => sendToTelegram(["en", "fr", "pt"])} disabled={updating || !item.telegram_en}
+                  title={item.telegram_en ? "Send to all Telegram channels" : "No Telegram content — run AI first"}
+                  className="bg-blue-950 hover:bg-blue-900 text-blue-300 border border-blue-800 text-[10px] h-7 px-3 gap-1.5">
+                  <Send size={9} /> Telegram All
+                </Button>
+              </>
             )}
             {updating && <Loader2 size={12} className="animate-spin text-crm-text-faint" />}
           </div>
