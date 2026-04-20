@@ -1366,7 +1366,7 @@ export default function EmailInboxModule() {
           </div>
           <div>
             <h2 className="text-xl font-bold text-crm-text">No email account connected</h2>
-            <p className="text-sm text-crm-text-muted mt-1.5 max-w-md">Connect your Zoho email to send, receive, and manage messages directly from the CRM.</p>
+            <p className="text-sm text-crm-text-muted mt-1.5 max-w-md">Connect or request access to your custom @ecowasparliamentinitiatives.org email to send, receive, and manage emails directly from the CRM.</p>
           </div>
           <button onClick={() => setConnectOpen(true)} className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-primary hover:bg-primary/90 text-white text-sm font-semibold shadow-lg shadow-primary/25 transition-colors">
             <Mail size={16} /> Connect Email
@@ -1381,7 +1381,7 @@ export default function EmailInboxModule() {
                 <h3 className="text-[15px] font-semibold text-crm-text">Connect Email</h3>
                 <button onClick={() => setConnectOpen(false)} className="p-1.5 rounded-full hover:bg-crm-surface text-crm-text-dim transition-colors"><X size={15} /></button>
               </div>
-              <p className="text-[12px] text-crm-text-muted">Enter your Zoho email address and app password.</p>
+              <p className="text-[12px] text-crm-text-muted">Enter your custom @ecowasparliamentinitiatives.org email address and app password provided by Admin.</p>
               {connectError && <div className="flex items-start gap-2 p-3 rounded-xl bg-red-950/40 border border-red-800/50"><AlertOctagon size={13} className="text-red-400 shrink-0 mt-0.5" /><p className="text-[11px] text-red-300">{connectError}</p></div>}
               <div className="space-y-3">
                 <div className="space-y-1"><label className="text-[11px] font-medium text-crm-text-dim">Email Address</label>
