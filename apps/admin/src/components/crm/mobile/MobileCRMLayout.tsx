@@ -33,7 +33,7 @@ export default function MobileCRMLayout({ activeSection, onNavigate, children }:
   return (
     <div
       className="flex flex-col bg-crm text-crm-text overflow-hidden"
-      style={{ height: "100dvh", minHeight: "-webkit-fill-available" }}
+      style={{ height: "100svh", minHeight: "-webkit-fill-available", maxHeight: "-webkit-fill-available" }}
     >
       {/* Animated gradient accent — 3px top edge */}
       <div className="h-[3px] flex-shrink-0 bg-gradient-to-r from-primary via-emerald-400 to-primary/40 animate-gradient-shift" />
@@ -50,7 +50,7 @@ export default function MobileCRMLayout({ activeSection, onNavigate, children }:
           backgroundSize: "24px 24px",
         }}
       >
-        <div key={activeSection} className="animate-fade-in relative z-10 w-full min-h-full">
+        <div key={activeSection} className="animate-fade-in relative z-10 w-full min-h-0">
           {children}
         </div>
       </main>

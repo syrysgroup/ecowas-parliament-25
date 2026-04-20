@@ -26,6 +26,7 @@ interface ParliamentContent {
   whatsapp_en: string | null;
   telegram_en: string | null;
   social_x: string | null;
+  social_ig: string | null;
   status: string;
   country_tags: string[];
   topic_tags: string[];
@@ -226,7 +227,7 @@ function UploadTab() {
 
         {processing && (
           <p className="text-[11px] text-amber-400 font-mono animate-pulse">
-            Running Claude AI — generating EN/FR/PT summaries + WhatsApp/Telegram/X formats…
+            Running Claude AI — generating EN/FR/PT summaries + WhatsApp/Telegram/X/Instagram formats…
           </p>
         )}
       </div>
@@ -302,6 +303,39 @@ function ContentRow({ item, onRefresh }: { item: ParliamentContent; onRefresh: (
       toast({ title: `Telegram sent to ${ok}/${d.results.length} channel${d.results.length > 1 ? "s" : ""}` });
     } catch (e: any) {
       toast({ title: "Telegram send failed", description: e.message, variant: "destructive" });
+    }
+    setUpdating(false);
+  }
+
+  async function sendToTwitter() {
+    setUpdating(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await supabase.functions.invoke("send-twitter", {
+        body: { content_id: item.id },
+        headers: { Authorization: `Bearer ${session?.access_token}` },
+      });
+      if (res.error) throw res.error;
+      const d = res.data as { success: boolean; count: number };
+      toast({ title: `Posted to X/Twitter`, description: `${d.count} tweet${d.count > 1 ? "s" : ""} published` });
+    } catch (e: any) {
+      toast({ title: "X/Twitter post failed", description: e.message, variant: "destructive" });
+    }
+    setUpdating(false);
+  }
+
+  async function sendToInstagram() {
+    setUpdating(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await supabase.functions.invoke("send-instagram", {
+        body: { content_id: item.id },
+        headers: { Authorization: `Bearer ${session?.access_token}` },
+      });
+      if (res.error) throw res.error;
+      toast({ title: "Posted to Instagram/Facebook Page" });
+    } catch (e: any) {
+      toast({ title: "Instagram post failed", description: e.message, variant: "destructive" });
     }
     setUpdating(false);
   }
@@ -386,6 +420,16 @@ function ContentRow({ item, onRefresh }: { item: ParliamentContent; onRefresh: (
                   className="bg-blue-950 hover:bg-blue-900 text-blue-300 border border-blue-800 text-[10px] h-7 px-3 gap-1.5">
                   <Send size={9} /> Telegram All
                 </Button>
+                <Button size="sm" onClick={sendToTwitter} disabled={updating || !item.social_x}
+                  title={item.social_x ? "Post thread to X/Twitter" : "No X content — run AI first"}
+                  className="bg-sky-950 hover:bg-sky-900 text-sky-300 border border-sky-800 text-[10px] h-7 px-3 gap-1.5">
+                  <Twitter size={9} /> Post to X
+                </Button>
+                <Button size="sm" onClick={sendToInstagram} disabled={updating || !item.social_ig}
+                  title={item.social_ig ? "Post to Instagram/Facebook Page" : "No Instagram content — run AI first"}
+                  className="bg-pink-950 hover:bg-pink-900 text-pink-300 border border-pink-800 text-[10px] h-7 px-3 gap-1.5">
+                  <Send size={9} /> Instagram
+                </Button>
               </>
             )}
             {updating && <Loader2 size={12} className="animate-spin text-crm-text-faint" />}
@@ -468,11 +512,12 @@ function ContentRow({ item, onRefresh }: { item: ParliamentContent; onRefresh: (
                   </div>
                 ) : null)}
               </div>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {[
                   { icon: MessageSquare, label: "WhatsApp EN", val: item.whatsapp_en },
                   { icon: Globe,         label: "Telegram EN", val: item.telegram_en },
                   { icon: Twitter,       label: "X/Twitter",   val: item.social_x },
+                  { icon: Send,          label: "Instagram",   val: item.social_ig },
                 ].map(({ icon: Icon, label, val }) => val ? (
                   <div key={label} className="bg-crm-surface border border-crm-border rounded-lg p-3 space-y-1.5">
                     <p className="text-[10px] font-mono text-crm-text-muted flex items-center gap-1">

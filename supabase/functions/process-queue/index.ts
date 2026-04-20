@@ -63,6 +63,28 @@ async function dispatchItem(
     return { ok: false, error: body.error ?? "send-telegram failed" };
   }
 
+  if (item.platform === "twitter") {
+    const res = await fetch(`${fnUrl}/send-twitter`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: authHeader },
+      body: JSON.stringify({ content_id: item.content_id }),
+    });
+    const body = await res.json();
+    if (body.success) return { ok: true };
+    return { ok: false, error: body.error ?? "send-twitter failed" };
+  }
+
+  if (item.platform === "instagram") {
+    const res = await fetch(`${fnUrl}/send-instagram`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: authHeader },
+      body: JSON.stringify({ content_id: item.content_id }),
+    });
+    const body = await res.json();
+    if (body.success) return { ok: true };
+    return { ok: false, error: body.error ?? "send-instagram failed" };
+  }
+
   return { ok: false, error: `Unknown platform: ${item.platform}` };
 }
 

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { BarChart2, Users, MessageSquare, CheckSquare, FileText, Calendar } from "lucide-react";
+import { BarChart2, Users, MessageSquare, CheckSquare, FileText, Calendar, Send } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { format, subDays, parseISO, startOfWeek } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -80,6 +80,40 @@ export default function AnalyticsModule() {
         byDay[d] = (byDay[d] ?? 0) + 1;
       });
       return Object.entries(byDay).map(([day, count]) => ({ day, count }));
+    },
+  });
+
+  // Distribution by platform (all-time)
+  const { data: distStats } = useQuery({
+    queryKey: ["analytics-distribution"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("distribution_log" as any)
+        .select("platform, status, sent_at, parliament_content(title)")
+        .order("sent_at", { ascending: false })
+        .limit(200);
+      const rows: any[] = data ?? [];
+
+      // Counts by platform
+      const byPlatform: Record<string, { sent: number; failed: number }> = {};
+      rows.forEach(r => {
+        if (!byPlatform[r.platform]) byPlatform[r.platform] = { sent: 0, failed: 0 };
+        if (r.status === "sent") byPlatform[r.platform].sent++;
+        else byPlatform[r.platform].failed++;
+      });
+      const platformChart = Object.entries(byPlatform).map(([platform, v]) => ({
+        platform,
+        sent: v.sent,
+        failed: v.failed,
+      }));
+
+      // Unique content pieces distributed
+      const uniqueContent = new Set(rows.map(r => r.content_id)).size;
+
+      // Recent 10 rows
+      const recent = rows.slice(0, 10);
+
+      return { platformChart, uniqueContent, total: rows.length, recent };
     },
   });
 
@@ -211,6 +245,66 @@ export default function AnalyticsModule() {
             No application data yet.
           </div>
         )}
+      </div>
+
+      {/* Distribution analytics */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Send size={14} className="text-crm-text-muted" />
+          <p className="text-[13px] font-bold text-crm-text">Communications Distribution</p>
+          <span className="text-[10px] font-mono text-crm-text-faint ml-auto">
+            {distStats?.total ?? 0} total sends · {distStats?.uniqueContent ?? 0} content pieces
+          </span>
+        </div>
+
+        {/* Sends by platform */}
+        <div className="bg-crm-card border border-crm-border rounded-xl p-4">
+          <p className="text-[11px] font-semibold text-crm-text mb-3">Sends by platform</p>
+          {distStats?.platformChart?.length ? (
+            <ResponsiveContainer width="100%" height={160}>
+              <BarChart data={distStats.platformChart}>
+                <XAxis dataKey="platform" tick={{ fill: "#4a6650", fontSize: 9 }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fill: "#4a6650", fontSize: 9 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                <Tooltip {...TOOLTIP_STYLE} />
+                <Legend wrapperStyle={{ fontSize: 10 }} />
+                <Bar dataKey="sent"   fill="#34d399" radius={[3, 3, 0, 0]} name="Sent" stackId="a" />
+                <Bar dataKey="failed" fill="#f87171" radius={[3, 3, 0, 0]} name="Failed" stackId="a" />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center h-32 text-crm-text-dim text-sm">
+              No distribution data yet. Publish content and send to channels.
+            </div>
+          )}
+        </div>
+
+        {/* Recent activity */}
+        {distStats?.recent?.length ? (
+          <div className="bg-crm-card border border-crm-border rounded-xl overflow-hidden">
+            <p className="text-[11px] font-semibold text-crm-text px-4 py-3 border-b border-crm-border">Recent distribution activity</p>
+            <table className="w-full text-[11px]">
+              <thead>
+                <tr className="bg-crm-surface border-b border-crm-border">
+                  {["Content","Platform","Status","Sent At"].map(h => (
+                    <th key={h} className="text-left px-4 py-2 font-mono text-[9px] uppercase tracking-widest text-crm-text-faint">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {(distStats.recent as any[]).map((row: any) => (
+                  <tr key={row.id} className="border-b border-crm-border/40 hover:bg-crm-surface/40">
+                    <td className="px-4 py-2 text-crm-text-muted max-w-[200px] truncate">
+                      {row.parliament_content?.title ?? "—"}
+                    </td>
+                    <td className="px-4 py-2 font-mono font-semibold text-crm-text-secondary capitalize">{row.platform}</td>
+                    <td className={`px-4 py-2 font-mono ${row.status === "sent" ? "text-emerald-400" : "text-red-400"}`}>{row.status}</td>
+                    <td className="px-4 py-2 text-crm-text-faint">{new Date(row.sent_at).toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : null}
       </div>
     </div>
   );

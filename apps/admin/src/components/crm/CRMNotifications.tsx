@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect, useCallback, useId } from "react";
 import { createPortal } from "react-dom";
 import {
   Bell, X, MessageSquare, CheckSquare, Calendar, FileText, Check, CheckCheck, Sun, Moon,
@@ -111,12 +111,17 @@ export function useNotifications() {
     retry: 0,
   });
 
-  const subGen = useRef(0);
+  // useId() is stable and unique per hook-call-site, preventing channel name
+  // collisions when useNotifications() is mounted in multiple components at once
+  // (e.g. MobileCRMLayout badge counter + NotificationBell both subscribing).
+  // The old subGen=useRef(0) approach gave every fresh instance gen=1, so two
+  // simultaneous mounts produced identical channel names and Supabase threw
+  // "cannot add postgres_changes callbacks after subscribe()".
+  const instanceId = useId().replace(/[^a-zA-Z0-9]/g, "");
 
   useEffect(() => {
     if (!user?.id) return;
-    const gen = ++subGen.current;
-    const pfx = `${user.id.slice(0, 8)}-${gen}`;
+    const pfx = `${user.id.slice(0, 8)}-${instanceId}`;
     const invalidate = () => qc.invalidateQueries({ queryKey: ["crm-notifications", user.id] });
     const channels = [
       supabase.channel(`notif-crm-messages-${pfx}`).on("postgres_changes" as any, { event: "INSERT", schema: "public", table: "crm_messages", filter: `to_user_id=eq.${user.id}` }, invalidate).subscribe(),
@@ -128,7 +133,7 @@ export function useNotifications() {
       channels.push(supabase.channel(`notif-applications-${pfx}`).on("postgres_changes" as any, { event: "INSERT", schema: "public", table: "applications" }, invalidate).subscribe());
     }
     return () => { channels.forEach(ch => supabase.removeChannel(ch)); };
-  }, [user?.id, isAdmin]);
+  }, [user?.id, isAdmin, instanceId]);
 
   return query;
 }

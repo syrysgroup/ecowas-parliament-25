@@ -139,10 +139,11 @@ Deno.serve(async (req) => {
     ]);
 
     // Use EN summary as base for platform-specific formats
-    const [whatsapp_en, telegram_en, social_x] = await Promise.all([
+    const [whatsapp_en, telegram_en, social_x, social_ig] = await Promise.all([
       prompts.whatsapp_en ? callClaude(apiKey, buildPrompt(prompts.whatsapp_en, { summary_en })) : Promise.resolve(""),
       prompts.telegram_en ? callClaude(apiKey, buildPrompt(prompts.telegram_en, { summary_en })) : Promise.resolve(""),
       prompts.social_x    ? callClaude(apiKey, buildPrompt(prompts.social_x,    { summary_en })) : Promise.resolve(""),
+      prompts.social_ig   ? callClaude(apiKey, buildPrompt(prompts.social_ig,   { summary_en })) : Promise.resolve(""),
     ]);
 
     // Update parliament_content with AI-generated outputs
@@ -155,6 +156,7 @@ Deno.serve(async (req) => {
         whatsapp_en,
         telegram_en,
         social_x,
+        social_ig,
         status: "review",
         updated_at: new Date().toISOString(),
       })
@@ -163,7 +165,7 @@ Deno.serve(async (req) => {
     if (updateErr) throw updateErr;
 
     return new Response(
-      JSON.stringify({ success: true, content_id, generated: ["summary_en", "summary_fr", "summary_pt", "whatsapp_en", "telegram_en", "social_x"] }),
+      JSON.stringify({ success: true, content_id, generated: ["summary_en", "summary_fr", "summary_pt", "whatsapp_en", "telegram_en", "social_x", "social_ig"] }),
       { headers: corsHeaders }
     );
   } catch (err: any) {
