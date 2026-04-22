@@ -236,8 +236,7 @@ function EmailConfigTab({ userId }: { userId?: string }) {
       const _smtpToken = _smtpRefreshData?.session?.access_token;
       if (_smtpRefreshErr || !_smtpToken) { toast({ title: "Session expired", description: "Please reload and log in again.", variant: "destructive" }); return; }
       const res = await supabase.functions.invoke("test-smtp", {
-        headers: { Authorization: `Bearer ${_smtpToken}` },
-      });
+        });
       const body = res.data as any;
       if (body?.success) {
         toast({ title: "SMTP connection verified", description: "Server responded correctly." });
@@ -1493,7 +1492,6 @@ export default function SuperAdminModule({ onNavigate }: { onNavigate?: (s: stri
       }
       const res = await supabase.functions.invoke("resend-invite", {
         body: { invitation_id: invId },
-        headers: { Authorization: `Bearer ${_resendToken}` },
       });
       if (res.error) {
         let msg = "Edge Function error";
@@ -1528,7 +1526,6 @@ export default function SuperAdminModule({ onNavigate }: { onNavigate?: (s: stri
       }
       const res = await supabase.functions.invoke("delete-invite", {
         body: { invitation_ids: [invId] },
-        headers: { Authorization: `Bearer ${token}` },
       });
       if (res.error) {
         let msg = "Edge Function error";
@@ -1635,7 +1632,6 @@ export default function SuperAdminModule({ onNavigate }: { onNavigate?: (s: stri
       }
       const res = await supabase.functions.invoke("delete-user", {
         body: { user_ids: [deleteTarget.id] },
-        headers: { Authorization: `Bearer ${_deleteToken}` },
       });
       if (res.error) {
         let msg = "Edge Function error";
@@ -1703,7 +1699,6 @@ export default function SuperAdminModule({ onNavigate }: { onNavigate?: (s: stri
           full_name: createName.trim() || undefined,
           force_password_change: createForceChange,
         },
-        headers: { Authorization: `Bearer ${_createToken}` },
       });
       if (res.error) {
         let msg = "Edge Function error";
@@ -1738,7 +1733,6 @@ export default function SuperAdminModule({ onNavigate }: { onNavigate?: (s: stri
     try {
       const res = await supabase.functions.invoke("admin-reset-password", {
         body: { target_user_id: resetTarget.id, new_password: resetPassword, force_password_change: resetForce },
-        headers: { Authorization: `Bearer ${_resetToken}` },
       });
       if (res.error) {
         let msg = "Edge Function error";

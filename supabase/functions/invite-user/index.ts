@@ -56,6 +56,16 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
+    // ── 3a. Delete any existing pending invitation so re-inviting never fails ─
+    // When the same email is invited twice, inviteUserByEmail returns 400
+    // "User already registered" for unconfirmed users. We delete the stale
+    // invitation record first so the insert below stays clean.
+    await serviceClient
+      .from("invitations")
+      .delete()
+      .eq("email", email)
+      .is("accepted_at", null);
+
     const { data, error: inviteError } = await serviceClient.auth.admin.inviteUserByEmail(
       email,
       {
