@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ShieldCheck, Users, ChevronRight, Lock, Check,
@@ -335,36 +335,25 @@ export default function RolesModule() {
     },
   });
 
-  // Build perms map when data loads
-  useState(() => {
+  // Sync perms state from DB data whenever the query result changes.
+  // useEffect is the correct tool here — the old code used useState(fn) as
+  // an initialiser (which ignores the return value of the callback) and also
+  // ran setState directly in the render body, both of which are anti-patterns
+  // that cause dropped saves, infinite re-render loops, and stale-data resets
+  // in React 18 concurrent mode.
+  useEffect(() => {
     if (!allPerms) return;
-    const map: Record<string, Record<string, boolean>> = {};
-    (allPerms as any[]).forEach(row => {
-      map[`${row.role}:${row.module}`] = {
-        can_view: row.can_view,
-        can_create: row.can_create,
-        can_edit: row.can_edit,
-        can_delete: row.can_delete,
-      };
-    });
-    setPerms(map);
-  });
-
-  // Keep perms map in sync
-  const [initialised, setInitialised] = useState(false);
-  if (allPerms && !initialised && allPerms.length > 0) {
     const map: Record<string, Record<string, boolean>> = {};
     (allPerms as any[]).forEach((row: any) => {
       map[`${row.role}:${row.module}`] = {
-        can_view: row.can_view,
-        can_create: row.can_create,
-        can_edit: row.can_edit,
-        can_delete: row.can_delete,
+        can_view:    row.can_view,
+        can_create:  row.can_create,
+        can_edit:    row.can_edit,
+        can_delete:  row.can_delete,
       };
     });
     setPerms(map);
-    setInitialised(true);
-  }
+  }, [allPerms]);
 
   const handleChange = (module: string, action: string) => {
     const key = `${selectedRole}:${module}`;
@@ -392,10 +381,19 @@ export default function RolesModule() {
           can_edit: p.can_edit ?? false, can_delete: p.can_delete ?? false,
         };
       });
-      await supabase.from("role_permissions").delete().eq("role", selectedRole);
-      await supabase.from("role_permissions").insert(upserts);
-      qc.invalidateQueries({ queryKey: ["all-role-permissions"] });
-      qc.invalidateQueries({ queryKey: ["role-permissions"] });
+      const { error: delErr } = await supabase
+        .from("role_permissions")
+        .delete()
+        .eq("role", selectedRole);
+      if (delErr) throw new Error(`Delete failed: ${delErr.message}`);
+
+      const { error: insErr } = await supabase
+        .from("role_permissions")
+        .insert(upserts);
+      if (insErr) throw new Error(`Insert failed: ${insErr.message}`);
+
+      await qc.invalidateQueries({ queryKey: ["all-role-permissions"] });
+      await qc.invalidateQueries({ queryKey: ["role-permissions"] });
       toast({ title: `Permissions saved for ${CRM_ROLE_META[selectedRole].label}` });
     } catch (err: any) {
       toast({ title: "Failed", description: err.message, variant: "destructive" });
@@ -441,7 +439,7 @@ export default function RolesModule() {
               role={role}
               userCount={roleCounts[role] ?? 0}
               selected={selectedRole === role}
-              onClick={() => { setSelectedRole(role); setInitialised(false); }}
+              onClick={() => setSelectedRole(role)}
             />
           ))}
 
@@ -452,7 +450,7 @@ export default function RolesModule() {
               role={role}
               userCount={roleCounts[role] ?? 0}
               selected={selectedRole === role}
-              onClick={() => { setSelectedRole(role); setInitialised(false); }}
+              onClick={() => setSelectedRole(role)}
             />
           ))}
 
@@ -463,7 +461,7 @@ export default function RolesModule() {
               role={role}
               userCount={roleCounts[role] ?? 0}
               selected={selectedRole === role}
-              onClick={() => { setSelectedRole(role); setInitialised(false); }}
+              onClick={() => setSelectedRole(role)}
             />
           ))}
         </div>

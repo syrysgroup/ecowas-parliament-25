@@ -106,11 +106,19 @@ export default function PermissionManagerPanel({ onNavigateToRoles }: Props) {
         }
       }
       for (const role of PERM_ROLES) {
-        await supabase.from("role_permissions").delete().eq("role", role);
+        const { error: delErr } = await supabase
+          .from("role_permissions")
+          .delete()
+          .eq("role", role);
+        if (delErr) throw new Error(`Delete failed for ${role}: ${delErr.message}`);
       }
-      await supabase.from("role_permissions").insert(upserts);
-      qc.invalidateQueries({ queryKey: ["all-role-permissions"] });
-      qc.invalidateQueries({ queryKey: ["role-permissions"] });
+      const { error: insErr } = await supabase
+        .from("role_permissions")
+        .insert(upserts);
+      if (insErr) throw new Error(`Insert failed: ${insErr.message}`);
+
+      await qc.invalidateQueries({ queryKey: ["all-role-permissions"] });
+      await qc.invalidateQueries({ queryKey: ["role-permissions"] });
       toast({ title: "Permissions saved" });
     } catch (err: any) {
       toast({ title: "Failed", description: err.message, variant: "destructive" });
