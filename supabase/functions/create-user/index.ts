@@ -83,8 +83,11 @@ Deno.serve(async (req) => {
     // ── 6. Insert role ────────────────────────────────────────────────────────
     const { error: roleErr } = await serviceClient
       .from("user_roles")
-      .upsert({ user_id: newUser.id, role }, { onConflict: "user_id" });
-    if (roleErr) console.warn("Role insert warning:", roleErr.message);
+      .insert({ user_id: newUser.id, role });
+    // 23505 = duplicate key (user already has this role) — safe to ignore
+    if (roleErr && roleErr.code !== "23505") {
+      console.warn("Role insert warning:", roleErr.message);
+    }
 
     // ── 7. Record in invitations (history only) ───────────────────────────────
     await serviceClient.from("invitations").insert({

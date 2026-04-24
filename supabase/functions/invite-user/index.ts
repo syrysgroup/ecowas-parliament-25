@@ -86,13 +86,16 @@ Deno.serve(async (req) => {
     }
 
     // ── 4. Seed user_roles table so the app picks up the role immediately ──────
+    // Plain insert — the unique constraint is (user_id, role), NOT just user_id,
+    // so onConflict:"user_id" was wrong and caused silent failures.
+    // Ignore 23505 (duplicate key) so re-inviting the same role is safe.
     if (data?.user?.id) {
-      await serviceClient
+      const { error: roleErr } = await serviceClient
         .from("user_roles")
-        .upsert({ user_id: data.user.id, role }, { onConflict: "user_id" })
-        .then(({ error: roleErr }) => {
-          if (roleErr) console.warn("user_roles upsert warning:", roleErr.message);
-        });
+        .insert({ user_id: data.user.id, role });
+      if (roleErr && roleErr.code !== "23505") {
+        console.warn("user_roles insert warning:", roleErr.message);
+      }
     }
 
     return new Response(

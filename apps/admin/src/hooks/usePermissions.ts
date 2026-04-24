@@ -25,7 +25,9 @@ export function usePermissions() {
       return data ?? [];
     },
     enabled: !!user && roles.length > 0,
-    staleTime: 5 * 60 * 1000,
+    // staleTime: 0 so permissions always refetch immediately when invalidated
+    // after a save in RolesModule or PermissionManagerPanel.
+    staleTime: 0,
   });
 
   const check = useCallback(

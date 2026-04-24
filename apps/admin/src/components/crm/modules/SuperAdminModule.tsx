@@ -1436,9 +1436,17 @@ export default function SuperAdminModule({ onNavigate }: { onNavigate?: (s: stri
     }
     try {
       if (action === "add") {
-        await supabase.from("user_roles").insert({ user_id: targetUserId, role });
+        const { error: roleInsertErr } = await supabase
+          .from("user_roles")
+          .insert({ user_id: targetUserId, role });
+        if (roleInsertErr) throw new Error(`Failed to grant role: ${roleInsertErr.message}`);
       } else {
-        await supabase.from("user_roles").delete().eq("user_id", targetUserId).eq("role", role);
+        const { error: roleDeleteErr } = await supabase
+          .from("user_roles")
+          .delete()
+          .eq("user_id", targetUserId)
+          .eq("role", role);
+        if (roleDeleteErr) throw new Error(`Failed to revoke role: ${roleDeleteErr.message}`);
       }
       // Log activity
       await supabase.from("admin_activity_logs").insert({
@@ -1472,7 +1480,7 @@ export default function SuperAdminModule({ onNavigate }: { onNavigate?: (s: stri
   // ── Update profile field inline ──────────────────────────────────────────
   const updateProfileField = async (targetUserId: string, field: string, value: string) => {
     try {
-      await supabase.from("profiles").update({ [field]: value }).eq("id", targetUserId);
+      await supabase.from("profiles").update({ [field]: value } as any).eq("id", targetUserId);
       setUsers(prev => prev.map(u => u.id === targetUserId ? { ...u, [field]: value } : u));
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });

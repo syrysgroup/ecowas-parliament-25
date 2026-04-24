@@ -117,8 +117,8 @@ export default function PermissionManagerPanel({ onNavigateToRoles }: Props) {
         .insert(upserts);
       if (insErr) throw new Error(`Insert failed: ${insErr.message}`);
 
-      await qc.invalidateQueries({ queryKey: ["all-role-permissions"] });
-      await qc.invalidateQueries({ queryKey: ["role-permissions"] });
+      await qc.invalidateQueries({ queryKey: ["all-role-permissions"], exact: false });
+      await qc.invalidateQueries({ queryKey: ["role-permissions"], exact: false });
       toast({ title: "Permissions saved" });
     } catch (err: any) {
       toast({ title: "Failed", description: err.message, variant: "destructive" });

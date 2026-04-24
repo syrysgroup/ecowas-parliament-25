@@ -236,7 +236,12 @@ function UsersWithRole({
 
   const handleRemove = async (userId: string, name: string) => {
     try {
-      await supabase.from("user_roles").delete().eq("user_id", userId).eq("role", role);
+      const { error: removeErr } = await supabase
+        .from("user_roles")
+        .delete()
+        .eq("user_id", userId)
+        .eq("role", role);
+      if (removeErr) throw new Error(removeErr.message);
       qc.invalidateQueries({ queryKey: ["users-with-role", role] });
       qc.invalidateQueries({ queryKey: ["user-role-counts"] });
       toast({ title: `Removed ${CRM_ROLE_META[role].label} from ${name}` });
@@ -392,8 +397,9 @@ export default function RolesModule() {
         .insert(upserts);
       if (insErr) throw new Error(`Insert failed: ${insErr.message}`);
 
-      await qc.invalidateQueries({ queryKey: ["all-role-permissions"] });
-      await qc.invalidateQueries({ queryKey: ["role-permissions"] });
+      await qc.invalidateQueries({ queryKey: ["all-role-permissions"], exact: false });
+      // exact:false matches ["role-permissions", roles] in usePermissions
+      await qc.invalidateQueries({ queryKey: ["role-permissions"], exact: false });
       toast({ title: `Permissions saved for ${CRM_ROLE_META[selectedRole].label}` });
     } catch (err: any) {
       toast({ title: "Failed", description: err.message, variant: "destructive" });
