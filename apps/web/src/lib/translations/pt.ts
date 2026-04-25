@@ -2,6 +2,8 @@ export const pt: Record<string, string> = {
   // ─── Navbar ───────────────────────────────────────────────────────
   "nav.home": "Início",
   "nav.about": "Sobre",
+  "nav.parliamentInitiative": "Iniciativa Parlamentar",
+  "nav.ecowasParliament": "Parlamento da CEDEAO",
   "nav.programmes": "Programas",
   "nav.timeline": "Cronograma",
   "nav.news": "Notícias",

@@ -2,12 +2,15 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { usePermissions } from "@/hooks/usePermissions";
 import { Save, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+
+const MODULE = "site-content";
 
 interface SiteContentRow {
   id: string;
@@ -174,9 +177,77 @@ const SECTION_TEMPLATES: Record<string, { label: string; fields: { key: string; 
       { key: "offices", label: 'Offices JSON (array of {city, country, role, address})', type: "textarea" },
     ],
   },
+  parliament_initiative: {
+    label: "Parliament Initiative Page (/about)",
+    fields: [
+      { key: "hero_title",         label: "Hero Title",                    type: "text"     },
+      { key: "hero_desc",          label: "Hero Description",              type: "textarea" },
+      { key: "why_title",          label: "Why a Year-Long Programme? — Title", type: "text" },
+      { key: "why_desc",           label: "Why a Year-Long Programme? — Body",  type: "textarea" },
+      { key: "living_title",       label: "A Living Story — Title",        type: "text"     },
+      { key: "living_desc",        label: "A Living Story — Body",         type: "textarea" },
+      { key: "focus_title",        label: "Priority Focus Areas — Title",  type: "text"     },
+      { key: "focus1_title",       label: "Focus Area 1 — Title",          type: "text"     },
+      { key: "focus1_desc",        label: "Focus Area 1 — Description",    type: "textarea" },
+      { key: "focus2_title",       label: "Focus Area 2 — Title",          type: "text"     },
+      { key: "focus2_desc",        label: "Focus Area 2 — Description",    type: "textarea" },
+      { key: "focus3_title",       label: "Focus Area 3 — Title",          type: "text"     },
+      { key: "focus3_desc",        label: "Focus Area 3 — Description",    type: "textarea" },
+      { key: "focus4_title",       label: "Focus Area 4 — Title",          type: "text"     },
+      { key: "focus4_desc",        label: "Focus Area 4 — Description",    type: "textarea" },
+      { key: "partnerships_title", label: "Strategic Partnerships — Title", type: "text"    },
+      { key: "partnerships_desc",  label: "Strategic Partnerships — Body", type: "textarea" },
+      { key: "vision_title",       label: "Vision 2050 — Title",           type: "text"     },
+      { key: "vision_desc",        label: "Vision 2050 — Body",            type: "textarea" },
+    ],
+  },
+  ecowas_parliament: {
+    label: "ECOWAS Parliament Page (/ecowas-parliament)",
+    fields: [
+      { key: "page_title",       label: "Hero Title",                          type: "text"     },
+      { key: "tagline",          label: "Hero Tagline",                        type: "text"     },
+      { key: "founding_badge",   label: "Founding Badge Text",                 type: "text"     },
+      { key: "website",          label: "Official Website URL (no https://)",  type: "text"     },
+      { key: "glance_badge",     label: "At a Glance — Badge Label",           type: "text"     },
+      { key: "numbers_title",    label: "At a Glance — Section Title",         type: "text"     },
+      { key: "committees_title", label: "Standing Committees — Title",         type: "text"     },
+      { key: "committees_desc",  label: "Standing Committees — Description",   type: "textarea" },
+      { key: "cta_title",        label: "Get Involved CTA — Title",            type: "text"     },
+      { key: "cta_desc",         label: "Get Involved CTA — Description",      type: "textarea" },
+    ],
+  },
+  media_kit_hero: {
+    label: "Media Kit Page — Hero",
+    fields: [
+      { key: "badge",         label: "Hero Badge Text",                   type: "text"     },
+      { key: "hero_title",    label: "Hero Title",                        type: "text"     },
+      { key: "hero_desc",     label: "Hero Description",                  type: "textarea" },
+      { key: "full_pack_url", label: "Full Pack Download URL",            type: "text"     },
+      { key: "contact_email", label: "Hero Contact Email (button label)", type: "text"     },
+    ],
+  },
+  media_contact: {
+    label: "Media Kit Page — Contact Card",
+    fields: [
+      { key: "section_title",         label: "Card Heading",           type: "text"     },
+      { key: "section_desc",          label: "Card Description",       type: "textarea" },
+      { key: "contact_name",          label: "Contact Name",           type: "text"     },
+      { key: "contact_title",         label: "Contact Job Title",      type: "text"     },
+      { key: "contact_email",         label: "Contact Email Address",  type: "text"     },
+      { key: "contact_response_time", label: "Response Time Note",     type: "text"     },
+      { key: "full_pack_url",         label: "Full Pack Download URL", type: "text"     },
+    ],
+  },
 };
 
-function SectionEditor({ section, onSaved }: { section: SiteContentRow; onSaved: () => void }) {
+function SectionEditor({
+  section, onSaved, allowEdit, allowDelete,
+}: {
+  section: SiteContentRow;
+  onSaved: () => void;
+  allowEdit: boolean;
+  allowDelete: boolean;
+}) {
   const { user } = useAuthContext();
   const { toast } = useToast();
   const template = SECTION_TEMPLATES[section.section_key];
@@ -239,11 +310,13 @@ function SectionEditor({ section, onSaved }: { section: SiteContentRow; onSaved:
             </>
           ) : (
             <>
-              <Button size="sm" variant="ghost" onClick={() => setConfirmDelete(true)}
-                className="text-crm-text-muted hover:text-red-400 text-xs gap-1 h-7">
-                <Trash2 size={11} />
-              </Button>
-              <Button size="sm" onClick={handleSave} disabled={saving}
+              {allowDelete && (
+                <Button size="sm" variant="ghost" onClick={() => setConfirmDelete(true)}
+                  className="text-crm-text-muted hover:text-red-400 text-xs gap-1 h-7">
+                  <Trash2 size={11} />
+                </Button>
+              )}
+              <Button size="sm" onClick={handleSave} disabled={saving || !allowEdit}
                 className="bg-emerald-700 hover:bg-emerald-600 text-white text-xs gap-1">
                 <Save size={11} /> {saving ? "Saving…" : "Save"}
               </Button>
@@ -271,6 +344,7 @@ function SectionEditor({ section, onSaved }: { section: SiteContentRow; onSaved:
 
 export default function SiteContentModule() {
   const { user } = useAuthContext();
+  const { canCreate, canEdit, canDelete } = usePermissions();
   const qc = useQueryClient();
   const { toast } = useToast();
   const [newKey, setNewKey] = useState("");
@@ -305,7 +379,7 @@ export default function SiteContentModule() {
         <p className="text-[12px] text-crm-text-muted mt-0.5">Edit homepage sections and site-wide content. Changes reflect on the public website immediately.</p>
       </div>
 
-      {availableTemplates.length > 0 && (
+      {availableTemplates.length > 0 && canCreate(MODULE) && (
         <div className="flex items-center gap-2">
           <select value={newKey} onChange={e => setNewKey(e.target.value)}
             className="bg-crm-surface border border-crm-border text-crm-text text-xs rounded-lg px-3 py-2">
@@ -325,7 +399,11 @@ export default function SiteContentModule() {
 
       <div className="space-y-4">
         {sections.map(s => (
-          <SectionEditor key={s.id} section={s} onSaved={() => qc.invalidateQueries({ queryKey: ["site-content"] })} />
+          <SectionEditor key={s.id} section={s}
+            onSaved={() => qc.invalidateQueries({ queryKey: ["site-content"] })}
+            allowEdit={canEdit(MODULE)}
+            allowDelete={canDelete(MODULE)}
+          />
         ))}
       </div>
 

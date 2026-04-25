@@ -10,6 +10,8 @@ import { useTranslation } from "@/lib/i18n";
 interface PillarRow {
   id: string;
   slug: string;
+  title: string | null;
+  description: string | null;
   emoji: string | null;
   color: string | null;
   icon_bg: string | null;
@@ -76,10 +78,10 @@ const PillarsGrid = () => {
                       {pillar.emoji}
                     </div>
                     <h3 className="text-base font-bold text-card-foreground mb-2 leading-tight group-hover:text-primary transition-colors">
-                      {t(`pillars.${pillar.slug}.title`)}
+                      {pillar.title || t(`pillars.${pillar.slug}.title`)}
                     </h3>
                     <p className="text-xs text-muted-foreground leading-relaxed mb-3.5">
-                      {t(`pillars.${pillar.slug}.desc`)}
+                      {pillar.description || t(`pillars.${pillar.slug}.desc`)}
                     </p>
                     <div className="flex items-center gap-3">
                       <span className="text-[11px] font-semibold text-muted-foreground">{pillar.progress_percent}%</span>

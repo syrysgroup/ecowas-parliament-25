@@ -8,12 +8,12 @@ import { useToast } from "@/hooks/use-toast";
 
 // ─── Shared constants ─────────────────────────────────────────────────────────
 export const PERM_MODULES = [
-  "dashboard", "tasks", "email-inbox", "calendar", "documents",
+  "dashboard", "tasks", "email-inbox", "comms", "calendar", "documents",
   "team", "people", "news-editor", "events-manager", "programme-pillars",
   "stakeholders-mgmt", "media-kit-mgmt", "sponsors-partners", "site-content",
   "cms", "media-library", "analytics", "geo-analytics", "sponsor-metrics",
-  "finance", "invoices", "marketing", "newsletter", "contact-submissions",
-  "parliament-ops", "settings",
+  "finance", "invoices", "seo", "marketing", "newsletter", "contact-submissions",
+  "parliament-ops", "parliament-content", "settings",
 ];
 
 export const PERM_ROLES = [

@@ -2,6 +2,8 @@ export const en: Record<string, string> = {
   // ─── Navbar ───────────────────────────────────────────────────────
   "nav.home": "Home",
   "nav.about": "About",
+  "nav.parliamentInitiative": "Parliament Initiative",
+  "nav.ecowasParliament": "ECOWAS Parliament",
   "nav.programmes": "Programmes",
   "nav.timeline": "Timeline",
   "nav.news": "News",

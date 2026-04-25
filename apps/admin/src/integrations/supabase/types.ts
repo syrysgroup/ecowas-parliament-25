@@ -1300,39 +1300,42 @@ export type Database = {
       }
       media_kit_items: {
         Row: {
-          category: string
-          created_at: string
-          description: string | null
-          display_order: number
-          file_type: string
-          file_url: string | null
           id: string
-          is_published: boolean
-          title: string
+          type: string
+          title: string | null
+          subtitle: string | null
+          description: string | null
+          url: string | null
+          metadata: Json
+          display_order: number
+          is_active: boolean
+          created_at: string
           updated_at: string
         }
         Insert: {
-          category?: string
-          created_at?: string
-          description?: string | null
-          display_order?: number
-          file_type?: string
-          file_url?: string | null
           id?: string
-          is_published?: boolean
-          title: string
+          type: string
+          title?: string | null
+          subtitle?: string | null
+          description?: string | null
+          url?: string | null
+          metadata?: Json
+          display_order?: number
+          is_active?: boolean
+          created_at?: string
           updated_at?: string
         }
         Update: {
-          category?: string
-          created_at?: string
-          description?: string | null
-          display_order?: number
-          file_type?: string
-          file_url?: string | null
           id?: string
-          is_published?: boolean
-          title?: string
+          type?: string
+          title?: string | null
+          subtitle?: string | null
+          description?: string | null
+          url?: string | null
+          metadata?: Json
+          display_order?: number
+          is_active?: boolean
+          created_at?: string
           updated_at?: string
         }
         Relationships: []

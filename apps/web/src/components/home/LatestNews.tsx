@@ -8,6 +8,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { format, parseISO } from "date-fns";
 import newsImg1 from "@/assets/news-1.jpg";
 
+function truncate(str: string | null | undefined, max: number): string {
+  if (!str) return "";
+  return str.length > max ? str.slice(0, max).trimEnd() + "…" : str;
+}
+
 const LatestNews = () => {
   const { t } = useTranslation();
 
@@ -65,8 +70,12 @@ const LatestNews = () => {
                           {article.published_at ? format(parseISO(article.published_at), "d MMMM yyyy") : ""}
                         </span>
                       </div>
-                      <h3 className="font-bold text-card-foreground group-hover:text-primary transition-colors leading-snug">{article.title}</h3>
-                      <p className="mt-2 text-sm text-muted-foreground line-clamp-2">{article.excerpt}</p>
+                      <h3 className="font-bold text-card-foreground group-hover:text-primary transition-colors leading-snug">
+                        {truncate(article.title, 80)}
+                      </h3>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        {truncate(article.excerpt, 120)}
+                      </p>
                     </div>
                   </div>
                 </Link>

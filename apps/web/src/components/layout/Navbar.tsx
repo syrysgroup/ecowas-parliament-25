@@ -38,11 +38,11 @@ const Navbar = () => {
   const navLinks = [
     { label: t("nav.home"), to: "/" },
     {
-      label: t("nav.about"),
+      label: t("nav.parliamentInitiative"),
       to: "/about",
       children: [
-        { label: t("nav.about"), to: "/about" },
-        { label: "ECOWAS Parliament Initiatives", to: "/ecowas-parliament" },
+        { label: t("nav.parliamentInitiative"), to: "/about" },
+        { label: t("nav.ecowasParliament"), to: "/ecowas-parliament" },
       ],
     },
     {

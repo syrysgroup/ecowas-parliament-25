@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useTranslation } from "@/lib/i18n";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
+import { useSiteContent } from "@/hooks/useSiteContent";
 import ecowasLogo from "@/assets/ecowas-parliament-logo.png";
 import parliamentHero from "@/assets/parliament-hero-clean.jpg";
 import parliamentChamber from "@/assets/parliament-chamber.png";
@@ -51,10 +52,13 @@ const COMMITTEES = [
 
 export default function EcowasParliament() {
   const { t } = useTranslation();
-  const { get } = useSiteSettings();
+  const { get: getSetting } = useSiteSettings();
+  const { data: cms } = useSiteContent("ecowas_parliament");
 
-  const socialLinks = SOCIAL_ICONS.map(s => ({ ...s, url: get(s.key, "") })).filter(s => s.url);
-  const website = "www.parl.ecowas.int";
+  const get = (key: string, fallback: string) => cms?.[key] || fallback;
+
+  const socialLinks = SOCIAL_ICONS.map(s => ({ ...s, url: getSetting(s.key, "") })).filter(s => s.url);
+  const website = get("website", "www.parl.ecowas.int");
 
   return (
     <Layout>
@@ -83,16 +87,16 @@ export default function EcowasParliament() {
 
             {/* Title */}
             <h1 className="text-5xl md:text-7xl font-black text-white tracking-tight leading-none">
-              ECOWAS Parliament
+              {get("page_title", "ECOWAS Parliament")}
             </h1>
             <p className="text-lg md:text-xl text-white/70 font-light">
-              The Voice of West Africa's People
+              {get("tagline", "The Voice of West Africa's People")}
             </p>
 
             {/* Founding badge */}
             <div className="flex justify-center">
               <Badge className="bg-ecowas-yellow/90 text-accent-foreground border-0 text-sm font-bold px-4 py-1.5">
-                Founded 16 November 2000 · 25th Anniversary
+                {get("founding_badge", "Founded 16 November 2000 · 25th Anniversary")}
               </Badge>
             </div>
 
@@ -138,8 +142,8 @@ export default function EcowasParliament() {
       <section className="py-16 bg-muted/40 border-y border-border">
         <div className="container">
           <AnimatedSection className="text-center mb-10">
-            <Badge variant="outline" className="mb-3">At a Glance</Badge>
-            <h2 className="text-2xl font-bold text-foreground">ECOWAS Parliament in Numbers</h2>
+            <Badge variant="outline" className="mb-3">{get("glance_badge", "At a Glance")}</Badge>
+            <h2 className="text-2xl font-bold text-foreground">{get("numbers_title", "ECOWAS Parliament in Numbers")}</h2>
           </AnimatedSection>
           <div className="grid sm:grid-cols-3 gap-6 max-w-3xl mx-auto">
             {STATS.map((s, i) => (
@@ -217,9 +221,9 @@ export default function EcowasParliament() {
         <div className="container">
           <AnimatedSection className="text-center mb-12">
             <Badge variant="outline" className="mb-3">Parliamentary Structure</Badge>
-            <h2 className="text-2xl md:text-3xl font-bold text-foreground">Standing Committees</h2>
+            <h2 className="text-2xl md:text-3xl font-bold text-foreground">{get("committees_title", "Standing Committees")}</h2>
             <p className="text-muted-foreground mt-2 max-w-xl mx-auto">
-              Specialist committees that drive ECOWAS Parliament's legislative and oversight work across the region.
+              {get("committees_desc", "Specialist committees that drive ECOWAS Parliament's legislative and oversight work across the region.")}
             </p>
           </AnimatedSection>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl mx-auto">
@@ -244,11 +248,10 @@ export default function EcowasParliament() {
             <div className="rounded-3xl bg-gradient-to-r from-primary/10 via-background to-accent/10 border border-border p-10 md:p-16 text-center space-y-6">
               <Badge className="bg-primary/10 text-primary border-primary/20">Get Involved</Badge>
               <h2 className="text-2xl md:text-4xl font-black text-foreground max-w-2xl mx-auto leading-tight">
-                Be a Part of the Future of West African Governance
+                {get("cta_title", "Be a Part of the Future of West African Governance")}
               </h2>
               <p className="text-muted-foreground max-w-xl mx-auto leading-relaxed">
-                Join the Youth Parliament simulation, partner with ECOWAS Parliament Initiatives,
-                or explore our programme pillars shaping the region.
+                {get("cta_desc", "Join the Youth Parliament simulation, partner with ECOWAS Parliament Initiatives, or explore our programme pillars shaping the region.")}
               </p>
               <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
                 <Button asChild size="lg" className="gap-2">

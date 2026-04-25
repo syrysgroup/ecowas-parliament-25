@@ -1,11 +1,12 @@
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useSiteContent } from "@/hooks/useSiteContent";
 import Layout from "@/components/layout/Layout";
 import AnimatedSection from "@/components/shared/AnimatedSection";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Download, ExternalLink, FileText, ImageIcon, Mic, Mail, Clock } from "lucide-react";
 import { useTranslation } from "@/lib/i18n";
@@ -38,36 +39,59 @@ function useMediaKitItems(type: string) {
   });
 }
 
+function cms(data: Record<string, string> | null | undefined, key: string, fallback: string): string {
+  return data?.[key] || fallback;
+}
+
 export default function MediaKit() {
   const { t } = useTranslation();
 
-  const { data: releases = [], isLoading: releasesLoading } = useMediaKitItems("press_release");
-  const { data: spokespeople = [], isLoading: spokesLoading } = useMediaKitItems("spokesperson");
-  const { data: eventCalendar = [], isLoading: calLoading } = useMediaKitItems("event_calendar");
-  const { data: assetPacks = [], isLoading: assetsLoading } = useMediaKitItems("asset_pack");
+  const { data: releases = [],    isLoading: releasesLoading } = useMediaKitItems("press_release");
+  const { data: spokespeople = [], isLoading: spokesLoading   } = useMediaKitItems("spokesperson");
+  const { data: eventCalendar = [], isLoading: calLoading     } = useMediaKitItems("event_calendar");
+  const { data: assetPacks = [],   isLoading: assetsLoading   } = useMediaKitItems("asset_pack");
+  const { data: keyFacts = [],     isLoading: factsLoading    } = useMediaKitItems("key_fact");
+
+  const { data: heroCms }    = useSiteContent("media_kit_hero");
+  const { data: contactCms } = useSiteContent("media_contact");
 
   return (
     <Layout>
+      {/* Hero */}
       <section className="bg-gradient-hero text-primary-foreground py-20">
         <div className="container">
           <AnimatedSection>
             <Badge className="bg-primary-foreground/10 text-primary-foreground border-primary-foreground/20 mb-3">
-              {t("mediaKit.badge")}
+              {cms(heroCms, "badge", t("mediaKit.badge"))}
             </Badge>
-            <h1 className="text-4xl md:text-5xl font-black">{t("mediaKit.heroTitle")}</h1>
-            <p className="mt-4 text-lg text-primary-foreground/70 max-w-2xl">{t("mediaKit.heroDesc")}</p>
+            <h1 className="text-4xl md:text-5xl font-black">
+              {cms(heroCms, "hero_title", t("mediaKit.heroTitle"))}
+            </h1>
+            <p className="mt-4 text-lg text-primary-foreground/70 max-w-2xl">
+              {cms(heroCms, "hero_desc", t("mediaKit.heroDesc"))}
+            </p>
             <div className="flex flex-wrap gap-3 mt-6">
-              <Button variant="secondary" className="gap-2">
-                <Download className="h-4 w-4" /> {t("mediaKit.fullPack")}
-              </Button>
+              {heroCms?.full_pack_url ? (
+                <Button variant="secondary" className="gap-2" asChild>
+                  <a href={heroCms.full_pack_url} target="_blank" rel="noreferrer">
+                    <Download className="h-4 w-4" /> {t("mediaKit.fullPack")}
+                  </a>
+                </Button>
+              ) : (
+                <Button variant="secondary" className="gap-2">
+                  <Download className="h-4 w-4" /> {t("mediaKit.fullPack")}
+                </Button>
+              )}
               <Button variant="secondary" className="gap-2 bg-primary-foreground/15 text-primary-foreground border-primary-foreground/30 hover:bg-primary-foreground/25">
-                <Mail className="h-4 w-4" /> media@ecowasparliamentinitiatives.org
+                <Mail className="h-4 w-4" />
+                {cms(heroCms, "contact_email", "media@ecowasparliamentinitiatives.org")}
               </Button>
             </div>
           </AnimatedSection>
         </div>
       </section>
 
+      {/* Accreditation alert */}
       <section className="py-5 bg-amber-50 dark:bg-amber-950/20 border-y border-amber-200 dark:border-amber-800">
         <div className="container">
           <div className="flex items-start gap-3">
@@ -86,6 +110,30 @@ export default function MediaKit() {
 
       <section className="py-16">
         <div className="container space-y-14">
+
+          {/* Key Facts */}
+          {(factsLoading || keyFacts.length > 0) && (
+            <AnimatedSection>
+              <h2 className="text-2xl font-bold mb-6">{t("mediaKit.keyFacts") || "Key Facts"}</h2>
+              {factsLoading ? (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />)}
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {keyFacts.map(f => (
+                    <div key={f.id} className="rounded-xl border border-border bg-card p-5 text-center">
+                      <p className="text-3xl font-black text-primary leading-none">
+                        {f.metadata?.value ?? ""}
+                        <span className="text-lg font-semibold text-muted-foreground ml-0.5">{f.metadata?.unit ?? ""}</span>
+                      </p>
+                      <p className="text-sm text-muted-foreground mt-2 leading-snug">{f.title}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </AnimatedSection>
+          )}
 
           {/* Press Releases */}
           <AnimatedSection>
@@ -157,7 +205,7 @@ export default function MediaKit() {
             <p className="text-xs text-muted-foreground mt-3">{t("mediaKit.calendarNote")}</p>
           </AnimatedSection>
 
-          {/* Spokespeople + Assets */}
+          {/* Spokespeople + Asset Packs */}
           <div className="grid lg:grid-cols-2 gap-10">
             <AnimatedSection>
               <h2 className="text-2xl font-bold mb-6">{t("mediaKit.spokespeople")}</h2>
@@ -209,7 +257,9 @@ export default function MediaKit() {
                         <div className="flex items-center gap-2 flex-shrink-0">
                           {a.metadata?.size && <span className="text-[10px] text-muted-foreground">{a.metadata.size}</span>}
                           <Button size="sm" variant="outline" className="h-7 text-xs gap-1" asChild={!!a.url}>
-                            {a.url ? <a href={a.url} target="_blank" rel="noreferrer"><Download className="h-3 w-3" /></a> : <span><Download className="h-3 w-3" /></span>}
+                            {a.url
+                              ? <a href={a.url} target="_blank" rel="noreferrer"><Download className="h-3 w-3" /></a>
+                              : <span><Download className="h-3 w-3" /></span>}
                           </Button>
                         </div>
                       </div>
@@ -229,23 +279,48 @@ export default function MediaKit() {
               <CardContent className="py-8 px-8">
                 <div className="flex flex-col md:flex-row items-start md:items-center gap-6 justify-between">
                   <div>
-                    <CardTitle className="text-xl text-primary-foreground mb-2">{t("mediaKit.mediaContact")}</CardTitle>
-                    <p className="text-primary-foreground/75 text-sm max-w-md">{t("mediaKit.mediaContactDesc")}</p>
-                    <p className="text-primary-foreground font-semibold mt-3">{t("mediaKit.contactName")}</p>
-                    <p className="text-primary-foreground/75 text-sm">{t("mediaKit.contactResponse")}</p>
+                    <CardTitle className="text-xl text-primary-foreground mb-2">
+                      {cms(contactCms, "section_title", t("mediaKit.mediaContact"))}
+                    </CardTitle>
+                    <p className="text-primary-foreground/75 text-sm max-w-md">
+                      {cms(contactCms, "section_desc", t("mediaKit.mediaContactDesc"))}
+                    </p>
+                    <p className="text-primary-foreground font-semibold mt-3">
+                      {cms(contactCms, "contact_name", t("mediaKit.contactName"))}
+                    </p>
+                    <p className="text-primary-foreground/75 text-sm">
+                      {cms(contactCms, "contact_response_time", t("mediaKit.contactResponse"))}
+                    </p>
                   </div>
                   <div className="flex flex-col gap-2">
-                    <Button variant="secondary" className="gap-2 whitespace-nowrap">
-                      <Mail className="h-4 w-4" /> {t("mediaKit.emailMediaTeam")}
-                    </Button>
-                    <Button variant="secondary" className="gap-2 whitespace-nowrap bg-primary-foreground/15 text-primary-foreground border-primary-foreground/30 hover:bg-primary-foreground/25">
-                      <Download className="h-4 w-4" /> {t("mediaKit.fullMediaPack")}
-                    </Button>
+                    {contactCms?.contact_email ? (
+                      <Button variant="secondary" className="gap-2 whitespace-nowrap" asChild>
+                        <a href={`mailto:${contactCms.contact_email}`}>
+                          <Mail className="h-4 w-4" /> {t("mediaKit.emailMediaTeam")}
+                        </a>
+                      </Button>
+                    ) : (
+                      <Button variant="secondary" className="gap-2 whitespace-nowrap">
+                        <Mail className="h-4 w-4" /> {t("mediaKit.emailMediaTeam")}
+                      </Button>
+                    )}
+                    {contactCms?.full_pack_url ? (
+                      <Button variant="secondary" className="gap-2 whitespace-nowrap bg-primary-foreground/15 text-primary-foreground border-primary-foreground/30 hover:bg-primary-foreground/25" asChild>
+                        <a href={contactCms.full_pack_url} target="_blank" rel="noreferrer">
+                          <Download className="h-4 w-4" /> {t("mediaKit.fullMediaPack")}
+                        </a>
+                      </Button>
+                    ) : (
+                      <Button variant="secondary" className="gap-2 whitespace-nowrap bg-primary-foreground/15 text-primary-foreground border-primary-foreground/30 hover:bg-primary-foreground/25">
+                        <Download className="h-4 w-4" /> {t("mediaKit.fullMediaPack")}
+                      </Button>
+                    )}
                   </div>
                 </div>
               </CardContent>
             </Card>
           </AnimatedSection>
+
         </div>
       </section>
     </Layout>
