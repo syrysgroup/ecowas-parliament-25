@@ -1340,42 +1340,66 @@ export type Database = {
       news_articles: {
         Row: {
           author_id: string | null
+          author_name: string | null
+          category: string | null
           content: string | null
           cover_image_url: string | null
           created_at: string
+          deck: string | null
+          event_id: string | null
           excerpt: string | null
           external_links: Json | null
+          fact_checked: boolean
           id: string
+          image_caption: string | null
+          location: string | null
           published_at: string | null
           slug: string
+          source_doc: string | null
           status: string
           title: string
           updated_at: string
         }
         Insert: {
           author_id?: string | null
+          author_name?: string | null
+          category?: string | null
           content?: string | null
           cover_image_url?: string | null
           created_at?: string
+          deck?: string | null
+          event_id?: string | null
           excerpt?: string | null
           external_links?: Json | null
+          fact_checked?: boolean
           id?: string
+          image_caption?: string | null
+          location?: string | null
           published_at?: string | null
           slug: string
+          source_doc?: string | null
           status?: string
           title: string
           updated_at?: string
         }
         Update: {
           author_id?: string | null
+          author_name?: string | null
+          category?: string | null
           content?: string | null
           cover_image_url?: string | null
           created_at?: string
+          deck?: string | null
+          event_id?: string | null
           excerpt?: string | null
           external_links?: Json | null
+          fact_checked?: boolean
           id?: string
+          image_caption?: string | null
+          location?: string | null
           published_at?: string | null
           slug?: string
+          source_doc?: string | null
           status?: string
           title?: string
           updated_at?: string

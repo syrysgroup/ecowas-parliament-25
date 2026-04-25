@@ -13,6 +13,7 @@ import FlagImg from "@/components/shared/FlagImg";
 import { getFlagSrc } from "@/lib/flags";
 import ProgrammeSponsorMarquee from "@/components/shared/ProgrammeSponsorMarquee";
 import ProgrammeSponsorsFooter from "@/components/shared/ProgrammeSponsorsFooter";
+import CommitteeStakeholders from "@/components/shared/CommitteeStakeholders";
 
 const artForms = [
   { title: "Fashion", desc: "West African textile traditions — from Kente and Adire to contemporary haute couture — showcased on the runway.", icon: <Sparkles className="h-5 w-5" /> },
@@ -256,6 +257,7 @@ const Culture = () => (
         </AnimatedSection>
       </div>
     </section>
+    <CommitteeStakeholders programmeSlug="culture" />
     <ProgrammeSponsorsFooter programme="culture" />
   </Layout>
 );

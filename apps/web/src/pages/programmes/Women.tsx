@@ -13,6 +13,7 @@ import { useTranslation } from "@/lib/i18n";
 import FlagImg from "@/components/shared/FlagImg";
 import ProgrammeSponsorMarquee from "@/components/shared/ProgrammeSponsorMarquee";
 import ProgrammeSponsorsFooter from "@/components/shared/ProgrammeSponsorsFooter";
+import CommitteeStakeholders from "@/components/shared/CommitteeStakeholders";
 
 const Women = () => {
   const { t } = useTranslation();
@@ -180,6 +181,7 @@ const Women = () => {
         <p className="text-muted-foreground mb-8 max-w-lg mx-auto">{t("women.ctaDesc")}</p>
         <Button size="lg" className="bg-secondary text-secondary-foreground hover:bg-secondary/90">{t("women.ctaBtn")}</Button>
       </AnimatedSection></div></section>
+      <CommitteeStakeholders programmeSlug="women" />
       <ProgrammeSponsorsFooter programme="women" />
     </Layout>
   );

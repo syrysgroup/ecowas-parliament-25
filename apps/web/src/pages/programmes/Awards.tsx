@@ -11,6 +11,7 @@ import {
 import FlagImg from "@/components/shared/FlagImg";
 import ProgrammeSponsorMarquee from "@/components/shared/ProgrammeSponsorMarquee";
 import ProgrammeSponsorsFooter from "@/components/shared/ProgrammeSponsorsFooter";
+import CommitteeStakeholders from "@/components/shared/CommitteeStakeholders";
 
 const categories = [
   { title: "Legislative Excellence Award", desc: "For outstanding contributions to lawmaking and regional policy development that have advanced the ECOWAS integration agenda.", icon: <Scale className="h-6 w-6" />, color: "bg-primary/10 text-primary" },
@@ -275,6 +276,7 @@ const Awards = () => (
         </AnimatedSection>
       </div>
     </section>
+    <CommitteeStakeholders programmeSlug="awards" />
     <ProgrammeSponsorsFooter programme="awards" />
   </Layout>
 );

@@ -12,6 +12,8 @@ import { format, parseISO } from "date-fns";
 import { toast } from "@/components/ui/sonner";
 import newsImg1 from "@/assets/news-1.jpg";
 
+interface ExternalLink { title: string; url: string; publication?: string; }
+
 const NewsDetail = () => {
   const { slug } = useParams<{ slug: string }>();
   const [copied, setCopied] = useState(false);
@@ -83,7 +85,7 @@ const NewsDetail = () => {
     );
   }
 
-  const externalLinks: { title: string; url: string }[] = (() => {
+  const externalLinks: ExternalLink[] = (() => {
     try {
       const links = (article as any).external_links;
       if (Array.isArray(links)) return links;
@@ -91,6 +93,7 @@ const NewsDetail = () => {
     } catch { return []; }
   })();
 
+  const a = article as any;
   const sidebarNews = moreNews.slice(0, 4);
   const gridNews = moreNews.slice(0, 3);
 
@@ -102,6 +105,12 @@ const NewsDetail = () => {
           <Button asChild variant="ghost" size="sm" className="mb-4">
             <Link to="/news"><ArrowLeft className="mr-2 h-4 w-4" /> Back to News</Link>
           </Button>
+          {/* Category / section tag */}
+          {a.category && (
+            <span className="inline-block bg-primary/10 text-primary text-[11px] font-medium tracking-widest uppercase px-3 py-1 rounded-sm">
+              {a.category}
+            </span>
+          )}
         </div>
       </section>
 
@@ -110,31 +119,57 @@ const NewsDetail = () => {
           <div className="grid lg:grid-cols-[1fr_380px] gap-10">
             {/* Main content */}
             <div className="space-y-8 min-w-0">
+
               {/* Cover image */}
               {article.cover_image_url && (
                 <AnimatedSection>
-                  <div className="aspect-[4/5] overflow-hidden rounded-2xl shadow-lg">
+                  <div className="aspect-[16/7] overflow-hidden rounded-2xl shadow-lg">
                     <img
                       src={article.cover_image_url}
                       alt={article.title}
                       className="w-full h-full object-cover object-center"
                     />
                   </div>
+                  {/* Image caption */}
+                  {a.image_caption && (
+                    <p className="text-xs text-muted-foreground italic mt-2 pl-1">{a.image_caption}</p>
+                  )}
                 </AnimatedSection>
               )}
 
-              {/* Title + date */}
+              {/* Title */}
               <AnimatedSection>
                 <h1 className="text-3xl md:text-4xl font-black text-foreground leading-tight">{article.title}</h1>
-                {article.published_at && (
-                  <p className="text-sm text-muted-foreground mt-3">
-                    {format(parseISO(article.published_at), "d MMMM yyyy")}
-                  </p>
-                )}
               </AnimatedSection>
 
-              {/* Excerpt as lead */}
-              {article.excerpt && (
+              {/* Deck / standfirst */}
+              {a.deck && (
+                <AnimatedSection>
+                  <p className="text-lg text-muted-foreground leading-relaxed border-l-4 border-primary pl-4 italic font-light">
+                    {a.deck}
+                  </p>
+                </AnimatedSection>
+              )}
+
+              {/* Meta row: author · location · date */}
+              <AnimatedSection>
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground border-t border-b border-border py-3">
+                  {a.author_name && (
+                    <span className="text-primary font-semibold uppercase tracking-widest text-xs">
+                      {a.author_name}
+                    </span>
+                  )}
+                  {a.location && (
+                    <span>{a.location}</span>
+                  )}
+                  {article.published_at && (
+                    <span>{format(parseISO(article.published_at), "d MMMM yyyy")}</span>
+                  )}
+                </div>
+              </AnimatedSection>
+
+              {/* Fallback: excerpt as lead if no deck */}
+              {!a.deck && article.excerpt && (
                 <AnimatedSection>
                   <p className="text-lg text-muted-foreground leading-relaxed border-l-4 border-primary pl-4">
                     {article.excerpt}
@@ -142,35 +177,41 @@ const NewsDetail = () => {
                 </AnimatedSection>
               )}
 
-              {/* Article body */}
-              <AnimatedSection>
-                <div className="prose prose-neutral dark:prose-invert max-w-none">
-                  {article.content?.split("\n").map((paragraph: string, i: number) => (
-                    paragraph.trim() ? <p key={i}>{paragraph}</p> : null
-                  ))}
-                </div>
-              </AnimatedSection>
+              {/* Article body — rendered as HTML from TipTap */}
+              {article.content && (
+                <AnimatedSection>
+                  <div
+                    className="prose prose-neutral dark:prose-invert max-w-none prose-headings:font-bold prose-h2:text-primary prose-blockquote:border-l-primary prose-blockquote:italic"
+                    dangerouslySetInnerHTML={{ __html: article.content }}
+                  />
+                </AnimatedSection>
+              )}
 
               {/* External Media Links */}
               {externalLinks.length > 0 && (
                 <AnimatedSection>
                   <div className="pt-8 border-t border-border">
                     <h2 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
-                      <ExternalLink className="h-5 w-5" /> Related Media Coverage
+                      <ExternalLink className="h-5 w-5" /> Media Coverage
                     </h2>
-                    <div className="grid sm:grid-cols-2 gap-3">
+                    <div className="divide-y divide-border border border-border rounded-xl overflow-hidden">
                       {externalLinks.map((link, i) => (
                         <a
                           key={i}
                           href={link.url}
                           target="_blank"
                           rel="noreferrer"
-                          className="flex items-center gap-3 p-4 rounded-xl border border-border bg-card hover:border-primary hover:shadow-md transition-all group"
+                          className="flex items-center gap-3 px-5 py-4 bg-card hover:bg-muted/50 transition-colors group"
                         >
                           <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary flex-shrink-0" />
-                          <span className="text-sm font-medium text-card-foreground group-hover:text-primary line-clamp-2">
-                            {link.title || link.url}
-                          </span>
+                          <div className="min-w-0">
+                            <span className="text-sm font-medium text-card-foreground group-hover:text-primary transition-colors line-clamp-2">
+                              {link.title || link.url}
+                            </span>
+                            {link.publication && (
+                              <span className="block text-xs text-muted-foreground italic mt-0.5">— {link.publication}</span>
+                            )}
+                          </div>
                         </a>
                       ))}
                     </div>

@@ -15,6 +15,7 @@ import parliamentHero from "@/assets/parliament-hero-clean.jpg";
 import ecowasLogo from "@/assets/ecowas-parliament-logo.png";
 import ProgrammeSponsorMarquee from "@/components/shared/ProgrammeSponsorMarquee";
 import ProgrammeSponsorsFooter from "@/components/shared/ProgrammeSponsorsFooter";
+import CommitteeStakeholders from "@/components/shared/CommitteeStakeholders";
 import FlagImg from "@/components/shared/FlagImg";
 import { useSiteContent } from "@/hooks/useSiteContent";
 
@@ -412,6 +413,7 @@ const Parliament = () => {
         </div>
       </section>
 
+      <CommitteeStakeholders programmeSlug="parliament" />
       <ProgrammeSponsorsFooter programme="parliament" />
       <ApplicationModal open={modalOpen} onOpenChange={setModalOpen} />
     </Layout>

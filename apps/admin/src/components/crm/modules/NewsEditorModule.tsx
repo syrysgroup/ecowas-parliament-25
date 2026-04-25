@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { format, parseISO } from "date-fns";
-import { Plus, Pencil, Trash2, Eye, Image, Send, Search, X, Link as LinkIcon } from "lucide-react";
+import { Plus, Pencil, Trash2, Eye, Image, Send, Search, X, Link as LinkIcon, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -13,16 +13,26 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { generateId } from "@/utils/id";
 import { usePermissions } from "@/hooks/usePermissions";
 import { toast } from "@/components/ui/sonner";
+import RichTextEditor from "./news/RichTextEditor";
+
+interface ExternalLink { title: string; url: string; publication?: string; }
 
 interface NewsRow {
   id: string; title: string; slug: string; excerpt: string | null;
   content: string | null; cover_image_url: string | null; author_id: string | null;
   status: string; published_at: string | null; created_at: string;
-  external_links?: { title: string; url: string }[];
+  external_links?: ExternalLink[];
   source_doc?: string | null;
   fact_checked?: boolean;
+  deck?: string | null;
+  author_name?: string | null;
+  location?: string | null;
+  category?: string | null;
+  image_caption?: string | null;
+  event_id?: string | null;
 }
 
+const ECOWAS_AUTHOR = "ECOWAS Parliament Initiative";
 const PAGE_SIZE = 20;
 
 function ArticleDialog({ open, onClose, article }: { open: boolean; onClose: () => void; article?: NewsRow }) {
@@ -40,9 +50,27 @@ function ArticleDialog({ open, onClose, article }: { open: boolean; onClose: () 
   const [uploading, setUploading] = useState(false);
   const [sourceDoc, setSourceDoc] = useState(article?.source_doc ?? "");
   const [factChecked, setFactChecked] = useState(article?.fact_checked ?? false);
-  const [externalLinks, setExternalLinks] = useState<{ title: string; url: string }[]>(
-    article?.external_links ?? []
+  const [externalLinks, setExternalLinks] = useState<ExternalLink[]>(
+    (article?.external_links as ExternalLink[]) ?? []
   );
+  const [deck, setDeck] = useState(article?.deck ?? "");
+  const [authorName, setAuthorName] = useState(article?.author_name ?? "");
+  const [locationField, setLocationField] = useState(article?.location ?? "");
+  const [category, setCategory] = useState(article?.category ?? "");
+  const [imageCaption, setImageCaption] = useState(article?.image_caption ?? "");
+  const [eventId, setEventId] = useState(article?.event_id ?? "");
+
+  const { data: events = [] } = useQuery<{ id: string; title: string; date: string }[]>({
+    queryKey: ["events-for-news-selector"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("events")
+        .select("id, title, date")
+        .eq("is_published", true)
+        .order("date", { ascending: false });
+      return data ?? [];
+    },
+  });
 
   const handleUpload = async (file: File) => {
     setUploading(true);
@@ -54,26 +82,35 @@ function ArticleDialog({ open, onClose, article }: { open: boolean; onClose: () 
     } finally { setUploading(false); }
   };
 
-  const addLink = () => setExternalLinks(prev => [...prev, { title: "", url: "" }]);
+  const addLink = () => setExternalLinks(prev => [...prev, { title: "", url: "", publication: "" }]);
   const removeLink = (i: number) => setExternalLinks(prev => prev.filter((_, idx) => idx !== i));
-  const updateLink = (i: number, field: "title" | "url", value: string) =>
+  const updateLink = (i: number, field: keyof ExternalLink, value: string) =>
     setExternalLinks(prev => prev.map((l, idx) => idx === i ? { ...l, [field]: value } : l));
 
   const save = useMutation({
     mutationFn: async () => {
       const wasNotPublished = !article?.published_at || article?.status !== "published";
       const isNowPublished  = status === "published";
-      // Require source document before publishing
       if (isNowPublished && !sourceDoc.trim()) {
         throw new Error("Source document is required before publishing. Add a source reference below.");
       }
-      const payload: any = {
-        title, slug: slug || title.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, ""),
-        excerpt: excerpt || null, content: content || null, cover_image_url: coverUrl || null,
-        status, updated_at: new Date().toISOString(),
+      const payload: Record<string, unknown> = {
+        title,
+        slug: slug || title.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, ""),
+        excerpt: excerpt || null,
+        content: content || null,
+        cover_image_url: coverUrl || null,
+        status,
+        updated_at: new Date().toISOString(),
         external_links: externalLinks.filter(l => l.url.trim()),
         source_doc: sourceDoc.trim() || null,
         fact_checked: factChecked,
+        deck: deck.trim() || null,
+        author_name: authorName.trim() || null,
+        location: locationField.trim() || null,
+        category: category.trim() || null,
+        image_caption: imageCaption.trim() || null,
+        event_id: eventId || null,
         ...(isNowPublished && wasNotPublished ? { published_at: new Date().toISOString() } : {}),
       };
       if (isEdit) await supabase.from("news_articles").update(payload).eq("id", article.id);
@@ -85,16 +122,18 @@ function ArticleDialog({ open, onClose, article }: { open: boolean; onClose: () 
       toast("Article saved");
       onClose();
     },
-    onError: (err: any) => toast(err.message || "Failed to save"),
+    onError: (err: unknown) => toast((err as Error).message || "Failed to save"),
   });
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="bg-crm-card border-crm-border text-crm-text max-w-2xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="bg-crm-card border-crm-border text-crm-text max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-sm font-semibold text-crm-text">{isEdit ? "Edit Article" : "New Article"}</DialogTitle>
         </DialogHeader>
         <div className="space-y-3 py-1">
+
+          {/* Cover Image */}
           <div className="space-y-2">
             <Label className="text-[11px] text-crm-text-dim">Cover Image</Label>
             {coverUrl && <img src={coverUrl} alt="" className="w-full h-40 object-cover rounded-lg border border-crm-border" />}
@@ -102,6 +141,16 @@ function ArticleDialog({ open, onClose, article }: { open: boolean; onClose: () 
             <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()} disabled={uploading}
               className="border-crm-border text-crm-text-muted text-xs gap-1"><Image size={12} /> {uploading ? "Uploading…" : "Upload"}</Button>
           </div>
+
+          {/* Image caption */}
+          <div className="space-y-1">
+            <Label className="text-[11px] text-crm-text-dim">Image Caption</Label>
+            <Input value={imageCaption} onChange={e => setImageCaption(e.target.value)}
+              placeholder="e.g. Media briefing at ECOWAS Parliament headquarters, Abuja — March 2026."
+              className="bg-crm-surface border-crm-border text-crm-text text-xs h-8 italic" />
+          </div>
+
+          {/* Title + Slug */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label className="text-[11px] text-crm-text-dim">Title *</Label>
@@ -114,22 +163,69 @@ function ArticleDialog({ open, onClose, article }: { open: boolean; onClose: () 
                 className="bg-crm-surface border-crm-border text-crm-text text-xs h-8 font-mono" />
             </div>
           </div>
+
+          {/* Category + Location */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label className="text-[11px] text-crm-text-dim">Category / Section Tag</Label>
+              <Input value={category} onChange={e => setCategory(e.target.value)}
+                placeholder="e.g. News • Regional Integration"
+                className="bg-crm-surface border-crm-border text-crm-text text-xs h-8" />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-[11px] text-crm-text-dim">Location (Dateline)</Label>
+              <Input value={locationField} onChange={e => setLocationField(e.target.value)}
+                placeholder="e.g. Abuja, Nigeria"
+                className="bg-crm-surface border-crm-border text-crm-text text-xs h-8" />
+            </div>
+          </div>
+
+          {/* Deck / Standfirst */}
           <div className="space-y-1">
-            <Label className="text-[11px] text-crm-text-dim">Excerpt</Label>
+            <Label className="text-[11px] text-crm-text-dim">Deck / Standfirst <span className="text-crm-text-dim font-normal">(italic lead sentence shown under the headline)</span></Label>
+            <Textarea value={deck} onChange={e => setDeck(e.target.value)}
+              className="bg-crm-surface border-crm-border text-crm-text text-xs resize-none italic" rows={2}
+              placeholder="e.g. Marking its 25th anniversary, the ECOWAS Parliament unveils a landmark initiative…" />
+          </div>
+
+          {/* Author Name */}
+          <div className="space-y-1">
+            <Label className="text-[11px] text-crm-text-dim">Author / Byline</Label>
+            <div className="flex gap-2">
+              <Input value={authorName} onChange={e => setAuthorName(e.target.value)}
+                placeholder="Author name or organisation"
+                className="bg-crm-surface border-crm-border text-crm-text text-xs h-8 flex-1" />
+              <Button type="button" variant="outline" size="sm"
+                onClick={() => setAuthorName(ECOWAS_AUTHOR)}
+                className="border-crm-border text-crm-text-muted text-[10px] h-8 px-2 whitespace-nowrap shrink-0">
+                EPI
+              </Button>
+            </div>
+            <p className="text-[10px] text-crm-text-dim">Press EPI to set "{ECOWAS_AUTHOR}"</p>
+          </div>
+
+          {/* Excerpt */}
+          <div className="space-y-1">
+            <Label className="text-[11px] text-crm-text-dim">Excerpt <span className="text-crm-text-dim font-normal">(short summary for article cards)</span></Label>
             <Textarea value={excerpt} onChange={e => setExcerpt(e.target.value)}
               className="bg-crm-surface border-crm-border text-crm-text text-xs resize-none" rows={2} />
           </div>
+
+          {/* Rich text content */}
           <div className="space-y-1">
-            <Label className="text-[11px] text-crm-text-dim">Content</Label>
-            <Textarea value={content} onChange={e => setContent(e.target.value)}
-              className="bg-crm-surface border-crm-border text-crm-text text-xs resize-none font-mono" rows={8} placeholder="Article content (markdown supported)" />
+            <Label className="text-[11px] text-crm-text-dim">Content <span className="text-crm-text-dim font-normal">(use toolbar for headings, bold, blockquotes, lists, alignment)</span></Label>
+            <RichTextEditor
+              value={content}
+              onChange={setContent}
+              placeholder="Article body — use the toolbar to format headings, pull quotes, and lists"
+            />
           </div>
 
-          {/* External Links */}
+          {/* External Media Links */}
           <div className="space-y-2 bg-crm-surface border border-crm-border rounded-lg p-3">
             <div className="flex items-center justify-between">
               <Label className="text-[11px] text-crm-text-dim font-semibold flex items-center gap-1">
-                <LinkIcon size={11} /> External Media Links
+                <LinkIcon size={11} /> Media Coverage Links
               </Label>
               <Button type="button" variant="outline" size="sm" onClick={addLink}
                 className="border-crm-border text-crm-text-muted text-[10px] gap-1 h-6 px-2">
@@ -137,19 +233,43 @@ function ArticleDialog({ open, onClose, article }: { open: boolean; onClose: () 
               </Button>
             </div>
             {externalLinks.map((link, i) => (
-              <div key={i} className="grid grid-cols-[1fr_1fr_auto] gap-2">
+              <div key={i} className="grid grid-cols-[1fr_1fr_0.7fr_auto] gap-2">
                 <Input value={link.title} onChange={e => updateLink(i, "title", e.target.value)}
-                  placeholder="Link title" className="bg-crm-card border-crm-border text-crm-text text-xs h-7" />
+                  placeholder="Article title" className="bg-crm-card border-crm-border text-crm-text text-xs h-7" />
                 <Input value={link.url} onChange={e => updateLink(i, "url", e.target.value)}
-                  placeholder="https://..." className="bg-crm-card border-crm-border text-crm-text text-xs h-7 font-mono" />
+                  placeholder="https://…" className="bg-crm-card border-crm-border text-crm-text text-xs h-7 font-mono" />
+                <Input value={link.publication ?? ""} onChange={e => updateLink(i, "publication", e.target.value)}
+                  placeholder="Publication" className="bg-crm-card border-crm-border text-crm-text text-xs h-7" />
                 <button onClick={() => removeLink(i)} className="w-7 h-7 rounded flex items-center justify-center text-red-400 hover:bg-red-950 transition-colors">
                   <X size={12} />
                 </button>
               </div>
             ))}
+            {externalLinks.length === 0 && (
+              <p className="text-[10px] text-crm-text-dim">No coverage links yet.</p>
+            )}
           </div>
 
-          {/* Editorial: source doc + fact-check */}
+          {/* Event linkage */}
+          <div className="space-y-1.5 bg-crm-surface border border-crm-border rounded-lg p-3">
+            <Label className="text-[11px] text-crm-text-dim font-semibold flex items-center gap-1">
+              <Calendar size={11} /> Link to Event <span className="font-normal">(optional)</span>
+            </Label>
+            <select
+              value={eventId}
+              onChange={e => setEventId(e.target.value)}
+              className="w-full bg-crm-card border border-crm-border text-crm-text text-xs h-8 rounded-md px-2 outline-none focus:border-emerald-700"
+            >
+              <option value="">— None —</option>
+              {events.map(ev => (
+                <option key={ev.id} value={ev.id}>
+                  {ev.title} ({format(parseISO(ev.date), "d MMM yyyy")})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Editorial */}
           <div className="space-y-2.5 bg-crm-surface border border-crm-border rounded-lg p-3">
             <p className="text-[10px] font-mono text-crm-text-dim uppercase tracking-wide font-semibold">Editorial</p>
             <div className="space-y-1">
@@ -162,12 +282,12 @@ function ArticleDialog({ open, onClose, article }: { open: boolean; onClose: () 
                 className="bg-crm-card border-crm-border text-crm-text text-xs h-8" />
             </div>
             <label className="flex items-center gap-2 cursor-pointer">
-              <Checkbox checked={factChecked} onCheckedChange={v => setFactChecked(!!v)}
-                className="border-crm-border" />
+              <Checkbox checked={factChecked} onCheckedChange={v => setFactChecked(!!v)} className="border-crm-border" />
               <span className="text-[11px] text-crm-text-muted">Fact-checked before publishing</span>
             </label>
           </div>
 
+          {/* Status */}
           <div className="flex gap-2">
             {["draft", "published"].map(s => (
               <button key={s} type="button" onClick={() => setStatus(s)}
@@ -177,6 +297,7 @@ function ArticleDialog({ open, onClose, article }: { open: boolean; onClose: () 
             ))}
           </div>
         </div>
+
         <DialogFooter>
           <Button variant="outline" size="sm" onClick={onClose} className="border-crm-border text-crm-text-muted text-xs">Cancel</Button>
           <Button size="sm" disabled={!title.trim() || save.isPending} onClick={() => save.mutate()}
@@ -291,7 +412,7 @@ export default function NewsEditorModule() {
             className="bg-crm-surface border-crm-border text-crm-text text-xs h-8 pl-8" placeholder="Search articles..." />
         </div>
         {["all", "draft", "published"].map(f => (
-          <button key={f} onClick={() => { setStatusFilter(f as any); setPage(0); }}
+          <button key={f} onClick={() => { setStatusFilter(f as "all" | "draft" | "published"); setPage(0); }}
             className={`text-[10px] font-mono px-2.5 py-1 rounded border transition-colors ${
               statusFilter === f ? "bg-emerald-950 text-emerald-400 border-emerald-800" : "bg-crm-surface text-crm-text-muted border-crm-border"
             }`}>{f === "all" ? "All" : f.charAt(0).toUpperCase() + f.slice(1)} ({articles.filter(a => f === "all" || a.status === f).length})</button>
@@ -338,9 +459,18 @@ export default function NewsEditorModule() {
                       {a.external_links!.length} links
                     </span>
                   )}
+                  {a.author_name && (
+                    <span className="text-[9px] font-mono px-1.5 py-0.5 rounded border bg-crm-surface text-crm-text-muted border-crm-border">
+                      {a.author_name}
+                    </span>
+                  )}
                 </div>
-                <p className="text-[10px] text-crm-text-dim">{format(parseISO(a.created_at), "d MMM yyyy")}</p>
-                {a.excerpt && <p className="text-[10px] text-crm-text-dim mt-0.5 line-clamp-1">{a.excerpt}</p>}
+                <p className="text-[10px] text-crm-text-dim">{format(parseISO(a.created_at), "d MMM yyyy")}{a.location ? ` · ${a.location}` : ""}</p>
+                {a.deck ? (
+                  <p className="text-[10px] text-crm-text-dim mt-0.5 line-clamp-1 italic">{a.deck}</p>
+                ) : a.excerpt ? (
+                  <p className="text-[10px] text-crm-text-dim mt-0.5 line-clamp-1">{a.excerpt}</p>
+                ) : null}
               </div>
               <div className="flex items-center gap-1 p-3 flex-shrink-0">
                 {a.status === "draft" && canEdit("news") && (

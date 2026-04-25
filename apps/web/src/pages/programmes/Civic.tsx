@@ -13,6 +13,7 @@ import {
 import FlagImg from "@/components/shared/FlagImg";
 import ProgrammeSponsorMarquee from "@/components/shared/ProgrammeSponsorMarquee";
 import ProgrammeSponsorsFooter from "@/components/shared/ProgrammeSponsorsFooter";
+import CommitteeStakeholders from "@/components/shared/CommitteeStakeholders";
 
 const caravanStops = [
   { type: "Airports", desc: "Branded installations at major West African airports reaching thousands of travellers daily.", icon: <Plane className="h-6 w-6" /> },
@@ -264,6 +265,7 @@ const Civic = () => (
         </AnimatedSection>
       </div>
     </section>
+    <CommitteeStakeholders programmeSlug="civic" />
     <ProgrammeSponsorsFooter programme="civic" />
   </Layout>
 );

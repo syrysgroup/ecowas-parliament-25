@@ -4,6 +4,7 @@ import AnimatedSection from "@/components/shared/AnimatedSection";
 import HeroIllustration from "@/components/shared/HeroIllustration";
 import ProgrammeSponsorMarquee from "@/components/shared/ProgrammeSponsorMarquee";
 import ProgrammeSponsorsFooter from "@/components/shared/ProgrammeSponsorsFooter";
+import CommitteeStakeholders from "@/components/shared/CommitteeStakeholders";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -491,6 +492,9 @@ const Trade = () => {
           </AnimatedSection>
         </div>
       </section>
+
+      {/* Committee Stakeholders */}
+      <CommitteeStakeholders programmeSlug="trade" />
 
       {/* Sponsor Footer */}
       <ProgrammeSponsorsFooter programme="trade" />

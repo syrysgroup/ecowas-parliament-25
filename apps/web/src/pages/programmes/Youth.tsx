@@ -10,6 +10,7 @@ import innovatorsBg from "@/assets/youth-innovators-bg.jpg";
 import smartBg from "@/assets/youth-smart-bg.jpg";
 import ProgrammeSponsorMarquee from "@/components/shared/ProgrammeSponsorMarquee";
 import ProgrammeSponsorsFooter from "@/components/shared/ProgrammeSponsorsFooter";
+import CommitteeStakeholders from "@/components/shared/CommitteeStakeholders";
 
 interface SponsorRow {
   id: string;
@@ -194,6 +195,7 @@ const Youth = () => {
         </div>
       </section>
 
+      <CommitteeStakeholders programmeSlug="youth" />
       <ProgrammeSponsorsFooter programme="youth" />
     </div>
   );
