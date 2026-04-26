@@ -113,8 +113,8 @@ function ArticleDialog({ open, onClose, article }: { open: boolean; onClose: () 
         event_id: eventId || null,
         ...(isNowPublished && wasNotPublished ? { published_at: new Date().toISOString() } : {}),
       };
-      if (isEdit) await supabase.from("news_articles").update(payload).eq("id", article.id);
-      else await supabase.from("news_articles").insert({ ...payload, author_id: user!.id });
+      if (isEdit) await supabase.from("news_articles").update(payload as any).eq("id", article.id);
+      else await supabase.from("news_articles").insert({ ...payload, author_id: user!.id } as any);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["news-editor"] });
@@ -397,7 +397,7 @@ export default function NewsEditorModule() {
           <h2 className="text-lg font-bold text-crm-text">News & Articles</h2>
           <p className="text-[12px] text-crm-text-muted mt-0.5">Manage news articles for the website</p>
         </div>
-        {canCreate("news") && (
+        {canCreate("news-editor") && (
           <Button size="sm" onClick={() => setAddOpen(true)} className="bg-emerald-700 hover:bg-emerald-600 text-white text-xs gap-1.5">
             <Plus size={13} /> New Article
           </Button>
@@ -423,7 +423,7 @@ export default function NewsEditorModule() {
       {selectedIds.size > 0 && (
         <div className="flex items-center gap-2 bg-crm-surface border border-crm-border rounded-lg px-3 py-2">
           <span className="text-[11px] text-crm-text-muted">{selectedIds.size} selected</span>
-          {canDelete("news") && (
+          {canDelete("news-editor") && (
             <Button size="sm" variant="outline" onClick={() => bulkDelete.mutate()}
               className="border-red-800 text-red-400 text-[10px] h-6 px-2">Delete</Button>
           )}
@@ -473,16 +473,16 @@ export default function NewsEditorModule() {
                 ) : null}
               </div>
               <div className="flex items-center gap-1 p-3 flex-shrink-0">
-                {a.status === "draft" && canEdit("news") && (
+                {a.status === "draft" && canEdit("news-editor") && (
                   <button onClick={() => publish.mutate(a.id)}
                     className="flex items-center gap-1 text-[10px] font-semibold text-emerald-400 bg-emerald-950 border border-emerald-800 rounded px-2 py-1">
                     <Send size={10} /> Publish
                   </button>
                 )}
-                {canEdit("news") && (
+                {canEdit("news-editor") && (
                   <button onClick={() => setEditTarget(a)} className="w-7 h-7 rounded flex items-center justify-center bg-crm-surface border border-crm-border text-crm-text-dim hover:text-crm-text-secondary transition-colors"><Pencil size={12} /></button>
                 )}
-                {canDelete("news") && (
+                {canDelete("news-editor") && (
                   confirmDeleteId === a.id ? (
                     <div className="flex items-center gap-1">
                       <button onClick={() => deleteArticle.mutate(a.id)} className="text-[10px] text-red-400 bg-red-950 border border-red-800 rounded px-2 py-1">Delete</button>

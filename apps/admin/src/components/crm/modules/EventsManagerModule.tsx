@@ -11,7 +11,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { generateId } from "@/utils/id";
@@ -320,7 +319,6 @@ function EventDialog({ open, onClose, event }: { open: boolean; onClose: () => v
 }
 
 export default function EventsManagerModule() {
-  const { isAdmin } = useAuthContext();
   const { canCreate, canEdit, canDelete } = usePermissions();
   const qc = useQueryClient();
   const [addOpen, setAddOpen] = useState(false);
@@ -398,7 +396,7 @@ export default function EventsManagerModule() {
           <h2 className="text-lg font-bold text-crm-text">Events Manager</h2>
           <p className="text-[12px] text-crm-text-muted mt-0.5">Manage public-facing events with cover images and registration</p>
         </div>
-        {canCreate("events") && (
+        {canCreate("events-manager") && (
           <Button size="sm" onClick={() => setAddOpen(true)}
             className="bg-emerald-700 hover:bg-emerald-600 text-white text-xs gap-1.5">
             <Plus size={13} /> New Event
@@ -425,7 +423,7 @@ export default function EventsManagerModule() {
       {selectedIds.size > 0 && (
         <div className="flex items-center gap-2 bg-crm-surface border border-crm-border rounded-lg px-3 py-2">
           <span className="text-[11px] text-crm-text-muted">{selectedIds.size} selected</span>
-          {canDelete("events") && (
+          {canDelete("events-manager") && (
             <Button size="sm" variant="outline" onClick={() => bulkDelete.mutate()}
               className="border-red-800 text-red-400 text-[10px] h-6 px-2">Delete</Button>
           )}
@@ -479,20 +477,20 @@ export default function EventsManagerModule() {
                 </div>
               </div>
               <div className="flex items-center gap-1 p-3 flex-shrink-0">
-                {canEdit("events") && (
+                {canEdit("events-manager") && (
                   <button onClick={() => togglePublish.mutate({ id: ev.id, published: !ev.is_published })}
                     className="w-7 h-7 rounded flex items-center justify-center bg-crm-surface border border-crm-border text-crm-text-dim hover:text-crm-text-secondary transition-colors"
                     title={ev.is_published ? "Unpublish" : "Publish"}>
                     {ev.is_published ? <EyeOff size={12} /> : <Eye size={12} />}
                   </button>
                 )}
-                {canEdit("events") && (
+                {canEdit("events-manager") && (
                   <button onClick={() => setEditTarget(ev)}
                     className="w-7 h-7 rounded flex items-center justify-center bg-crm-surface border border-crm-border text-crm-text-dim hover:text-crm-text-secondary transition-colors">
                     <Pencil size={12} />
                   </button>
                 )}
-                {canDelete("events") && (
+                {canDelete("events-manager") && (
                   confirmDeleteId === ev.id ? (
                     <div className="flex items-center gap-1">
                       <button onClick={() => deleteEvent.mutate(ev.id)}

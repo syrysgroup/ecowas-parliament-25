@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+﻿import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthContext";
@@ -568,7 +568,7 @@ export default function SponsorsManagerModule() {
           <h2 className="text-lg font-bold text-crm-text">Sponsors & Partners</h2>
           <p className="text-[12px] text-crm-text-muted mt-0.5">Manage sponsors and partners displayed on the website</p>
         </div>
-        {canCreate("sponsors") && (
+        {canCreate("sponsors-partners") && (
           <Button size="sm" onClick={() => tab === "sponsors" ? setAddSponsorOpen(true) : setAddPartnerOpen(true)}
             className="bg-emerald-700 hover:bg-emerald-600 text-white text-xs gap-1.5">
             <Plus size={13} /> Add {tab === "sponsors" ? "Sponsor" : "Partner"}
@@ -587,7 +587,7 @@ export default function SponsorsManagerModule() {
       {selectedIds.size > 0 && (
         <div className="flex items-center gap-2 bg-crm-surface border border-crm-border rounded-lg px-3 py-2">
           <span className="text-[11px] text-crm-text-muted">{selectedIds.size} selected</span>
-          {canEdit("sponsors") && (
+          {canEdit("sponsors-partners") && (
             <>
               <Button size="sm" variant="outline" onClick={() => bulkPublish.mutate()} disabled={bulkPublish.isPending}
                 className="border-emerald-800 text-emerald-400 text-[10px] h-6 px-2">
@@ -599,7 +599,7 @@ export default function SponsorsManagerModule() {
               </Button>
             </>
           )}
-          {canDelete("sponsors") && (
+          {canDelete("sponsors-partners") && (
             <Button size="sm" variant="outline" onClick={() => bulkDelete.mutate()} disabled={bulkDelete.isPending}
               className="border-red-800 text-red-400 text-[10px] h-6 px-2">
               Delete selected
@@ -649,7 +649,7 @@ export default function SponsorsManagerModule() {
               </div>
               <div className="flex gap-1">
                 {/* Publish toggle */}
-                {canEdit("sponsors") && (
+                {canEdit("sponsors-partners") && (
                   <button
                     onClick={() => toggleSponsorPublish.mutate({ id: s.id, published: !s.is_published })}
                     title={s.is_published ? "Click to unpublish" : "Click to publish"}
@@ -672,10 +672,10 @@ export default function SponsorsManagerModule() {
                 >
                   <ExternalLink size={12} />
                 </a>
-                {canEdit("sponsors") && (
+                {canEdit("sponsors-partners") && (
                   <button onClick={() => setEditSponsor(s)} className="w-7 h-7 rounded flex items-center justify-center bg-crm-surface border border-crm-border text-crm-text-dim hover:text-crm-text-secondary transition-colors"><Pencil size={12} /></button>
                 )}
-                {canDelete("sponsors") && (
+                {canDelete("sponsors-partners") && (
                   confirmDelete === s.id ? (
                     <div className="flex items-center gap-1">
                       <button onClick={() => deleteSponsor.mutate(s.id)} className="text-[10px] text-red-400 bg-red-950 border border-red-800 rounded px-2 py-1">Yes</button>
@@ -719,7 +719,7 @@ export default function SponsorsManagerModule() {
               </div>
               <div className="flex gap-1">
                 {/* Publish toggle */}
-                {canEdit("sponsors") && (
+                {canEdit("sponsors-partners") && (
                   <button
                     onClick={() => togglePartnerPublish.mutate({ id: p.id, published: !p.is_published })}
                     title={p.is_published ? "Click to unpublish" : "Click to publish"}
@@ -742,10 +742,10 @@ export default function SponsorsManagerModule() {
                 >
                   <ExternalLink size={12} />
                 </a>
-                {canEdit("sponsors") && (
+                {canEdit("sponsors-partners") && (
                   <button onClick={() => setEditPartner(p)} className="w-7 h-7 rounded flex items-center justify-center bg-crm-surface border border-crm-border text-crm-text-dim hover:text-crm-text-secondary transition-colors"><Pencil size={12} /></button>
                 )}
-                {canDelete("sponsors") && (
+                {canDelete("sponsors-partners") && (
                   confirmDelete === p.id ? (
                     <div className="flex items-center gap-1">
                       <button onClick={() => deletePartner.mutate(p.id)} className="text-[10px] text-red-400 bg-red-950 border border-red-800 rounded px-2 py-1">Yes</button>
