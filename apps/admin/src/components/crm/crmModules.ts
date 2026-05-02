@@ -64,6 +64,7 @@ export type ModuleId =
   | "events-manager"
   | "sponsors-partners"
   | "news-editor"
+  | "marketplace"
   | "site-content"
   | "contact-submissions"
   | "newsletter"
