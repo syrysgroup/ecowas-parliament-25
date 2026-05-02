@@ -33,6 +33,11 @@ import MediaPortal from "./pages/MediaPortal";
 import EcowasParliament from "./pages/EcowasParliament";
 import SponsorDashboard from "./pages/SponsorDashboard";
 
+// Marketplace
+import Marketplace from "./pages/marketplace/Marketplace";
+import MarketplaceListingDetail from "./pages/marketplace/ListingDetail";
+import MarketplaceSell from "./pages/marketplace/SellForm";
+
 // Programme pages
 import Youth from "./pages/programmes/Youth";
 import Trade from "./pages/programmes/Trade";
@@ -112,6 +117,11 @@ const App = () => (
               <Route path="/partners/:slug"     element={<PartnerPage />}    />
               <Route path="/sponsors/:slug"     element={<SponsorPage />}    />
               <Route path="/ecowas-parliament"  element={<EcowasParliament />} />
+
+              {/* Marketplace */}
+              <Route path="/marketplace" element={<Marketplace />} />
+              <Route path="/marketplace/sell" element={<MarketplaceSell />} />
+              <Route path="/marketplace/listings/:slug" element={<MarketplaceListingDetail />} />
 
               {/* Programme pillars */}
               <Route path="/programmes/youth"      element={<Youth />}      />
