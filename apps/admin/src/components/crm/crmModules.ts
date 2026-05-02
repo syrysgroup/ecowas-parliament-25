@@ -259,6 +259,15 @@ export const CRM_MODULES: CRMModule[] = [
     group: "CONTENT",
   },
   {
+    id: "marketplace",
+    label: "Marketplace",
+    icon: ShoppingBag,
+    section: "marketplace",
+    allowedRoles: ["super_admin", "admin", "project_director", "programme_lead", "sponsor_manager"],
+    isStub: false,
+    group: "CONTENT",
+  },
+  {
     id: "site-content",
     label: "Site Content",
     icon: PanelTop,
