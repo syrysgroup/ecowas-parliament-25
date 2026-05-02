@@ -29,6 +29,7 @@ import MediaKitModule from "@/components/crm/modules/MediaKitModule";
 import InvoiceModule from "@/components/crm/modules/InvoiceModule";
 import ProfileModule from "@/components/crm/modules/ProfileModule";
 import RolesModule from "@/components/crm/modules/RolesModule";
+import MarketplaceModule from "@/components/crm/modules/MarketplaceModule";
 
 // Lazy — less frequently used modules
 const MessagingModule = lazy(() => import("@/components/crm/modules/MessagingModule"));
@@ -141,6 +142,7 @@ export default function CRMDashboard() {
       case "seo":             return <Suspense fallback={<ModuleLoader />}><SEOModule /></Suspense>;
       case "events-manager":  return <EventsManagerModule />;
       case "sponsors-partners": return <SponsorsManagerModule />;
+      case "marketplace":       return <MarketplaceModule />;
       case "news-editor":     return <Suspense fallback={<ModuleLoader />}><NewsEditorModule /></Suspense>;
       case "site-content":    return <Suspense fallback={<ModuleLoader />}><SiteContentModule /></Suspense>;
       case "contact-submissions": return <Suspense fallback={<ModuleLoader />}><ContactSubmissionsModule /></Suspense>;

@@ -51,6 +51,7 @@ const Navbar = () => {
       children: [
         { label: t("prog.youth"), to: "/programmes/youth" },
         { label: t("prog.trade"), to: "/programmes/trade" },
+        { label: "Marketplace", to: "/marketplace" },
         { label: t("prog.women"), to: "/programmes/women" },
         { label: t("prog.civic"), to: "/programmes/civic" },
         { label: t("prog.culture"), to: "/programmes/culture" },

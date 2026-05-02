@@ -32,6 +32,7 @@ import {
   Crown,
   Search,
   Scroll,
+  ShoppingBag,
 } from "lucide-react";
 
 export type ModuleGroup =
@@ -64,6 +65,7 @@ export type ModuleId =
   | "events-manager"
   | "sponsors-partners"
   | "news-editor"
+  | "marketplace"
   | "site-content"
   | "contact-submissions"
   | "newsletter"
@@ -254,6 +256,15 @@ export const CRM_MODULES: CRMModule[] = [
     icon: Handshake,
     section: "sponsors-partners",
     allowedRoles: ["super_admin", "admin", "sponsor_manager"],
+    isStub: false,
+    group: "CONTENT",
+  },
+  {
+    id: "marketplace",
+    label: "Marketplace",
+    icon: ShoppingBag,
+    section: "marketplace",
+    allowedRoles: ["super_admin", "admin", "project_director", "programme_lead", "sponsor_manager"],
     isStub: false,
     group: "CONTENT",
   },
