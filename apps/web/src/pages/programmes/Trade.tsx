@@ -487,6 +487,9 @@ const Trade = () => {
               <Button asChild variant="outline" size="lg">
                 <Link to="/contact">{t("trade.cta.partner")}</Link>
               </Button>
+              <Button asChild variant="secondary" size="lg">
+                <Link to="/marketplace">Visit Marketplace</Link>
+              </Button>
             </div>
             <p className="text-xs text-muted-foreground mt-4">{t("trade.cta.training")}</p>
           </AnimatedSection>
