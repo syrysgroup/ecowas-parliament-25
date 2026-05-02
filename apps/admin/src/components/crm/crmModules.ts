@@ -32,6 +32,7 @@ import {
   Crown,
   Search,
   Scroll,
+  ShoppingBag,
 } from "lucide-react";
 
 export type ModuleGroup =
