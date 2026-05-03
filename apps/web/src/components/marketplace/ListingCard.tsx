@@ -50,7 +50,12 @@ export default function ListingCard({ listing }: { listing: ListingCardData }) {
           </h3>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             {listing.country && <FlagImg country={listing.country} className="h-3 w-4" />}
-            <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{listing.country || "—"}</span>
+            <span className="flex items-center gap-1">
+              <MapPin className="h-3 w-3" />Sourced from {listing.country || "West Africa"}
+            </span>
+          </div>
+          <div className="text-[10px] uppercase font-bold text-primary/80">
+            Distributed by ECOWAS Parliament Initiatives
           </div>
           <div className="flex items-center justify-between pt-2 border-t border-border/60">
             <span className="text-sm font-bold text-primary">{priceText}</span>
