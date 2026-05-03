@@ -7,6 +7,7 @@ import CountriesSection from "@/components/home/CountriesSection";
 import AnniversarySection from "@/components/home/AnniversarySection";
 import PeopleMandateSection from "@/components/home/PeopleMandateSection";
 import PillarsGrid from "@/components/home/PillarsGrid";
+import MarketplaceSpotlight from "@/components/home/MarketplaceSpotlight";
 import ImplementingPartnersSection from "@/components/home/ImplementingPartnersSection";
 import InstitutionalPartnersSection from "@/components/home/InstitutionalPartnersSection";
 import SponsorPlaceholderSection from "@/components/home/SponsorPlaceholderSection";
@@ -28,6 +29,7 @@ const Index = () => {
       <AnniversarySection />
       <PeopleMandateSection />
       <PillarsGrid />
+      <MarketplaceSpotlight />
       <ImplementingPartnersSection />
       <InstitutionalPartnersSection />
       <SponsorPlaceholderSection />
