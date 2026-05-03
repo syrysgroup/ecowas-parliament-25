@@ -1449,6 +1449,48 @@ export type Database = {
           },
         ]
       }
+      marketplace_buyers: {
+        Row: {
+          categories_of_interest: string[]
+          country: string
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          organisation: string
+          sourcing_intent: string | null
+          status: string
+          updated_at: string
+          whatsapp: string | null
+        }
+        Insert: {
+          categories_of_interest?: string[]
+          country: string
+          created_at?: string
+          email: string
+          full_name: string
+          id?: string
+          organisation: string
+          sourcing_intent?: string | null
+          status?: string
+          updated_at?: string
+          whatsapp?: string | null
+        }
+        Update: {
+          categories_of_interest?: string[]
+          country?: string
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          organisation?: string
+          sourcing_intent?: string | null
+          status?: string
+          updated_at?: string
+          whatsapp?: string | null
+        }
+        Relationships: []
+      }
       marketplace_categories: {
         Row: {
           created_at: string
@@ -1472,6 +1514,69 @@ export type Database = {
           sort_order?: number
         }
         Relationships: []
+      }
+      marketplace_connections: {
+        Row: {
+          buyer_email: string
+          buyer_name: string
+          buyer_whatsapp: string | null
+          created_at: string
+          id: string
+          invoice_id: string | null
+          listing_id: string | null
+          message: string | null
+          product_name: string | null
+          seller_company: string | null
+          seller_email: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          buyer_email: string
+          buyer_name: string
+          buyer_whatsapp?: string | null
+          created_at?: string
+          id?: string
+          invoice_id?: string | null
+          listing_id?: string | null
+          message?: string | null
+          product_name?: string | null
+          seller_company?: string | null
+          seller_email?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          buyer_email?: string
+          buyer_name?: string
+          buyer_whatsapp?: string | null
+          created_at?: string
+          id?: string
+          invoice_id?: string | null
+          listing_id?: string | null
+          message?: string | null
+          product_name?: string | null
+          seller_company?: string | null
+          seller_email?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_connections_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_connections_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_listings"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       marketplace_inquiries: {
         Row: {
