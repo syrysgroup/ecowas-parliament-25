@@ -29,6 +29,7 @@ const Index = () => {
       <AnniversarySection />
       <PeopleMandateSection />
       <PillarsGrid />
+      <MarketplaceSpotlight />
       <ImplementingPartnersSection />
       <InstitutionalPartnersSection />
       <SponsorPlaceholderSection />
