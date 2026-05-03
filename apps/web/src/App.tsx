@@ -37,6 +37,7 @@ import SponsorDashboard from "./pages/SponsorDashboard";
 import Marketplace from "./pages/marketplace/Marketplace";
 import MarketplaceListingDetail from "./pages/marketplace/ListingDetail";
 import MarketplaceSell from "./pages/marketplace/SellForm";
+import MarketplaceInquiryThread from "./pages/marketplace/InquiryThread";
 
 // Programme pages
 import Youth from "./pages/programmes/Youth";
@@ -122,6 +123,7 @@ const App = () => (
               <Route path="/marketplace" element={<Marketplace />} />
               <Route path="/marketplace/sell" element={<MarketplaceSell />} />
               <Route path="/marketplace/listings/:slug" element={<MarketplaceListingDetail />} />
+              <Route path="/marketplace/inquiries/:token" element={<MarketplaceInquiryThread />} />
 
               {/* Programme pillars */}
               <Route path="/programmes/youth"      element={<Youth />}      />
