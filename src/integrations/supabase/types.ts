@@ -1473,6 +1473,101 @@ export type Database = {
         }
         Relationships: []
       }
+      marketplace_inquiries: {
+        Row: {
+          access_token: string
+          assigned_to: string | null
+          buyer_company: string | null
+          buyer_country: string | null
+          buyer_email: string
+          buyer_name: string
+          buyer_phone: string | null
+          created_at: string
+          id: string
+          interest_id: string | null
+          listing_id: string
+          status: string
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          access_token?: string
+          assigned_to?: string | null
+          buyer_company?: string | null
+          buyer_country?: string | null
+          buyer_email: string
+          buyer_name: string
+          buyer_phone?: string | null
+          created_at?: string
+          id?: string
+          interest_id?: string | null
+          listing_id: string
+          status?: string
+          subject?: string
+          updated_at?: string
+        }
+        Update: {
+          access_token?: string
+          assigned_to?: string | null
+          buyer_company?: string | null
+          buyer_country?: string | null
+          buyer_email?: string
+          buyer_name?: string
+          buyer_phone?: string | null
+          created_at?: string
+          id?: string
+          interest_id?: string | null
+          listing_id?: string
+          status?: string
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      marketplace_inquiry_messages: {
+        Row: {
+          attachment_url: string | null
+          body: string
+          created_at: string
+          id: string
+          inquiry_id: string
+          is_internal: boolean
+          sender_email: string | null
+          sender_name: string | null
+          sender_type: string
+        }
+        Insert: {
+          attachment_url?: string | null
+          body: string
+          created_at?: string
+          id?: string
+          inquiry_id: string
+          is_internal?: boolean
+          sender_email?: string | null
+          sender_name?: string | null
+          sender_type: string
+        }
+        Update: {
+          attachment_url?: string | null
+          body?: string
+          created_at?: string
+          id?: string
+          inquiry_id?: string
+          is_internal?: boolean
+          sender_email?: string | null
+          sender_name?: string | null
+          sender_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_inquiry_messages_inquiry_id_fkey"
+            columns: ["inquiry_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_inquiries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       marketplace_interests: {
         Row: {
           assigned_to: string | null
@@ -1541,6 +1636,33 @@ export type Database = {
           },
         ]
       }
+      marketplace_listing_views: {
+        Row: {
+          country: string | null
+          created_at: string
+          id: string
+          listing_id: string
+          referrer: string | null
+          session_id: string | null
+        }
+        Insert: {
+          country?: string | null
+          created_at?: string
+          id?: string
+          listing_id: string
+          referrer?: string | null
+          session_id?: string | null
+        }
+        Update: {
+          country?: string | null
+          created_at?: string
+          id?: string
+          listing_id?: string
+          referrer?: string | null
+          session_id?: string | null
+        }
+        Relationships: []
+      }
       marketplace_listings: {
         Row: {
           available_quantity: number | null
@@ -1562,6 +1684,7 @@ export type Database = {
           seller_name: string
           seller_phone: string | null
           slug: string
+          spec_tags: string[] | null
           status: string
           title: string
           unit: string
@@ -1588,6 +1711,7 @@ export type Database = {
           seller_name: string
           seller_phone?: string | null
           slug: string
+          spec_tags?: string[] | null
           status?: string
           title: string
           unit?: string
@@ -1614,6 +1738,7 @@ export type Database = {
           seller_name?: string
           seller_phone?: string | null
           slug?: string
+          spec_tags?: string[] | null
           status?: string
           title?: string
           unit?: string
@@ -1629,6 +1754,75 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      marketplace_seller_requests: {
+        Row: {
+          available_quantity: number | null
+          category_id: string | null
+          country: string | null
+          created_at: string
+          currency: string | null
+          id: string
+          image_url: string | null
+          notes: string | null
+          price_max: number | null
+          price_min: number | null
+          product_description: string | null
+          product_title: string
+          reviewed_by: string | null
+          seller_company: string | null
+          seller_email: string
+          seller_name: string
+          seller_phone: string | null
+          status: string
+          unit: string | null
+          updated_at: string
+        }
+        Insert: {
+          available_quantity?: number | null
+          category_id?: string | null
+          country?: string | null
+          created_at?: string
+          currency?: string | null
+          id?: string
+          image_url?: string | null
+          notes?: string | null
+          price_max?: number | null
+          price_min?: number | null
+          product_description?: string | null
+          product_title: string
+          reviewed_by?: string | null
+          seller_company?: string | null
+          seller_email: string
+          seller_name: string
+          seller_phone?: string | null
+          status?: string
+          unit?: string | null
+          updated_at?: string
+        }
+        Update: {
+          available_quantity?: number | null
+          category_id?: string | null
+          country?: string | null
+          created_at?: string
+          currency?: string | null
+          id?: string
+          image_url?: string | null
+          notes?: string | null
+          price_max?: number | null
+          price_min?: number | null
+          product_description?: string | null
+          product_title?: string
+          reviewed_by?: string | null
+          seller_company?: string | null
+          seller_email?: string
+          seller_name?: string
+          seller_phone?: string | null
+          status?: string
+          unit?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       media_kit_items: {
         Row: {
