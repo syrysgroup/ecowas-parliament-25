@@ -6,14 +6,14 @@ import FlagImg from "@/components/shared/FlagImg";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import InterestForm from "@/components/marketplace/InterestForm";
+import InquiryDialog from "@/components/marketplace/InquiryDialog";
 import { supabase } from "@/integrations/supabase/client";
 import placeholder from "@/assets/parliament-25-logo.png";
-import { ArrowLeft, MapPin, Package, DollarSign, Building2, Loader2 } from "lucide-react";
+import { ArrowLeft, MapPin, Package, DollarSign, ShieldCheck, Loader2 } from "lucide-react";
 
 interface Listing {
   id: string; slug: string; title: string; description: string | null;
   country: string | null; image_url: string | null;
-  seller_name: string; seller_company: string | null;
   unit: string; moq: number | null; available_quantity: number | null;
   price_min: number | null; price_max: number | null; currency: string;
   category: { name: string } | null;
@@ -28,12 +28,29 @@ export default function ListingDetail() {
     if (!slug) return;
     (async () => {
       const { data } = await supabase.from("marketplace_listings")
-        .select("id, slug, title, description, country, image_url, seller_name, seller_company, unit, moq, available_quantity, price_min, price_max, currency, category:marketplace_categories(name)")
+        .select("id, slug, title, description, country, image_url, unit, moq, available_quantity, price_min, price_max, currency, category:marketplace_categories(name)")
         .eq("slug", slug).eq("status", "approved").maybeSingle();
       setListing(data as never);
       setLoading(false);
     })();
   }, [slug]);
+
+  // Track view
+  useEffect(() => {
+    if (!listing) return;
+    supabase.from("marketplace_listing_views").insert({
+      listing_id: listing.id,
+      country: listing.country,
+      referrer: typeof document !== "undefined" ? document.referrer.slice(0, 200) : null,
+      session_id: (() => {
+        try {
+          let s = sessionStorage.getItem("mp_sid");
+          if (!s) { s = Math.random().toString(36).slice(2); sessionStorage.setItem("mp_sid", s); }
+          return s;
+        } catch { return null; }
+      })(),
+    } as never).then(() => {});
+  }, [listing?.id]);
 
   if (loading) return <Layout><div className="container py-32 flex justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div></Layout>;
   if (!listing) return <Layout><div className="container py-32 text-center"><h1 className="text-2xl font-bold">Listing not found</h1><Button asChild className="mt-4"><Link to="/marketplace">Back to marketplace</Link></Button></div></Layout>;
@@ -82,12 +99,17 @@ export default function ListingDetail() {
               ))}
             </div>
 
-            <div className="rounded-2xl border border-border/60 p-5 bg-muted/30 flex items-start gap-3">
-              <Building2 className="h-5 w-5 text-primary mt-0.5" />
-              <div>
-                <div className="text-xs font-bold uppercase text-muted-foreground">Seller</div>
-                <div className="font-semibold">{listing.seller_company || listing.seller_name}</div>
-                <div className="text-xs text-muted-foreground">Verified West Africa SME</div>
+            <div className="rounded-2xl border-2 border-primary/20 p-5 bg-primary/5 flex items-start gap-3">
+              <img src={placeholder} alt="" className="h-12 w-12 rounded-lg object-contain bg-white p-1" />
+              <div className="flex-1">
+                <div className="text-xs font-bold uppercase text-primary flex items-center gap-1">
+                  <ShieldCheck className="h-3 w-3" />Distributor &amp; Guarantor
+                </div>
+                <div className="font-semibold">ECOWAS Parliament Initiatives</div>
+                <div className="text-xs text-muted-foreground">
+                  Sourced from a verified ECOWAS SME{listing.country ? ` in ${listing.country}` : ""}.
+                  All transactions are brokered and guaranteed by ECOWAS.
+                </div>
               </div>
             </div>
           </AnimatedSection>
@@ -96,9 +118,12 @@ export default function ListingDetail() {
             <div className="lg:sticky lg:top-24 rounded-3xl border-2 border-primary/20 bg-card p-6 shadow-xl">
               <h2 className="text-xl font-bold mb-1">Express interest</h2>
               <p className="text-sm text-muted-foreground mb-5">
-                Tell us exactly what you need — quantity, size and timeline. The seller and our trade team will follow up.
+                Tell ECOWAS exactly what you need — quantity, size and timeline. Our trade desk will broker the deal with the verified seller.
               </p>
               <InterestForm listingId={listing.id} listingUnit={listing.unit} />
+              <div className="mt-4 pt-4 border-t border-border/60">
+                <InquiryDialog listingId={listing.id} listingTitle={listing.title} />
+              </div>
             </div>
           </AnimatedSection>
         </div>
