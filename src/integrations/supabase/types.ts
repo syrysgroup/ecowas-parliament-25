@@ -2396,6 +2396,114 @@ export type Database = {
         }
         Relationships: []
       }
+      parliament_panorama_hotspots: {
+        Row: {
+          created_at: string
+          description: string | null
+          display_order: number
+          id: string
+          image_url: string | null
+          is_active: boolean
+          link_scene_id: string | null
+          link_url: string | null
+          pitch: number
+          scene_id: string
+          title: string
+          updated_at: string
+          yaw: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          link_scene_id?: string | null
+          link_url?: string | null
+          pitch: number
+          scene_id: string
+          title: string
+          updated_at?: string
+          yaw: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          link_scene_id?: string | null
+          link_url?: string | null
+          pitch?: number
+          scene_id?: string
+          title?: string
+          updated_at?: string
+          yaw?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "parliament_panorama_hotspots_link_scene_id_fkey"
+            columns: ["link_scene_id"]
+            isOneToOne: false
+            referencedRelation: "parliament_panorama_scenes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "parliament_panorama_hotspots_scene_id_fkey"
+            columns: ["scene_id"]
+            isOneToOne: false
+            referencedRelation: "parliament_panorama_scenes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      parliament_panorama_scenes: {
+        Row: {
+          created_at: string
+          default_pitch: number
+          default_yaw: number
+          description: string | null
+          display_order: number
+          id: string
+          is_active: boolean
+          name: string
+          panorama_url: string
+          preview_url: string | null
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          default_pitch?: number
+          default_yaw?: number
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          name: string
+          panorama_url: string
+          preview_url?: string | null
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          default_pitch?: number
+          default_yaw?: number
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+          panorama_url?: string
+          preview_url?: string | null
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       partners: {
         Row: {
           created_at: string
