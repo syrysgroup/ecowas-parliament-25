@@ -245,6 +245,31 @@ export default function EcowasParliament() {
       {/* ── Youth Parliament CTA ─────────────────────────────────────────────── */}
       <section className="py-20 bg-background">
         <div className="container">
+          {/* Virtual 360° tour teaser */}
+          <AnimatedSection className="mb-12">
+            <div className="relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-ecowas-green/10 via-background to-ecowas-yellow/10 p-8 md:p-12">
+              <div className="grid md:grid-cols-[1fr,auto] gap-6 items-center">
+                <div>
+                  <Badge className="bg-ecowas-yellow/20 text-ecowas-yellow-foreground border-ecowas-yellow/40 mb-3">
+                    Virtual 360° Tour
+                  </Badge>
+                  <h3 className="text-2xl md:text-3xl font-black text-foreground mb-2">
+                    Step Inside the Chamber
+                  </h3>
+                  <p className="text-muted-foreground max-w-xl">
+                    Walk through the ECOWAS Parliament hall in immersive 360°. Explore the Speaker's
+                    chair, member benches and public gallery with interactive hotspots.
+                  </p>
+                </div>
+                <Button asChild size="lg" className="gap-2 shrink-0">
+                  <Link to="/parliament-tour">
+                    <Compass className="h-5 w-5" /> Launch Tour
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </AnimatedSection>
+
           <AnimatedSection>
             <div className="rounded-3xl bg-gradient-to-r from-primary/10 via-background to-accent/10 border border-border p-10 md:p-16 text-center space-y-6">
               <Badge className="bg-primary/10 text-primary border-primary/20">Get Involved</Badge>
