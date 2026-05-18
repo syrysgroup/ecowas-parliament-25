@@ -15,6 +15,7 @@ import { useSiteContent } from "@/hooks/useSiteContent";
 import ecowasLogo from "@/assets/ecowas-parliament-logo.png";
 import parliamentHero from "@/assets/parliament-hero-clean.jpg";
 import parliamentChamber from "@/assets/parliament-chamber.png";
+import { Compass } from "lucide-react";
 
 // ─── Social icon map ──────────────────────────────────────────────────────────
 const SOCIAL_ICONS = [
