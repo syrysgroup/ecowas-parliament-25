@@ -6,6 +6,7 @@ import CountdownTimer from "@/components/home/CountdownTimer";
 import CountriesSection from "@/components/home/CountriesSection";
 import AnniversarySection from "@/components/home/AnniversarySection";
 import PeopleMandateSection from "@/components/home/PeopleMandateSection";
+import ParliamentTourSpotlight from "@/components/home/ParliamentTourSpotlight";
 import PillarsGrid from "@/components/home/PillarsGrid";
 import MarketplaceSpotlight from "@/components/home/MarketplaceSpotlight";
 import ImplementingPartnersSection from "@/components/home/ImplementingPartnersSection";
@@ -28,6 +29,7 @@ const Index = () => {
       <CountriesSection />
       <AnniversarySection />
       <PeopleMandateSection />
+      <ParliamentTourSpotlight />
       <PillarsGrid />
       <MarketplaceSpotlight />
       <ImplementingPartnersSection />

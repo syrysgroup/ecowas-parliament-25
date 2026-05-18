@@ -43,6 +43,7 @@ const ContactSubmissionsModule = lazy(() => import("@/components/crm/modules/Con
 const NewsletterModule = lazy(() => import("@/components/crm/modules/NewsletterModule"));
 const MediaLibraryModule = lazy(() => import("@/components/crm/modules/MediaLibraryModule"));
 const SEOModule          = lazy(() => import("@/components/crm/modules/SEOModule"));
+const PanoramaModule     = lazy(() => import("@/components/crm/modules/PanoramaModule"));
 
 function ModuleLoader() {
   return (
@@ -143,6 +144,7 @@ export default function CRMDashboard() {
       case "events-manager":  return <EventsManagerModule />;
       case "sponsors-partners": return <SponsorsManagerModule />;
       case "marketplace":       return <MarketplaceModule />;
+      case "parliament-tour":   return <Suspense fallback={<ModuleLoader />}><PanoramaModule /></Suspense>;
       case "news-editor":     return <Suspense fallback={<ModuleLoader />}><NewsEditorModule /></Suspense>;
       case "site-content":    return <Suspense fallback={<ModuleLoader />}><SiteContentModule /></Suspense>;
       case "contact-submissions": return <Suspense fallback={<ModuleLoader />}><ContactSubmissionsModule /></Suspense>;

@@ -1,79 +1,100 @@
+# Parliament 3D Panoramic Tour
 
-# Plan: Homepage Marketplace Spotlight + Marketplace Modification + CRM/Invoice Flows
+## Goal
+Give visitors an immersive 360° walkthrough of the ECOWAS Parliament chamber using the 35 photos you provided, with hotspots, fullscreen/VR mode, autorotate, and prominent placement across the site.
 
-## Part 1 — Homepage: Add prominent Marketplace section
+## 1. Process the source photos (one-off, server-side)
 
-**File:** `apps/web/src/components/home/MarketplaceSpotlight.tsx` (new)
-**File:** `apps/web/src/pages/Index.tsx` (insert after `PillarsGrid`, tagged as part of Trade & SME programmes)
+Your 35 shots are unstitched, so we'll stitch them into one or more 360° equirectangular panoramas before they ever reach the browser (browsers can't reliably stitch 35 images in real time).
 
-A full-width visual section:
-- Tag chip: "Linked to Trade & SME Programmes"
-- Bold headline: "ECOWAS Trade Network Marketplace"
-- Two-column layout (mobile-stacked): left = pitch + buttons (Browse Marketplace, List your Product, Register as Buyer); right = a 2×2 collage of latest 4 approved listings pulled live from `marketplace_listings` with country flag overlays and gold category pill
-- Animated stats strip (15 nations · live listings count · ECOWAS-guaranteed)
-- Deep green gradient background with gold accent
+Steps I'll run in the sandbox once you confirm:
+1. Unzip `Parl Panaroma.zip` into `/tmp/parl-pano/`.
+2. Inspect the photos to determine whether they form **one** full 360° sphere or **multiple scenes** (e.g., floor, gallery, speaker view).
+3. Stitch using OpenCV's `Stitcher` (PANORAMA mode) or Hugin CLI (`pto_gen` → `cpfind` → `autooptimiser` → `pano_modify` → `nona` → `enblend`) — whichever yields clean seams.
+4. Export final equirectangular JPEG(s) at 6000×3000 (with a 3000×1500 mobile variant) and commit them to `apps/web/public/panorama/parliament/`.
+5. Generate a low-res blurred preview for the loading state.
 
-## Part 2 — Marketplace page redesign (modification, no rebuild)
+If stitching reveals distinct scenes, we treat them as a multi-scene tour (your "walk between spots" feature comes free).
 
-### 2a. `ListingCard.tsx` (modify)
-- REMOVE: MOQ row, "Sourced from…" label, price text
-- KEEP: image, title, business name (we'll add `seller_company` to query), category pill (gold, top-left over image), country flag + name (compact, identity not origin), description excerpt (2 lines)
-- ADD: full-width deep-green `Connect with Seller` CTA button at bottom that opens a Connection modal (passes listing data)
-- Hover: gold border glow + lift transition
+## 2. Viewer library
 
-### 2b. `Marketplace.tsx` (modify)
-- Remove sidebar `Slider` (price), `MIN AVAILABLE`, `SIZE/SPEC` filter blocks; remove price/MOQ sort options
-- Replace sidebar with a **horizontal pill bar** above the grid: `All · Agriculture · Processed Foods · Textiles · Raw Materials · Crafts & Artisanry · Manufacturing · Services · Organic & Natural` (gold active fill)
-- Country dropdown (12 ECOWAS states) above grid
-- Hero search now searches: title, seller_company, category name, country
-- Add two new top buttons in hero: `List Your Product` (opens Seller drawer) and `Register as Buyer` (opens Buyer drawer)
-- Cards use new `ListingCard` and pass an `onConnect(listing)` to open Connection modal
+Use **`@photo-sphere-viewer/core`** + plugins (`markers`, `autorotate`, `virtual-tour`, `gyroscope`). It's the most maintained 360° viewer, supports equirectangular, hotspots, autorotate, fullscreen, VR/gyroscope, and lazy-loads tiles. MIT-licensed, ~80KB gzipped core.
 
-### 2c. New components (in `apps/web/src/components/marketplace/`)
-- `SellerListingDrawer.tsx` — side drawer (full-screen on mobile) capturing Business Name, ECOWAS state, Category, Product Name, Description (≤300 chars), Email, WhatsApp, Image upload → inserts into `marketplace_seller_requests` (status `pending`); calls `send-marketplace-notification` edge function for confirmation email
-- `BuyerRegistrationDrawer.tsx` — captures Full Name, Organisation, Country (open), Categories of Interest (multi), Email, WhatsApp, Sourcing Intent → inserts into new `marketplace_buyers` table
-- `ConnectionRequestModal.tsx` — shows seller business name + flag, product name + description, WhatsApp/email shortcuts, plus form (Buyer Name, Email, Message) → inserts into new `marketplace_connections` table; notifies seller via edge function
+## 3. New React component
 
-All forms: no `<form>` tags — `useState` + `onClick`; required fields highlight red on submit attempt; mobile = full-screen, desktop = side drawer; live filter updates (already state-driven).
+`apps/web/src/components/parliament/PanoramaViewer.tsx`
+- Props: `scenes` (array of `{ id, panorama, name, hotspots[] }`), `autoRotate`, `defaultSceneId`.
+- Loads PSV dynamically (`React.lazy` + dynamic import) so the heavy bundle only ships when the viewer is opened.
+- Shows a branded loading shimmer over the blurred preview while the high-res image streams in.
+- Hotspots render as pulsing ECOWAS-green dots; click opens a styled popover with title + description (data-driven, see §5).
+- Toolbar: fullscreen, VR, reset view, scene picker (if multi-scene), autorotate toggle.
 
-## Part 3 — Database migrations
+## 4. Placement
 
-Create:
-- `marketplace_buyers` (id, full_name, organisation, country, categories_of_interest text[], email, whatsapp, sourcing_intent, status default 'active', created_at). RLS: anon insert; CRM staff select/update.
-- `marketplace_connections` (id, listing_id fk, seller_email, seller_company, product_name, buyer_name, buyer_email, buyer_whatsapp, message, status default 'new' [new|contacted|matched|closed], invoice_id fk nullable, created_at, updated_at). RLS: anon insert; CRM staff select/update.
+Per your choices:
 
-Image uploads from Seller drawer go to existing `marketplace-media` bucket (already public).
-
-## Part 4 — CRM integration (admin app)
-
-**File:** `apps/admin/src/components/crm/modules/MarketplaceModule.tsx` (new) and register in `crmModules.ts`
-
-Tabs: **Listings** (existing approved listings) · **Pending Sellers** (`marketplace_seller_requests`) · **Buyers** (`marketplace_buyers`) · **Connection Requests** (`marketplace_connections`) · **Invoices** (filtered to marketplace-linked).
-
-Per Connection Request row: status select (new → contacted → matched → closed). When status changes to `matched`, action button "Generate Invoice" creates an `invoices` row prefilled from buyer/seller/product, navigates to existing invoice editor; the new invoice id is written back to `marketplace_connections.invoice_id`. Existing `invoices` table already supports number generation (`next_invoice_number()` exists — replace prefix call with format `ECOWAS-INV-YYYY-XXXX` via a small helper or update of the SQL function).
-
-Filter by record type, country, date.
-
-## Part 5 — Email notifications
-
-New edge function `supabase/functions/marketplace-notify/index.ts` accepts `{ kind: 'seller_listing'|'buyer_registration'|'connection_request'|'invoice', payload }` and sends branded (green header + gold accent) email to relevant party using existing email infrastructure (`send-transactional-email` queue if available, otherwise direct Resend via existing `send-email` function — will reuse current pattern in repo).
-
-Triggered from each drawer/modal after insert.
-
-## Files Summary
-
-| File | Type |
+| Location | Treatment |
 |---|---|
-| `apps/web/src/components/home/MarketplaceSpotlight.tsx` | new |
-| `apps/web/src/pages/Index.tsx` | modify |
-| `apps/web/src/components/marketplace/ListingCard.tsx` | modify |
-| `apps/web/src/pages/marketplace/Marketplace.tsx` | modify |
-| `apps/web/src/components/marketplace/SellerListingDrawer.tsx` | new |
-| `apps/web/src/components/marketplace/BuyerRegistrationDrawer.tsx` | new |
-| `apps/web/src/components/marketplace/ConnectionRequestModal.tsx` | new |
-| `apps/admin/src/components/crm/modules/MarketplaceModule.tsx` | new |
-| `apps/admin/src/components/crm/crmModules.ts` | modify |
-| `supabase/functions/marketplace-notify/index.ts` | new |
-| Migration: `marketplace_buyers`, `marketplace_connections` tables + RLS | new |
+| `/parliament-tour` (new route) | Full-bleed viewer, header overlay with title + nav back, hotspot legend, "About this chamber" side panel |
+| `/ecowas-parliament` page | New section "Step Inside the Chamber" with an embedded viewer card + "Open full tour" CTA → `/parliament-tour` |
+| `/` (homepage) | New `ParliamentTourSpotlight` block (after `PeopleMandateSection`) — blurred panorama preview, headline, "Launch 360° Tour" button |
+| Navbar | Add "Virtual Tour" link under the Parliament dropdown |
 
-Preserved: existing listings data/images, marketplace URLs, navigation, existing footer.
+## 5. Hotspot content (database-driven, per project convention)
+
+New table `parliament_panorama_hotspots`:
+- `scene_id text`, `yaw float`, `pitch float`, `title text`, `description text`, `image_url text nullable`, `link_url text nullable`, `display_order int`, `is_active boolean`
+- RLS: public `select` where `is_active`; CRM staff (`is_crm_staff()`) full access.
+
+CRM module: add a **"Virtual Tour"** tab inside the existing Parliament module (or a new lightweight `PanoramaModule.tsx` registered in `crmModules.ts`) where staff can:
+- Pick a scene, click anywhere on a preview to set yaw/pitch
+- Edit title/description, optional thumbnail + external link
+- Reorder, toggle active
+
+Seed 6–8 starter hotspots (Speaker's chair, Mace, Public gallery, Member benches, Press box, ECOWAS emblem) — final list adjustable from CRM.
+
+## 6. Performance & UX
+
+- Image format: progressive JPEG; serve via existing CDN (Amplify).
+- Lazy-load PSV via dynamic import; route is code-split.
+- Preload only the blurred preview on the homepage spotlight; full image loads on click.
+- Respect `prefers-reduced-motion` → disable autorotate by default.
+- Mobile: gyroscope opt-in (permission prompt on iOS), touch drag, pinch-zoom.
+- SEO: `SEOHead` with title "Virtual Tour — ECOWAS Parliament Chamber", OG image = static panorama preview, JSON-LD `VirtualLocation`.
+
+## 7. Accessibility
+
+- Keyboard controls (arrow keys pan, +/- zoom, `F` fullscreen, `R` reset).
+- Hotspots are real `<button>` elements with `aria-label`.
+- Reduced-motion users get a static gallery fallback link.
+
+## Technical details
+
+**Dependencies to add** (in `apps/web/`):
+```
+@photo-sphere-viewer/core
+@photo-sphere-viewer/markers-plugin
+@photo-sphere-viewer/autorotate-plugin
+@photo-sphere-viewer/virtual-tour-plugin
+@photo-sphere-viewer/gyroscope-plugin
+```
+
+**Files to add**
+- `apps/web/src/pages/ParliamentTour.tsx`
+- `apps/web/src/components/parliament/PanoramaViewer.tsx`
+- `apps/web/src/components/home/ParliamentTourSpotlight.tsx`
+- `apps/web/public/panorama/parliament/scene-*.jpg` (+ `-preview.jpg`)
+- `apps/admin/src/components/crm/modules/PanoramaModule.tsx` (+ register in `crmModules.ts`)
+- `supabase/migrations/<ts>_parliament_panorama_hotspots.sql`
+
+**Files to edit**
+- `apps/web/src/App.tsx` — add `/parliament-tour` route
+- `apps/web/src/components/layout/Navbar.tsx` — add "Virtual Tour" link
+- `apps/web/src/pages/EcowasParliament.tsx` — embed viewer section
+- `apps/web/src/pages/Index.tsx` — insert `ParliamentTourSpotlight`
+
+## What I need from you to start
+
+1. **Re-upload `Parl Panaroma.zip`** — only the first attachment came through and I need all 35 photos to stitch.
+2. Confirmation that one stitched panorama (vs splitting into 2–3 scenes) is acceptable — I'll recommend after inspecting the photos.
+3. Approve this plan, and I'll execute end-to-end (stitch → build viewer → wire CRM → ship).
