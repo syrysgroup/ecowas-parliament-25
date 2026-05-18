@@ -33,6 +33,7 @@ import {
   Search,
   Scroll,
   ShoppingBag,
+  Compass,
 } from "lucide-react";
 
 export type ModuleGroup =
@@ -66,6 +67,7 @@ export type ModuleId =
   | "sponsors-partners"
   | "news-editor"
   | "marketplace"
+  | "parliament-tour"
   | "site-content"
   | "contact-submissions"
   | "newsletter"
@@ -265,6 +267,15 @@ export const CRM_MODULES: CRMModule[] = [
     icon: ShoppingBag,
     section: "marketplace",
     allowedRoles: ["super_admin", "admin", "project_director", "programme_lead", "sponsor_manager"],
+    isStub: false,
+    group: "CONTENT",
+  },
+  {
+    id: "parliament-tour",
+    label: "360° Tour",
+    icon: Compass,
+    section: "parliament-tour",
+    allowedRoles: ["super_admin", "admin", "website_editor", "communications_officer"],
     isStub: false,
     group: "CONTENT",
   },
