@@ -32,6 +32,7 @@ import EventDetail from "./pages/events/EventDetail";
 import MediaPortal from "./pages/MediaPortal";
 import EcowasParliament from "./pages/EcowasParliament";
 import SponsorDashboard from "./pages/SponsorDashboard";
+import ParliamentTour from "./pages/ParliamentTour";
 
 // Marketplace
 import Marketplace from "./pages/marketplace/Marketplace";
@@ -118,6 +119,7 @@ const App = () => (
               <Route path="/partners/:slug"     element={<PartnerPage />}    />
               <Route path="/sponsors/:slug"     element={<SponsorPage />}    />
               <Route path="/ecowas-parliament"  element={<EcowasParliament />} />
+              <Route path="/parliament-tour"    element={<ParliamentTour />} />
 
               {/* Marketplace */}
               <Route path="/marketplace" element={<Marketplace />} />

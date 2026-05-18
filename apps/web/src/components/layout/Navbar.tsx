@@ -43,6 +43,7 @@ label: t("nav.about"),
 to: "/about",					
 children: [					
 { label: t("nav.ecowasParliament"), to: "/ecowas-parliament" },					
+{ label: "Virtual 360° Tour", to: "/parliament-tour" },
 { label: t("nav.parliamentInitiative"), to: "/about" },					
 ],					
 },					
