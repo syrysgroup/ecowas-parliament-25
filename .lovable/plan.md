@@ -1,100 +1,65 @@
-# Parliament 3D Panoramic Tour
+# Finish the Parliament 360° Tour — Stitch & Wire Live Assets
 
-## Goal
-Give visitors an immersive 360° walkthrough of the ECOWAS Parliament chamber using the 35 photos you provided, with hotspots, fullscreen/VR mode, autorotate, and prominent placement across the site.
+The viewer, route, homepage spotlight, navbar link, CRM module, and DB tables are already shipped (currently showing a placeholder scene). All 35 photos `DJI_0001.JPG`–`DJI_0035.JPG` are now in the `parliament-panorama` Supabase bucket. This plan covers only what remains: turn those 35 photos into a real 360° panorama and put it live.
 
-## 1. Process the source photos (one-off, server-side)
+## 1. Stitch the panorama (sandbox, one-off)
 
-Your 35 shots are unstitched, so we'll stitch them into one or more 360° equirectangular panoramas before they ever reach the browser (browsers can't reliably stitch 35 images in real time).
+1. Download all 35 originals from the `parliament-panorama` bucket into `/tmp/pano/`.
+2. Inspect EXIF (yaw/pitch/gimbal angles DJI embeds) to detect whether the set is:
+   - a single full sphere (typical 34-shot DJI "Sphere" pattern + 1 nadir → matches the 35 count), or
+   - multiple scenes.
+   Expectation: one full sphere.
+3. Run OpenCV `Stitcher.create(Stitcher.PANORAMA)` on the full set. If seam/exposure issues appear, fall back to Hugin CLI (`pto_gen → cpfind --multirow → cpclean → autooptimiser -a -m -l -s → pano_modify --canvas=AUTO --projection=2 → nona → enblend`) which is purpose-built for spherical pano stitching.
+4. Reproject the result to **equirectangular 2:1** at **6144×3072** (desktop) and **3072×1536** (mobile fallback). Generate a 32×16 blurred preview for the loading shimmer.
+5. Auto-crop/feather any nadir/zenith gaps; if a hard hole remains, fill with a neutral patch sampled from surrounding pixels.
+6. QA: open both renders, verify horizon is level, seams are clean, no doubled people/objects at stitch boundaries.
 
-Steps I'll run in the sandbox once you confirm:
-1. Unzip `Parl Panaroma.zip` into `/tmp/parl-pano/`.
-2. Inspect the photos to determine whether they form **one** full 360° sphere or **multiple scenes** (e.g., floor, gallery, speaker view).
-3. Stitch using OpenCV's `Stitcher` (PANORAMA mode) or Hugin CLI (`pto_gen` → `cpfind` → `autooptimiser` → `pano_modify` → `nona` → `enblend`) — whichever yields clean seams.
-4. Export final equirectangular JPEG(s) at 6000×3000 (with a 3000×1500 mobile variant) and commit them to `apps/web/public/panorama/parliament/`.
-5. Generate a low-res blurred preview for the loading state.
+## 2. Publish the panorama
 
-If stitching reveals distinct scenes, we treat them as a multi-scene tour (your "walk between spots" feature comes free).
+1. Upload the final files into `parliament-panorama/scenes/`:
+   - `chamber-main.jpg` (6144×3072, progressive JPEG ~quality 85)
+   - `chamber-main@mobile.jpg` (3072×1536)
+   - `chamber-main-preview.jpg` (blurred 32×16)
+2. Insert/update one row in `parliament_panorama_scenes`:
+   - `slug = 'chamber-main'`, `name = 'Parliament Chamber'`, `panorama_url` = public URL of `chamber-main.jpg`, `preview_url` set, `default_yaw/pitch = 0`, `is_active = true`, `display_order = 0`.
+3. Remove (or deactivate) the placeholder scene so visitors only see the real chamber.
 
-## 2. Viewer library
+## 3. Seed starter hotspots
 
-Use **`@photo-sphere-viewer/core`** + plugins (`markers`, `autorotate`, `virtual-tour`, `gyroscope`). It's the most maintained 360° viewer, supports equirectangular, hotspots, autorotate, fullscreen, VR/gyroscope, and lazy-loads tiles. MIT-licensed, ~80KB gzipped core.
+Insert 6 rows into `parliament_panorama_hotspots` for `scene_id = chamber-main`, all `is_active = true`. Coordinates are best-guess starting positions — CRM staff can drag-refine in the existing Panorama module:
 
-## 3. New React component
+| Title | yaw (rad) | pitch (rad) |
+|---|---|---|
+| Speaker's Chair | 0.0 | 0.05 |
+| The Mace | 0.15 | -0.20 |
+| Member Benches (Left) | -1.3 | -0.05 |
+| Member Benches (Right) | 1.3 | -0.05 |
+| Public Gallery | 3.1 | 0.30 |
+| ECOWAS Emblem | 0.0 | 0.55 |
 
-`apps/web/src/components/parliament/PanoramaViewer.tsx`
-- Props: `scenes` (array of `{ id, panorama, name, hotspots[] }`), `autoRotate`, `defaultSceneId`.
-- Loads PSV dynamically (`React.lazy` + dynamic import) so the heavy bundle only ships when the viewer is opened.
-- Shows a branded loading shimmer over the blurred preview while the high-res image streams in.
-- Hotspots render as pulsing ECOWAS-green dots; click opens a styled popover with title + description (data-driven, see §5).
-- Toolbar: fullscreen, VR, reset view, scene picker (if multi-scene), autorotate toggle.
+Each gets a 1–2 sentence description aligned with existing Parliament copy.
 
-## 4. Placement
+## 4. Viewer polish (small follow-ups)
 
-Per your choices:
+- Add `panoData` width/height to the `PanoramaViewer` call so PSV doesn't have to probe.
+- Wire the mobile variant via a `useIsMobile()` check in `usePanoramaScenes` (pick `*@mobile.jpg` under 768px).
+- Add `<link rel="preload" as="image">` for the preview JPG on `/parliament-tour` so the shimmer never flashes blank.
+- Ensure the homepage `ParliamentTourSpotlight` uses `chamber-main-preview.jpg` instead of `parliamentChamber` static asset.
 
-| Location | Treatment |
-|---|---|
-| `/parliament-tour` (new route) | Full-bleed viewer, header overlay with title + nav back, hotspot legend, "About this chamber" side panel |
-| `/ecowas-parliament` page | New section "Step Inside the Chamber" with an embedded viewer card + "Open full tour" CTA → `/parliament-tour` |
-| `/` (homepage) | New `ParliamentTourSpotlight` block (after `PeopleMandateSection`) — blurred panorama preview, headline, "Launch 360° Tour" button |
-| Navbar | Add "Virtual Tour" link under the Parliament dropdown |
+## 5. Verification
 
-## 5. Hotspot content (database-driven, per project convention)
+- Hit `/parliament-tour` → real chamber loads, drag/zoom works, autorotate engages after 2s, fullscreen + VR + gyroscope buttons present.
+- Click each hotspot → dialog opens with title/description.
+- Open the CRM "Virtual Tour" module → see the `chamber-main` scene, can edit hotspots, can toggle active.
+- Homepage spotlight → real preview thumbnail visible, CTA navigates.
 
-New table `parliament_panorama_hotspots`:
-- `scene_id text`, `yaw float`, `pitch float`, `title text`, `description text`, `image_url text nullable`, `link_url text nullable`, `display_order int`, `is_active boolean`
-- RLS: public `select` where `is_active`; CRM staff (`is_crm_staff()`) full access.
+## Technical notes
 
-CRM module: add a **"Virtual Tour"** tab inside the existing Parliament module (or a new lightweight `PanoramaModule.tsx` registered in `crmModules.ts`) where staff can:
-- Pick a scene, click anywhere on a preview to set yaw/pitch
-- Edit title/description, optional thumbnail + external link
-- Reorder, toggle active
+- Stitching runs in the sandbox via Python + OpenCV (already available). Hugin only invoked as fallback (`nix run nixpkgs#hugin`).
+- Uploads use the Supabase storage REST API with the service role key (sandbox-only) so the bucket's existing RLS for staff-only writes is preserved.
+- Scene + hotspot rows are inserted via the insert tool (data, not schema). No new migrations required — tables already exist from the previous step.
+- No frontend code changes needed beyond the small polish in §4; everything else is data.
 
-Seed 6–8 starter hotspots (Speaker's chair, Mace, Public gallery, Member benches, Press box, ECOWAS emblem) — final list adjustable from CRM.
+## What I need from you
 
-## 6. Performance & UX
-
-- Image format: progressive JPEG; serve via existing CDN (Amplify).
-- Lazy-load PSV via dynamic import; route is code-split.
-- Preload only the blurred preview on the homepage spotlight; full image loads on click.
-- Respect `prefers-reduced-motion` → disable autorotate by default.
-- Mobile: gyroscope opt-in (permission prompt on iOS), touch drag, pinch-zoom.
-- SEO: `SEOHead` with title "Virtual Tour — ECOWAS Parliament Chamber", OG image = static panorama preview, JSON-LD `VirtualLocation`.
-
-## 7. Accessibility
-
-- Keyboard controls (arrow keys pan, +/- zoom, `F` fullscreen, `R` reset).
-- Hotspots are real `<button>` elements with `aria-label`.
-- Reduced-motion users get a static gallery fallback link.
-
-## Technical details
-
-**Dependencies to add** (in `apps/web/`):
-```
-@photo-sphere-viewer/core
-@photo-sphere-viewer/markers-plugin
-@photo-sphere-viewer/autorotate-plugin
-@photo-sphere-viewer/virtual-tour-plugin
-@photo-sphere-viewer/gyroscope-plugin
-```
-
-**Files to add**
-- `apps/web/src/pages/ParliamentTour.tsx`
-- `apps/web/src/components/parliament/PanoramaViewer.tsx`
-- `apps/web/src/components/home/ParliamentTourSpotlight.tsx`
-- `apps/web/public/panorama/parliament/scene-*.jpg` (+ `-preview.jpg`)
-- `apps/admin/src/components/crm/modules/PanoramaModule.tsx` (+ register in `crmModules.ts`)
-- `supabase/migrations/<ts>_parliament_panorama_hotspots.sql`
-
-**Files to edit**
-- `apps/web/src/App.tsx` — add `/parliament-tour` route
-- `apps/web/src/components/layout/Navbar.tsx` — add "Virtual Tour" link
-- `apps/web/src/pages/EcowasParliament.tsx` — embed viewer section
-- `apps/web/src/pages/Index.tsx` — insert `ParliamentTourSpotlight`
-
-## What I need from you to start
-
-1. **Re-upload `Parl Panaroma.zip`** — only the first attachment came through and I need all 35 photos to stitch.
-2. Confirmation that one stitched panorama (vs splitting into 2–3 scenes) is acceptable — I'll recommend after inspecting the photos.
-3. Approve this plan, and I'll execute end-to-end (stitch → build viewer → wire CRM → ship).
+Just approval. Photos are in place; I'll run the stitch, upload, seed hotspots, and verify.
