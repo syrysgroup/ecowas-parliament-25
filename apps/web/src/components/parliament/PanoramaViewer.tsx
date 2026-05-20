@@ -170,6 +170,20 @@ export default function PanoramaViewer({ scene, autoRotate = true, className, on
       }
       case "Enter":
       case " ":
+        {
+          // If a marker dot has DOM focus, activate that one
+          const target = e.target as HTMLElement;
+          const dot = target?.closest?.(".psv-hotspot-dot") as HTMLElement | null;
+          if (dot) {
+            e.preventDefault();
+            // Find marker id by walking up to the PSV marker wrapper
+            const wrapper = dot.closest("[data-psv-marker]") as HTMLElement | null;
+            const id = wrapper?.getAttribute("data-psv-marker");
+            const h = scene.hotspots.find((x) => x.id === id);
+            if (h) onHotspotClick?.(h);
+            return;
+          }
+        }
         if (focusedHotspotIdx >= 0 && focusedHotspotIdx < scene.hotspots.length) {
           e.preventDefault();
           onHotspotClick?.(scene.hotspots[focusedHotspotIdx]);
