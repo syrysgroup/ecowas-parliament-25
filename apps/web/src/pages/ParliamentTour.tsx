@@ -4,7 +4,8 @@ import Layout from "@/components/layout/Layout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Loader2, ArrowLeft, MapPin, Maximize2 } from "lucide-react";
+import { Loader2, ArrowLeft, MapPin, Maximize2, ExternalLink, Compass } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import SEOHead from "@/components/SEOHead";
 import { usePanoramaScenes } from "@/hooks/usePanoramaScenes";
 import type { PanoramaHotspot } from "@/components/parliament/PanoramaViewer";
@@ -127,21 +128,65 @@ export default function ParliamentTour() {
       )}
 
       <Dialog open={!!activeHotspot} onOpenChange={(o) => !o && setActiveHotspot(null)}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>{activeHotspot?.title}</DialogTitle>
-            {activeHotspot?.description && (
-              <DialogDescription>{activeHotspot.description}</DialogDescription>
-            )}
-          </DialogHeader>
-          {activeHotspot?.image_url && (
-            <img src={activeHotspot.image_url} alt={activeHotspot.title} className="rounded-lg w-full" />
+        <DialogContent className="max-w-xl p-0 overflow-hidden gap-0">
+          {activeHotspot?.image_url ? (
+            <div className="relative w-full aspect-[16/9] bg-muted">
+              <img
+                src={activeHotspot.image_url}
+                alt={activeHotspot.title}
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+              <div className="absolute bottom-4 left-5 right-5 text-white">
+                <Badge className="bg-ecowas-yellow/90 text-ecowas-green-foreground border-0 mb-2">
+                  <MapPin className="h-3 w-3 mr-1" /> {scene?.name ?? "Point of Interest"}
+                </Badge>
+                <h2 className="text-2xl font-black leading-tight drop-shadow">
+                  {activeHotspot.title}
+                </h2>
+              </div>
+            </div>
+          ) : (
+            <div className="px-6 pt-6">
+              <Badge className="bg-primary/10 text-primary border-primary/20 mb-2">
+                <MapPin className="h-3 w-3 mr-1" /> {scene?.name ?? "Point of Interest"}
+              </Badge>
+            </div>
           )}
-          {activeHotspot?.link_url && (
-            <Button asChild className="w-full">
-              <a href={activeHotspot.link_url} target="_blank" rel="noopener noreferrer">Learn more</a>
-            </Button>
-          )}
+
+          <div className="p-6 space-y-4">
+            <DialogHeader className="space-y-2 text-left">
+              {!activeHotspot?.image_url && (
+                <DialogTitle className="text-2xl">{activeHotspot?.title}</DialogTitle>
+              )}
+              {activeHotspot?.description ? (
+                <DialogDescription className="text-base text-foreground/80 leading-relaxed">
+                  {activeHotspot.description}
+                </DialogDescription>
+              ) : (
+                <DialogDescription className="sr-only">
+                  Details about {activeHotspot?.title}
+                </DialogDescription>
+              )}
+            </DialogHeader>
+
+            <div className="flex flex-col sm:flex-row gap-2 pt-2">
+              <Button
+                variant="outline"
+                className="flex-1 gap-2"
+                onClick={() => setActiveHotspot(null)}
+              >
+                <Compass className="h-4 w-4" /> Back to tour
+              </Button>
+              {activeHotspot?.link_url && (
+                <Button asChild className="flex-1 gap-2">
+                  <a href={activeHotspot.link_url} target="_blank" rel="noopener noreferrer">
+                    Learn more <ExternalLink className="h-4 w-4" />
+                  </a>
+                </Button>
+              )}
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </Layout>
