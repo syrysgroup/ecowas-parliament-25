@@ -99,7 +99,7 @@ export default function PanoramaViewer({ scene, autoRotate = true, className, on
           scene.hotspots.map((h) => ({
             id: h.id,
             position: { yaw: h.yaw, pitch: h.pitch },
-            html: `<div class="psv-hotspot-dot" aria-label="${h.title.replace(/"/g, "&quot;")}"></div>`,
+            html: `<div class="psv-hotspot-dot" role="button" tabindex="0" aria-label="Hotspot: ${h.title.replace(/"/g, "&quot;")}. Press Enter to view details."></div>`,
             anchor: "center center",
             tooltip: { content: h.title, position: "top center" },
             data: h,
