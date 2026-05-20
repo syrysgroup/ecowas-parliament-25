@@ -26,6 +26,8 @@ export function usePanoramaScenes() {
         name: s.name,
         description: s.description,
         panorama_url: s.panorama_url,
+        mobile_panorama_url: s.mobile_panorama_url ?? null,
+        preview_url: s.preview_url ?? null,
         default_yaw: s.default_yaw ?? 0,
         default_pitch: s.default_pitch ?? 0,
         hotspots: ((hotspots ?? []) as any[])
