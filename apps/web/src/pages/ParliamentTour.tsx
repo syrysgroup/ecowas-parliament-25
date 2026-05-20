@@ -61,13 +61,16 @@ export default function ParliamentTour() {
               </p>
             </div>
             {scenes && scenes.length > 1 && (
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2" role="tablist" aria-label="Choose a panorama scene">
                 {scenes.map((s) => (
                   <Button
                     key={s.id}
                     size="sm"
                     variant={s.id === scene?.id ? "default" : "outline"}
                     onClick={() => setActiveSceneId(s.id)}
+                    role="tab"
+                    aria-selected={s.id === scene?.id}
+                    aria-label={`Switch to ${s.name} panorama`}
                   >
                     {s.name}
                   </Button>
@@ -103,26 +106,32 @@ export default function ParliamentTour() {
       {scene && scene.hotspots.length > 0 && (
         <section className="py-12 bg-muted/30">
           <div className="container">
-            <h2 className="text-2xl font-bold text-foreground mb-6 flex items-center gap-2">
-              <MapPin className="h-5 w-5 text-primary" /> Points of Interest
+            <h2 id="poi-heading" className="text-2xl font-bold text-foreground mb-6 flex items-center gap-2">
+              <MapPin className="h-5 w-5 text-primary" aria-hidden="true" /> Points of Interest
             </h2>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <ul
+              className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 list-none p-0"
+              aria-labelledby="poi-heading"
+            >
               {scene.hotspots.map((h) => (
-                <button
-                  key={h.id}
-                  onClick={() => setActiveHotspot(h)}
-                  className="text-left p-5 rounded-xl bg-card border border-border hover:shadow-lg hover:border-primary/40 transition-all"
-                >
-                  <h3 className="font-bold text-card-foreground mb-1.5">{h.title}</h3>
-                  {h.description && (
-                    <p className="text-sm text-muted-foreground line-clamp-3">{h.description}</p>
-                  )}
-                  <p className="text-xs text-primary font-medium mt-3 inline-flex items-center gap-1">
-                    <Maximize2 className="h-3 w-3" /> View in tour
-                  </p>
-                </button>
+                <li key={h.id}>
+                  <button
+                    type="button"
+                    onClick={() => setActiveHotspot(h)}
+                    aria-label={`Open details for ${h.title}`}
+                    className="w-full text-left p-5 rounded-xl bg-card border border-border hover:shadow-lg hover:border-primary/40 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                  >
+                    <h3 className="font-bold text-card-foreground mb-1.5">{h.title}</h3>
+                    {h.description && (
+                      <p className="text-sm text-muted-foreground line-clamp-3">{h.description}</p>
+                    )}
+                    <p className="text-xs text-primary font-medium mt-3 inline-flex items-center gap-1">
+                      <Maximize2 className="h-3 w-3" aria-hidden="true" /> View in tour
+                    </p>
+                  </button>
+                </li>
               ))}
-            </div>
+            </ul>
           </div>
         </section>
       )}
