@@ -23,6 +23,8 @@ export type PanoramaScene = {
   name: string;
   description?: string | null;
   panorama_url: string;
+  mobile_panorama_url?: string | null;
+  preview_url?: string | null;
   default_yaw: number;
   default_pitch: number;
   hotspots: PanoramaHotspot[];
@@ -54,9 +56,20 @@ export default function PanoramaViewer({ scene, autoRotate = true, className, on
       typeof window !== "undefined" &&
       window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
+    const isMobile =
+      typeof window !== "undefined" &&
+      window.matchMedia?.("(max-width: 768px)").matches;
+
+    const panoramaUrl =
+      isMobile && scene.mobile_panorama_url
+        ? scene.mobile_panorama_url
+        : isMobile && scene.panorama_url.endsWith("chamber-main.jpg")
+        ? scene.panorama_url.replace("chamber-main.jpg", "chamber-main-mobile.jpg")
+        : scene.panorama_url;
+
     const viewer = new Viewer({
       container: containerRef.current,
-      panorama: scene.panorama_url,
+      panorama: panoramaUrl,
       defaultYaw: scene.default_yaw,
       defaultPitch: scene.default_pitch,
       navbar: ["zoom", "move", "autorotate", "gyroscope", "fullscreen"],
@@ -111,7 +124,17 @@ export default function PanoramaViewer({ scene, autoRotate = true, className, on
 
   return (
     <div className={`relative w-full h-full bg-black ${className ?? ""}`}>
-      <div ref={containerRef} className="absolute inset-0" />
+      <div
+        ref={containerRef}
+        className="absolute inset-0 bg-center bg-cover"
+        style={
+          scene.preview_url
+            ? { backgroundImage: `url(${scene.preview_url})` }
+            : scene.panorama_url.endsWith("chamber-main.jpg")
+            ? { backgroundImage: `url(${scene.panorama_url.replace("chamber-main.jpg", "chamber-main-preview.jpg")})` }
+            : undefined
+        }
+      />
       {loading && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/80 text-white pointer-events-none">
           <div className="flex flex-col items-center gap-3">
