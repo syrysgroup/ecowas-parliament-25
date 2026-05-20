@@ -1,4 +1,4 @@
-import { useState, lazy, Suspense } from "react";
+import { useState, lazy, Suspense, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +17,24 @@ export default function ParliamentTour() {
   const [activeHotspot, setActiveHotspot] = useState<PanoramaHotspot | null>(null);
 
   const scene = scenes?.find((s) => s.id === activeSceneId) ?? scenes?.[0];
+
+  useEffect(() => {
+    if (!scene?.panorama_url) return;
+    const isMobile = window.matchMedia("(max-width: 768px)").matches;
+    const href =
+      isMobile && scene.panorama_url.endsWith("chamber-main.jpg")
+        ? scene.panorama_url.replace("chamber-main.jpg", "chamber-main-mobile.jpg")
+        : scene.panorama_url;
+    const link = document.createElement("link");
+    link.rel = "preload";
+    link.as = "image";
+    link.href = href;
+    (link as any).fetchPriority = "high";
+    document.head.appendChild(link);
+    return () => {
+      document.head.removeChild(link);
+    };
+  }, [scene?.panorama_url]);
 
   return (
     <Layout>
