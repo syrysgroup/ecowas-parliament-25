@@ -306,10 +306,25 @@ export default function PanoramaModule() {
                         {hotspotsQ.data?.map((h) => (
                           <div key={h.id} className="flex items-center justify-between p-2.5 rounded border border-border bg-muted/30">
                             <div className="text-sm">
-                              <p className="font-medium">{h.title}</p>
-                              <p className="text-xs text-muted-foreground">yaw {h.yaw.toFixed(2)} · pitch {h.pitch.toFixed(2)}</p>
+                              <p className="font-medium">{h.title} {!h.is_active && <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">hidden</span>}</p>
+                              <p className="text-xs text-muted-foreground">yaw {h.yaw.toFixed(2)} · pitch {h.pitch.toFixed(2)} · order {h.display_order}</p>
                             </div>
-                            <div className="flex gap-1">
+                            <div className="flex items-center gap-1">
+                              <Button size="sm" variant="ghost" title="Move up"
+                                onClick={() => reorder(hotspotsQ.data ?? [], h.id, -1,
+                                  (id, order) => quickUpdateHotspot.mutate({ id, patch: { display_order: order } }))}>
+                                <ArrowUp className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button size="sm" variant="ghost" title="Move down"
+                                onClick={() => reorder(hotspotsQ.data ?? [], h.id, 1,
+                                  (id, order) => quickUpdateHotspot.mutate({ id, patch: { display_order: order } }))}>
+                                <ArrowDown className="h-3.5 w-3.5" />
+                              </Button>
+                              <Switch checked={h.is_active}
+                                onCheckedChange={(v) => quickUpdateHotspot.mutate({ id: h.id, patch: { is_active: v } })} />
+                              <Button size="sm" variant="ghost" title="Re-pick position" onClick={() => setHotspotDialog(h)}>
+                                <Target className="h-3.5 w-3.5" />
+                              </Button>
                               <Button size="sm" variant="ghost" onClick={() => setHotspotDialog(h)}><Edit2 className="h-3.5 w-3.5" /></Button>
                               <Button size="sm" variant="ghost" onClick={() => { if (confirm(`Delete "${h.title}"?`)) deleteHotspot.mutate(h.id); }}>
                                 <Trash2 className="h-3.5 w-3.5 text-destructive" />
