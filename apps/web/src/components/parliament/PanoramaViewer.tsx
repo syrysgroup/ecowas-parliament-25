@@ -75,6 +75,7 @@ export default function PanoramaViewer({ scene, autoRotate = true, className, on
       panorama: panoramaUrl,
       defaultYaw: scene.default_yaw,
       defaultPitch: scene.default_pitch,
+      defaultZoomLvl: typeof scene.default_zoom === "number" ? scene.default_zoom : 50,
       navbar: ["zoom", "move", "autorotate", "gyroscope", "fullscreen"],
       loadingTxt: "Loading the Parliament chamber…",
       touchmoveTwoFingers: false,
