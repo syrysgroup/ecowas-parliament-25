@@ -27,6 +27,7 @@ export type PanoramaScene = {
   preview_url?: string | null;
   default_yaw: number;
   default_pitch: number;
+  default_zoom?: number | null;
   hotspots: PanoramaHotspot[];
 };
 
