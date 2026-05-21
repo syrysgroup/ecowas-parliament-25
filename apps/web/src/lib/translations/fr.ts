@@ -277,7 +277,7 @@ export const fr: Record<string, string> = {
   "contact.followUs": "Suivez @ecoparl_initiatives",
   "contact.web": "Web",
   "contact.sponsorCardTitle": "Pour les demandes de parrainage",
-  "contact.sponsorCardDesc": "Contactez Mariama Camara, Responsable des relations partenaires, directement pour des offres de partenariat personnalisées.",
+  "contact.sponsorCardDesc": "Pour des offres de partenariat personnalisées, écrivez à sponsor@ecowasparliamentinitiatives.org.",
   "contact.enquiry.general": "Demande générale",
   "contact.enquiry.press": "Accréditation presse / médias",
   "contact.enquiry.sponsorship": "Parrainage & partenariats",
@@ -1040,7 +1040,7 @@ export const fr: Record<string, string> = {
   "sponsor.sampleNote": "Rapports livrés mensuellement par votre gestionnaire de compte dédié. Appel de point trimestriel inclus pour tous les partenaires Or + Argent.",
   "sponsor.ctaTitle": "Prêt à devenir partenaire ?",
   "sponsor.ctaDesc": "Contactez notre Responsable des relations partenaires pour discuter du niveau adapté à votre organisation et recevoir une proposition de visibilité personnalisée.",
-  "sponsor.ctaContact": "Mariama Camara  Responsable des relations partenaires · Réponse sous 48 heures",
+  "sponsor.ctaContact": "Écrivez à sponsor@ecowasparliamentinitiatives.org · Réponse sous 48 heures",
   "sponsor.bookCall": "Réserver un appel de 30 min",
 
   // ─── Sponsor Dashboard ────────────────────────────────────────────
@@ -1056,7 +1056,7 @@ export const fr: Record<string, string> = {
   "sponsorDash.since": "Depuis {date}",
   "sponsorDash.progress": "Progression du programme",
   "sponsorDash.accountManager": "Votre gestionnaire de compte",
-  "sponsorDash.accountManagerName": "Mariama Camara  Responsable des relations partenaires",
+  "sponsorDash.accountManagerName": "Équipe Partenariats — sponsor@ecowasparliamentinitiatives.org",
   "sponsorDash.accountManagerEmail": "sponsors@ecowasparliamentinitiatives.org · Appels de point trimestriels programmés",
 
   // ─── Set Password ─────────────────────────────────────────────────

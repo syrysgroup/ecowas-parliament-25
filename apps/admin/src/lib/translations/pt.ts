@@ -275,7 +275,7 @@ export const pt: Record<string, string> = {
   "contact.followUs": "Siga @ecoparl_initiatives",
   "contact.web": "Web",
   "contact.sponsorCardTitle": "Para consultas de patrocínio",
-  "contact.sponsorCardDesc": "Contacte Mariama Camara, Gestora de Relações com Patrocinadores, diretamente para pacotes de parceria personalizados.",
+  "contact.sponsorCardDesc": "Para pacotes de parceria personalizados, escreva para sponsor@ecowasparliamentinitiatives.org.",
   "contact.enquiry.general": "Consulta geral",
   "contact.enquiry.press": "Acreditação de imprensa / media",
   "contact.enquiry.sponsorship": "Patrocínio & parcerias",
@@ -1038,7 +1038,7 @@ export const pt: Record<string, string> = {
   "sponsor.sampleNote": "Relatórios entregues mensalmente pelo seu gestor de conta dedicado. Chamada de ponto trimestral incluída para todos os patrocinadores Ouro + Prata.",
   "sponsor.ctaTitle": "Pronto para ser parceiro?",
   "sponsor.ctaDesc": "Contacte a nossa Gestora de Relações com Patrocinadores para discutir o nível adequado à sua organização e receber uma proposta de visibilidade personalizada.",
-  "sponsor.ctaContact": "Mariama Camara  Gestora de Relações com Patrocinadores · Resposta em 48 horas",
+  "sponsor.ctaContact": "Escreva para sponsor@ecowasparliamentinitiatives.org · Resposta em 48 horas",
   "sponsor.bookCall": "Agendar chamada de 30 min",
 
   // ─── Sponsor Dashboard ────────────────────────────────────────────
@@ -1054,7 +1054,7 @@ export const pt: Record<string, string> = {
   "sponsorDash.since": "Desde {date}",
   "sponsorDash.progress": "Progresso do Programa",
   "sponsorDash.accountManager": "O Seu Gestor de Conta",
-  "sponsorDash.accountManagerName": "Mariama Camara  Gestora de Relações com Patrocinadores",
+  "sponsorDash.accountManagerName": "Equipa de Parcerias — sponsor@ecowasparliamentinitiatives.org",
   "sponsorDash.accountManagerEmail": "sponsors@ecowasparliamentinitiatives.org · Chamadas de ponto trimestrais agendadas",
 
   // ─── Set Password ─────────────────────────────────────────────────

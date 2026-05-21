@@ -5,7 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Loader2, ArrowLeft, MapPin, Maximize2, ExternalLink, Compass } from "lucide-react";
-import { SEOHead } from "@/components/SEOHead";
+import { Badge } from "@/components/ui/badge";
+import SEOHead from "@/components/SEOHead";
 import { usePanoramaScenes } from "@/hooks/usePanoramaScenes";
 import type { PanoramaHotspot } from "@/components/parliament/PanoramaViewer";
 

@@ -287,7 +287,7 @@ export const en: Record<string, string> = {
   "contact.followUs": "Follow @ecoparl_initiatives",
   "contact.web": "Web",
   "contact.sponsorCardTitle": "For sponsorship enquiries",
-  "contact.sponsorCardDesc": "Contact Mariama Camara, Sponsor Relations Manager, directly for tailored partnership packages.",
+  "contact.sponsorCardDesc": "For tailored partnership packages, email sponsor@ecowasparliamentinitiatives.org.",
   "contact.enquiry.general": "General enquiry",
   "contact.enquiry.press": "Press / media accreditation",
   "contact.enquiry.sponsorship": "Sponsorship & partnerships",
@@ -1143,7 +1143,7 @@ export const en: Record<string, string> = {
   "sponsor.sampleNote": "Reports delivered monthly by your dedicated account manager. Quarterly touchpoint call included for all Gold + Silver sponsors.",
   "sponsor.ctaTitle": "Ready to partner?",
   "sponsor.ctaDesc": "Contact our Sponsor Relations Manager to discuss the right tier for your organisation and receive a personalised visibility proposal.",
-  "sponsor.ctaContact": "Mariama Camara  Sponsor Relations Manager · Responds within 48 hours",
+  "sponsor.ctaContact": "Email sponsor@ecowasparliamentinitiatives.org · Responds within 48 hours",
   "sponsor.bookCall": "Book a 30-min briefing call",
 
   // ─── Sponsor Dashboard ────────────────────────────────────────────
@@ -1159,7 +1159,7 @@ export const en: Record<string, string> = {
   "sponsorDash.since": "Since {date}",
   "sponsorDash.progress": "Programme Progress",
   "sponsorDash.accountManager": "Your Account Manager",
-  "sponsorDash.accountManagerName": "Mariama Camara  Sponsor Relations Manager",
+  "sponsorDash.accountManagerName": "Sponsorship Team — sponsor@ecowasparliamentinitiatives.org",
   "sponsorDash.accountManagerEmail": "sponsors@ecowasparliamentinitiatives.org · Quarterly touchpoint calls scheduled",
 
   // ─── Set Password ─────────────────────────────────────────────────
