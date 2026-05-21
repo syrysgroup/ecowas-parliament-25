@@ -2464,6 +2464,7 @@ export type Database = {
           created_at: string
           default_pitch: number
           default_yaw: number
+          default_zoom: number
           description: string | null
           display_order: number
           id: string
@@ -2479,6 +2480,7 @@ export type Database = {
           created_at?: string
           default_pitch?: number
           default_yaw?: number
+          default_zoom?: number
           description?: string | null
           display_order?: number
           id?: string
@@ -2494,6 +2496,7 @@ export type Database = {
           created_at?: string
           default_pitch?: number
           default_yaw?: number
+          default_zoom?: number
           description?: string | null
           display_order?: number
           id?: string
