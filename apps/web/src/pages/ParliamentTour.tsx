@@ -1,12 +1,11 @@
-import { useState, lazy, Suspense, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { useState, lazy, Suspense, useEffect, useMemo } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Loader2, ArrowLeft, MapPin, Maximize2, ExternalLink, Compass } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import SEOHead from "@/components/SEOHead";
+import { SEOHead } from "@/components/SEOHead";
 import { usePanoramaScenes } from "@/hooks/usePanoramaScenes";
 import type { PanoramaHotspot } from "@/components/parliament/PanoramaViewer";
 
@@ -14,10 +13,17 @@ const PanoramaViewer = lazy(() => import("@/components/parliament/PanoramaViewer
 
 export default function ParliamentTour() {
   const { data: scenes, isLoading } = usePanoramaScenes();
+  const [searchParams] = useSearchParams();
+  const slugParam = searchParams.get("scene");
   const [activeSceneId, setActiveSceneId] = useState<string | null>(null);
   const [activeHotspot, setActiveHotspot] = useState<PanoramaHotspot | null>(null);
 
-  const scene = scenes?.find((s) => s.id === activeSceneId) ?? scenes?.[0];
+  const scene = useMemo(() => {
+    if (!scenes?.length) return undefined;
+    if (activeSceneId) return scenes.find((s) => s.id === activeSceneId) ?? scenes[0];
+    if (slugParam) return scenes.find((s) => s.slug === slugParam) ?? scenes[0];
+    return scenes[0];
+  }, [scenes, activeSceneId, slugParam]);
 
   useEffect(() => {
     if (!scene?.panorama_url) return;

@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Plus, Trash2, Upload, Compass, MapPin, Edit2, Info, Crosshair } from "lucide-react";
+import { Plus, Trash2, Upload, Compass, MapPin, Edit2, Info, Crosshair, ArrowUp, ArrowDown, ExternalLink, Target } from "lucide-react";
 import { toast } from "sonner";
 import { validateEquirectangular, generateDerivatives } from "@/lib/panorama";
 import HotspotPicker from "./panorama/HotspotPicker";
@@ -17,7 +17,7 @@ import HotspotPicker from "./panorama/HotspotPicker";
 type Scene = {
   id: string; slug: string; name: string; description: string | null;
   panorama_url: string; preview_url: string | null; mobile_panorama_url: string | null;
-  default_yaw: number; default_pitch: number;
+  default_yaw: number; default_pitch: number; default_zoom: number;
   display_order: number; is_active: boolean;
 };
 type Hotspot = {
@@ -26,6 +26,9 @@ type Hotspot = {
   image_url: string | null; link_url: string | null;
   display_order: number; is_active: boolean;
 };
+
+const WEB_TOUR_URL =
+  (import.meta.env.VITE_WEB_BASE_URL?.replace(/\/$/, "") ?? "") + "/parliament-tour";
 
 export default function PanoramaModule() {
   const qc = useQueryClient();
@@ -63,7 +66,9 @@ export default function PanoramaModule() {
         panorama_url: s.panorama_url,
         preview_url: s.preview_url,
         mobile_panorama_url: s.mobile_panorama_url,
-        default_yaw: s.default_yaw ?? 0, default_pitch: s.default_pitch ?? 0,
+        default_yaw: s.default_yaw ?? 0,
+        default_pitch: s.default_pitch ?? 0,
+        default_zoom: s.default_zoom ?? 50,
         display_order: s.display_order ?? 0, is_active: s.is_active ?? true,
       };
       if (s.id) {
@@ -130,6 +135,38 @@ export default function PanoramaModule() {
     },
   });
 
+  const quickUpdateScene = useMutation({
+    mutationFn: async ({ id, patch }: { id: string; patch: Partial<Scene> }) => {
+      const { error } = await supabase.from("parliament_panorama_scenes" as any).update(patch).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["crm-panorama-scenes"] }),
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const quickUpdateHotspot = useMutation({
+    mutationFn: async ({ id, patch }: { id: string; patch: Partial<Hotspot> }) => {
+      const { error } = await supabase.from("parliament_panorama_hotspots" as any).update(patch).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["crm-panorama-hotspots", activeSceneId] }),
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  function reorder<T extends { id: string; display_order: number }>(
+    list: T[],
+    id: string,
+    dir: -1 | 1,
+    mutate: (id: string, order: number) => void,
+  ) {
+    const sorted = [...list].sort((a, b) => a.display_order - b.display_order);
+    const idx = sorted.findIndex((x) => x.id === id);
+    const swap = sorted[idx + dir];
+    if (!swap) return;
+    mutate(sorted[idx].id, swap.display_order);
+    mutate(swap.id, sorted[idx].display_order);
+  }
+
   async function uploadBlob(blob: Blob, name: string): Promise<string | null> {
     const path = `${Date.now()}-${name.replace(/[^a-z0-9.\-_]/gi, "_")}`;
     const { error } = await supabase.storage.from("parliament-panorama").upload(path, blob, {
@@ -174,9 +211,16 @@ export default function PanoramaModule() {
           </h1>
           <p className="text-sm text-muted-foreground">Manage panorama scenes and interactive hotspots for the virtual tour.</p>
         </div>
-        <Button onClick={() => setSceneDialog({ is_active: true, default_yaw: 0, default_pitch: 0, display_order: (scenesQ.data?.length ?? 0) + 1 })}>
-          <Plus className="h-4 w-4 mr-1" /> New Scene
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" asChild>
+            <a href={WEB_TOUR_URL || "/parliament-tour"} target="_blank" rel="noopener noreferrer">
+              <ExternalLink className="h-4 w-4 mr-1" /> Preview live tour
+            </a>
+          </Button>
+          <Button onClick={() => setSceneDialog({ is_active: true, default_yaw: 0, default_pitch: 0, default_zoom: 50, display_order: (scenesQ.data?.length ?? 0) + 1 })}>
+            <Plus className="h-4 w-4 mr-1" /> New Scene
+          </Button>
+        </div>
       </div>
 
       <Tabs value="scenes">
@@ -203,6 +247,29 @@ export default function PanoramaModule() {
                     {!s.is_active && <span className="text-xs px-2 py-0.5 rounded bg-muted text-muted-foreground">Hidden</span>}
                   </CardTitle>
                   <div className="flex gap-2">
+                  <div className="flex items-center gap-1">
+                    <Button size="sm" variant="ghost" title="Move up"
+                      onClick={() => reorder(scenesQ.data ?? [], s.id, -1,
+                        (id, order) => quickUpdateScene.mutate({ id, patch: { display_order: order } }))}>
+                      <ArrowUp className="h-4 w-4" />
+                    </Button>
+                    <Button size="sm" variant="ghost" title="Move down"
+                      onClick={() => reorder(scenesQ.data ?? [], s.id, 1,
+                        (id, order) => quickUpdateScene.mutate({ id, patch: { display_order: order } }))}>
+                      <ArrowDown className="h-4 w-4" />
+                    </Button>
+                    <div className="flex items-center gap-1 px-2 border-l border-border ml-1">
+                      <Switch
+                        checked={s.is_active}
+                        onCheckedChange={(v) => quickUpdateScene.mutate({ id: s.id, patch: { is_active: v } })}
+                      />
+                      <span className="text-xs text-muted-foreground">Live</span>
+                    </div>
+                    <Button size="sm" variant="outline" asChild title="Preview this scene">
+                      <a href={`${WEB_TOUR_URL || "/parliament-tour"}?scene=${encodeURIComponent(s.slug)}`} target="_blank" rel="noopener noreferrer">
+                        <ExternalLink className="h-4 w-4" />
+                      </a>
+                    </Button>
                     <Button size="sm" variant="outline" onClick={() => setActiveSceneId(activeSceneId === s.id ? null : s.id)}>
                       <MapPin className="h-4 w-4 mr-1" /> Hotspots
                     </Button>
@@ -219,7 +286,10 @@ export default function PanoramaModule() {
                     <img src={s.panorama_url} alt={s.name} className="w-48 h-24 object-cover rounded border border-border" />
                     <div className="flex-1 text-sm space-y-1">
                       <p className="text-muted-foreground">{s.description}</p>
-                      <p className="text-xs text-muted-foreground">Slug: <code>{s.slug}</code> · Order: {s.display_order}</p>
+                      <p className="text-xs text-muted-foreground">
+                        Slug: <code>{s.slug}</code> · Order: {s.display_order} ·
+                        Default view: yaw {Number(s.default_yaw ?? 0).toFixed(2)}, pitch {Number(s.default_pitch ?? 0).toFixed(2)}, zoom {Number(s.default_zoom ?? 50).toFixed(0)}
+                      </p>
                     </div>
                   </div>
 
@@ -236,10 +306,25 @@ export default function PanoramaModule() {
                         {hotspotsQ.data?.map((h) => (
                           <div key={h.id} className="flex items-center justify-between p-2.5 rounded border border-border bg-muted/30">
                             <div className="text-sm">
-                              <p className="font-medium">{h.title}</p>
-                              <p className="text-xs text-muted-foreground">yaw {h.yaw.toFixed(2)} · pitch {h.pitch.toFixed(2)}</p>
+                              <p className="font-medium">{h.title} {!h.is_active && <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">hidden</span>}</p>
+                              <p className="text-xs text-muted-foreground">yaw {h.yaw.toFixed(2)} · pitch {h.pitch.toFixed(2)} · order {h.display_order}</p>
                             </div>
-                            <div className="flex gap-1">
+                            <div className="flex items-center gap-1">
+                              <Button size="sm" variant="ghost" title="Move up"
+                                onClick={() => reorder(hotspotsQ.data ?? [], h.id, -1,
+                                  (id, order) => quickUpdateHotspot.mutate({ id, patch: { display_order: order } }))}>
+                                <ArrowUp className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button size="sm" variant="ghost" title="Move down"
+                                onClick={() => reorder(hotspotsQ.data ?? [], h.id, 1,
+                                  (id, order) => quickUpdateHotspot.mutate({ id, patch: { display_order: order } }))}>
+                                <ArrowDown className="h-3.5 w-3.5" />
+                              </Button>
+                              <Switch checked={h.is_active}
+                                onCheckedChange={(v) => quickUpdateHotspot.mutate({ id: h.id, patch: { is_active: v } })} />
+                              <Button size="sm" variant="ghost" title="Re-pick position" onClick={() => setHotspotDialog(h)}>
+                                <Target className="h-3.5 w-3.5" />
+                              </Button>
                               <Button size="sm" variant="ghost" onClick={() => setHotspotDialog(h)}><Edit2 className="h-3.5 w-3.5" /></Button>
                               <Button size="sm" variant="ghost" onClick={() => { if (confirm(`Delete "${h.title}"?`)) deleteHotspot.mutate(h.id); }}>
                                 <Trash2 className="h-3.5 w-3.5 text-destructive" />
@@ -288,9 +373,23 @@ export default function PanoramaModule() {
                   </p>
                 )}
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div><Label>Default Yaw (rad)</Label><Input type="number" step="0.1" value={sceneDialog.default_yaw ?? 0} onChange={(e) => setSceneDialog({ ...sceneDialog, default_yaw: parseFloat(e.target.value) })} /></div>
-                <div><Label>Default Pitch (rad)</Label><Input type="number" step="0.1" value={sceneDialog.default_pitch ?? 0} onChange={(e) => setSceneDialog({ ...sceneDialog, default_pitch: parseFloat(e.target.value) })} /></div>
+              {sceneDialog.panorama_url && (
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-1.5">
+                    <Crosshair className="h-3.5 w-3.5" /> Default view — click in the panorama to set where the tour opens
+                  </Label>
+                  <HotspotPicker
+                    panoramaUrl={sceneDialog.panorama_url}
+                    yaw={sceneDialog.default_yaw ?? 0}
+                    pitch={sceneDialog.default_pitch ?? 0}
+                    onPick={(y, p) => setSceneDialog((prev) => prev ? { ...prev, default_yaw: y, default_pitch: p } : prev)}
+                  />
+                </div>
+              )}
+              <div className="grid grid-cols-3 gap-3">
+                <div><Label>Default Yaw (rad)</Label><Input type="number" step="0.05" value={sceneDialog.default_yaw ?? 0} onChange={(e) => setSceneDialog({ ...sceneDialog, default_yaw: parseFloat(e.target.value) })} /></div>
+                <div><Label>Default Pitch (rad)</Label><Input type="number" step="0.05" value={sceneDialog.default_pitch ?? 0} onChange={(e) => setSceneDialog({ ...sceneDialog, default_pitch: parseFloat(e.target.value) })} /></div>
+                <div><Label>Default Zoom (0–100)</Label><Input type="number" min={0} max={100} step="1" value={sceneDialog.default_zoom ?? 50} onChange={(e) => setSceneDialog({ ...sceneDialog, default_zoom: Math.max(0, Math.min(100, parseFloat(e.target.value) || 0)) })} /></div>
               </div>
               <div className="grid grid-cols-2 gap-3 items-end">
                 <div><Label>Display Order</Label><Input type="number" value={sceneDialog.display_order ?? 0} onChange={(e) => setSceneDialog({ ...sceneDialog, display_order: parseInt(e.target.value) || 0 })} /></div>
