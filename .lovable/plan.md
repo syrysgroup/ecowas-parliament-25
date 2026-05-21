@@ -1,41 +1,52 @@
-## Goal
-Restore the preview, verify the 360° chamber panorama loads on `/parliament-tour`, and apply small viewer polish (mobile-resolution panorama + asset preload).
+## Context
 
-## 1. Fix preview (dev server down)
-Dev-server logs show repeated `node_modules/.bin/vite: No such file or directory` — `apps/web/node_modules` was wiped. Reinstall:
-- `cd apps/web && npm install --no-audit --no-fund`
-- Poll `http://localhost:8080/` until 200.
+- An admin module already exists at `apps/admin/src/components/crm/modules/PanoramaModule.tsx` with: upload to the `parliament-panorama` storage bucket, scene CRUD, and hotspot CRUD. What's missing is (a) a DJI-aware ingest workflow and (b) a visual way to place hotspots without reading yaw/pitch from the console.
+- The "Mariama Camara" sponsor contact line is a translation string used in 3 places per locale, in both `apps/web` and `apps/admin`.
 
-## 2. Verify panorama asset delivery
-With the server back up, probe:
-- `GET /panorama/chamber-main.jpg` (desktop, ~1.4 MB) → expect 200
-- `GET /panorama/chamber-main-mobile.jpg` (~860 KB) → expect 200
-- `GET /panorama/chamber-main-preview.jpg` (LQIP, ~780 B) → expect 200
-- `GET /parliament-tour` → expect 200 HTML
+## 1. Panorama: DJI Mini 3 ingest + stitching
 
-Also confirm the DB scene row's `panorama_url` points at `/panorama/chamber-main.jpg` (via `usePanoramaScenes`) so the viewer resolves the file.
+The DJI Mini 3 has a built-in **Sphere panorama** mode: the drone shoots ~26 frames and the DJI Fly app auto-stitches them on the phone into a single equirectangular JPG (2:1, typically 8192×4096). That stitched file is what 360° viewers like Photo Sphere Viewer expect — no re-stitching needed.
 
-## 3. Viewer polish
+Browser-side stitching of raw drone frames (Hugin/OpenCV-class work) is not practical in a Vite SPA. So the recommended approach is:
 
-### 3a. Mobile variant
-In `apps/web/src/components/parliament/PanoramaViewer.tsx`:
-- Pick lower-res panorama on small/low-DPR devices to cut load time and avoid GPU texture limits.
-- Resolution: if `window.matchMedia('(max-width: 768px)').matches` AND `scene.panorama_url` ends in `chamber-main.jpg`, swap to `chamber-main-mobile.jpg`. Generalize via a `mobile_panorama_url` field on the scene when present (fallback to the desktop URL otherwise) — the hook already returns the raw row, so extend the `PanoramaScene` type with an optional `mobile_panorama_url` and read it in `usePanoramaScenes`.
-- Show `chamber-main-preview.jpg` as the viewer container `background-image` while PSV loads, so users see something immediately instead of a black box.
+**A. Primary path — upload a pre-stitched panorama (already works, just guide the admin).**
+- Add a clear "How to capture" callout in `PanoramaModule.tsx`: Shoot in DJI Fly → *Photo → Pano → Sphere* → wait for auto-stitch → export the equirectangular JPG → upload here.
+- On upload, validate the file: must be JPG/PNG, aspect ratio ≈ 2:1 (tolerance ±2%), min 4096×2048. Show a warning toast if it's not equirectangular (this is exactly what causes the "not properly stitched" look the user is seeing — a flat aerial photo was probably uploaded instead of a Sphere export).
+- Auto-generate two derivatives client-side via `<canvas>`: a `*-mobile.jpg` (4096×2048, quality 0.82) and a `*-preview.jpg` (1024×512, quality 0.7). Store all three URLs on the scene row (`panorama_url`, `mobile_panorama_url`, `preview_url`).
 
-### 3b. Preload
-In `apps/web/src/pages/ParliamentTour.tsx`:
-- Add a `<link rel="preload" as="image" href={scene.panorama_url} fetchpriority="high">` via a `useEffect` that injects/removes the tag, so the panorama starts downloading in parallel with the lazy PSV chunk.
-- Keep the existing `lazy(() => import("@/components/parliament/PanoramaViewer"))` — only the image preload is added.
+**B. Secondary path — multi-frame stitching (optional, deferred).**
+True drone-frame stitching needs Hugin-class tooling. If wanted later, the right home is a Supabase edge function shelling out to a stitching service, or a desktop preprocessing step — not the browser. Out of scope for this change; the in-app text will tell the admin to use DJI Fly's built-in stitching.
 
-No DB migration needed for step 3 unless we want a per-scene mobile URL; if so, add a follow-up migration adding `mobile_panorama_url text` to `parliament_panorama_scenes` (optional, defer unless requested).
+## 2. Panorama: visual hotspot placement
 
-## 4. Final verification
-- Re-hit `/parliament-tour` in the preview and confirm: preview image visible immediately, full panorama swaps in, mobile viewport (430×667) serves the mobile JPG (check Network tab via browser tools).
-- Confirm no console errors from PSV.
+Replace the "read yaw/pitch from the console" tip with a real picker:
 
-## Files touched
-- `apps/web/src/components/parliament/PanoramaViewer.tsx` — mobile URL swap + LQIP background
-- `apps/web/src/hooks/usePanoramaScenes.ts` — expose `mobile_panorama_url`
-- `apps/web/src/pages/ParliamentTour.tsx` — preload `<link>` injection
-- (env) reinstall `apps/web/node_modules`
+- In the hotspot dialog, embed a small `<PanoramaViewer>` of the current scene with `autoRotate={false}`.
+- Add a "Pick location" mode: enable Photo Sphere Viewer's `click` event; on click capture `data.yaw` / `data.pitch`, write them into the dialog state, and show a temporary marker at that point.
+- Keep the manual yaw/pitch number inputs as a fallback.
+- Same picker is reused when editing: load existing yaw/pitch as the initial marker.
+
+## 3. Sponsor contact copy
+
+Replace the "Mariama Camara, Sponsor Relations Manager…" line and related strings with the shared sponsorship email `sponsor@ecowasparliamentinitiatives.org`.
+
+Files (web + admin, en/fr/pt = 6 files), keys:
+
+- `contact.sponsorCardDesc` → "For tailored partnership packages, email sponsor@ecowasparliamentinitiatives.org." (translated per locale).
+- `sponsor.ctaContact` → "Sponsorship enquiries: sponsor@ecowasparliamentinitiatives.org · Responds within 48 hours".
+- `sponsorDash.accountManagerName` → "Sponsorship Team" (with the email shown alongside in the existing UI string for that section; will verify the surrounding component renders the email and add it if missing).
+
+Also: if any component renders "Mariama Camara" as a hard-coded string (avatar caption, mailto), swap the `mailto:` to `sponsor@ecowasparliamentinitiatives.org` and remove the person's name. I'll grep both apps before editing.
+
+## Technical notes
+
+- New file: `apps/admin/src/components/crm/modules/panorama/HotspotPicker.tsx` (wraps `PanoramaViewer` from `apps/web` — the component is duplicated/imported into admin; will copy it under `apps/admin/src/components/parliament/PanoramaViewer.tsx` since admin doesn't currently import from web).
+- New helper: `apps/admin/src/lib/panorama.ts` with `validateEquirectangular(file)` and `generateDerivatives(file)` using `createImageBitmap` + `OffscreenCanvas`.
+- DB: no schema changes — `parliament_panorama_scenes` already has `panorama_url`, `mobile_panorama_url`, `preview_url`. (Will confirm `mobile_panorama_url` column exists; the web hook reads it, but if the column is missing I'll add a migration.)
+- Storage: `parliament-panorama` bucket exists and is public.
+- No package additions required: `@photo-sphere-viewer/core` is already installed for the web viewer; I'll add it to `apps/admin/package.json` (already used in web).
+
+## Out of scope
+
+- True multi-frame in-browser stitching (Hugin-class). Recommended workflow is DJI Fly's onboard Sphere stitching.
+- Localised rewrite of every sponsor page beyond the three translation keys + any hard-coded "Mariama" mention found by grep.
