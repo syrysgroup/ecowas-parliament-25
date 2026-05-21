@@ -66,7 +66,9 @@ export default function PanoramaModule() {
         panorama_url: s.panorama_url,
         preview_url: s.preview_url,
         mobile_panorama_url: s.mobile_panorama_url,
-        default_yaw: s.default_yaw ?? 0, default_pitch: s.default_pitch ?? 0,
+        default_yaw: s.default_yaw ?? 0,
+        default_pitch: s.default_pitch ?? 0,
+        default_zoom: s.default_zoom ?? 50,
         display_order: s.display_order ?? 0, is_active: s.is_active ?? true,
       };
       if (s.id) {
