@@ -9,12 +9,14 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Plus, Trash2, Upload, Compass, MapPin, Edit2 } from "lucide-react";
+import { Plus, Trash2, Upload, Compass, MapPin, Edit2, Info, Crosshair } from "lucide-react";
 import { toast } from "sonner";
+import { validateEquirectangular, generateDerivatives } from "@/lib/panorama";
+import HotspotPicker from "./panorama/HotspotPicker";
 
 type Scene = {
   id: string; slug: string; name: string; description: string | null;
-  panorama_url: string; preview_url: string | null;
+  panorama_url: string; preview_url: string | null; mobile_panorama_url: string | null;
   default_yaw: number; default_pitch: number;
   display_order: number; is_active: boolean;
 };
@@ -31,6 +33,7 @@ export default function PanoramaModule() {
   const [sceneDialog, setSceneDialog] = useState<Partial<Scene> | null>(null);
   const [hotspotDialog, setHotspotDialog] = useState<Partial<Hotspot> | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   const scenesQ = useQuery({
     queryKey: ["crm-panorama-scenes"],
@@ -57,7 +60,9 @@ export default function PanoramaModule() {
     mutationFn: async (s: Partial<Scene>) => {
       const payload = {
         slug: s.slug, name: s.name, description: s.description,
-        panorama_url: s.panorama_url, preview_url: s.preview_url,
+        panorama_url: s.panorama_url,
+        preview_url: s.preview_url,
+        mobile_panorama_url: s.mobile_panorama_url,
         default_yaw: s.default_yaw ?? 0, default_pitch: s.default_pitch ?? 0,
         display_order: s.display_order ?? 0, is_active: s.is_active ?? true,
       };
@@ -125,20 +130,38 @@ export default function PanoramaModule() {
     },
   });
 
-  async function uploadPanorama(file: File): Promise<string | null> {
+  async function uploadBlob(blob: Blob, name: string): Promise<string | null> {
+    const path = `${Date.now()}-${name.replace(/[^a-z0-9.\-_]/gi, "_")}`;
+    const { error } = await supabase.storage.from("parliament-panorama").upload(path, blob, {
+      cacheControl: "31536000", upsert: false, contentType: blob.type || "image/jpeg",
+    });
+    if (error) throw error;
+    return supabase.storage.from("parliament-panorama").getPublicUrl(path).data.publicUrl;
+  }
+
+  async function uploadPanorama(file: File): Promise<void> {
     setUploading(true);
     try {
-      const path = `${Date.now()}-${file.name.replace(/[^a-z0-9.\-_]/gi, "_")}`;
-      const { error } = await supabase.storage.from("parliament-panorama").upload(path, file, {
-        cacheControl: "31536000", upsert: false,
-      });
-      if (error) throw error;
-      const { data } = supabase.storage.from("parliament-panorama").getPublicUrl(path);
-      toast.success("Panorama uploaded");
-      return data.publicUrl;
+      const check = await validateEquirectangular(file);
+      if (!check.ok) {
+        toast.error(check.error);
+        return;
+      }
+      toast.message(`Uploading ${check.width}×${check.height} panorama + derivatives…`);
+      const fullUrl = await uploadBlob(file, file.name);
+      const { mobile, preview } = await generateDerivatives(file, check.width);
+      const base = file.name.replace(/\.[^.]+$/, "");
+      const mobileUrl = mobile ? await uploadBlob(mobile, `${base}-mobile.jpg`) : null;
+      const previewUrl = preview ? await uploadBlob(preview, `${base}-preview.jpg`) : null;
+      setSceneDialog((prev) => prev ? {
+        ...prev,
+        panorama_url: fullUrl ?? prev.panorama_url,
+        mobile_panorama_url: mobileUrl ?? prev.mobile_panorama_url ?? null,
+        preview_url: previewUrl ?? prev.preview_url ?? null,
+      } : prev);
+      toast.success("Panorama uploaded with mobile + preview derivatives");
     } catch (e: any) {
       toast.error(e.message);
-      return null;
     } finally { setUploading(false); }
   }
 
@@ -161,6 +184,16 @@ export default function PanoramaModule() {
           <TabsTrigger value="scenes">Scenes ({scenesQ.data?.length ?? 0})</TabsTrigger>
         </TabsList>
         <TabsContent value="scenes" className="space-y-4 mt-4">
+          <div className="flex gap-2 p-3 rounded-lg border border-border bg-muted/40 text-xs text-muted-foreground">
+            <Info className="h-4 w-4 shrink-0 mt-0.5 text-primary" />
+            <div>
+              <strong className="text-foreground">DJI Mini 3 capture workflow:</strong> in DJI Fly, choose
+              <em> Photo → Pano → Sphere</em>. The drone shoots ~26 frames and the app auto-stitches them
+              into a single 2:1 equirectangular JPG (typically 8192×4096). Export that stitched file and
+              upload it here — uploads that aren't 2:1 will be rejected. Mobile and preview derivatives
+              are generated automatically.
+            </div>
+          </div>
           {scenesQ.isLoading ? <p className="text-muted-foreground">Loading…</p> :
             scenesQ.data?.map((s) => (
               <Card key={s.id}>
@@ -241,13 +274,19 @@ export default function PanoramaModule() {
                   <label className="inline-flex">
                     <input type="file" accept="image/jpeg,image/png" hidden onChange={async (e) => {
                       const f = e.target.files?.[0]; if (!f) return;
-                      const url = await uploadPanorama(f);
-                      if (url) setSceneDialog((prev) => prev ? { ...prev, panorama_url: url } : prev);
+                        await uploadPanorama(f);
+                        e.target.value = "";
                     }} />
                     <Button asChild variant="outline" disabled={uploading}><span><Upload className="h-4 w-4 mr-1" />{uploading ? "Uploading…" : "Upload"}</span></Button>
                   </label>
                 </div>
                 {sceneDialog.panorama_url && <img src={sceneDialog.panorama_url} alt="" className="mt-2 w-full h-32 object-cover rounded border border-border" />}
+                {(sceneDialog.mobile_panorama_url || sceneDialog.preview_url) && (
+                  <p className="mt-1 text-[11px] text-muted-foreground">
+                    {sceneDialog.mobile_panorama_url && <>✓ mobile derivative </>}
+                    {sceneDialog.preview_url && <>✓ preview derivative</>}
+                  </p>
+                )}
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div><Label>Default Yaw (rad)</Label><Input type="number" step="0.1" value={sceneDialog.default_yaw ?? 0} onChange={(e) => setSceneDialog({ ...sceneDialog, default_yaw: parseFloat(e.target.value) })} /></div>
@@ -268,17 +307,40 @@ export default function PanoramaModule() {
 
       {/* Hotspot editor */}
       <Dialog open={!!hotspotDialog} onOpenChange={(o) => !o && setHotspotDialog(null)}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{hotspotDialog?.id ? "Edit Hotspot" : "New Hotspot"}</DialogTitle></DialogHeader>
           {hotspotDialog && (
             <div className="space-y-3">
               <div><Label>Title</Label><Input value={hotspotDialog.title ?? ""} onChange={(e) => setHotspotDialog({ ...hotspotDialog, title: e.target.value })} /></div>
               <div><Label>Description</Label><Textarea value={hotspotDialog.description ?? ""} onChange={(e) => setHotspotDialog({ ...hotspotDialog, description: e.target.value })} /></div>
+              {(() => {
+                const scene = scenesQ.data?.find((s) => s.id === hotspotDialog.scene_id);
+                if (!scene?.panorama_url) {
+                  return <p className="text-xs text-amber-600">Upload a panorama for this scene to enable visual hotspot placement.</p>;
+                }
+                return (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="flex items-center gap-1.5"><Crosshair className="h-3.5 w-3.5" /> Click in the panorama to place the hotspot</Label>
+                      <Button type="button" size="sm" variant="ghost" onClick={() => setPickerOpen((v) => !v)}>
+                        {pickerOpen ? "Hide viewer" : "Show viewer"}
+                      </Button>
+                    </div>
+                    {pickerOpen && (
+                      <HotspotPicker
+                        panoramaUrl={scene.panorama_url}
+                        yaw={hotspotDialog.yaw ?? 0}
+                        pitch={hotspotDialog.pitch ?? 0}
+                        onPick={(y, p) => setHotspotDialog((prev) => prev ? { ...prev, yaw: y, pitch: p } : prev)}
+                      />
+                    )}
+                  </div>
+                );
+              })()}
               <div className="grid grid-cols-2 gap-3">
                 <div><Label>Yaw (rad, -π to π)</Label><Input type="number" step="0.05" value={hotspotDialog.yaw ?? 0} onChange={(e) => setHotspotDialog({ ...hotspotDialog, yaw: parseFloat(e.target.value) })} /></div>
                 <div><Label>Pitch (rad, -π/2 to π/2)</Label><Input type="number" step="0.05" value={hotspotDialog.pitch ?? 0} onChange={(e) => setHotspotDialog({ ...hotspotDialog, pitch: parseFloat(e.target.value) })} /></div>
               </div>
-              <p className="text-xs text-muted-foreground">Tip: open the public tour, position your view on the spot, and read coordinates from the browser console while we add a coordinate picker.</p>
               <div><Label>Image URL (optional)</Label><Input value={hotspotDialog.image_url ?? ""} onChange={(e) => setHotspotDialog({ ...hotspotDialog, image_url: e.target.value })} /></div>
               <div><Label>Link URL (optional)</Label><Input value={hotspotDialog.link_url ?? ""} onChange={(e) => setHotspotDialog({ ...hotspotDialog, link_url: e.target.value })} /></div>
               <div className="grid grid-cols-2 gap-3 items-end">
