@@ -30,6 +30,7 @@ export function usePanoramaScenes() {
         preview_url: s.preview_url ?? null,
         default_yaw: s.default_yaw ?? 0,
         default_pitch: s.default_pitch ?? 0,
+        default_zoom: s.default_zoom ?? 50,
         hotspots: ((hotspots ?? []) as any[])
           .filter((h) => h.scene_id === s.id)
           .map((h) => ({
