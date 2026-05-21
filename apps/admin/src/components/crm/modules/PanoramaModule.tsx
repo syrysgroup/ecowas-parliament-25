@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Plus, Trash2, Upload, Compass, MapPin, Edit2, Info, Crosshair } from "lucide-react";
+import { Plus, Trash2, Upload, Compass, MapPin, Edit2, Info, Crosshair, ArrowUp, ArrowDown, ExternalLink, Target } from "lucide-react";
 import { toast } from "sonner";
 import { validateEquirectangular, generateDerivatives } from "@/lib/panorama";
 import HotspotPicker from "./panorama/HotspotPicker";
@@ -17,7 +17,7 @@ import HotspotPicker from "./panorama/HotspotPicker";
 type Scene = {
   id: string; slug: string; name: string; description: string | null;
   panorama_url: string; preview_url: string | null; mobile_panorama_url: string | null;
-  default_yaw: number; default_pitch: number;
+  default_yaw: number; default_pitch: number; default_zoom: number;
   display_order: number; is_active: boolean;
 };
 type Hotspot = {
@@ -26,6 +26,9 @@ type Hotspot = {
   image_url: string | null; link_url: string | null;
   display_order: number; is_active: boolean;
 };
+
+const WEB_TOUR_URL =
+  (import.meta.env.VITE_WEB_BASE_URL?.replace(/\/$/, "") ?? "") + "/parliament-tour";
 
 export default function PanoramaModule() {
   const qc = useQueryClient();
