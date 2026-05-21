@@ -373,9 +373,23 @@ export default function PanoramaModule() {
                   </p>
                 )}
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div><Label>Default Yaw (rad)</Label><Input type="number" step="0.1" value={sceneDialog.default_yaw ?? 0} onChange={(e) => setSceneDialog({ ...sceneDialog, default_yaw: parseFloat(e.target.value) })} /></div>
-                <div><Label>Default Pitch (rad)</Label><Input type="number" step="0.1" value={sceneDialog.default_pitch ?? 0} onChange={(e) => setSceneDialog({ ...sceneDialog, default_pitch: parseFloat(e.target.value) })} /></div>
+              {sceneDialog.panorama_url && (
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-1.5">
+                    <Crosshair className="h-3.5 w-3.5" /> Default view — click in the panorama to set where the tour opens
+                  </Label>
+                  <HotspotPicker
+                    panoramaUrl={sceneDialog.panorama_url}
+                    yaw={sceneDialog.default_yaw ?? 0}
+                    pitch={sceneDialog.default_pitch ?? 0}
+                    onPick={(y, p) => setSceneDialog((prev) => prev ? { ...prev, default_yaw: y, default_pitch: p } : prev)}
+                  />
+                </div>
+              )}
+              <div className="grid grid-cols-3 gap-3">
+                <div><Label>Default Yaw (rad)</Label><Input type="number" step="0.05" value={sceneDialog.default_yaw ?? 0} onChange={(e) => setSceneDialog({ ...sceneDialog, default_yaw: parseFloat(e.target.value) })} /></div>
+                <div><Label>Default Pitch (rad)</Label><Input type="number" step="0.05" value={sceneDialog.default_pitch ?? 0} onChange={(e) => setSceneDialog({ ...sceneDialog, default_pitch: parseFloat(e.target.value) })} /></div>
+                <div><Label>Default Zoom (0–100)</Label><Input type="number" min={0} max={100} step="1" value={sceneDialog.default_zoom ?? 50} onChange={(e) => setSceneDialog({ ...sceneDialog, default_zoom: Math.max(0, Math.min(100, parseFloat(e.target.value) || 0)) })} /></div>
               </div>
               <div className="grid grid-cols-2 gap-3 items-end">
                 <div><Label>Display Order</Label><Input type="number" value={sceneDialog.display_order ?? 0} onChange={(e) => setSceneDialog({ ...sceneDialog, display_order: parseInt(e.target.value) || 0 })} /></div>
