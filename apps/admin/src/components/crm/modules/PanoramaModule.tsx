@@ -211,9 +211,16 @@ export default function PanoramaModule() {
           </h1>
           <p className="text-sm text-muted-foreground">Manage panorama scenes and interactive hotspots for the virtual tour.</p>
         </div>
-        <Button onClick={() => setSceneDialog({ is_active: true, default_yaw: 0, default_pitch: 0, display_order: (scenesQ.data?.length ?? 0) + 1 })}>
-          <Plus className="h-4 w-4 mr-1" /> New Scene
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" asChild>
+            <a href={WEB_TOUR_URL || "/parliament-tour"} target="_blank" rel="noopener noreferrer">
+              <ExternalLink className="h-4 w-4 mr-1" /> Preview live tour
+            </a>
+          </Button>
+          <Button onClick={() => setSceneDialog({ is_active: true, default_yaw: 0, default_pitch: 0, default_zoom: 50, display_order: (scenesQ.data?.length ?? 0) + 1 })}>
+            <Plus className="h-4 w-4 mr-1" /> New Scene
+          </Button>
+        </div>
       </div>
 
       <Tabs value="scenes">
