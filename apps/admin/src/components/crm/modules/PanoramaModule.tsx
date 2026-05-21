@@ -135,6 +135,38 @@ export default function PanoramaModule() {
     },
   });
 
+  const quickUpdateScene = useMutation({
+    mutationFn: async ({ id, patch }: { id: string; patch: Partial<Scene> }) => {
+      const { error } = await supabase.from("parliament_panorama_scenes" as any).update(patch).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["crm-panorama-scenes"] }),
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const quickUpdateHotspot = useMutation({
+    mutationFn: async ({ id, patch }: { id: string; patch: Partial<Hotspot> }) => {
+      const { error } = await supabase.from("parliament_panorama_hotspots" as any).update(patch).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["crm-panorama-hotspots", activeSceneId] }),
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  function reorder<T extends { id: string; display_order: number }>(
+    list: T[],
+    id: string,
+    dir: -1 | 1,
+    mutate: (id: string, order: number) => void,
+  ) {
+    const sorted = [...list].sort((a, b) => a.display_order - b.display_order);
+    const idx = sorted.findIndex((x) => x.id === id);
+    const swap = sorted[idx + dir];
+    if (!swap) return;
+    mutate(sorted[idx].id, swap.display_order);
+    mutate(swap.id, sorted[idx].display_order);
+  }
+
   async function uploadBlob(blob: Blob, name: string): Promise<string | null> {
     const path = `${Date.now()}-${name.replace(/[^a-z0-9.\-_]/gi, "_")}`;
     const { error } = await supabase.storage.from("parliament-panorama").upload(path, blob, {
