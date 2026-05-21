@@ -247,6 +247,29 @@ export default function PanoramaModule() {
                     {!s.is_active && <span className="text-xs px-2 py-0.5 rounded bg-muted text-muted-foreground">Hidden</span>}
                   </CardTitle>
                   <div className="flex gap-2">
+                  <div className="flex items-center gap-1">
+                    <Button size="sm" variant="ghost" title="Move up"
+                      onClick={() => reorder(scenesQ.data ?? [], s.id, -1,
+                        (id, order) => quickUpdateScene.mutate({ id, patch: { display_order: order } }))}>
+                      <ArrowUp className="h-4 w-4" />
+                    </Button>
+                    <Button size="sm" variant="ghost" title="Move down"
+                      onClick={() => reorder(scenesQ.data ?? [], s.id, 1,
+                        (id, order) => quickUpdateScene.mutate({ id, patch: { display_order: order } }))}>
+                      <ArrowDown className="h-4 w-4" />
+                    </Button>
+                    <div className="flex items-center gap-1 px-2 border-l border-border ml-1">
+                      <Switch
+                        checked={s.is_active}
+                        onCheckedChange={(v) => quickUpdateScene.mutate({ id: s.id, patch: { is_active: v } })}
+                      />
+                      <span className="text-xs text-muted-foreground">Live</span>
+                    </div>
+                    <Button size="sm" variant="outline" asChild title="Preview this scene">
+                      <a href={`${WEB_TOUR_URL || "/parliament-tour"}?scene=${encodeURIComponent(s.slug)}`} target="_blank" rel="noopener noreferrer">
+                        <ExternalLink className="h-4 w-4" />
+                      </a>
+                    </Button>
                     <Button size="sm" variant="outline" onClick={() => setActiveSceneId(activeSceneId === s.id ? null : s.id)}>
                       <MapPin className="h-4 w-4 mr-1" /> Hotspots
                     </Button>
@@ -263,7 +286,10 @@ export default function PanoramaModule() {
                     <img src={s.panorama_url} alt={s.name} className="w-48 h-24 object-cover rounded border border-border" />
                     <div className="flex-1 text-sm space-y-1">
                       <p className="text-muted-foreground">{s.description}</p>
-                      <p className="text-xs text-muted-foreground">Slug: <code>{s.slug}</code> · Order: {s.display_order}</p>
+                      <p className="text-xs text-muted-foreground">
+                        Slug: <code>{s.slug}</code> · Order: {s.display_order} ·
+                        Default view: yaw {Number(s.default_yaw ?? 0).toFixed(2)}, pitch {Number(s.default_pitch ?? 0).toFixed(2)}, zoom {Number(s.default_zoom ?? 50).toFixed(0)}
+                      </p>
                     </div>
                   </div>
 
