@@ -2468,6 +2468,7 @@ export type Database = {
           display_order: number
           id: string
           is_active: boolean
+          mobile_panorama_url: string | null
           name: string
           panorama_url: string
           preview_url: string | null
@@ -2482,6 +2483,7 @@ export type Database = {
           display_order?: number
           id?: string
           is_active?: boolean
+          mobile_panorama_url?: string | null
           name: string
           panorama_url: string
           preview_url?: string | null
@@ -2496,6 +2498,7 @@ export type Database = {
           display_order?: number
           id?: string
           is_active?: boolean
+          mobile_panorama_url?: string | null
           name?: string
           panorama_url?: string
           preview_url?: string | null
