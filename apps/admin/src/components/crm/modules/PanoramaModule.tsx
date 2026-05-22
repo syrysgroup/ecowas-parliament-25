@@ -28,6 +28,29 @@ type Hotspot = {
   display_order: number; is_active: boolean;
 };
 
+const YAW_MAX = Math.PI;
+const PITCH_MAX = Math.PI / 2;
+
+function clampNum(v: unknown, min: number, max: number): number | null {
+  const n = typeof v === "number" ? v : parseFloat(String(v ?? ""));
+  if (!Number.isFinite(n)) return null;
+  return Math.min(max, Math.max(min, n));
+}
+const clampYaw = (v: unknown) => clampNum(v, -YAW_MAX, YAW_MAX);
+const clampPitch = (v: unknown) => clampNum(v, -PITCH_MAX, PITCH_MAX);
+const clampZoom = (v: unknown) => clampNum(v, 0, 100);
+
+function validateDefaultView(s: { default_yaw?: number; default_pitch?: number; default_zoom?: number } | null | undefined) {
+  const errors: Record<string, string> = {};
+  if (!s) return { ok: false as const, errors };
+  if (clampYaw(s.default_yaw) === null) errors.yaw = "Yaw must be a number between -π and π.";
+  if (clampPitch(s.default_pitch) === null) errors.pitch = "Pitch must be a number between -π/2 and π/2.";
+  if (clampZoom(s.default_zoom) === null) errors.zoom = "Zoom must be a number between 0 and 100.";
+  return { ok: Object.keys(errors).length === 0, errors };
+}
+
+
+
 const WEB_TOUR_URL =
   (import.meta.env.VITE_WEB_BASE_URL?.replace(/\/$/, "") ?? "") + "/parliament-tour";
 
