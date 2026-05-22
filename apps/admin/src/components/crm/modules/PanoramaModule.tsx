@@ -38,6 +38,7 @@ export default function PanoramaModule() {
   const [hotspotDialog, setHotspotDialog] = useState<Partial<Hotspot> | null>(null);
   const [uploading, setUploading] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [stitcherOpen, setStitcherOpen] = useState(false);
 
   const scenesQ = useQuery({
     queryKey: ["crm-panorama-scenes"],
