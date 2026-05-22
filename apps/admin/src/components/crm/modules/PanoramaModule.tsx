@@ -9,10 +9,11 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Plus, Trash2, Upload, Compass, MapPin, Edit2, Info, Crosshair, ArrowUp, ArrowDown, ExternalLink, Target } from "lucide-react";
+import { Plus, Trash2, Upload, Compass, MapPin, Edit2, Info, Crosshair, ArrowUp, ArrowDown, ExternalLink, Target, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 import { validateEquirectangular, generateDerivatives } from "@/lib/panorama";
 import HotspotPicker from "./panorama/HotspotPicker";
+import StitcherDialog from "./panorama/StitcherDialog";
 
 type Scene = {
   id: string; slug: string; name: string; description: string | null;
@@ -37,6 +38,7 @@ export default function PanoramaModule() {
   const [hotspotDialog, setHotspotDialog] = useState<Partial<Hotspot> | null>(null);
   const [uploading, setUploading] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [stitcherOpen, setStitcherOpen] = useState(false);
 
   const scenesQ = useQuery({
     queryKey: ["crm-panorama-scenes"],
@@ -176,7 +178,8 @@ export default function PanoramaModule() {
     return supabase.storage.from("parliament-panorama").getPublicUrl(path).data.publicUrl;
   }
 
-  async function uploadPanorama(file: File): Promise<void> {
+  async function uploadPanorama(input: File | Blob, fallbackName = "panorama.jpg"): Promise<void> {
+    const file = input instanceof File ? input : new File([input], fallbackName, { type: input.type || "image/jpeg" });
     setUploading(true);
     try {
       const check = await validateEquirectangular(file);
@@ -190,6 +193,7 @@ export default function PanoramaModule() {
       const base = file.name.replace(/\.[^.]+$/, "");
       const mobileUrl = mobile ? await uploadBlob(mobile, `${base}-mobile.jpg`) : null;
       const previewUrl = preview ? await uploadBlob(preview, `${base}-preview.jpg`) : null;
+      setSceneDialog((prev) => (prev ?? { is_active: true, default_yaw: 0, default_pitch: 0, default_zoom: 50, display_order: (scenesQ.data?.length ?? 0) + 1 }) as any);
       setSceneDialog((prev) => prev ? {
         ...prev,
         panorama_url: fullUrl ?? prev.panorama_url,
@@ -216,6 +220,9 @@ export default function PanoramaModule() {
             <a href={WEB_TOUR_URL || "/parliament-tour"} target="_blank" rel="noopener noreferrer">
               <ExternalLink className="h-4 w-4 mr-1" /> Preview live tour
             </a>
+          </Button>
+          <Button variant="outline" onClick={() => setStitcherOpen(true)}>
+            <Wand2 className="h-4 w-4 mr-1" /> Stitch raw photos
           </Button>
           <Button onClick={() => setSceneDialog({ is_active: true, default_yaw: 0, default_pitch: 0, default_zoom: 50, display_order: (scenesQ.data?.length ?? 0) + 1 })}>
             <Plus className="h-4 w-4 mr-1" /> New Scene
@@ -364,6 +371,9 @@ export default function PanoramaModule() {
                     }} />
                     <Button asChild variant="outline" disabled={uploading}><span><Upload className="h-4 w-4 mr-1" />{uploading ? "Uploading…" : "Upload"}</span></Button>
                   </label>
+                  <Button type="button" variant="outline" onClick={() => setStitcherOpen(true)} disabled={uploading}>
+                    <Wand2 className="h-4 w-4 mr-1" /> Stitch raw
+                  </Button>
                 </div>
                 {sceneDialog.panorama_url && <img src={sceneDialog.panorama_url} alt="" className="mt-2 w-full h-32 object-cover rounded border border-border" />}
                 {(sceneDialog.mobile_panorama_url || sceneDialog.preview_url) && (
@@ -454,6 +464,18 @@ export default function PanoramaModule() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <StitcherDialog
+        open={stitcherOpen}
+        onOpenChange={setStitcherOpen}
+        onStitched={async (blob, name) => {
+          // If no scene dialog is open, open a fresh one so derivatives land somewhere.
+          if (!sceneDialog) {
+            setSceneDialog({ is_active: true, default_yaw: 0, default_pitch: 0, default_zoom: 50, display_order: (scenesQ.data?.length ?? 0) + 1 });
+          }
+          await uploadPanorama(blob, name);
+        }}
+      />
     </div>
   );
 }

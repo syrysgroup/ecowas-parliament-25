@@ -1,48 +1,51 @@
-## 1. Fix the build error
+## What already exists (no rebuild needed)
 
-`apps/web/src/components/SEOHead.tsx` only exports **named** `SEOHead` and `GoogleAnalyticsHead` — there is no default export. `apps/web/src/pages/ParliamentTour.tsx` imports it as default, which Rollup rejects.
+The admin Panorama module is fully wired:
 
-Also: line 8 of `ParliamentTour.tsx` re-imports `Badge` (already imported on line 4), which will fail the next build.
+- `apps/admin/src/components/crm/modules/PanoramaModule.tsx` — scenes + hotspots CRUD, upload to `parliament-panorama` bucket, auto-generated mobile/preview derivatives, visual `HotspotPicker`, ordering arrows, active toggles, "Preview live tour" links, default yaw/pitch/zoom picker.
+- Registered in `crmModules.ts` as `parliament-tour` ("360° Tour") under CONTENT, visible to `super_admin`, `admin`, `website_editor`, `communications_officer`.
+- Lazy-loaded in `CRMDashboard.tsx` at `/crm/parliament-tour`.
+- DB tables `parliament_panorama_scenes` + `parliament_panorama_hotspots` and the public `parliament-panorama` storage bucket already exist.
 
-Edit `apps/web/src/pages/ParliamentTour.tsx`:
-- Change `import SEOHead from "@/components/SEOHead";` → `import { SEOHead } from "@/components/SEOHead";`
-- Delete the duplicate `import { Badge } from "@/components/ui/badge";` line.
+The piece the user is missing is **raw multi-photo upload → stitched equirectangular panorama**. Today the uploader only accepts an already-stitched 2:1 JPG.
 
-Grep the rest of `apps/web/src` for any other `import SEOHead from` occurrences and convert them to the named import in the same pass.
+## What this plan adds
 
-## 2. Full admin control of the panorama tour
+### 1. Raw-photo stitcher (new)
 
-The admin already has `PanoramaModule.tsx` (scenes + hotspots CRUD, upload to `parliament-panorama` bucket, visual `HotspotPicker`). Gaps to close so an admin can manage the `/parliament-tour` page end-to-end without code changes:
+Add a second upload mode inside the scene dialog, beside the existing "Upload stitched panorama" button:
 
-### 2a. Scene controls the page actually reads
-`apps/web/src/pages/ParliamentTour.tsx` and `ParliamentTourSpotlight.tsx` use scene fields plus a few hard-coded strings (page title, intro paragraph, badge text, "Points of Interest" heading, spotlight CTA). Make these editable:
+- **"Stitch raw photos"** button → opens a `StitcherDialog`.
+- Multi-file picker accepting JPEG/PNG (10–40 frames typical for a sphere).
+- Client-side stitching using **OpenCV.js** (`cv.Stitcher_create(cv.Stitcher.PANORAMA)`), loaded on demand from a CDN the first time the dialog opens so the main bundle isn't bloated.
+- Progress UI: thumbnail strip of selected frames, "Stitching…" status, cancel button.
+- After OpenCV returns a stitched canvas, run a **cylindrical → equirectangular pad** step in a `<canvas>`: pad the result to a 2:1 ratio (transparent/black bars top+bottom if vertical FOV < 180°) so the existing `validateEquirectangular` check passes and the Photo Sphere Viewer can display it.
+- Export the result as JPEG (quality 0.85), feed it through the existing `uploadPanorama(blob)` path so mobile + preview derivatives are generated automatically and the scene fields populate.
+- Clear in-dialog warning: "Best results come from DJI Sphere mode auto-stitched exports. Browser stitching is experimental — 20+ overlapping frames recommended; results vary with lens, exposure, and parallax."
 
-- Reuse the existing `site_content` / `useSiteContent` pattern (already used elsewhere in `apps/web`) and add a small **"Tour Page Copy"** card at the top of `PanoramaModule.tsx` with fields: `hero_badge`, `hero_title`, `hero_subtitle`, `poi_heading`, `spotlight_title`, `spotlight_body`, `spotlight_cta_label`. Persist under a single `site_content` key like `parliament_tour`.
-- Update `ParliamentTour.tsx` and `ParliamentTourSpotlight.tsx` to read those values (with the current strings as fallbacks) so nothing breaks if the row is empty.
+Files:
+- New: `apps/admin/src/components/crm/modules/panorama/StitcherDialog.tsx`
+- New: `apps/admin/src/lib/opencvLoader.ts` (singleton loader for OpenCV.js from `https://docs.opencv.org/4.x/opencv.js`)
+- Edit: `PanoramaModule.tsx` — add the "Stitch raw photos" button next to the existing Upload button, wire it to feed the resulting Blob through `uploadPanorama`.
 
-### 2b. Accurate positions (yaw/pitch/zoom)
-The viewer already honours `default_yaw` / `default_pitch` from the scene row, and `HotspotPicker` writes click-captured yaw/pitch into the hotspot dialog. Tighten this so positions are reliable:
+### 2. Refactor `uploadPanorama` to accept Blob | File
 
-- In `PanoramaModule.tsx` scene dialog, add a **"Set default view"** button that opens the same picker against the current scene and writes the captured yaw/pitch (and the viewer's current `zoom`) back into `default_yaw` / `default_pitch` / (new) `default_zoom`.
-- Migration: add `default_zoom numeric not null default 50` to `parliament_panorama_scenes` (only column added; nullable-safe default).
-- Update `apps/web/src/components/parliament/PanoramaViewer.tsx` to apply `scene.default_zoom` on load when present.
-- In the hotspot list, add inline yaw/pitch numeric editors plus a "Re-pick" button that reopens `HotspotPicker` pre-seeded with the existing position so an admin can nudge a marker without retyping numbers.
-- Add a "Preview on site" link in the module header that opens `/parliament-tour?scene=<slug>` in a new tab; update `ParliamentTour.tsx` to honour that query param when selecting the initial scene.
+Tiny change so the stitched canvas blob can reuse the same upload + derivative pipeline without a fake `File` wrapper.
 
-### 2c. Ordering + active toggles in one place
-Add up/down arrows (or a numeric `display_order` input) and an `is_active` switch directly on each scene/hotspot row so admins don't have to open the dialog just to reorder or hide an item. Both columns already exist in the schema.
+### 3. Header hint + sidebar visibility
 
-### 2d. CRM nav surfacing
-The `parliament-tour` section is already registered in `crmModules.ts`. Verify `getModulesForRoles` exposes it to `super_admin`, `admin`, and `website_editor`; widen `allowedRoles` if any of those are missing.
-
-## Technical notes
-
-- No new packages. `@photo-sphere-viewer/core` is already in admin (used by `HotspotPicker`).
-- One migration: `alter table parliament_panorama_scenes add column default_zoom numeric not null default 50;` — no RLS changes (existing scene policies cover the new column).
-- No edits to `src/integrations/supabase/types.ts` (auto-generated).
-- Storage bucket `parliament-panorama` already exists and is public — no changes.
+- Add a "Stitch raw photos" shortcut button in the module header (opens the stitcher with no pre-selected scene; on success it pre-fills a new scene dialog with the uploaded URLs).
+- Verify `getModulesForRoles` already exposes `parliament-tour` to the four content roles (it does) — no change needed. If the user reports they still don't see it, the fix is to assign them one of those roles in `/crm/people`.
 
 ## Out of scope
 
-- Re-rolling / re-stitching the source panorama JPGs (already handled in the previous turn).
-- Translating the new editable copy fields into FR/PT — admin can paste localised strings, but a multi-locale editor for these specific keys can come later if requested.
+- Server-side stitching (Deno edge functions can't run OpenCV cleanly; would require a separate Python service).
+- True spherical projection correction for arbitrary phone-camera input — we ship cylindrical+pad with the experimental warning. DJI Sphere remains the recommended path.
+- Any change to the public `/parliament-tour` page.
+
+## Technical notes
+
+- OpenCV.js is ~9 MB; loaded lazily only when the stitcher dialog opens, cached by the browser thereafter.
+- No new npm dependency (CDN script tag injected by the loader).
+- No DB migration; no RLS changes; no new storage bucket.
+- `validateEquirectangular` already enforces the 2:1 ratio, so the stitched output must be padded before it's handed off — handled inside `StitcherDialog` before calling `uploadPanorama`.
