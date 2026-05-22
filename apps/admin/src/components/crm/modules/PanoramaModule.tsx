@@ -371,6 +371,9 @@ export default function PanoramaModule() {
                     }} />
                     <Button asChild variant="outline" disabled={uploading}><span><Upload className="h-4 w-4 mr-1" />{uploading ? "Uploading…" : "Upload"}</span></Button>
                   </label>
+                  <Button type="button" variant="outline" onClick={() => setStitcherOpen(true)} disabled={uploading}>
+                    <Wand2 className="h-4 w-4 mr-1" /> Stitch raw
+                  </Button>
                 </div>
                 {sceneDialog.panorama_url && <img src={sceneDialog.panorama_url} alt="" className="mt-2 w-full h-32 object-cover rounded border border-border" />}
                 {(sceneDialog.mobile_panorama_url || sceneDialog.preview_url) && (
