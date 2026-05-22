@@ -63,16 +63,23 @@ export default function PanoramaModule() {
 
   const saveScene = useMutation({
     mutationFn: async (s: Partial<Scene>) => {
+      const yaw = clampYaw(s.default_yaw);
+      const pitch = clampPitch(s.default_pitch);
+      const zoom = clampZoom(s.default_zoom);
+      if (yaw === null || pitch === null || zoom === null) {
+        throw new Error("Default view values are invalid. Yaw must be between -π and π, pitch between -π/2 and π/2, and zoom between 0 and 100.");
+      }
       const payload = {
         slug: s.slug, name: s.name, description: s.description,
         panorama_url: s.panorama_url,
         preview_url: s.preview_url,
         mobile_panorama_url: s.mobile_panorama_url,
-        default_yaw: s.default_yaw ?? 0,
-        default_pitch: s.default_pitch ?? 0,
-        default_zoom: s.default_zoom ?? 50,
+        default_yaw: yaw,
+        default_pitch: pitch,
+        default_zoom: zoom,
         display_order: s.display_order ?? 0, is_active: s.is_active ?? true,
       };
+
       if (s.id) {
         const { error } = await supabase.from("parliament_panorama_scenes" as any)
           .update(payload).eq("id", s.id);
