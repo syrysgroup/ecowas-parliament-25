@@ -28,6 +28,29 @@ type Hotspot = {
   display_order: number; is_active: boolean;
 };
 
+const YAW_MAX = Math.PI;
+const PITCH_MAX = Math.PI / 2;
+
+function clampNum(v: unknown, min: number, max: number): number | null {
+  const n = typeof v === "number" ? v : parseFloat(String(v ?? ""));
+  if (!Number.isFinite(n)) return null;
+  return Math.min(max, Math.max(min, n));
+}
+const clampYaw = (v: unknown) => clampNum(v, -YAW_MAX, YAW_MAX);
+const clampPitch = (v: unknown) => clampNum(v, -PITCH_MAX, PITCH_MAX);
+const clampZoom = (v: unknown) => clampNum(v, 0, 100);
+
+function validateDefaultView(s: { default_yaw?: number; default_pitch?: number; default_zoom?: number } | null | undefined) {
+  const errors: Record<string, string> = {};
+  if (!s) return { ok: false as const, errors };
+  if (clampYaw(s.default_yaw) === null) errors.yaw = "Yaw must be a number between -π and π.";
+  if (clampPitch(s.default_pitch) === null) errors.pitch = "Pitch must be a number between -π/2 and π/2.";
+  if (clampZoom(s.default_zoom) === null) errors.zoom = "Zoom must be a number between 0 and 100.";
+  return { ok: Object.keys(errors).length === 0, errors };
+}
+
+
+
 const WEB_TOUR_URL =
   (import.meta.env.VITE_WEB_BASE_URL?.replace(/\/$/, "") ?? "") + "/parliament-tour";
 
@@ -63,16 +86,23 @@ export default function PanoramaModule() {
 
   const saveScene = useMutation({
     mutationFn: async (s: Partial<Scene>) => {
+      const yaw = clampYaw(s.default_yaw);
+      const pitch = clampPitch(s.default_pitch);
+      const zoom = clampZoom(s.default_zoom);
+      if (yaw === null || pitch === null || zoom === null) {
+        throw new Error("Default view values are invalid. Yaw must be between -π and π, pitch between -π/2 and π/2, and zoom between 0 and 100.");
+      }
       const payload = {
         slug: s.slug, name: s.name, description: s.description,
         panorama_url: s.panorama_url,
         preview_url: s.preview_url,
         mobile_panorama_url: s.mobile_panorama_url,
-        default_yaw: s.default_yaw ?? 0,
-        default_pitch: s.default_pitch ?? 0,
-        default_zoom: s.default_zoom ?? 50,
+        default_yaw: yaw,
+        default_pitch: pitch,
+        default_zoom: zoom,
         display_order: s.display_order ?? 0, is_active: s.is_active ?? true,
       };
+
       if (s.id) {
         const { error } = await supabase.from("parliament_panorama_scenes" as any)
           .update(payload).eq("id", s.id);
@@ -390,17 +420,47 @@ export default function PanoramaModule() {
                   </Label>
                   <HotspotPicker
                     panoramaUrl={sceneDialog.panorama_url}
-                    yaw={sceneDialog.default_yaw ?? 0}
-                    pitch={sceneDialog.default_pitch ?? 0}
-                    onPick={(y, p) => setSceneDialog((prev) => prev ? { ...prev, default_yaw: y, default_pitch: p } : prev)}
+                    yaw={clampYaw(sceneDialog.default_yaw) ?? 0}
+                    pitch={clampPitch(sceneDialog.default_pitch) ?? 0}
+                    onPick={(y, p) => setSceneDialog((prev) => prev ? { ...prev, default_yaw: clampYaw(y) ?? 0, default_pitch: clampPitch(p) ?? 0 } : prev)}
                   />
                 </div>
               )}
-              <div className="grid grid-cols-3 gap-3">
-                <div><Label>Default Yaw (rad)</Label><Input type="number" step="0.05" value={sceneDialog.default_yaw ?? 0} onChange={(e) => setSceneDialog({ ...sceneDialog, default_yaw: parseFloat(e.target.value) })} /></div>
-                <div><Label>Default Pitch (rad)</Label><Input type="number" step="0.05" value={sceneDialog.default_pitch ?? 0} onChange={(e) => setSceneDialog({ ...sceneDialog, default_pitch: parseFloat(e.target.value) })} /></div>
-                <div><Label>Default Zoom (0–100)</Label><Input type="number" min={0} max={100} step="1" value={sceneDialog.default_zoom ?? 50} onChange={(e) => setSceneDialog({ ...sceneDialog, default_zoom: Math.max(0, Math.min(100, parseFloat(e.target.value) || 0)) })} /></div>
-              </div>
+              {(() => {
+                const v = validateDefaultView(sceneDialog);
+                return (
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <Label>Default Yaw (rad)</Label>
+                      <Input type="number" step="0.05" min={-YAW_MAX} max={YAW_MAX}
+                        value={Number.isFinite(sceneDialog.default_yaw as number) ? (sceneDialog.default_yaw as number) : ""}
+                        onChange={(e) => setSceneDialog({ ...sceneDialog, default_yaw: e.target.value === "" ? (undefined as any) : parseFloat(e.target.value) })}
+                        onBlur={(e) => { const c = clampYaw(e.target.value); if (c !== null) setSceneDialog({ ...sceneDialog, default_yaw: c }); }}
+                        aria-invalid={!!v.errors.yaw} />
+                      {v.errors.yaw && <p className="text-[11px] text-destructive mt-1">{v.errors.yaw}</p>}
+                    </div>
+                    <div>
+                      <Label>Default Pitch (rad)</Label>
+                      <Input type="number" step="0.05" min={-PITCH_MAX} max={PITCH_MAX}
+                        value={Number.isFinite(sceneDialog.default_pitch as number) ? (sceneDialog.default_pitch as number) : ""}
+                        onChange={(e) => setSceneDialog({ ...sceneDialog, default_pitch: e.target.value === "" ? (undefined as any) : parseFloat(e.target.value) })}
+                        onBlur={(e) => { const c = clampPitch(e.target.value); if (c !== null) setSceneDialog({ ...sceneDialog, default_pitch: c }); }}
+                        aria-invalid={!!v.errors.pitch} />
+                      {v.errors.pitch && <p className="text-[11px] text-destructive mt-1">{v.errors.pitch}</p>}
+                    </div>
+                    <div>
+                      <Label>Default Zoom (0–100)</Label>
+                      <Input type="number" min={0} max={100} step="1"
+                        value={Number.isFinite(sceneDialog.default_zoom as number) ? (sceneDialog.default_zoom as number) : ""}
+                        onChange={(e) => setSceneDialog({ ...sceneDialog, default_zoom: e.target.value === "" ? (undefined as any) : parseFloat(e.target.value) })}
+                        onBlur={(e) => { const c = clampZoom(e.target.value); if (c !== null) setSceneDialog({ ...sceneDialog, default_zoom: c }); }}
+                        aria-invalid={!!v.errors.zoom} />
+                      {v.errors.zoom && <p className="text-[11px] text-destructive mt-1">{v.errors.zoom}</p>}
+                    </div>
+                  </div>
+                );
+              })()}
+
               <div className="grid grid-cols-2 gap-3 items-end">
                 <div><Label>Display Order</Label><Input type="number" value={sceneDialog.display_order ?? 0} onChange={(e) => setSceneDialog({ ...sceneDialog, display_order: parseInt(e.target.value) || 0 })} /></div>
                 <div className="flex items-center gap-2 pb-2"><Switch checked={sceneDialog.is_active ?? true} onCheckedChange={(v) => setSceneDialog({ ...sceneDialog, is_active: v })} /><Label>Active</Label></div>
@@ -409,7 +469,7 @@ export default function PanoramaModule() {
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setSceneDialog(null)}>Cancel</Button>
-            <Button onClick={() => sceneDialog && saveScene.mutate(sceneDialog)} disabled={saveScene.isPending}>Save</Button>
+            <Button onClick={() => sceneDialog && saveScene.mutate(sceneDialog)} disabled={saveScene.isPending || !validateDefaultView(sceneDialog).ok}>Save</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
