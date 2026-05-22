@@ -469,7 +469,7 @@ export default function PanoramaModule() {
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setSceneDialog(null)}>Cancel</Button>
-            <Button onClick={() => sceneDialog && saveScene.mutate(sceneDialog)} disabled={saveScene.isPending}>Save</Button>
+            <Button onClick={() => sceneDialog && saveScene.mutate(sceneDialog)} disabled={saveScene.isPending || !validateDefaultView(sceneDialog).ok}>Save</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
