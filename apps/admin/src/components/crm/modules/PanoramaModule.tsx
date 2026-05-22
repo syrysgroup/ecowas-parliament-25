@@ -178,7 +178,8 @@ export default function PanoramaModule() {
     return supabase.storage.from("parliament-panorama").getPublicUrl(path).data.publicUrl;
   }
 
-  async function uploadPanorama(file: File): Promise<void> {
+  async function uploadPanorama(input: File | Blob, fallbackName = "panorama.jpg"): Promise<void> {
+    const file = input instanceof File ? input : new File([input], fallbackName, { type: input.type || "image/jpeg" });
     setUploading(true);
     try {
       const check = await validateEquirectangular(file);
@@ -192,6 +193,7 @@ export default function PanoramaModule() {
       const base = file.name.replace(/\.[^.]+$/, "");
       const mobileUrl = mobile ? await uploadBlob(mobile, `${base}-mobile.jpg`) : null;
       const previewUrl = preview ? await uploadBlob(preview, `${base}-preview.jpg`) : null;
+      setSceneDialog((prev) => (prev ?? { is_active: true, default_yaw: 0, default_pitch: 0, default_zoom: 50, display_order: (scenesQ.data?.length ?? 0) + 1 }) as any);
       setSceneDialog((prev) => prev ? {
         ...prev,
         panorama_url: fullUrl ?? prev.panorama_url,
