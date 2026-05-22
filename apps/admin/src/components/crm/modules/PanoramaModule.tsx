@@ -464,6 +464,18 @@ export default function PanoramaModule() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <StitcherDialog
+        open={stitcherOpen}
+        onOpenChange={setStitcherOpen}
+        onStitched={async (blob, name) => {
+          // If no scene dialog is open, open a fresh one so derivatives land somewhere.
+          if (!sceneDialog) {
+            setSceneDialog({ is_active: true, default_yaw: 0, default_pitch: 0, default_zoom: 50, display_order: (scenesQ.data?.length ?? 0) + 1 });
+          }
+          await uploadPanorama(blob, name);
+        }}
+      />
     </div>
   );
 }
