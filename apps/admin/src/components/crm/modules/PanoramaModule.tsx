@@ -420,17 +420,47 @@ export default function PanoramaModule() {
                   </Label>
                   <HotspotPicker
                     panoramaUrl={sceneDialog.panorama_url}
-                    yaw={sceneDialog.default_yaw ?? 0}
-                    pitch={sceneDialog.default_pitch ?? 0}
-                    onPick={(y, p) => setSceneDialog((prev) => prev ? { ...prev, default_yaw: y, default_pitch: p } : prev)}
+                    yaw={clampYaw(sceneDialog.default_yaw) ?? 0}
+                    pitch={clampPitch(sceneDialog.default_pitch) ?? 0}
+                    onPick={(y, p) => setSceneDialog((prev) => prev ? { ...prev, default_yaw: clampYaw(y) ?? 0, default_pitch: clampPitch(p) ?? 0 } : prev)}
                   />
                 </div>
               )}
-              <div className="grid grid-cols-3 gap-3">
-                <div><Label>Default Yaw (rad)</Label><Input type="number" step="0.05" value={sceneDialog.default_yaw ?? 0} onChange={(e) => setSceneDialog({ ...sceneDialog, default_yaw: parseFloat(e.target.value) })} /></div>
-                <div><Label>Default Pitch (rad)</Label><Input type="number" step="0.05" value={sceneDialog.default_pitch ?? 0} onChange={(e) => setSceneDialog({ ...sceneDialog, default_pitch: parseFloat(e.target.value) })} /></div>
-                <div><Label>Default Zoom (0–100)</Label><Input type="number" min={0} max={100} step="1" value={sceneDialog.default_zoom ?? 50} onChange={(e) => setSceneDialog({ ...sceneDialog, default_zoom: Math.max(0, Math.min(100, parseFloat(e.target.value) || 0)) })} /></div>
-              </div>
+              {(() => {
+                const v = validateDefaultView(sceneDialog);
+                return (
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <Label>Default Yaw (rad)</Label>
+                      <Input type="number" step="0.05" min={-YAW_MAX} max={YAW_MAX}
+                        value={Number.isFinite(sceneDialog.default_yaw as number) ? (sceneDialog.default_yaw as number) : ""}
+                        onChange={(e) => setSceneDialog({ ...sceneDialog, default_yaw: e.target.value === "" ? (undefined as any) : parseFloat(e.target.value) })}
+                        onBlur={(e) => { const c = clampYaw(e.target.value); if (c !== null) setSceneDialog({ ...sceneDialog, default_yaw: c }); }}
+                        aria-invalid={!!v.errors.yaw} />
+                      {v.errors.yaw && <p className="text-[11px] text-destructive mt-1">{v.errors.yaw}</p>}
+                    </div>
+                    <div>
+                      <Label>Default Pitch (rad)</Label>
+                      <Input type="number" step="0.05" min={-PITCH_MAX} max={PITCH_MAX}
+                        value={Number.isFinite(sceneDialog.default_pitch as number) ? (sceneDialog.default_pitch as number) : ""}
+                        onChange={(e) => setSceneDialog({ ...sceneDialog, default_pitch: e.target.value === "" ? (undefined as any) : parseFloat(e.target.value) })}
+                        onBlur={(e) => { const c = clampPitch(e.target.value); if (c !== null) setSceneDialog({ ...sceneDialog, default_pitch: c }); }}
+                        aria-invalid={!!v.errors.pitch} />
+                      {v.errors.pitch && <p className="text-[11px] text-destructive mt-1">{v.errors.pitch}</p>}
+                    </div>
+                    <div>
+                      <Label>Default Zoom (0–100)</Label>
+                      <Input type="number" min={0} max={100} step="1"
+                        value={Number.isFinite(sceneDialog.default_zoom as number) ? (sceneDialog.default_zoom as number) : ""}
+                        onChange={(e) => setSceneDialog({ ...sceneDialog, default_zoom: e.target.value === "" ? (undefined as any) : parseFloat(e.target.value) })}
+                        onBlur={(e) => { const c = clampZoom(e.target.value); if (c !== null) setSceneDialog({ ...sceneDialog, default_zoom: c }); }}
+                        aria-invalid={!!v.errors.zoom} />
+                      {v.errors.zoom && <p className="text-[11px] text-destructive mt-1">{v.errors.zoom}</p>}
+                    </div>
+                  </div>
+                );
+              })()}
+
               <div className="grid grid-cols-2 gap-3 items-end">
                 <div><Label>Display Order</Label><Input type="number" value={sceneDialog.display_order ?? 0} onChange={(e) => setSceneDialog({ ...sceneDialog, display_order: parseInt(e.target.value) || 0 })} /></div>
                 <div className="flex items-center gap-2 pb-2"><Switch checked={sceneDialog.is_active ?? true} onCheckedChange={(v) => setSceneDialog({ ...sceneDialog, is_active: v })} /><Label>Active</Label></div>
