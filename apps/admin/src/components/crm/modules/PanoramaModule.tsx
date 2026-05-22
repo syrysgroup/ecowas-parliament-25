@@ -9,10 +9,11 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Plus, Trash2, Upload, Compass, MapPin, Edit2, Info, Crosshair, ArrowUp, ArrowDown, ExternalLink, Target } from "lucide-react";
+import { Plus, Trash2, Upload, Compass, MapPin, Edit2, Info, Crosshair, ArrowUp, ArrowDown, ExternalLink, Target, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 import { validateEquirectangular, generateDerivatives } from "@/lib/panorama";
 import HotspotPicker from "./panorama/HotspotPicker";
+import StitcherDialog from "./panorama/StitcherDialog";
 
 type Scene = {
   id: string; slug: string; name: string; description: string | null;
