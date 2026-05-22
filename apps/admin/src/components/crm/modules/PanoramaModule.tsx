@@ -221,6 +221,9 @@ export default function PanoramaModule() {
               <ExternalLink className="h-4 w-4 mr-1" /> Preview live tour
             </a>
           </Button>
+          <Button variant="outline" onClick={() => setStitcherOpen(true)}>
+            <Wand2 className="h-4 w-4 mr-1" /> Stitch raw photos
+          </Button>
           <Button onClick={() => setSceneDialog({ is_active: true, default_yaw: 0, default_pitch: 0, default_zoom: 50, display_order: (scenesQ.data?.length ?? 0) + 1 })}>
             <Plus className="h-4 w-4 mr-1" /> New Scene
           </Button>
