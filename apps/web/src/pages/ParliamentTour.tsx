@@ -119,8 +119,9 @@ export default function ParliamentTour() {
         <section className="py-12 bg-muted/30">
           <div className="container">
             <h2 id="poi-heading" className="text-2xl font-bold text-foreground mb-6 flex items-center gap-2">
-              <MapPin className="h-5 w-5 text-primary" aria-hidden="true" /> Points of Interest
+              <MapPin className="h-5 w-5 text-primary" aria-hidden="true" /> {copy?.poi_heading || "Points of Interest"}
             </h2>
+
             <ul
               className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 list-none p-0"
               aria-labelledby="poi-heading"
