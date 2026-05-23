@@ -15,10 +15,12 @@ const PanoramaViewer = lazy(() => import("@/components/parliament/PanoramaViewer
 
 export default function ParliamentTour() {
   const { data: scenes, isLoading } = usePanoramaScenes();
+  const { data: copy } = useSiteContent("parliament_tour");
   const [searchParams] = useSearchParams();
   const slugParam = searchParams.get("scene");
   const [activeSceneId, setActiveSceneId] = useState<string | null>(null);
   const [activeHotspot, setActiveHotspot] = useState<PanoramaHotspot | null>(null);
+
 
   const scene = useMemo(() => {
     if (!scenes?.length) return undefined;
