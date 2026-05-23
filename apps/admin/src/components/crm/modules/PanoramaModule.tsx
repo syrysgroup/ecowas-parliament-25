@@ -223,6 +223,10 @@ export default function PanoramaModule() {
         </div>
       </div>
 
+      <TourPageCopyCard />
+
+
+
       <Tabs value="scenes">
         <TabsList>
           <TabsTrigger value="scenes">Scenes ({scenesQ.data?.length ?? 0})</TabsTrigger>
