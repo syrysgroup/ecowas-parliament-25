@@ -62,14 +62,16 @@ export default function ParliamentTour() {
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
               <Badge className="bg-ecowas-yellow/20 text-ecowas-yellow-foreground border-ecowas-yellow/40 mb-3">
-                Virtual Experience
+                {copy?.hero_badge || "Virtual Experience"}
               </Badge>
-              <h1 className="text-3xl md:text-5xl font-black text-foreground">Step Inside the Chamber</h1>
+              <h1 className="text-3xl md:text-5xl font-black text-foreground">
+                {copy?.hero_title || "Step Inside the Chamber"}
+              </h1>
               <p className="mt-2 text-muted-foreground max-w-2xl">
-                Explore the ECOWAS Parliament hall in immersive 360°. Drag to look around, click hotspots
-                for details, or tap fullscreen for a cinematic experience.
+                {copy?.hero_subtitle || "Explore the ECOWAS Parliament hall in immersive 360°. Drag to look around, click hotspots for details, or tap fullscreen for a cinematic experience."}
               </p>
             </div>
+
             {scenes && scenes.length > 1 && (
               <div className="flex flex-wrap gap-2" role="tablist" aria-label="Choose a panorama scene">
                 {scenes.map((s) => (
