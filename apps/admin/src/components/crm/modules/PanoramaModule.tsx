@@ -375,6 +375,13 @@ export default function PanoramaModule() {
                               </Button>
                               <Switch checked={h.is_active}
                                 onCheckedChange={(v) => quickUpdateHotspot.mutate({ id: h.id, patch: { is_active: v } })} />
+                              <Button size="sm" variant="ghost" title="Identify on panorama"
+                                onClick={() => {
+                                  setHighlightHotspotId(h.id);
+                                  setTimeout(() => setHighlightHotspotId((cur) => (cur === h.id ? null : cur)), 2500);
+                                }}>
+                                <Eye className="h-3.5 w-3.5" />
+                              </Button>
                               <Button size="sm" variant="ghost" title="Re-pick position" onClick={() => setHotspotDialog(h)}>
                                 <Target className="h-3.5 w-3.5" />
                               </Button>
@@ -517,6 +524,9 @@ export default function PanoramaModule() {
                         yaw={hotspotDialog.yaw ?? 0}
                         pitch={hotspotDialog.pitch ?? 0}
                         onPick={(y, p) => setHotspotDialog((prev) => prev ? { ...prev, yaw: y, pitch: p } : prev)}
+                        otherHotspots={(hotspotsQ.data ?? [])
+                          .filter((h) => h.id !== hotspotDialog.id)
+                          .map((h) => ({ id: h.id, yaw: h.yaw, pitch: h.pitch, title: h.title }))}
                       />
                     )}
                   </div>
