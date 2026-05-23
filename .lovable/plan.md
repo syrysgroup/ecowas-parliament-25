@@ -1,51 +1,55 @@
-## What already exists (no rebuild needed)
+# Plan: Working Panorama + Dynamic Programmes
 
-The admin Panorama module is fully wired:
+## 1. Replace panorama with the uploaded photo
 
-- `apps/admin/src/components/crm/modules/PanoramaModule.tsx` — scenes + hotspots CRUD, upload to `parliament-panorama` bucket, auto-generated mobile/preview derivatives, visual `HotspotPicker`, ordering arrows, active toggles, "Preview live tour" links, default yaw/pitch/zoom picker.
-- Registered in `crmModules.ts` as `parliament-tour` ("360° Tour") under CONTENT, visible to `super_admin`, `admin`, `website_editor`, `communications_officer`.
-- Lazy-loaded in `CRMDashboard.tsx` at `/crm/parliament-tour`.
-- DB tables `parliament_panorama_scenes` + `parliament_panorama_hotspots` and the public `parliament-panorama` storage bucket already exist.
+The DB scene `chamber-main` points to `/panorama/chamber-main.jpg`. We'll use the equirectangular photo you uploaded as the new source of truth.
 
-The piece the user is missing is **raw multi-photo upload → stitched equirectangular panorama**. Today the uploader only accepts an already-stitched 2:1 JPG.
+- Copy `user-uploads://Panaroma.jpeg` into the `parliament-panorama` storage bucket as `chamber-main.jpg` (public URL).
+- Update the existing `parliament_panorama_scenes` row (slug `chamber-main`) so `panorama_url` points to that public Supabase URL, and clear stale mobile/preview URLs so the viewer falls back cleanly.
+- Also drop the file into `apps/web/public/panorama/chamber-main.jpg` as a local fallback so existing relative links keep working.
+- Verify the `/parliament-tour` page renders the new image (Photo Sphere Viewer expects 2:1 equirectangular — the upload is 1920x960, perfect).
 
-## What this plan adds
+## 2. Make programmes fully admin-driven (create / hide / delete)
 
-### 1. Raw-photo stitcher (new)
+The `programme_pillars` table already has `is_active`, `display_order`, `slug`, `title`, `route`, and the admin `ProgrammePillarsModule` already supports create / edit / hide / delete. The remaining gap is that the website's **navbar and programmes pages are hardcoded**, so admin changes don't show up.
 
-Add a second upload mode inside the scene dialog, beside the existing "Upload stitched panorama" button:
+### a. Dynamic navbar Programmes menu
 
-- **"Stitch raw photos"** button → opens a `StitcherDialog`.
-- Multi-file picker accepting JPEG/PNG (10–40 frames typical for a sphere).
-- Client-side stitching using **OpenCV.js** (`cv.Stitcher_create(cv.Stitcher.PANORAMA)`), loaded on demand from a CDN the first time the dialog opens so the main bundle isn't bloated.
-- Progress UI: thumbnail strip of selected frames, "Stitching…" status, cancel button.
-- After OpenCV returns a stitched canvas, run a **cylindrical → equirectangular pad** step in a `<canvas>`: pad the result to a 2:1 ratio (transparent/black bars top+bottom if vertical FOV < 180°) so the existing `validateEquirectangular` check passes and the Photo Sphere Viewer can display it.
-- Export the result as JPEG (quality 0.85), feed it through the existing `uploadPanorama(blob)` path so mobile + preview derivatives are generated automatically and the scene fields populate.
-- Clear in-dialog warning: "Best results come from DJI Sphere mode auto-stitched exports. Browser stitching is experimental — 20+ overlapping frames recommended; results vary with lens, exposure, and parallax."
+- New hook `apps/web/src/hooks/useProgrammePillars.ts` — TanStack Query fetch of active pillars ordered by `display_order`.
+- `apps/web/src/components/layout/Navbar.tsx`: replace the hardcoded 7-item programmes submenu with a mapped list from the hook. Falls back to the current static list while loading or if the query fails (so the menu is never empty). Mobile menu uses the same source.
 
-Files:
-- New: `apps/admin/src/components/crm/modules/panorama/StitcherDialog.tsx`
-- New: `apps/admin/src/lib/opencvLoader.ts` (singleton loader for OpenCV.js from `https://docs.opencv.org/4.x/opencv.js`)
-- Edit: `PanoramaModule.tsx` — add the "Stitch raw photos" button next to the existing Upload button, wire it to feed the resulting Blob through `uploadPanorama`.
+### b. Dynamic programmes index + routes
 
-### 2. Refactor `uploadPanorama` to accept Blob | File
+- `apps/web/src/App.tsx`: keep the existing static routes (`/programmes/youth`, `/programmes/trade`, etc.) for backward compatibility, and add a catch-all `/programmes/:slug` that renders the existing generic `PillarPage` for any new pillar created in the admin.
+- Add a `/programmes` index route that lists all active pillars as cards (reuses `PillarsGrid` data).
 
-Tiny change so the stitched canvas blob can reuse the same upload + derivative pipeline without a fake `File` wrapper.
+### c. Reflect "hidden" state everywhere
 
-### 3. Header hint + sidebar visibility
+- `PillarsGrid` on the home page already reads from the DB — confirm it filters `is_active = true` (add the filter if missing).
+- Direct visits to a hidden pillar's slug return a friendly "Not available" state in `PillarPage` instead of an empty page.
 
-- Add a "Stitch raw photos" shortcut button in the module header (opens the stitcher with no pre-selected scene; on success it pre-fills a new scene dialog with the uploaded URLs).
-- Verify `getModulesForRoles` already exposes `parliament-tour` to the four content roles (it does) — no change needed. If the user reports they still don't see it, the fix is to assign them one of those roles in `/crm/people`.
+### d. Admin UX polish (small)
 
-## Out of scope
-
-- Server-side stitching (Deno edge functions can't run OpenCV cleanly; would require a separate Python service).
-- True spherical projection correction for arbitrary phone-camera input — we ship cylindrical+pad with the experimental warning. DJI Sphere remains the recommended path.
-- Any change to the public `/parliament-tour` page.
+In `ProgrammePillarsModule`:
+- Surface an explicit "Visible on website" toggle in the list row (today it's only inside the edit dialog).
+- Show a clear "Hidden" badge already present; add a tooltip explaining it hides the pillar from the public site + navbar.
+- Confirm dialog on delete already exists.
 
 ## Technical notes
 
-- OpenCV.js is ~9 MB; loaded lazily only when the stitcher dialog opens, cached by the browser thereafter.
-- No new npm dependency (CDN script tag injected by the loader).
-- No DB migration; no RLS changes; no new storage bucket.
-- `validateEquirectangular` already enforces the 2:1 ratio, so the stitched output must be padded before it's handed off — handled inside `StitcherDialog` before calling `uploadPanorama`.
+- No schema changes required — `programme_pillars.is_active` and `display_order` already exist.
+- Navbar query uses `staleTime: 60_000` and `placeholderData` = current static list, so SSR/first paint never shows an empty menu.
+- The new `/programmes/:slug` route is added after the specific routes so React Router matches the explicit ones first.
+- Storage upload uses the existing public `parliament-panorama` bucket; no new bucket or RLS work needed.
+
+## Files touched
+
+- `apps/web/public/panorama/chamber-main.jpg` (new — uploaded photo)
+- `parliament-panorama` storage bucket — upload `chamber-main.jpg`
+- DB: one `UPDATE` on `parliament_panorama_scenes` row
+- `apps/web/src/hooks/useProgrammePillars.ts` (new)
+- `apps/web/src/components/layout/Navbar.tsx` (dynamic submenu)
+- `apps/web/src/App.tsx` (catch-all `/programmes/:slug` + `/programmes` index)
+- `apps/web/src/pages/programmes/PillarPage.tsx` (hidden-state guard)
+- `apps/web/src/components/home/PillarsGrid.tsx` (ensure `is_active` filter)
+- `apps/admin/src/components/crm/modules/ProgrammePillarsModule.tsx` (row-level visibility toggle)
