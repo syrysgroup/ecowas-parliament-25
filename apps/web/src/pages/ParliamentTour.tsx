@@ -7,7 +7,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Loader2, ArrowLeft, MapPin, Maximize2, ExternalLink, Compass } from "lucide-react";
 import { SEOHead } from "@/components/SEOHead";
 import { usePanoramaScenes } from "@/hooks/usePanoramaScenes";
+import { useSiteContent } from "@/hooks/useSiteContent";
 import type { PanoramaHotspot } from "@/components/parliament/PanoramaViewer";
+
 
 const PanoramaViewer = lazy(() => import("@/components/parliament/PanoramaViewer"));
 
