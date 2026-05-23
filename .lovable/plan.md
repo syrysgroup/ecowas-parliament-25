@@ -1,48 +1,107 @@
-## 1. Fix the build error
 
-`apps/web/src/components/SEOHead.tsx` only exports **named** `SEOHead` and `GoogleAnalyticsHead` — there is no default export. `apps/web/src/pages/ParliamentTour.tsx` imports it as default, which Rollup rejects.
+# Admin → Web parity & full panorama control
 
-Also: line 8 of `ParliamentTour.tsx` re-imports `Badge` (already imported on line 4), which will fail the next build.
+Goal: every public route under `apps/web` is admin-editable from `apps/admin`, and the panorama tour is fully controllable end-to-end. Delivered in 3 phases so we can ship usable value after each.
 
-Edit `apps/web/src/pages/ParliamentTour.tsx`:
-- Change `import SEOHead from "@/components/SEOHead";` → `import { SEOHead } from "@/components/SEOHead";`
-- Delete the duplicate `import { Badge } from "@/components/ui/badge";` line.
+---
 
-Grep the rest of `apps/web/src` for any other `import SEOHead from` occurrences and convert them to the named import in the same pass.
+## Phase 1 — Panorama tour: full admin control (ships first)
 
-## 2. Full admin control of the panorama tour
+Closes every gap from `.lovable/plan.md` plus the build error.
 
-The admin already has `PanoramaModule.tsx` (scenes + hotspots CRUD, upload to `parliament-panorama` bucket, visual `HotspotPicker`). Gaps to close so an admin can manage the `/parliament-tour` page end-to-end without code changes:
+### Fixes
+- `apps/web/src/pages/ParliamentTour.tsx`
+  - Convert `import SEOHead from …` → `import { SEOHead } from …` (named export).
+  - Remove the duplicate `Badge` import.
+  - Grep `apps/web/src` for any other default `SEOHead` imports and convert.
+- Honour `?scene=<slug>` query param when selecting the initial scene.
 
-### 2a. Scene controls the page actually reads
-`apps/web/src/pages/ParliamentTour.tsx` and `ParliamentTourSpotlight.tsx` use scene fields plus a few hard-coded strings (page title, intro paragraph, badge text, "Points of Interest" heading, spotlight CTA). Make these editable:
+### Editable Tour Page Copy
+- New `site_content` row keyed `parliament_tour` with fields: `hero_badge`, `hero_title`, `hero_subtitle`, `poi_heading`, `spotlight_title`, `spotlight_body`, `spotlight_cta_label`.
+- Add a "Tour Page Copy" card at the top of `PanoramaModule.tsx` editing those fields.
+- `ParliamentTour.tsx` and `ParliamentTourSpotlight.tsx` read via `useSiteContent("parliament_tour")` with current hard-coded strings as fallbacks.
 
-- Reuse the existing `site_content` / `useSiteContent` pattern (already used elsewhere in `apps/web`) and add a small **"Tour Page Copy"** card at the top of `PanoramaModule.tsx` with fields: `hero_badge`, `hero_title`, `hero_subtitle`, `poi_heading`, `spotlight_title`, `spotlight_body`, `spotlight_cta_label`. Persist under a single `site_content` key like `parliament_tour`.
-- Update `ParliamentTour.tsx` and `ParliamentTourSpotlight.tsx` to read those values (with the current strings as fallbacks) so nothing breaks if the row is empty.
+### Live default view + zoom capture
+- Migration: `alter table parliament_panorama_scenes add column default_zoom numeric not null default 50;`
+- In the scene dialog add **"Set default view"** — opens `HotspotPicker` against the current scene; on save writes captured yaw/pitch and the viewer's current zoom into `default_yaw`/`default_pitch`/`default_zoom`.
+- `PanoramaViewer.tsx` applies `scene.default_zoom` on load.
 
-### 2b. Accurate positions (yaw/pitch/zoom)
-The viewer already honours `default_yaw` / `default_pitch` from the scene row, and `HotspotPicker` writes click-captured yaw/pitch into the hotspot dialog. Tighten this so positions are reliable:
+### Inline scene/hotspot management
+- On each scene row: up/down arrows (or `display_order` numeric input) and `is_active` switch — no dialog needed.
+- On each hotspot row: same controls + inline yaw/pitch editors + **"Re-pick"** that reopens `HotspotPicker` pre-seeded with current position.
 
-- In `PanoramaModule.tsx` scene dialog, add a **"Set default view"** button that opens the same picker against the current scene and writes the captured yaw/pitch (and the viewer's current `zoom`) back into `default_yaw` / `default_pitch` / (new) `default_zoom`.
-- Migration: add `default_zoom numeric not null default 50` to `parliament_panorama_scenes` (only column added; nullable-safe default).
-- Update `apps/web/src/components/parliament/PanoramaViewer.tsx` to apply `scene.default_zoom` on load when present.
-- In the hotspot list, add inline yaw/pitch numeric editors plus a "Re-pick" button that reopens `HotspotPicker` pre-seeded with the existing position so an admin can nudge a marker without retyping numbers.
-- Add a "Preview on site" link in the module header that opens `/parliament-tour?scene=<slug>` in a new tab; update `ParliamentTour.tsx` to honour that query param when selecting the initial scene.
+### Deep-link preview
+- Module header gets a "Preview on site" button → `/parliament-tour?scene=<slug>` in a new tab.
 
-### 2c. Ordering + active toggles in one place
-Add up/down arrows (or a numeric `display_order` input) and an `is_active` switch directly on each scene/hotspot row so admins don't have to open the dialog just to reorder or hide an item. Both columns already exist in the schema.
+### CRM nav check
+- Verify `parliament-tour` module's `allowedRoles` includes `super_admin`, `admin`, `website_editor`; widen if missing.
 
-### 2d. CRM nav surfacing
-The `parliament-tour` section is already registered in `crmModules.ts`. Verify `getModulesForRoles` exposes it to `super_admin`, `admin`, and `website_editor`; widen `allowedRoles` if any of those are missing.
+---
+
+## Phase 2 — Web content audit & gap fill
+
+Walk every route in `apps/web/src/App.tsx` and make all currently-hardcoded copy editable through `site_content`. No visual redesigns — just swap hardcoded strings for `useSiteContent(...)` with the existing string as fallback so nothing breaks if a row is empty.
+
+### Pages already CMS-backed (verify only)
+`/` (hero, about, quote, stats, anniversary, did_you_know, pillars, speaker, newsletter, sponsor_cta, implementing_partners) · `/about` · `/media-kit` · `/programmes/parliament` · `/ecowas-parliament` · sponsor_portal_stats.
+
+### Pages to make editable (add `site_content` keys + templates in `SiteContentModule.tsx`)
+- `/timeline` → `timeline_page` (hero copy, intro)
+- `/news` → `news_page` (hero, intro, empty-state)
+- `/documents` → `documents_page` (hero, categories intro)
+- `/stakeholders` → `stakeholders_page` (hero, intro)
+- `/team` → `team_page` (hero, intro)
+- `/contact` → `contact_page` (hero, channels intro, office address block)
+- `/events` → `events_page` (hero, filters intro)
+- `/volunteer` → `volunteer_page` (hero, eligibility, CTA)
+- `/sponsors` (portal) → `sponsor_portal_hero`, `sponsor_portal_tiers_intro`
+- `/parliament-tour` → handled in Phase 1
+- Programme pillar pages (`/programmes/youth|trade|women|civic|culture|awards`, plus `/programmes/youth/innovators`, `/programmes/youth/smart`) → one `programme_<slug>` key each (hero, intro, CTA copy). Already-dynamic `PillarPage.tsx` extended to read shared overrides.
+- `/marketplace` and `/marketplace/sell` → `marketplace_landing`, `marketplace_sell_intro`.
+
+### Home section additions
+- `MarketplaceSpotlight`, `ParliamentTourSpotlight`, `EventsSection`, `LatestNews`, `CountriesSection`, `StatsSection`, `PartnersStrip`, `Parliament25Section`, `PeopleMandateSection`, `MarqueeStrip`, `SponsorPlaceholderSection` — add `useSiteContent` for their headings/subheadings/CTAs.
+
+### Layout chrome
+- `Navbar` + `Footer` already use `useSiteSettings`. Add a `site_footer` key (tagline, contact line, copyright, social link overrides) and a `site_nav_cta` key (primary nav button label/URL).
+
+### SiteContentModule UX
+- Group templates under collapsible sections matching the route map (Home / Programmes / Marketplace / Tour / Other), each row showing a "Preview" link that opens the corresponding public URL.
+- Add a small global search field across template labels.
+
+### Migration
+- One `site_content` insert per new key with sensible defaults (current hardcoded strings) so live site never goes blank.
+
+---
+
+## Phase 3 — Per-module CRUD parity & preview deep links
+
+Many web pages are already powered by dedicated tables/modules. This phase tightens the loop so admins can manage them without leaving the CRM and jump to the rendered page.
+
+- Add "Preview on site" deep links on these modules: `NewsEditorModule` → `/news/:slug`, `EventsManagerModule` → `/events/:id`, `SponsorsManagerModule` → `/sponsors/:slug` and `/partners/:slug`, `StakeholdersModule` → `/stakeholders`, `TeamModule` → `/team`, `MarketplaceModule` → `/marketplace/listings/:slug`, `ProgrammePillarsModule` → matching `/programmes/...`, `PanoramaModule` → `/parliament-tour?scene=…`.
+- Confirm `allowedRoles` for every CMS-related module exposes `super_admin`, `admin`, and `website_editor`. Widen where missing.
+- Add `display_order` + `is_active` inline controls (arrows + switch) on list rows that don't already have them: `SponsorsManagerModule`, `StakeholdersModule`, `TeamModule`, `ProgrammePillarsModule`, `NewsEditorModule`.
+- Verify no module is still flagged `isStub: true` in `crmModules.ts` for live-site content (`news-editor`, `events-manager`, `sponsors-partners`, `marketplace`, `parliament-tour`, `site-content`, `programme-pillars`, `stakeholders-mgmt`, `media-kit-mgmt`).
+
+---
 
 ## Technical notes
 
-- No new packages. `@photo-sphere-viewer/core` is already in admin (used by `HotspotPicker`).
-- One migration: `alter table parliament_panorama_scenes add column default_zoom numeric not null default 50;` — no RLS changes (existing scene policies cover the new column).
-- No edits to `src/integrations/supabase/types.ts` (auto-generated).
-- Storage bucket `parliament-panorama` already exists and is public — no changes.
+- One DB migration in Phase 1 (`default_zoom` column). Phase 2 only seeds `site_content` rows (insert tool, not a migration). No migration in Phase 3.
+- No new packages. `@photo-sphere-viewer/core`, shadcn `Switch`, `lucide` icons already present.
+- `src/integrations/supabase/types.ts` is auto-generated — not edited manually.
+- Fallback pattern everywhere: `cms?.field ?? "current hard-coded string"` so empty rows never break the site.
+- No locale editor for the new keys yet; admins paste localised strings if needed.
 
 ## Out of scope
 
-- Re-rolling / re-stitching the source panorama JPGs (already handled in the previous turn).
-- Translating the new editable copy fields into FR/PT — admin can paste localised strings, but a multi-locale editor for these specific keys can come later if requested.
+- Visual redesigns of the public pages.
+- Multi-locale editor surface for the new `site_content` keys.
+- Re-stitching panorama JPGs.
+- Restructuring `crmModules.ts` groups/ordering beyond role/preview fixes.
+
+## Rollout order
+
+1. Phase 1 PR — panorama complete + build fix. Verifiable on `/parliament-tour` immediately.
+2. Phase 2 PR — `site_content` expansion + page wiring. Verifiable by editing copy in `SiteContentModule` and reloading each route.
+3. Phase 3 PR — preview links + inline reorder/active toggles across modules.
