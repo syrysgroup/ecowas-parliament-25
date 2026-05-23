@@ -3,9 +3,15 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Compass, Maximize2 } from "lucide-react";
 import AnimatedSection from "@/components/shared/AnimatedSection";
+import { useSiteContent } from "@/hooks/useSiteContent";
 import parliamentChamber from "@/assets/parliament-chamber.png";
 
 export default function ParliamentTourSpotlight() {
+  const { data: copy } = useSiteContent("parliament_tour");
+  const title = copy?.spotlight_title || "Step Inside the Parliament Chamber";
+  const body = copy?.spotlight_body || "Tour the seat of West African parliamentary democracy in immersive 360°. Look around the chamber, discover the Speaker's chair, member benches and public gallery — all from anywhere in the world.";
+  const ctaLabel = copy?.spotlight_cta_label || "Launch 360° Tour";
+
   return (
     <section className="py-20 bg-gradient-to-br from-ecowas-green/5 via-background to-ecowas-yellow/5">
       <div className="container">
