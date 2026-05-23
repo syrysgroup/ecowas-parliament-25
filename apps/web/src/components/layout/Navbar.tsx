@@ -6,8 +6,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useTranslation, Locale } from "@/lib/i18n";					
 import ThemeToggle from "@/components/shared/ThemeToggle";					
 import ecowasLogo from "@/assets/ecowas-parliament-logo.png";					
-import { useSiteSettings } from "@/hooks/useSiteSettings";
-import { useProgrammePillars } from "@/hooks/useProgrammePillars";
+import { useSiteSettings } from "@/hooks/useSiteSettings";					
 					
 const localeLabels: Record<Locale, string> = { en: "EN", fr: "FR", pt: "PT" };					
 const localeOrder: Locale[] = ["en", "fr", "pt"];					
@@ -15,8 +14,7 @@ const localeOrder: Locale[] = ["en", "fr", "pt"];
 const Navbar = () => {					
 const { t, locale, setLocale } = useTranslation();					
 const location = useLocation();					
-const { get } = useSiteSettings();
-const { data: dbPillars } = useProgrammePillars();
+const { get } = useSiteSettings();					
 const dbLogoUrl = get("site_logo_url", "");					
 const dbSiteName = get("site_name", "");					
 const [mobileOpen, setMobileOpen] = useState(false);					
@@ -49,21 +47,19 @@ children: [
 { label: t("nav.parliamentInitiative"), to: "/about" },					
 ],					
 },					
-{
-label: t("nav.programmes"),
-to: dbPillars && dbPillars.length > 0 ? dbPillars[0].route : "/programmes/youth",
-children: (dbPillars && dbPillars.length > 0
-  ? dbPillars.map((p) => ({ label: p.title, to: p.route }))
-  : [
-      { label: t("prog.youth"), to: "/programmes/youth" },
-      { label: t("prog.trade"), to: "/programmes/trade" },
-      { label: t("prog.women"), to: "/programmes/women" },
-      { label: t("prog.civic"), to: "/programmes/civic" },
-      { label: t("prog.culture"), to: "/programmes/culture" },
-      { label: t("prog.awards"), to: "/programmes/awards" },
-      { label: t("prog.parliament"), to: "/programmes/parliament" },
-    ]),
-},
+{					
+label: t("nav.programmes"),					
+to: "/programmes/youth",					
+children: [					
+{ label: t("prog.youth"), to: "/programmes/youth" },					
+{ label: t("prog.trade"), to: "/programmes/trade" },					
+{ label: t("prog.women"), to: "/programmes/women" },					
+{ label: t("prog.civic"), to: "/programmes/civic" },					
+{ label: t("prog.culture"), to: "/programmes/culture" },					
+{ label: t("prog.awards"), to: "/programmes/awards" },					
+{ label: t("prog.parliament"), to: "/programmes/parliament" },					
+],					
+},					
 {					
 label: t("nav.eventsMedia"),					
 to: "/events",					

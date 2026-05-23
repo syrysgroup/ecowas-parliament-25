@@ -7,16 +7,20 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Loader2, ArrowLeft, MapPin, Maximize2, ExternalLink, Compass } from "lucide-react";
 import { SEOHead } from "@/components/SEOHead";
 import { usePanoramaScenes } from "@/hooks/usePanoramaScenes";
+import { useSiteContent } from "@/hooks/useSiteContent";
 import type { PanoramaHotspot } from "@/components/parliament/PanoramaViewer";
+
 
 const PanoramaViewer = lazy(() => import("@/components/parliament/PanoramaViewer"));
 
 export default function ParliamentTour() {
   const { data: scenes, isLoading } = usePanoramaScenes();
+  const { data: copy } = useSiteContent("parliament_tour");
   const [searchParams] = useSearchParams();
   const slugParam = searchParams.get("scene");
   const [activeSceneId, setActiveSceneId] = useState<string | null>(null);
   const [activeHotspot, setActiveHotspot] = useState<PanoramaHotspot | null>(null);
+
 
   const scene = useMemo(() => {
     if (!scenes?.length) return undefined;
@@ -58,14 +62,16 @@ export default function ParliamentTour() {
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
               <Badge className="bg-ecowas-yellow/20 text-ecowas-yellow-foreground border-ecowas-yellow/40 mb-3">
-                Virtual Experience
+                {copy?.hero_badge || "Virtual Experience"}
               </Badge>
-              <h1 className="text-3xl md:text-5xl font-black text-foreground">Step Inside the Chamber</h1>
+              <h1 className="text-3xl md:text-5xl font-black text-foreground">
+                {copy?.hero_title || "Step Inside the Chamber"}
+              </h1>
               <p className="mt-2 text-muted-foreground max-w-2xl">
-                Explore the ECOWAS Parliament hall in immersive 360°. Drag to look around, click hotspots
-                for details, or tap fullscreen for a cinematic experience.
+                {copy?.hero_subtitle || "Explore the ECOWAS Parliament hall in immersive 360°. Drag to look around, click hotspots for details, or tap fullscreen for a cinematic experience."}
               </p>
             </div>
+
             {scenes && scenes.length > 1 && (
               <div className="flex flex-wrap gap-2" role="tablist" aria-label="Choose a panorama scene">
                 {scenes.map((s) => (
@@ -113,8 +119,9 @@ export default function ParliamentTour() {
         <section className="py-12 bg-muted/30">
           <div className="container">
             <h2 id="poi-heading" className="text-2xl font-bold text-foreground mb-6 flex items-center gap-2">
-              <MapPin className="h-5 w-5 text-primary" aria-hidden="true" /> Points of Interest
+              <MapPin className="h-5 w-5 text-primary" aria-hidden="true" /> {copy?.poi_heading || "Points of Interest"}
             </h2>
+
             <ul
               className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 list-none p-0"
               aria-labelledby="poi-heading"

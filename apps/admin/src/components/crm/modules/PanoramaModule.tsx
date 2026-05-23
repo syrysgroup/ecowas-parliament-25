@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -9,12 +9,10 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Plus, Trash2, Upload, Compass, MapPin, Edit2, Info, Crosshair, ArrowUp, ArrowDown, ExternalLink, Target, Wand2, Eye } from "lucide-react";
+import { Plus, Trash2, Upload, Compass, MapPin, Edit2, Info, Crosshair, ArrowUp, ArrowDown, ExternalLink, Target } from "lucide-react";
 import { toast } from "sonner";
 import { validateEquirectangular, generateDerivatives } from "@/lib/panorama";
 import HotspotPicker from "./panorama/HotspotPicker";
-import SceneHotspotMap from "./panorama/SceneHotspotMap";
-import StitcherDialog from "./panorama/StitcherDialog";
 
 type Scene = {
   id: string; slug: string; name: string; description: string | null;
@@ -29,29 +27,6 @@ type Hotspot = {
   display_order: number; is_active: boolean;
 };
 
-const YAW_MAX = Math.PI;
-const PITCH_MAX = Math.PI / 2;
-
-function clampNum(v: unknown, min: number, max: number): number | null {
-  const n = typeof v === "number" ? v : parseFloat(String(v ?? ""));
-  if (!Number.isFinite(n)) return null;
-  return Math.min(max, Math.max(min, n));
-}
-const clampYaw = (v: unknown) => clampNum(v, -YAW_MAX, YAW_MAX);
-const clampPitch = (v: unknown) => clampNum(v, -PITCH_MAX, PITCH_MAX);
-const clampZoom = (v: unknown) => clampNum(v, 0, 100);
-
-function validateDefaultView(s: { default_yaw?: number; default_pitch?: number; default_zoom?: number } | null | undefined) {
-  const errors: Record<string, string> = {};
-  if (!s) return { ok: false as const, errors };
-  if (clampYaw(s.default_yaw) === null) errors.yaw = "Yaw must be a number between -π and π.";
-  if (clampPitch(s.default_pitch) === null) errors.pitch = "Pitch must be a number between -π/2 and π/2.";
-  if (clampZoom(s.default_zoom) === null) errors.zoom = "Zoom must be a number between 0 and 100.";
-  return { ok: Object.keys(errors).length === 0, errors };
-}
-
-
-
 const WEB_TOUR_URL =
   (import.meta.env.VITE_WEB_BASE_URL?.replace(/\/$/, "") ?? "") + "/parliament-tour";
 
@@ -62,8 +37,6 @@ export default function PanoramaModule() {
   const [hotspotDialog, setHotspotDialog] = useState<Partial<Hotspot> | null>(null);
   const [uploading, setUploading] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [stitcherOpen, setStitcherOpen] = useState(false);
-  const [highlightHotspotId, setHighlightHotspotId] = useState<string | null>(null);
 
   const scenesQ = useQuery({
     queryKey: ["crm-panorama-scenes"],
@@ -88,23 +61,16 @@ export default function PanoramaModule() {
 
   const saveScene = useMutation({
     mutationFn: async (s: Partial<Scene>) => {
-      const yaw = clampYaw(s.default_yaw);
-      const pitch = clampPitch(s.default_pitch);
-      const zoom = clampZoom(s.default_zoom);
-      if (yaw === null || pitch === null || zoom === null) {
-        throw new Error("Default view values are invalid. Yaw must be between -π and π, pitch between -π/2 and π/2, and zoom between 0 and 100.");
-      }
       const payload = {
         slug: s.slug, name: s.name, description: s.description,
         panorama_url: s.panorama_url,
         preview_url: s.preview_url,
         mobile_panorama_url: s.mobile_panorama_url,
-        default_yaw: yaw,
-        default_pitch: pitch,
-        default_zoom: zoom,
+        default_yaw: s.default_yaw ?? 0,
+        default_pitch: s.default_pitch ?? 0,
+        default_zoom: s.default_zoom ?? 50,
         display_order: s.display_order ?? 0, is_active: s.is_active ?? true,
       };
-
       if (s.id) {
         const { error } = await supabase.from("parliament_panorama_scenes" as any)
           .update(payload).eq("id", s.id);
@@ -210,8 +176,7 @@ export default function PanoramaModule() {
     return supabase.storage.from("parliament-panorama").getPublicUrl(path).data.publicUrl;
   }
 
-  async function uploadPanorama(input: File | Blob, fallbackName = "panorama.jpg"): Promise<void> {
-    const file = input instanceof File ? input : new File([input], fallbackName, { type: input.type || "image/jpeg" });
+  async function uploadPanorama(file: File): Promise<void> {
     setUploading(true);
     try {
       const check = await validateEquirectangular(file);
@@ -225,7 +190,6 @@ export default function PanoramaModule() {
       const base = file.name.replace(/\.[^.]+$/, "");
       const mobileUrl = mobile ? await uploadBlob(mobile, `${base}-mobile.jpg`) : null;
       const previewUrl = preview ? await uploadBlob(preview, `${base}-preview.jpg`) : null;
-      setSceneDialog((prev) => (prev ?? { is_active: true, default_yaw: 0, default_pitch: 0, default_zoom: 50, display_order: (scenesQ.data?.length ?? 0) + 1 }) as any);
       setSceneDialog((prev) => prev ? {
         ...prev,
         panorama_url: fullUrl ?? prev.panorama_url,
@@ -253,14 +217,15 @@ export default function PanoramaModule() {
               <ExternalLink className="h-4 w-4 mr-1" /> Preview live tour
             </a>
           </Button>
-          <Button variant="outline" onClick={() => setStitcherOpen(true)}>
-            <Wand2 className="h-4 w-4 mr-1" /> Stitch raw photos
-          </Button>
           <Button onClick={() => setSceneDialog({ is_active: true, default_yaw: 0, default_pitch: 0, default_zoom: 50, display_order: (scenesQ.data?.length ?? 0) + 1 })}>
             <Plus className="h-4 w-4 mr-1" /> New Scene
           </Button>
         </div>
       </div>
+
+      <TourPageCopyCard />
+
+
 
       <Tabs value="scenes">
         <TabsList>
@@ -340,21 +305,7 @@ export default function PanoramaModule() {
                           <Plus className="h-3 w-3 mr-1" /> Add Hotspot
                         </Button>
                       </div>
-                      {s.panorama_url && (hotspotsQ.data?.length ?? 0) > 0 && (
-                        <SceneHotspotMap
-                          panoramaUrl={s.panorama_url}
-                          hotspots={(hotspotsQ.data ?? []).map((h) => ({
-                            id: h.id, yaw: h.yaw, pitch: h.pitch,
-                            title: h.title, display_order: h.display_order, is_active: h.is_active,
-                          }))}
-                          highlightId={highlightHotspotId}
-                          onEdit={(id) => {
-                            const h = hotspotsQ.data?.find((x) => x.id === id);
-                            if (h) setHotspotDialog(h);
-                          }}
-                        />
-                      )}
-                      {hotspotsQ.data?.length === 0 && <p className="text-xs text-muted-foreground">No hotspots yet. Click "Add Hotspot" then click in the panorama to place it.</p>}
+                      {hotspotsQ.data?.length === 0 && <p className="text-xs text-muted-foreground">No hotspots yet.</p>}
                       <div className="space-y-2">
                         {hotspotsQ.data?.map((h) => (
                           <div key={h.id} className="flex items-center justify-between p-2.5 rounded border border-border bg-muted/30">
@@ -375,13 +326,6 @@ export default function PanoramaModule() {
                               </Button>
                               <Switch checked={h.is_active}
                                 onCheckedChange={(v) => quickUpdateHotspot.mutate({ id: h.id, patch: { is_active: v } })} />
-                              <Button size="sm" variant="ghost" title="Identify on panorama"
-                                onClick={() => {
-                                  setHighlightHotspotId(h.id);
-                                  setTimeout(() => setHighlightHotspotId((cur) => (cur === h.id ? null : cur)), 2500);
-                                }}>
-                                <Eye className="h-3.5 w-3.5" />
-                              </Button>
                               <Button size="sm" variant="ghost" title="Re-pick position" onClick={() => setHotspotDialog(h)}>
                                 <Target className="h-3.5 w-3.5" />
                               </Button>
@@ -424,9 +368,6 @@ export default function PanoramaModule() {
                     }} />
                     <Button asChild variant="outline" disabled={uploading}><span><Upload className="h-4 w-4 mr-1" />{uploading ? "Uploading…" : "Upload"}</span></Button>
                   </label>
-                  <Button type="button" variant="outline" onClick={() => setStitcherOpen(true)} disabled={uploading}>
-                    <Wand2 className="h-4 w-4 mr-1" /> Stitch raw
-                  </Button>
                 </div>
                 {sceneDialog.panorama_url && <img src={sceneDialog.panorama_url} alt="" className="mt-2 w-full h-32 object-cover rounded border border-border" />}
                 {(sceneDialog.mobile_panorama_url || sceneDialog.preview_url) && (
@@ -443,47 +384,17 @@ export default function PanoramaModule() {
                   </Label>
                   <HotspotPicker
                     panoramaUrl={sceneDialog.panorama_url}
-                    yaw={clampYaw(sceneDialog.default_yaw) ?? 0}
-                    pitch={clampPitch(sceneDialog.default_pitch) ?? 0}
-                    onPick={(y, p) => setSceneDialog((prev) => prev ? { ...prev, default_yaw: clampYaw(y) ?? 0, default_pitch: clampPitch(p) ?? 0 } : prev)}
+                    yaw={sceneDialog.default_yaw ?? 0}
+                    pitch={sceneDialog.default_pitch ?? 0}
+                    onPick={(y, p) => setSceneDialog((prev) => prev ? { ...prev, default_yaw: y, default_pitch: p } : prev)}
                   />
                 </div>
               )}
-              {(() => {
-                const v = validateDefaultView(sceneDialog);
-                return (
-                  <div className="grid grid-cols-3 gap-3">
-                    <div>
-                      <Label>Default Yaw (rad)</Label>
-                      <Input type="number" step="0.05" min={-YAW_MAX} max={YAW_MAX}
-                        value={Number.isFinite(sceneDialog.default_yaw as number) ? (sceneDialog.default_yaw as number) : ""}
-                        onChange={(e) => setSceneDialog({ ...sceneDialog, default_yaw: e.target.value === "" ? (undefined as any) : parseFloat(e.target.value) })}
-                        onBlur={(e) => { const c = clampYaw(e.target.value); if (c !== null) setSceneDialog({ ...sceneDialog, default_yaw: c }); }}
-                        aria-invalid={!!v.errors.yaw} />
-                      {v.errors.yaw && <p className="text-[11px] text-destructive mt-1">{v.errors.yaw}</p>}
-                    </div>
-                    <div>
-                      <Label>Default Pitch (rad)</Label>
-                      <Input type="number" step="0.05" min={-PITCH_MAX} max={PITCH_MAX}
-                        value={Number.isFinite(sceneDialog.default_pitch as number) ? (sceneDialog.default_pitch as number) : ""}
-                        onChange={(e) => setSceneDialog({ ...sceneDialog, default_pitch: e.target.value === "" ? (undefined as any) : parseFloat(e.target.value) })}
-                        onBlur={(e) => { const c = clampPitch(e.target.value); if (c !== null) setSceneDialog({ ...sceneDialog, default_pitch: c }); }}
-                        aria-invalid={!!v.errors.pitch} />
-                      {v.errors.pitch && <p className="text-[11px] text-destructive mt-1">{v.errors.pitch}</p>}
-                    </div>
-                    <div>
-                      <Label>Default Zoom (0–100)</Label>
-                      <Input type="number" min={0} max={100} step="1"
-                        value={Number.isFinite(sceneDialog.default_zoom as number) ? (sceneDialog.default_zoom as number) : ""}
-                        onChange={(e) => setSceneDialog({ ...sceneDialog, default_zoom: e.target.value === "" ? (undefined as any) : parseFloat(e.target.value) })}
-                        onBlur={(e) => { const c = clampZoom(e.target.value); if (c !== null) setSceneDialog({ ...sceneDialog, default_zoom: c }); }}
-                        aria-invalid={!!v.errors.zoom} />
-                      {v.errors.zoom && <p className="text-[11px] text-destructive mt-1">{v.errors.zoom}</p>}
-                    </div>
-                  </div>
-                );
-              })()}
-
+              <div className="grid grid-cols-3 gap-3">
+                <div><Label>Default Yaw (rad)</Label><Input type="number" step="0.05" value={sceneDialog.default_yaw ?? 0} onChange={(e) => setSceneDialog({ ...sceneDialog, default_yaw: parseFloat(e.target.value) })} /></div>
+                <div><Label>Default Pitch (rad)</Label><Input type="number" step="0.05" value={sceneDialog.default_pitch ?? 0} onChange={(e) => setSceneDialog({ ...sceneDialog, default_pitch: parseFloat(e.target.value) })} /></div>
+                <div><Label>Default Zoom (0–100)</Label><Input type="number" min={0} max={100} step="1" value={sceneDialog.default_zoom ?? 50} onChange={(e) => setSceneDialog({ ...sceneDialog, default_zoom: Math.max(0, Math.min(100, parseFloat(e.target.value) || 0)) })} /></div>
+              </div>
               <div className="grid grid-cols-2 gap-3 items-end">
                 <div><Label>Display Order</Label><Input type="number" value={sceneDialog.display_order ?? 0} onChange={(e) => setSceneDialog({ ...sceneDialog, display_order: parseInt(e.target.value) || 0 })} /></div>
                 <div className="flex items-center gap-2 pb-2"><Switch checked={sceneDialog.is_active ?? true} onCheckedChange={(v) => setSceneDialog({ ...sceneDialog, is_active: v })} /><Label>Active</Label></div>
@@ -492,7 +403,7 @@ export default function PanoramaModule() {
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setSceneDialog(null)}>Cancel</Button>
-            <Button onClick={() => sceneDialog && saveScene.mutate(sceneDialog)} disabled={saveScene.isPending || !validateDefaultView(sceneDialog).ok}>Save</Button>
+            <Button onClick={() => sceneDialog && saveScene.mutate(sceneDialog)} disabled={saveScene.isPending}>Save</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -524,9 +435,6 @@ export default function PanoramaModule() {
                         yaw={hotspotDialog.yaw ?? 0}
                         pitch={hotspotDialog.pitch ?? 0}
                         onPick={(y, p) => setHotspotDialog((prev) => prev ? { ...prev, yaw: y, pitch: p } : prev)}
-                        otherHotspots={(hotspotsQ.data ?? [])
-                          .filter((h) => h.id !== hotspotDialog.id)
-                          .map((h) => ({ id: h.id, yaw: h.yaw, pitch: h.pitch, title: h.title }))}
                       />
                     )}
                   </div>
@@ -550,18 +458,106 @@ export default function PanoramaModule() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      <StitcherDialog
-        open={stitcherOpen}
-        onOpenChange={setStitcherOpen}
-        onStitched={async (blob, name) => {
-          // If no scene dialog is open, open a fresh one so derivatives land somewhere.
-          if (!sceneDialog) {
-            setSceneDialog({ is_active: true, default_yaw: 0, default_pitch: 0, default_zoom: 50, display_order: (scenesQ.data?.length ?? 0) + 1 });
-          }
-          await uploadPanorama(blob, name);
-        }}
-      />
     </div>
+  );
+}
+
+// ─── Tour Page Copy editor ──────────────────────────────────────────────────
+type TourCopy = {
+  hero_badge: string;
+  hero_title: string;
+  hero_subtitle: string;
+  poi_heading: string;
+  spotlight_title: string;
+  spotlight_body: string;
+  spotlight_cta_label: string;
+};
+
+const TOUR_COPY_FIELDS: { key: keyof TourCopy; label: string; type: "text" | "textarea" }[] = [
+  { key: "hero_badge",          label: "Hero badge (eyebrow)",        type: "text" },
+  { key: "hero_title",          label: "Hero title",                  type: "text" },
+  { key: "hero_subtitle",       label: "Hero subtitle / paragraph",   type: "textarea" },
+  { key: "poi_heading",         label: "“Points of Interest” heading", type: "text" },
+  { key: "spotlight_title",     label: "Homepage spotlight — title",  type: "text" },
+  { key: "spotlight_body",      label: "Homepage spotlight — body",   type: "textarea" },
+  { key: "spotlight_cta_label", label: "Homepage spotlight — CTA",    type: "text" },
+];
+
+function TourPageCopyCard() {
+  const qc = useQueryClient();
+  const [values, setValues] = useState<Partial<TourCopy>>({});
+  const [rowId, setRowId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from("site_content")
+        .select("id, content")
+        .eq("section_key", "parliament_tour")
+        .maybeSingle();
+      if (data) {
+        setRowId(data.id);
+        setValues((data.content as any) ?? {});
+      }
+    })();
+  }, []);
+
+  async function save() {
+    setSaving(true);
+    try {
+      const payload = { section_key: "parliament_tour", content: values, updated_at: new Date().toISOString() };
+      if (rowId) {
+        const { error } = await supabase.from("site_content").update(payload).eq("id", rowId);
+        if (error) throw error;
+      } else {
+        const { data, error } = await supabase.from("site_content").insert(payload).select("id").single();
+        if (error) throw error;
+        if (data?.id) setRowId(data.id);
+      }
+      toast.success("Tour page copy saved");
+      qc.invalidateQueries({ queryKey: ["site-content", "parliament_tour"] });
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base flex items-center gap-2">
+          <Edit2 className="h-4 w-4 text-primary" /> Tour Page Copy
+        </CardTitle>
+        <p className="text-xs text-muted-foreground">
+          Editable text that appears on <code>/parliament-tour</code> and the homepage spotlight. Leave a field blank to use the built-in default.
+        </p>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div className="grid md:grid-cols-2 gap-3">
+          {TOUR_COPY_FIELDS.map((f) => (
+            <div key={f.key} className={f.type === "textarea" ? "md:col-span-2" : ""}>
+              <Label className="text-xs">{f.label}</Label>
+              {f.type === "textarea" ? (
+                <Textarea
+                  rows={3}
+                  value={values[f.key] ?? ""}
+                  onChange={(e) => setValues({ ...values, [f.key]: e.target.value })}
+                />
+              ) : (
+                <Input
+                  value={values[f.key] ?? ""}
+                  onChange={(e) => setValues({ ...values, [f.key]: e.target.value })}
+                />
+              )}
+            </div>
+          ))}
+        </div>
+        <div className="flex justify-end">
+          <Button size="sm" onClick={save} disabled={saving}>{saving ? "Saving…" : "Save copy"}</Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
