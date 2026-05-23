@@ -461,3 +461,103 @@ export default function PanoramaModule() {
     </div>
   );
 }
+
+// ─── Tour Page Copy editor ──────────────────────────────────────────────────
+type TourCopy = {
+  hero_badge: string;
+  hero_title: string;
+  hero_subtitle: string;
+  poi_heading: string;
+  spotlight_title: string;
+  spotlight_body: string;
+  spotlight_cta_label: string;
+};
+
+const TOUR_COPY_FIELDS: { key: keyof TourCopy; label: string; type: "text" | "textarea" }[] = [
+  { key: "hero_badge",          label: "Hero badge (eyebrow)",        type: "text" },
+  { key: "hero_title",          label: "Hero title",                  type: "text" },
+  { key: "hero_subtitle",       label: "Hero subtitle / paragraph",   type: "textarea" },
+  { key: "poi_heading",         label: "“Points of Interest” heading", type: "text" },
+  { key: "spotlight_title",     label: "Homepage spotlight — title",  type: "text" },
+  { key: "spotlight_body",      label: "Homepage spotlight — body",   type: "textarea" },
+  { key: "spotlight_cta_label", label: "Homepage spotlight — CTA",    type: "text" },
+];
+
+function TourPageCopyCard() {
+  const qc = useQueryClient();
+  const [values, setValues] = useState<Partial<TourCopy>>({});
+  const [rowId, setRowId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from("site_content")
+        .select("id, content")
+        .eq("section_key", "parliament_tour")
+        .maybeSingle();
+      if (data) {
+        setRowId(data.id);
+        setValues((data.content as any) ?? {});
+      }
+    })();
+  }, []);
+
+  async function save() {
+    setSaving(true);
+    try {
+      const payload = { section_key: "parliament_tour", content: values, updated_at: new Date().toISOString() };
+      if (rowId) {
+        const { error } = await supabase.from("site_content").update(payload).eq("id", rowId);
+        if (error) throw error;
+      } else {
+        const { data, error } = await supabase.from("site_content").insert(payload).select("id").single();
+        if (error) throw error;
+        if (data?.id) setRowId(data.id);
+      }
+      toast.success("Tour page copy saved");
+      qc.invalidateQueries({ queryKey: ["site-content", "parliament_tour"] });
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base flex items-center gap-2">
+          <Edit2 className="h-4 w-4 text-primary" /> Tour Page Copy
+        </CardTitle>
+        <p className="text-xs text-muted-foreground">
+          Editable text that appears on <code>/parliament-tour</code> and the homepage spotlight. Leave a field blank to use the built-in default.
+        </p>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div className="grid md:grid-cols-2 gap-3">
+          {TOUR_COPY_FIELDS.map((f) => (
+            <div key={f.key} className={f.type === "textarea" ? "md:col-span-2" : ""}>
+              <Label className="text-xs">{f.label}</Label>
+              {f.type === "textarea" ? (
+                <Textarea
+                  rows={3}
+                  value={values[f.key] ?? ""}
+                  onChange={(e) => setValues({ ...values, [f.key]: e.target.value })}
+                />
+              ) : (
+                <Input
+                  value={values[f.key] ?? ""}
+                  onChange={(e) => setValues({ ...values, [f.key]: e.target.value })}
+                />
+              )}
+            </div>
+          ))}
+        </div>
+        <div className="flex justify-end">
+          <Button size="sm" onClick={save} disabled={saving}>{saving ? "Saving…" : "Save copy"}</Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
