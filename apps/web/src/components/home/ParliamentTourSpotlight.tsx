@@ -41,23 +41,22 @@ export default function ParliamentTourSpotlight() {
             <div className="space-y-5">
               <Badge className="bg-primary/10 text-primary border-primary/20">Virtual Experience</Badge>
               <h2 className="text-3xl md:text-5xl font-black text-foreground leading-tight">
-                Step Inside the <span className="text-primary">Parliament Chamber</span>
+                {title.includes("Parliament Chamber") ? (
+                  <>{title.split("Parliament Chamber")[0]}<span className="text-primary">Parliament Chamber</span>{title.split("Parliament Chamber")[1] ?? ""}</>
+                ) : title}
               </h2>
-              <p className="text-muted-foreground leading-relaxed text-lg">
-                Tour the seat of West African parliamentary democracy in immersive 360°.
-                Look around the chamber, discover the Speaker's chair, member benches and public
-                gallery — all from anywhere in the world.
-              </p>
+              <p className="text-muted-foreground leading-relaxed text-lg">{body}</p>
               <div className="flex flex-wrap gap-3 pt-2">
                 <Button asChild size="lg" className="gap-2">
                   <Link to="/parliament-tour">
-                    Launch 360° Tour <ArrowRight className="h-5 w-5" />
+                    {ctaLabel} <ArrowRight className="h-5 w-5" />
                   </Link>
                 </Button>
                 <Button asChild size="lg" variant="outline">
                   <Link to="/ecowas-parliament">About the Parliament</Link>
                 </Button>
               </div>
+
             </div>
           </div>
         </AnimatedSection>
