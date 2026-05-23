@@ -9,10 +9,11 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Plus, Trash2, Upload, Compass, MapPin, Edit2, Info, Crosshair, ArrowUp, ArrowDown, ExternalLink, Target, Wand2 } from "lucide-react";
+import { Plus, Trash2, Upload, Compass, MapPin, Edit2, Info, Crosshair, ArrowUp, ArrowDown, ExternalLink, Target, Wand2, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { validateEquirectangular, generateDerivatives } from "@/lib/panorama";
 import HotspotPicker from "./panorama/HotspotPicker";
+import SceneHotspotMap from "./panorama/SceneHotspotMap";
 import StitcherDialog from "./panorama/StitcherDialog";
 
 type Scene = {
@@ -62,6 +63,7 @@ export default function PanoramaModule() {
   const [uploading, setUploading] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [stitcherOpen, setStitcherOpen] = useState(false);
+  const [highlightHotspotId, setHighlightHotspotId] = useState<string | null>(null);
 
   const scenesQ = useQuery({
     queryKey: ["crm-panorama-scenes"],
@@ -338,7 +340,21 @@ export default function PanoramaModule() {
                           <Plus className="h-3 w-3 mr-1" /> Add Hotspot
                         </Button>
                       </div>
-                      {hotspotsQ.data?.length === 0 && <p className="text-xs text-muted-foreground">No hotspots yet.</p>}
+                      {s.panorama_url && (hotspotsQ.data?.length ?? 0) > 0 && (
+                        <SceneHotspotMap
+                          panoramaUrl={s.panorama_url}
+                          hotspots={(hotspotsQ.data ?? []).map((h) => ({
+                            id: h.id, yaw: h.yaw, pitch: h.pitch,
+                            title: h.title, display_order: h.display_order, is_active: h.is_active,
+                          }))}
+                          highlightId={highlightHotspotId}
+                          onEdit={(id) => {
+                            const h = hotspotsQ.data?.find((x) => x.id === id);
+                            if (h) setHotspotDialog(h);
+                          }}
+                        />
+                      )}
+                      {hotspotsQ.data?.length === 0 && <p className="text-xs text-muted-foreground">No hotspots yet. Click "Add Hotspot" then click in the panorama to place it.</p>}
                       <div className="space-y-2">
                         {hotspotsQ.data?.map((h) => (
                           <div key={h.id} className="flex items-center justify-between p-2.5 rounded border border-border bg-muted/30">
