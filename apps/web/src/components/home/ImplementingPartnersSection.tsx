@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "@/lib/i18n";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useSiteContent } from "@/hooks/useSiteContent";
 import { Building2 } from "lucide-react";
 
 interface PartnerRow {
@@ -17,6 +18,7 @@ interface PartnerRow {
 
 const ImplementingPartnersSection = () => {
   const { t } = useTranslation();
+  const { data: cms } = useSiteContent("implementing_partners");
 
   const { data: partners = [] } = useQuery<PartnerRow[]>({
     queryKey: ["partners-public", "implementing"],
@@ -44,18 +46,18 @@ const ImplementingPartnersSection = () => {
         {/* HEADER */}
         <AnimatedSection className="text-center mb-14">
           <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 border border-primary/20 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-primary mb-4">
-            {t("implPartners.badge")}
+            {cms?.badge ?? t("implPartners.badge")}
           </span>
 
           <h2 className="text-3xl md:text-4xl font-black text-foreground">
-            {t("implPartners.title")}{" "}
+            {cms?.title ?? t("implPartners.title")}{" "}
             <span className="text-primary">
-              {t("implPartners.titleAccent")}
+              {cms?.title_accent ?? t("implPartners.titleAccent")}
             </span>
           </h2>
 
           <p className="mt-3 text-muted-foreground max-w-xl mx-auto">
-            {t("implPartners.subtitle")}
+            {cms?.subtitle ?? cms?.description ?? t("implPartners.subtitle")}
           </p>
         </AnimatedSection>
 
