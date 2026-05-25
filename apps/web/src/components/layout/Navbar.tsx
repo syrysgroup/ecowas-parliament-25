@@ -16,8 +16,11 @@ const Navbar = () => {
 const { t, locale, setLocale } = useTranslation();					
 const location = useLocation();					
 const { get } = useSiteSettings();					
+const { data: navCms } = useSiteContent("nav");					
 const dbLogoUrl = get("site_logo_url", "");					
 const dbSiteName = get("site_name", "");					
+const ctaLabel = navCms?.cta_label ?? t("nav.partnerWithUs");					
+const ctaHref = navCms?.cta_href ?? "/sponsors";					
 const [mobileOpen, setMobileOpen] = useState(false);					
 const [openDrop, setOpenDrop] = useState<string | null>(null);					
 const [langOpen, setLangOpen] = useState(false);					
