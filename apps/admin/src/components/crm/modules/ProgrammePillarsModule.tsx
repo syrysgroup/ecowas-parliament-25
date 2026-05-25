@@ -442,6 +442,14 @@ function PillarsTab() {
               <div className="flex items-center gap-1 flex-shrink-0">
                 {canEdit(MODULE) && (
                   <Button variant="ghost" size="icon" className="h-7 w-7 text-crm-text-muted hover:text-crm-text"
+                    title={p.is_active ? "Hide from public website" : "Show on public website"}
+                    disabled={toggleActiveMutation.isPending}
+                    onClick={() => toggleActiveMutation.mutate({ id: p.id, is_active: !p.is_active })}>
+                    {p.is_active ? <Eye size={12} /> : <EyeOff size={12} className="text-amber-400" />}
+                  </Button>
+                )}
+                {canEdit(MODULE) && (
+                  <Button variant="ghost" size="icon" className="h-7 w-7 text-crm-text-muted hover:text-crm-text"
                     onClick={() => openEdit(p)}>
                     <Pencil size={12} />
                   </Button>
