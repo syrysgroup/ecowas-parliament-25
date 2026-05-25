@@ -96,16 +96,16 @@ const Footer = () => {
 
         <div className="mt-6 pt-5 border-t border-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div>
-            <p className="text-xs text-muted-foreground">{t("footer.copyright")}</p>
-            <p className="text-[10px] text-muted-foreground/60 mt-1">{t("footer.disclaimer")}</p>
-            <p className="text-[10px] text-muted-foreground/40 mt-0.5">{t("footer.builtBy")}</p>
+            <p className="text-xs text-muted-foreground">{copyright}</p>
+            <p className="text-[10px] text-muted-foreground/60 mt-1">{disclaimer}</p>
+            <p className="text-[10px] text-muted-foreground/40 mt-0.5">{builtBy}</p>
           </div>
           <div className="flex flex-wrap items-center gap-4">
             <Link to="/contact" className="text-xs text-muted-foreground hover:text-primary transition-colors">{t("nav.contact")}</Link>
             <Link to="/media-kit" className="text-xs text-muted-foreground hover:text-primary transition-colors">{t("common.mediaKit")}</Link>
             <Link to="/sponsors" className="text-xs text-muted-foreground hover:text-primary transition-colors">{t("common.sponsor")}</Link>
-            <a href="https://parl.ecowas.int" target="_blank" rel="noreferrer" className="text-xs text-muted-foreground hover:text-primary transition-colors">
-              {t("footer.officialSite")} ↗
+            <a href={officialSiteUrl} target="_blank" rel="noreferrer" className="text-xs text-muted-foreground hover:text-primary transition-colors">
+              {officialSiteLabel} ↗
             </a>
             <a
               href="https://admin.ecowasparliamentinitiatives.org"
