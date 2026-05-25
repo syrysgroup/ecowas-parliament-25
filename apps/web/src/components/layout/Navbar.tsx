@@ -6,7 +6,8 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useTranslation, Locale } from "@/lib/i18n";					
 import ThemeToggle from "@/components/shared/ThemeToggle";					
 import ecowasLogo from "@/assets/ecowas-parliament-logo.png";					
-import { useSiteSettings } from "@/hooks/useSiteSettings";					
+import { useSiteSettings } from "@/hooks/useSiteSettings";
+import { useSiteContent } from "@/hooks/useSiteContent";
 					
 const localeLabels: Record<Locale, string> = { en: "EN", fr: "FR", pt: "PT" };					
 const localeOrder: Locale[] = ["en", "fr", "pt"];					
