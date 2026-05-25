@@ -280,7 +280,7 @@ l === locale ? "bg-primary text-primary-foreground" : "bg-muted text-foreground/
 <ThemeToggle variant="full" className="w-full" />					
 </div>					
 <Button asChild className="w-full" onClick={() => setMobileOpen(false)}>					
-<Link to="/sponsors">{t("nav.partnerWithUs")}</Link>					
+<Link to={ctaHref}>{ctaLabel}</Link>					
 </Button>					
 </div>					
 </nav>					
