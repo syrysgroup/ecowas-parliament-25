@@ -72,9 +72,9 @@ const Footer = () => {
                 <img src={anniversary25Logo} alt="25th Anniversary" className="h-8 w-auto object-contain" width={32} height={32} loading="lazy" decoding="async" />
               </div>
             </div>
-            <p className="text-sm text-muted-foreground leading-relaxed mb-4">{t("footer.tagline")}</p>
+            <p className="text-sm text-muted-foreground leading-relaxed mb-4">{tagline}</p>
             <div className="space-y-1.5 text-xs text-muted-foreground mb-4">
-              <p>📍 Herbert Macaulay Way, Garki, Abuja 900103, Federal Capital Territory</p>
+              <p>{address}</p>
             </div>
             <SocialMediaBar variant="full" showParliamentLink={true} />
 
