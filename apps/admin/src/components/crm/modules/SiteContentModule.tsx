@@ -149,6 +149,25 @@ const SECTION_TEMPLATES: Record<string, { label: string; fields: { key: string; 
       { key: "quote_attr",    label: "Quote Attribution", type: "text" },
     ],
   },
+  nav: {
+    label: "Navigation Bar",
+    fields: [
+      { key: "cta_label", label: "Primary CTA Label (e.g. Partner With Us)", type: "text" },
+      { key: "cta_href",  label: "Primary CTA Link URL", type: "text" },
+    ],
+  },
+  footer: {
+    label: "Footer",
+    fields: [
+      { key: "tagline",            label: "Tagline (short description under logos)", type: "textarea" },
+      { key: "address",            label: "Address Line", type: "text" },
+      { key: "copyright",          label: "Copyright Line", type: "text" },
+      { key: "disclaimer",         label: "Disclaimer", type: "textarea" },
+      { key: "built_by",           label: "Built-By Credit", type: "text" },
+      { key: "official_site_label",label: "Official Site Link Label", type: "text" },
+      { key: "official_site_url",  label: "Official Site URL", type: "text" },
+    ],
+  },
   newsletter: {
     label: "Newsletter CTA Section",
     fields: [

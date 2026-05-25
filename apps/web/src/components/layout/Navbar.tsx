@@ -6,7 +6,8 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useTranslation, Locale } from "@/lib/i18n";					
 import ThemeToggle from "@/components/shared/ThemeToggle";					
 import ecowasLogo from "@/assets/ecowas-parliament-logo.png";					
-import { useSiteSettings } from "@/hooks/useSiteSettings";					
+import { useSiteSettings } from "@/hooks/useSiteSettings";
+import { useSiteContent } from "@/hooks/useSiteContent";
 					
 const localeLabels: Record<Locale, string> = { en: "EN", fr: "FR", pt: "PT" };					
 const localeOrder: Locale[] = ["en", "fr", "pt"];					
@@ -15,8 +16,11 @@ const Navbar = () => {
 const { t, locale, setLocale } = useTranslation();					
 const location = useLocation();					
 const { get } = useSiteSettings();					
+const { data: navCms } = useSiteContent("nav");					
 const dbLogoUrl = get("site_logo_url", "");					
 const dbSiteName = get("site_name", "");					
+const ctaLabel = navCms?.cta_label ?? t("nav.partnerWithUs");					
+const ctaHref = navCms?.cta_href ?? "/sponsors";					
 const [mobileOpen, setMobileOpen] = useState(false);					
 const [openDrop, setOpenDrop] = useState<string | null>(null);					
 const [langOpen, setLangOpen] = useState(false);					
@@ -214,7 +218,7 @@ l === locale ? "text-primary bg-primary/5 font-bold" : "text-foreground/70 hover
 <ThemeToggle className="hidden xl:flex" />					
 					
 <Button asChild size="sm" className="hidden xl:flex">					
-<Link to="/sponsors">{t("nav.partnerWithUs")}</Link>					
+<Link to={ctaHref}>{ctaLabel}</Link>					
 </Button>					
 					
 {/* Mobile hamburger */}					
@@ -276,7 +280,7 @@ l === locale ? "bg-primary text-primary-foreground" : "bg-muted text-foreground/
 <ThemeToggle variant="full" className="w-full" />					
 </div>					
 <Button asChild className="w-full" onClick={() => setMobileOpen(false)}>					
-<Link to="/sponsors">{t("nav.partnerWithUs")}</Link>					
+<Link to={ctaHref}>{ctaLabel}</Link>					
 </Button>					
 </div>					
 </nav>					

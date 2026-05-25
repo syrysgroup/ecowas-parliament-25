@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "@/lib/i18n";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
+import { useSiteContent } from "@/hooks/useSiteContent";
 import ecowasLogo from "@/assets/ecowas-parliament-logo.png";
 import anniversary25Logo from "@/assets/parliament-25-logo.png";
 import SocialMediaBar from "@/components/shared/SocialMediaBar";
@@ -11,8 +12,16 @@ const Footer = () => {
   const { t } = useTranslation();
   const { user } = useAuthContext();
   const { get } = useSiteSettings();
+  const { data: cms } = useSiteContent("footer");
 
   const contactEmail = get("contact_email", "info@ecowasparliamentinitiatives.org");
+  const tagline = cms?.tagline ?? t("footer.tagline");
+  const address = cms?.address ?? "📍 Herbert Macaulay Way, Garki, Abuja 900103, Federal Capital Territory";
+  const copyright = cms?.copyright ?? t("footer.copyright");
+  const disclaimer = cms?.disclaimer ?? t("footer.disclaimer");
+  const builtBy = cms?.built_by ?? t("footer.builtBy");
+  const officialSiteLabel = cms?.official_site_label ?? t("footer.officialSite");
+  const officialSiteUrl = cms?.official_site_url ?? "https://parl.ecowas.int";
 
   const footerLinks = [
     {
@@ -63,9 +72,9 @@ const Footer = () => {
                 <img src={anniversary25Logo} alt="25th Anniversary" className="h-8 w-auto object-contain" width={32} height={32} loading="lazy" decoding="async" />
               </div>
             </div>
-            <p className="text-sm text-muted-foreground leading-relaxed mb-4">{t("footer.tagline")}</p>
+            <p className="text-sm text-muted-foreground leading-relaxed mb-4">{tagline}</p>
             <div className="space-y-1.5 text-xs text-muted-foreground mb-4">
-              <p>📍 Herbert Macaulay Way, Garki, Abuja 900103, Federal Capital Territory</p>
+              <p>{address}</p>
             </div>
             <SocialMediaBar variant="full" showParliamentLink={true} />
 
@@ -87,16 +96,16 @@ const Footer = () => {
 
         <div className="mt-6 pt-5 border-t border-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div>
-            <p className="text-xs text-muted-foreground">{t("footer.copyright")}</p>
-            <p className="text-[10px] text-muted-foreground/60 mt-1">{t("footer.disclaimer")}</p>
-            <p className="text-[10px] text-muted-foreground/40 mt-0.5">{t("footer.builtBy")}</p>
+            <p className="text-xs text-muted-foreground">{copyright}</p>
+            <p className="text-[10px] text-muted-foreground/60 mt-1">{disclaimer}</p>
+            <p className="text-[10px] text-muted-foreground/40 mt-0.5">{builtBy}</p>
           </div>
           <div className="flex flex-wrap items-center gap-4">
             <Link to="/contact" className="text-xs text-muted-foreground hover:text-primary transition-colors">{t("nav.contact")}</Link>
             <Link to="/media-kit" className="text-xs text-muted-foreground hover:text-primary transition-colors">{t("common.mediaKit")}</Link>
             <Link to="/sponsors" className="text-xs text-muted-foreground hover:text-primary transition-colors">{t("common.sponsor")}</Link>
-            <a href="https://parl.ecowas.int" target="_blank" rel="noreferrer" className="text-xs text-muted-foreground hover:text-primary transition-colors">
-              {t("footer.officialSite")} ↗
+            <a href={officialSiteUrl} target="_blank" rel="noreferrer" className="text-xs text-muted-foreground hover:text-primary transition-colors">
+              {officialSiteLabel} ↗
             </a>
             <a
               href="https://admin.ecowasparliamentinitiatives.org"
