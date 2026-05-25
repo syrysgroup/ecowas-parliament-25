@@ -4,7 +4,8 @@
       "Bash(wc -l \"c:\\\\Users\\\\emmat\\\\OneDrive\\\\Desktop\\\\Projects\\\\ECOWAS\\\\Implementation\\\\src\\\\components\\\\crm\\\\modules\"/*.tsx)",
       "Bash(unzip -p vertical-menu-template.zip vertical-menu-template/dashboards-crm.html)",
       "Bash(sed 's/^\\\\s*//')",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "WebFetch(domain:docs.blackbox.ai)"
     ]
   }
 }

@@ -1,0 +1,41 @@
+# Blackbox Global Rules — ECOWAS Parliament Monorepo
+
+## Repository layout
+- apps/admin/  — CRM (staff portal, invitation-only)
+- apps/web/    — Public ECOWAS Parliament website
+- supabase/    — Edge functions (Deno) + SQL migrations
+
+No root-level package.json. All npm commands must run from inside apps/admin/ or apps/web/.
+
+## Coding conventions
+- TypeScript strict mode throughout — no `any`, no `@ts-ignore`
+- React components use named exports, not default exports (exception: page-level route files)
+- shadcn/ui for all UI primitives; Tailwind for layout and spacing
+- TanStack Query for all server state; Redux Toolkit only for pure UI state
+- Sonner (`useToast`) for all toast notifications — never `alert()`
+- Zod for all runtime validation at system boundaries (forms, API responses)
+
+## Naming patterns
+- CRM module files: `<PascalCase>Module.tsx` in apps/admin/src/components/crm/modules/
+- Edge functions: `supabase/functions/<kebab-case>/index.ts`
+- Migrations: `supabase/migrations/YYYYMMDDHHMMSS_<snake_case_description>.sql`
+- Translation keys: dot-notation namespaced by UI area (e.g. `crm.tasks.title`)
+
+## Auth & security rules
+- NEVER use the Supabase service role key on the client side
+- Every new table must have RLS enabled and at least one policy before any frontend query is written
+- RLS policy pattern: `has_role(auth.uid(), 'role_name'::app_role)`
+- isSuperAdmin UI checks are display-only — always enforce the same check server-side in RLS or edge functions
+- Edge functions must authenticate BEFORE any DB operation (anonClient.auth.getUser() first)
+
+## i18n rules
+- All user-facing strings must use the `t()` helper from `useI18n()`
+- Every key added to en.ts must be added to fr.ts and pt.ts in the same commit
+- Untranslated stubs use the prefix `[NEEDS_TRANSLATION]`
+
+## Files agents must never modify
+- supabase/migrations/ — existing migration files are immutable once committed
+- apps/admin/src/integrations/supabase/types.ts — auto-generated, regenerate with CLI only
+- apps/web/src/integrations/supabase/types.ts — same as above
+- amplify.yml — deployment config, change only on explicit instruction
+- Any .env or .env.local file

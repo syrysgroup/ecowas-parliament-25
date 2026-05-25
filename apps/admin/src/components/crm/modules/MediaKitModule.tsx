@@ -409,7 +409,7 @@ function ItemList({ type, label }: { type: string; label: string }) {
           ))}
           {items.length === 0 && (
             <p className="text-[11px] text-crm-text-dim py-4 text-center">
-              No {label.toLowerCase()} yet.{canCreate(MODULE) ? " Click "Add" to create one." : ""}
+              No {label.toLowerCase()} yet.{canCreate(MODULE) ? ' Click "Add" to create one.' : ""}
             </p>
           )}
         </div>

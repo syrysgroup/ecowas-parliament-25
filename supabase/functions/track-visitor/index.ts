@@ -46,8 +46,49 @@ Deno.serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
+  if (req.method !== "POST") {
+    return new Response(
+      JSON.stringify({ error: "Method not allowed" }),
+      {
+        status: 405,
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+  }
+
   try {
-    const { page, referrer, sessionId } = await req.json();
+    let payload: { page?: unknown; referrer?: unknown; sessionId?: unknown } = {};
+    try {
+      payload = await req.json();
+    } catch (parseError) {
+      console.error("track-visitor invalid json:", parseError);
+      return new Response(
+        JSON.stringify({ error: "Invalid JSON payload" }),
+        {
+          status: 400,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
+    const page =
+      typeof payload.page === "string" && payload.page.trim().length > 0
+        ? payload.page.trim()
+        : "/";
+    const referrer =
+      typeof payload.referrer === "string" && payload.referrer.trim().length > 0
+        ? payload.referrer.trim()
+        : null;
+    const sessionId =
+      typeof payload.sessionId === "string" && payload.sessionId.trim().length > 0
+        ? payload.sessionId.trim()
+        : null;
 
     /**
      * 🌍 IP & GEO DATA
@@ -82,13 +123,31 @@ Deno.serve(async (req) => {
     else if (/safari/i.test(ua) && !/chrome/i.test(ua)) browser = "Safari";
     else if (/edge/i.test(ua)) browser = "Edge";
 
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseServiceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+    if (!supabaseUrl || !supabaseServiceRoleKey) {
+      console.error("track-visitor missing env vars", {
+        hasSupabaseUrl: Boolean(supabaseUrl),
+        hasServiceRoleKey: Boolean(supabaseServiceRoleKey),
+      });
+
+      return new Response(
+        JSON.stringify({ error: "Server configuration error" }),
+        {
+          status: 500,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
     /**
      * 🔌 SUPABASE CLIENT
      */
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
+    const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
     /**
      * 📊 INSERT VISITOR LOG
@@ -99,15 +158,20 @@ Deno.serve(async (req) => {
       city,
       device,
       browser,
-      current_page: page || "/",
-      referrer: referrer || null,
-      session_id: sessionId || null,
+      current_page: page,
+      referrer,
+      session_id: sessionId,
     });
 
     if (error) {
-      console.error("DB insert error:", error);
+      console.error("track-visitor DB insert error:", {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code,
+      });
       return new Response(
-        JSON.stringify({ error: "Database insert failed" }),
+        JSON.stringify({ error: "Database insert failed", code: error.code ?? null }),
         {
           status: 500,
           headers: {
@@ -129,7 +193,7 @@ Deno.serve(async (req) => {
       },
     });
   } catch (err) {
-    console.error("track-visitor error:", err);
+    console.error("track-visitor unexpected error:", err);
 
     return new Response(JSON.stringify({ error: "Internal error" }), {
       status: 500,

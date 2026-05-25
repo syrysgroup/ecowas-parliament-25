@@ -181,7 +181,7 @@ export default function PanoramaModule() {
     try {
       const check = await validateEquirectangular(file);
       if (!check.ok) {
-        toast.error(check.error);
+        toast.error((check as { ok: false; error: string }).error);
         return;
       }
       toast.message(`Uploading ${check.width}×${check.height} panorama + derivatives…`);
@@ -283,6 +283,7 @@ export default function PanoramaModule() {
                     <Button size="sm" variant="outline" onClick={() => { if (confirm(`Delete "${s.name}"?`)) deleteScene.mutate(s.id); }}>
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
+                  </div>
                   </div>
                 </CardHeader>
                 <CardContent>

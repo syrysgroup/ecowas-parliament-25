@@ -465,7 +465,7 @@ function PillarsTab() {
           ))}
           {pillars.length === 0 && (
             <p className="text-sm text-crm-text-muted text-center py-10">
-              No pillars yet.{canCreate(MODULE) ? " Click "Add Pillar" to create the first one." : ""}
+              No pillars yet.{canCreate(MODULE) ? ' Click "Add Pillar" to create the first one.' : ""}
             </p>
           )}
         </div>
@@ -743,7 +743,7 @@ function PageContentTab() {
               </div>
             ) : sections.length === 0 ? (
               <p className="text-xs text-crm-text-muted text-center py-6">
-                No sections yet.{canEditModule ? " Click "Add Section" to build out the page." : ""}
+                No sections yet.{canEditModule ? ' Click "Add Section" to build out the page.' : ""}
               </p>
             ) : (
               <div className="space-y-2">
