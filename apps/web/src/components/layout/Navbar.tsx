@@ -218,7 +218,7 @@ l === locale ? "text-primary bg-primary/5 font-bold" : "text-foreground/70 hover
 <ThemeToggle className="hidden xl:flex" />					
 					
 <Button asChild size="sm" className="hidden xl:flex">					
-<Link to="/sponsors">{t("nav.partnerWithUs")}</Link>					
+<Link to={ctaHref}>{ctaLabel}</Link>					
 </Button>					
 					
 {/* Mobile hamburger */}					
