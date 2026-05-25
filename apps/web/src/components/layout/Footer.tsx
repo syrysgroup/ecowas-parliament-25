@@ -12,8 +12,16 @@ const Footer = () => {
   const { t } = useTranslation();
   const { user } = useAuthContext();
   const { get } = useSiteSettings();
+  const { data: cms } = useSiteContent("footer");
 
   const contactEmail = get("contact_email", "info@ecowasparliamentinitiatives.org");
+  const tagline = cms?.tagline ?? t("footer.tagline");
+  const address = cms?.address ?? "📍 Herbert Macaulay Way, Garki, Abuja 900103, Federal Capital Territory";
+  const copyright = cms?.copyright ?? t("footer.copyright");
+  const disclaimer = cms?.disclaimer ?? t("footer.disclaimer");
+  const builtBy = cms?.built_by ?? t("footer.builtBy");
+  const officialSiteLabel = cms?.official_site_label ?? t("footer.officialSite");
+  const officialSiteUrl = cms?.official_site_url ?? "https://parl.ecowas.int";
 
   const footerLinks = [
     {
