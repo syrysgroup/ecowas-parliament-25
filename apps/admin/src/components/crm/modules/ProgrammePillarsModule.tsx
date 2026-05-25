@@ -363,6 +363,18 @@ function PillarsTab() {
     onError: (err: any) => toast({ title: "Error", description: err.message, variant: "destructive" }),
   });
 
+  const toggleActiveMutation = useMutation({
+    mutationFn: async ({ id, is_active }: { id: string; is_active: boolean }) => {
+      const { error } = await supabase.from("programme_pillars").update({ is_active }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ["programme_pillars"] });
+      toast({ title: vars.is_active ? "Programme shown on website" : "Programme hidden from website" });
+    },
+    onError: (err: any) => toast({ title: "Error", description: err.message, variant: "destructive" }),
+  });
+
   const openCreate = () => { setEditing(undefined); setDialogOpen(true); };
   const openEdit = (p: PillarRow) => { setEditing(p); setDialogOpen(true); };
 
