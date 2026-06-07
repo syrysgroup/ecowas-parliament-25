@@ -3157,6 +3157,121 @@ export type Database = {
         }
         Relationships: []
       }
+      sponsor_portal_downloads: {
+        Row: {
+          category: string | null
+          created_at: string
+          file_url: string
+          id: string
+          sponsor_id: string
+          title: string
+          updated_at: string
+          visible: boolean
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          file_url: string
+          id?: string
+          sponsor_id: string
+          title: string
+          updated_at?: string
+          visible?: boolean
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          file_url?: string
+          id?: string
+          sponsor_id?: string
+          title?: string
+          updated_at?: string
+          visible?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sponsor_portal_downloads_sponsor_id_fkey"
+            columns: ["sponsor_id"]
+            isOneToOne: false
+            referencedRelation: "sponsors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sponsor_portal_settings: {
+        Row: {
+          branding_logo_url: string | null
+          created_at: string
+          custom_message_html: string | null
+          enabled_widgets: string[]
+          id: string
+          sponsor_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          branding_logo_url?: string | null
+          created_at?: string
+          custom_message_html?: string | null
+          enabled_widgets?: string[]
+          id?: string
+          sponsor_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          branding_logo_url?: string | null
+          created_at?: string
+          custom_message_html?: string | null
+          enabled_widgets?: string[]
+          id?: string
+          sponsor_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sponsor_portal_settings_sponsor_id_fkey"
+            columns: ["sponsor_id"]
+            isOneToOne: true
+            referencedRelation: "sponsors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sponsor_portal_widgets: {
+        Row: {
+          created_at: string
+          default_enabled: boolean
+          description: string | null
+          id: string
+          key: string
+          label: string
+          position: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          default_enabled?: boolean
+          description?: string | null
+          id?: string
+          key: string
+          label: string
+          position?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          default_enabled?: boolean
+          description?: string | null
+          id?: string
+          key?: string
+          label?: string
+          position?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       sponsors: {
         Row: {
           about: string | null
@@ -3169,6 +3284,7 @@ export type Database = {
           is_published: boolean
           logo_url: string | null
           name: string
+          owner_user_id: string | null
           programmes: string[] | null
           slug: string
           sort_order: number
@@ -3187,6 +3303,7 @@ export type Database = {
           is_published?: boolean
           logo_url?: string | null
           name: string
+          owner_user_id?: string | null
           programmes?: string[] | null
           slug: string
           sort_order?: number
@@ -3205,6 +3322,7 @@ export type Database = {
           is_published?: boolean
           logo_url?: string | null
           name?: string
+          owner_user_id?: string | null
           programmes?: string[] | null
           slug?: string
           sort_order?: number
