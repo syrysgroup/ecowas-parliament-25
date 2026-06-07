@@ -233,8 +233,10 @@ const SECTION_TEMPLATES: Record<string, { label: string; fields: { key: string; 
   parliament_initiative: {
     label: "Parliament Initiative Page (/about)",
     fields: [
+      { key: "intro_eyebrow",      label: "Hero Eyebrow / Badge",          type: "text"     },
       { key: "hero_title",         label: "Hero Title",                    type: "text"     },
       { key: "hero_desc",          label: "Hero Description",              type: "textarea" },
+      { key: "hero_image_url",     label: "Hero Image URL (replaces gradient)", type: "text"  },
       { key: "why_title",          label: "Why a Year-Long Programme? — Title", type: "text" },
       { key: "why_desc",           label: "Why a Year-Long Programme? — Body",  type: "textarea" },
       { key: "living_title",       label: "A Living Story — Title",        type: "text"     },
