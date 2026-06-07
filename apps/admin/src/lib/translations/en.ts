@@ -438,7 +438,7 @@ export const en: Record<string, string> = {
   "mediaKit.spokesperson2.name": "Adaora Okafor",
   "mediaKit.spokesperson2.title": "Programme Director 25th Anniversary",
   "mediaKit.spokesperson2.note": "Available for background briefings, programme detail, and logistics questions.",
-  "mediaKit.spokesperson3.name": "Ibrahim Traore",
+  "mediaKit.spokesperson3.name": "Emmanuel Temile",
   "mediaKit.spokesperson3.title": "Communications Director",
   "mediaKit.spokesperson3.note": "Primary media contact for accreditation, statements, and photography access.",
   "mediaKit.cal1.event": "Opening Ceremony & Launch",
@@ -461,7 +461,7 @@ export const en: Record<string, string> = {
   "mediaKit.asset5.desc": "Two-page editorial summary of Vision 2050 for background context in reporting.",
   "mediaKit.asset6.title": "Branded graphics  social & print",
   "mediaKit.asset6.desc": "25th anniversary branded graphics for social media, print headers, and broadcast lower-thirds.",
-  "mediaKit.contactName": "Ibrahim Traore  Communications Director",
+  "mediaKit.contactName": "Communications Team",
   "mediaKit.contactResponse": "media@ecowasparliamentinitiatives.org · Response within 24hrs",
 
   // ─── Team Page ────────────────────────────────────────────────────

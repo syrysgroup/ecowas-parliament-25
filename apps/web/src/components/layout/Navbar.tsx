@@ -1,16 +1,25 @@
-import { useState, useRef, useEffect } from "react";					
+import { useMemo, useState, useRef, useEffect } from "react";					
 import { Link, useLocation } from "react-router-dom";					
 import { Menu, X, ChevronDown } from "lucide-react";					
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";					
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";					
 import { useTranslation, Locale } from "@/lib/i18n";					
 import ThemeToggle from "@/components/shared/ThemeToggle";					
 import ecowasLogo from "@/assets/ecowas-parliament-logo.png";					
+import { supabase } from "@/integrations/supabase/client";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { useSiteContent } from "@/hooks/useSiteContent";
 					
 const localeLabels: Record<Locale, string> = { en: "EN", fr: "FR", pt: "PT" };					
-const localeOrder: Locale[] = ["en", "fr", "pt"];					
+const localeOrder: Locale[] = ["en", "fr", "pt"];
+
+type ProgrammeNavRow = {
+  slug: string;
+  title: string | null;
+  route: string | null;
+  is_active: boolean;
+};
 					
 const Navbar = () => {					
 const { t, locale, setLocale } = useTranslation();					
@@ -47,6 +56,39 @@ document.addEventListener("mousedown", handler);
 return () => document.removeEventListener("mousedown", handler);					
 }, []);					
 					
+const fallbackProgrammeChildren = [
+{ label: t("prog.youth"), to: "/programmes/youth" },
+{ label: t("prog.parliament"), to: "/programmes/parliament" },
+{ label: t("prog.women"), to: "/programmes/women" },
+{ label: t("prog.trade"), to: "/programmes/trade" },
+{ label: t("prog.civic"), to: "/programmes/civic" },
+{ label: t("prog.culture"), to: "/programmes/culture" },
+{ label: t("prog.awards"), to: "/programmes/awards" },
+];
+
+const { data: programmeRows = [] } = useQuery<ProgrammeNavRow[]>({
+queryKey: ["navbar_programme_pillars"],
+queryFn: async () => {
+const { data, error } = await supabase
+.from("programme_pillars")
+.select("slug,title,route,is_active")
+.eq("is_active", true);
+if (error) throw error;
+return (data ?? []) as ProgrammeNavRow[];
+},
+staleTime: 60_000,
+});
+
+const programmeChildren = useMemo(() => {
+if (!programmeRows.length) return fallbackProgrammeChildren;
+return [...programmeRows]
+.sort((a, b) => (a.title ?? a.slug).localeCompare(b.title ?? b.slug, undefined, { sensitivity: "base" }))
+.map((row) => ({
+label: row.title?.trim() || row.slug,
+to: row.route?.trim() || `/programmes/${row.slug}`,
+}));
+}, [programmeRows, fallbackProgrammeChildren]);
+
 const navLinks = [
 { label: t("nav.home"), to: "/" },
 {
@@ -55,32 +97,33 @@ to: "/about",
 children: [
 { label: t("nav.parliamentInitiative"), to: "/about" },
 { label: t("nav.ecowasParliament"), to: "/ecowas-parliament" },
-{ label: "Virtual 360° Tour", to: "/parliament-tour" },
 { label: t("nav.team"), to: "/team" },
 { label: t("nav.timeline"), to: "/timeline" },
 ],
 },
 {
 label: t("nav.programmes"),
-to: "/programmes/youth",
-children: [
-{ label: t("prog.youth"), to: "/programmes/youth" },
-{ label: t("prog.trade"), to: "/programmes/trade" },
-{ label: t("prog.women"), to: "/programmes/women" },
-{ label: t("prog.civic"), to: "/programmes/civic" },
-{ label: t("prog.culture"), to: "/programmes/culture" },
-{ label: t("prog.awards"), to: "/programmes/awards" },
-{ label: t("prog.parliament"), to: "/programmes/parliament" },
-],
+to: programmeChildren[0]?.to || "/programmes/youth",
+children: programmeChildren,
 },
 {
-label: t("nav.newsMedia"),
+label: t("nav.newsEvents"),
 to: "/news",
 children: [
 { label: t("nav.news"), to: "/news" },
 { label: t("nav.events"), to: "/events" },
-{ label: t("nav.documents"), to: "/documents" },
 { label: t("common.mediaKit"), to: "/media-kit" },
+{ label: t("nav.mediaPortal"), to: "/media-portal" },
+],
+},
+{
+label: t("nav.resources"),
+to: "/documents",
+children: [
+{ label: t("nav.documents"), to: "/documents" },
+{ label: t("nav.stakeholdersPartners"), to: "/stakeholders" },
+{ label: t("nav.marketplace"), to: "/marketplace" },
+{ label: t("nav.virtualTour"), to: "/parliament-tour" },
 ],
 },
 {
@@ -88,9 +131,7 @@ label: t("nav.getInvolved"),
 to: "/volunteer",
 children: [
 { label: t("nav.volunteer"), to: "/volunteer" },
-{ label: t("common.sponsor"), to: "/sponsors" },
-{ label: t("nav.marketplace"), to: "/marketplace" },
-{ label: t("nav.stakeholdersPartners"), to: "/stakeholders" },
+{ label: t("nav.becomeSponsor"), to: "/sponsors" },
 ],
 },
 { label: t("nav.contact"), to: "/contact" },
@@ -192,15 +233,16 @@ isActive(child.to)
 {/* CTA + language switcher + mobile */}					
 <div className="flex items-center gap-2">					
 {/* Language dropdown */}					
-<div					
-className="relative hidden xl:block"					
-onMouseEnter={() => {					
-if (langTimer.current) clearTimeout(langTimer.current);					
-setLangOpen(true);					
-}}					
-onMouseLeave={() => {					
-langTimer.current = setTimeout(() => setLangOpen(false), 150);					
-}}					
+<div
+ref={langRef}
+className="relative hidden xl:block"
+onMouseEnter={() => {
+if (langTimer.current) clearTimeout(langTimer.current);
+setLangOpen(true);
+}}
+onMouseLeave={() => {
+langTimer.current = setTimeout(() => setLangOpen(false), 150);
+}}
 >					
 <button					
 aria-label={t("nav.languageLabel")}					
