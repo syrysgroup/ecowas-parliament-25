@@ -668,7 +668,7 @@ function WebsiteTeamTab({ qc, toast, isSuperAdmin, assignableRoles }: {
           <div className="w-5 h-5 border-2 border-emerald-700 border-t-emerald-400 rounded-full animate-spin" />
         </div>
       ) : (
-        <div className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border-subtle))] rounded-xl overflow-hidden divide-y divide-crm-border">
+        <div className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border-subtle))] rounded-xl overflow-hidden divide-y divide-[hsl(var(--border-subtle))]">
           {teamMembers.length === 0 ? (
             <p className="text-center text-xs text-[hsl(var(--text-3))] py-8">No team members added yet.</p>
           ) : teamMembers.map(m => (
@@ -1008,7 +1008,7 @@ export default function PeopleModule() {
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-crm-border">
+              <tbody className="divide-y divide-[hsl(var(--border-subtle))]">
                 {filteredUsers.length === 0 ? (
                   <tr><td colSpan={5} className="text-center text-xs text-[hsl(var(--text-3))] py-8">No users found.</td></tr>
                 ) : filteredUsers.map(u => {
@@ -1097,7 +1097,7 @@ export default function PeopleModule() {
           {invitations.length === 0 ? (
             <p className="text-center text-xs text-[hsl(var(--text-3))] py-8">No invitations sent yet.</p>
           ) : (
-            <div className="divide-y divide-crm-border">
+            <div className="divide-y divide-[hsl(var(--border-subtle))]">
               {invitations.map(inv => {
                 const m = CRM_ROLE_META[inv.role];
                 const accepted = !!inv.accepted_at;
