@@ -5,7 +5,14 @@
       "Bash(unzip -p vertical-menu-template.zip vertical-menu-template/dashboards-crm.html)",
       "Bash(sed 's/^\\\\s*//')",
       "Bash(npx tsc:*)",
-      "WebFetch(domain:docs.blackbox.ai)"
+      "WebFetch(domain:docs.blackbox.ai)",
+      "Bash(ls \"E:\\\\Projects\\\\Implementation\\\\.git\" 2>&1; ls \"E:\\\\Projects\\\\.git\" 2>&1)",
+      "Bash(git -C \"E:\\\\Projects\\\\Implementation\" status --porcelain=v1)",
+      "Bash(git -C \"E:\\\\Projects\\\\Implementation\" rev-parse --show-toplevel)",
+      "Bash(dir \"E:\\\\Projects\\\\Implementation\" /b)",
+      "Bash(git -C \"E:/Projects/Implementation\" status --porcelain=v1 -uall)",
+      "Bash(git -C \"E:/Projects/Implementation\" check-ignore -v \".blackboxrules\" \".blackbox/\")",
+      "Bash(git -C \"E:/Projects/Implementation\" ls-files --others --exclude-standard)"
     ]
   }
 }
