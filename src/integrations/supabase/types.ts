@@ -1956,6 +1956,80 @@ export type Database = {
         }
         Relationships: []
       }
+      media_accreditations: {
+        Row: {
+          badge_issued_at: string | null
+          badge_number: string | null
+          bio: string | null
+          country: string | null
+          coverage_event_id: string | null
+          created_at: string
+          email: string
+          expires_at: string | null
+          full_name: string
+          id: string
+          id_document_url: string | null
+          outlet: string
+          outlet_type: string
+          phone: string | null
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          badge_issued_at?: string | null
+          badge_number?: string | null
+          bio?: string | null
+          country?: string | null
+          coverage_event_id?: string | null
+          created_at?: string
+          email: string
+          expires_at?: string | null
+          full_name: string
+          id?: string
+          id_document_url?: string | null
+          outlet: string
+          outlet_type: string
+          phone?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          badge_issued_at?: string | null
+          badge_number?: string | null
+          bio?: string | null
+          country?: string | null
+          coverage_event_id?: string | null
+          created_at?: string
+          email?: string
+          expires_at?: string | null
+          full_name?: string
+          id?: string
+          id_document_url?: string | null
+          outlet?: string
+          outlet_type?: string
+          phone?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_accreditations_coverage_event_id_fkey"
+            columns: ["coverage_event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       media_kit_items: {
         Row: {
           category: string
@@ -3592,6 +3666,7 @@ export type Database = {
       is_crm_staff:
         | { Args: never; Returns: boolean }
         | { Args: { _user_id: string }; Returns: boolean }
+      next_badge_number: { Args: never; Returns: string }
       next_invoice_number: { Args: never; Returns: string }
       upsert_email_contact: {
         Args: { p_email: string; p_name?: string; p_user_id: string }
