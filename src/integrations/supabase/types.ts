@@ -1449,6 +1449,33 @@ export type Database = {
           },
         ]
       }
+      legal_page_versions: {
+        Row: {
+          created_at: string
+          edited_by: string | null
+          html: string
+          id: string
+          page_key: string
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          edited_by?: string | null
+          html: string
+          id?: string
+          page_key: string
+          version?: number
+        }
+        Update: {
+          created_at?: string
+          edited_by?: string | null
+          html?: string
+          id?: string
+          page_key?: string
+          version?: number
+        }
+        Relationships: []
+      }
       marketplace_buyers: {
         Row: {
           categories_of_interest: string[]
