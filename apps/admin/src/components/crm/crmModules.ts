@@ -39,6 +39,7 @@ import {
   FileLock,
   Sparkles,
   Briefcase,
+  Milestone,
 } from "lucide-react";
 
 export type ModuleGroup =
