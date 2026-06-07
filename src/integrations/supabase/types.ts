@@ -1449,6 +1449,39 @@ export type Database = {
           },
         ]
       }
+      legal_page_versions: {
+        Row: {
+          created_at: string
+          edited_by: string | null
+          html: string
+          id: string
+          is_published: boolean
+          page_key: string
+          title: string | null
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          edited_by?: string | null
+          html: string
+          id?: string
+          is_published?: boolean
+          page_key: string
+          title?: string | null
+          version?: number
+        }
+        Update: {
+          created_at?: string
+          edited_by?: string | null
+          html?: string
+          id?: string
+          is_published?: boolean
+          page_key?: string
+          title?: string | null
+          version?: number
+        }
+        Relationships: []
+      }
       marketplace_buyers: {
         Row: {
           categories_of_interest: string[]
@@ -1928,6 +1961,80 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      media_accreditations: {
+        Row: {
+          badge_issued_at: string | null
+          badge_number: string | null
+          bio: string | null
+          country: string | null
+          coverage_event_id: string | null
+          created_at: string
+          email: string
+          expires_at: string | null
+          full_name: string
+          id: string
+          id_document_url: string | null
+          outlet: string
+          outlet_type: string
+          phone: string | null
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          badge_issued_at?: string | null
+          badge_number?: string | null
+          bio?: string | null
+          country?: string | null
+          coverage_event_id?: string | null
+          created_at?: string
+          email: string
+          expires_at?: string | null
+          full_name: string
+          id?: string
+          id_document_url?: string | null
+          outlet: string
+          outlet_type: string
+          phone?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          badge_issued_at?: string | null
+          badge_number?: string | null
+          bio?: string | null
+          country?: string | null
+          coverage_event_id?: string | null
+          created_at?: string
+          email?: string
+          expires_at?: string | null
+          full_name?: string
+          id?: string
+          id_document_url?: string | null
+          outlet?: string
+          outlet_type?: string
+          phone?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_accreditations_coverage_event_id_fkey"
+            columns: ["coverage_event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       media_kit_items: {
         Row: {
@@ -3056,6 +3163,121 @@ export type Database = {
         }
         Relationships: []
       }
+      sponsor_portal_downloads: {
+        Row: {
+          category: string | null
+          created_at: string
+          file_url: string
+          id: string
+          sponsor_id: string
+          title: string
+          updated_at: string
+          visible: boolean
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          file_url: string
+          id?: string
+          sponsor_id: string
+          title: string
+          updated_at?: string
+          visible?: boolean
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          file_url?: string
+          id?: string
+          sponsor_id?: string
+          title?: string
+          updated_at?: string
+          visible?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sponsor_portal_downloads_sponsor_id_fkey"
+            columns: ["sponsor_id"]
+            isOneToOne: false
+            referencedRelation: "sponsors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sponsor_portal_settings: {
+        Row: {
+          branding_logo_url: string | null
+          created_at: string
+          custom_message_html: string | null
+          enabled_widgets: string[]
+          id: string
+          sponsor_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          branding_logo_url?: string | null
+          created_at?: string
+          custom_message_html?: string | null
+          enabled_widgets?: string[]
+          id?: string
+          sponsor_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          branding_logo_url?: string | null
+          created_at?: string
+          custom_message_html?: string | null
+          enabled_widgets?: string[]
+          id?: string
+          sponsor_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sponsor_portal_settings_sponsor_id_fkey"
+            columns: ["sponsor_id"]
+            isOneToOne: true
+            referencedRelation: "sponsors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sponsor_portal_widgets: {
+        Row: {
+          created_at: string
+          default_enabled: boolean
+          description: string | null
+          id: string
+          key: string
+          label: string
+          position: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          default_enabled?: boolean
+          description?: string | null
+          id?: string
+          key: string
+          label: string
+          position?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          default_enabled?: boolean
+          description?: string | null
+          id?: string
+          key?: string
+          label?: string
+          position?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       sponsors: {
         Row: {
           about: string | null
@@ -3068,6 +3290,7 @@ export type Database = {
           is_published: boolean
           logo_url: string | null
           name: string
+          owner_user_id: string | null
           programmes: string[] | null
           slug: string
           sort_order: number
@@ -3086,6 +3309,7 @@ export type Database = {
           is_published?: boolean
           logo_url?: string | null
           name: string
+          owner_user_id?: string | null
           programmes?: string[] | null
           slug: string
           sort_order?: number
@@ -3104,6 +3328,7 @@ export type Database = {
           is_published?: boolean
           logo_url?: string | null
           name?: string
+          owner_user_id?: string | null
           programmes?: string[] | null
           slug?: string
           sort_order?: number
@@ -3386,6 +3611,247 @@ export type Database = {
         }
         Relationships: []
       }
+      volunteer_applications: {
+        Row: {
+          availability: string | null
+          country: string | null
+          created_at: string
+          email: string
+          extra: Json
+          full_name: string
+          id: string
+          interests: string[]
+          motivation: string | null
+          phone: string | null
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          availability?: string | null
+          country?: string | null
+          created_at?: string
+          email: string
+          extra?: Json
+          full_name: string
+          id?: string
+          interests?: string[]
+          motivation?: string | null
+          phone?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          availability?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string
+          extra?: Json
+          full_name?: string
+          id?: string
+          interests?: string[]
+          motivation?: string | null
+          phone?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      volunteer_form_fields: {
+        Row: {
+          active: boolean
+          created_at: string
+          field_type: string
+          id: string
+          key: string
+          label: string
+          options: Json
+          position: number
+          required: boolean
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          field_type: string
+          id?: string
+          key: string
+          label: string
+          options?: Json
+          position?: number
+          required?: boolean
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          field_type?: string
+          id?: string
+          key?: string
+          label?: string
+          options?: Json
+          position?: number
+          required?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      youth_milestones: {
+        Row: {
+          created_at: string
+          date: string | null
+          description: string | null
+          id: string
+          position: number
+          sub_pillar_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          date?: string | null
+          description?: string | null
+          id?: string
+          position?: number
+          sub_pillar_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          date?: string | null
+          description?: string | null
+          id?: string
+          position?: number
+          sub_pillar_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "youth_milestones_sub_pillar_id_fkey"
+            columns: ["sub_pillar_id"]
+            isOneToOne: false
+            referencedRelation: "youth_sub_pillars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      youth_sub_pillars: {
+        Row: {
+          active: boolean
+          created_at: string
+          cta_label: string | null
+          cta_url: string | null
+          hero_image_url: string | null
+          id: string
+          intro_html: string | null
+          slug: string
+          tagline: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          cta_label?: string | null
+          cta_url?: string | null
+          hero_image_url?: string | null
+          id?: string
+          intro_html?: string | null
+          slug: string
+          tagline?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          cta_label?: string | null
+          cta_url?: string | null
+          hero_image_url?: string | null
+          id?: string
+          intro_html?: string | null
+          slug?: string
+          tagline?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      youth_submissions: {
+        Row: {
+          applicant_name: string
+          attachment_url: string | null
+          country: string | null
+          created_at: string
+          email: string
+          id: string
+          link_url: string | null
+          project_summary: string | null
+          project_title: string
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          score: number | null
+          status: string
+          sub_pillar_id: string
+          updated_at: string
+        }
+        Insert: {
+          applicant_name: string
+          attachment_url?: string | null
+          country?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          link_url?: string | null
+          project_summary?: string | null
+          project_title: string
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          score?: number | null
+          status?: string
+          sub_pillar_id: string
+          updated_at?: string
+        }
+        Update: {
+          applicant_name?: string
+          attachment_url?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          link_url?: string | null
+          project_summary?: string | null
+          project_title?: string
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          score?: number | null
+          status?: string
+          sub_pillar_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "youth_submissions_sub_pillar_id_fkey"
+            columns: ["sub_pillar_id"]
+            isOneToOne: false
+            referencedRelation: "youth_sub_pillars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       integration_secrets_status: {
@@ -3472,6 +3938,7 @@ export type Database = {
       is_crm_staff:
         | { Args: never; Returns: boolean }
         | { Args: { _user_id: string }; Returns: boolean }
+      next_badge_number: { Args: never; Returns: string }
       next_invoice_number: { Args: never; Returns: string }
       upsert_email_contact: {
         Args: { p_email: string; p_name?: string; p_user_id: string }
