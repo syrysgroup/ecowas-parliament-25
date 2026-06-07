@@ -1455,7 +1455,9 @@ export type Database = {
           edited_by: string | null
           html: string
           id: string
+          is_published: boolean
           page_key: string
+          title: string | null
           version: number
         }
         Insert: {
@@ -1463,7 +1465,9 @@ export type Database = {
           edited_by?: string | null
           html: string
           id?: string
+          is_published?: boolean
           page_key: string
+          title?: string | null
           version?: number
         }
         Update: {
@@ -1471,7 +1475,9 @@ export type Database = {
           edited_by?: string | null
           html?: string
           id?: string
+          is_published?: boolean
           page_key?: string
+          title?: string | null
           version?: number
         }
         Relationships: []

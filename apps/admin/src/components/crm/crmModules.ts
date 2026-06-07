@@ -34,6 +34,11 @@ import {
   Scroll,
   ShoppingBag,
   Compass,
+  HeartHandshake,
+  IdCard,
+  FileLock,
+  Sparkles,
+  Briefcase,
 } from "lucide-react";
 
 export type ModuleGroup =
@@ -80,6 +85,11 @@ export type ModuleId =
   | "invoices"
   | "seo"
   | "profile"
+  | "volunteer"
+  | "media-accreditation"
+  | "legal-pages"
+  | "youth-sub-pillars"
+  | "sponsor-portal-config"
   | "super-admin";
 
 export interface CRMModule {
@@ -306,6 +316,51 @@ export const CRM_MODULES: CRMModule[] = [
     icon: Image,
     section: "media-library",
     allowedRoles: ["super_admin", "admin"],
+    isStub: false,
+    group: "CONTENT",
+  },
+  {
+    id: "volunteer",
+    label: "Volunteer",
+    icon: HeartHandshake,
+    section: "volunteer",
+    allowedRoles: ["super_admin", "admin", "communications_officer", "programme_lead", "moderator"],
+    isStub: false,
+    group: "CONTENT",
+  },
+  {
+    id: "media-accreditation",
+    label: "Media Accreditation",
+    icon: IdCard,
+    section: "media-accreditation",
+    allowedRoles: ["super_admin", "admin", "communications_officer", "marketing_manager"],
+    isStub: false,
+    group: "CONTENT",
+  },
+  {
+    id: "legal-pages",
+    label: "Legal Pages",
+    icon: FileLock,
+    section: "legal-pages",
+    allowedRoles: ["super_admin", "admin", "website_editor"],
+    isStub: false,
+    group: "CONTENT",
+  },
+  {
+    id: "youth-sub-pillars",
+    label: "Youth Sub-Pillars",
+    icon: Sparkles,
+    section: "youth-sub-pillars",
+    allowedRoles: ["super_admin", "admin", "website_editor", "programme_lead"],
+    isStub: false,
+    group: "CONTENT",
+  },
+  {
+    id: "sponsor-portal-config",
+    label: "Sponsor Portal Config",
+    icon: Briefcase,
+    section: "sponsor-portal-config",
+    allowedRoles: ["super_admin", "admin", "sponsor_manager"],
     isStub: false,
     group: "CONTENT",
   },

@@ -104,6 +104,9 @@ const Footer = () => {
             <Link to="/contact" className="text-xs text-muted-foreground hover:text-primary transition-colors">{t("nav.contact")}</Link>
             <Link to="/media-kit" className="text-xs text-muted-foreground hover:text-primary transition-colors">{t("common.mediaKit")}</Link>
             <Link to="/sponsors" className="text-xs text-muted-foreground hover:text-primary transition-colors">{t("common.sponsor")}</Link>
+            <Link to="/privacy" className="text-xs text-muted-foreground hover:text-primary transition-colors">Privacy</Link>
+            <Link to="/terms"   className="text-xs text-muted-foreground hover:text-primary transition-colors">Terms</Link>
+            <Link to="/cookies" className="text-xs text-muted-foreground hover:text-primary transition-colors">Cookies</Link>
             <a href={officialSiteUrl} target="_blank" rel="noreferrer" className="text-xs text-muted-foreground hover:text-primary transition-colors">
               {officialSiteLabel} ↗
             </a>
