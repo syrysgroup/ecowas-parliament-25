@@ -3580,6 +3580,154 @@ export type Database = {
         }
         Relationships: []
       }
+      youth_milestones: {
+        Row: {
+          created_at: string
+          date: string | null
+          description: string | null
+          id: string
+          position: number
+          sub_pillar_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          date?: string | null
+          description?: string | null
+          id?: string
+          position?: number
+          sub_pillar_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          date?: string | null
+          description?: string | null
+          id?: string
+          position?: number
+          sub_pillar_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "youth_milestones_sub_pillar_id_fkey"
+            columns: ["sub_pillar_id"]
+            isOneToOne: false
+            referencedRelation: "youth_sub_pillars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      youth_sub_pillars: {
+        Row: {
+          active: boolean
+          created_at: string
+          cta_label: string | null
+          cta_url: string | null
+          hero_image_url: string | null
+          id: string
+          intro_html: string | null
+          slug: string
+          tagline: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          cta_label?: string | null
+          cta_url?: string | null
+          hero_image_url?: string | null
+          id?: string
+          intro_html?: string | null
+          slug: string
+          tagline?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          cta_label?: string | null
+          cta_url?: string | null
+          hero_image_url?: string | null
+          id?: string
+          intro_html?: string | null
+          slug?: string
+          tagline?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      youth_submissions: {
+        Row: {
+          applicant_name: string
+          attachment_url: string | null
+          country: string | null
+          created_at: string
+          email: string
+          id: string
+          link_url: string | null
+          project_summary: string | null
+          project_title: string
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          score: number | null
+          status: string
+          sub_pillar_id: string
+          updated_at: string
+        }
+        Insert: {
+          applicant_name: string
+          attachment_url?: string | null
+          country?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          link_url?: string | null
+          project_summary?: string | null
+          project_title: string
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          score?: number | null
+          status?: string
+          sub_pillar_id: string
+          updated_at?: string
+        }
+        Update: {
+          applicant_name?: string
+          attachment_url?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          link_url?: string | null
+          project_summary?: string | null
+          project_title?: string
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          score?: number | null
+          status?: string
+          sub_pillar_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "youth_submissions_sub_pillar_id_fkey"
+            columns: ["sub_pillar_id"]
+            isOneToOne: false
+            referencedRelation: "youth_sub_pillars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       integration_secrets_status: {
