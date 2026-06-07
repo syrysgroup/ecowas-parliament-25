@@ -4,6 +4,7 @@ import { useAuthContext } from "@/contexts/AuthContext";
 import { getModulesForRoles } from "@/components/crm/crmModules";
 import { usePermissions } from "@/hooks/usePermissions";
 import CRMLayout from "@/components/crm/CRMLayout";
+import AppShell from "@/components/shell/AppShell";
 import { supabase } from "@/integrations/supabase/client";
 
 // Eager — core modules used immediately
@@ -58,6 +59,15 @@ export default function CRMDashboard() {
   const { user, roles, loading, rolesLoading, isSuperAdmin } = useAuthContext();
   const navigate = useNavigate();
   const { canView } = usePermissions();
+
+  // Shell v2 opt-in: ?shellV2=1 sets it; localStorage persists; ?shellV2=0 clears it.
+  const [useShellV2] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    const p = new URLSearchParams(window.location.search);
+    if (p.get("shellV2") === "1") { localStorage.setItem("shellV2", "1"); return true; }
+    if (p.get("shellV2") === "0") { localStorage.removeItem("shellV2"); return false; }
+    return localStorage.getItem("shellV2") === "1";
+  });
 
   // ── Keep-alive: track which sections have been mounted so they stay in the DOM ──
   const [mountedSections, setMountedSections] = useState<Set<string>>(() => new Set([section]));
@@ -160,13 +170,14 @@ export default function CRMDashboard() {
     }
   };
 
+  const Shell = useShellV2 ? AppShell : CRMLayout;
   return (
-    <CRMLayout activeSection={section} onNavigate={navigateSection}>
+    <Shell activeSection={section} onNavigate={navigateSection}>
       {Array.from(mountedSections).map(sec => (
         <div key={sec} style={sec === section ? undefined : { display: "none" }}>
           {getModuleForSection(sec)}
         </div>
       ))}
-    </CRMLayout>
+    </Shell>
   );
 }

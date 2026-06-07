@@ -65,6 +65,27 @@
     --crm-accent:       243 100% 60%;   /* vivid purple */
     --crm-accent-bg:    243 80% 94%;
     --crm-accent-border:243 60% 78%;
+
+    /* ── Shell v2 tokens (light) ── */
+    --surface-1: 0 0% 100%;
+    --surface-2: 220 16% 98%;
+    --surface-3: 220 14% 95%;
+    --surface-4: 220 14% 92%;
+    --border-subtle: 220 14% 90%;
+    --text-1: 220 35% 10%;
+    --text-2: 220 18% 28%;
+    --text-3: 220 12% 48%;
+    --brand-green: 152 100% 26%;
+    --brand-yellow: 50 90% 48%;
+    --brand-red: 340 68% 38%;
+    --gradient-brand: linear-gradient(135deg, hsl(var(--brand-green)) 0%, hsl(var(--brand-yellow)) 60%, hsl(var(--brand-red)) 100%);
+    --shadow-elev-1: 0 1px 2px hsl(220 20% 10% / 0.04), 0 1px 3px hsl(220 20% 10% / 0.06);
+    --shadow-elev-2: 0 4px 12px hsl(220 20% 10% / 0.06), 0 2px 4px hsl(220 20% 10% / 0.04);
+    --shadow-elev-3: 0 12px 32px hsl(220 20% 10% / 0.10), 0 4px 8px hsl(220 20% 10% / 0.06);
+    --dur-fast: 120ms;
+    --dur-med: 220ms;
+    --dur-slow: 380ms;
+    --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   .dark {
@@ -126,6 +147,22 @@
     --crm-accent:       243 100% 74%;   /* vivid purple */
     --crm-accent-bg:    243 50% 22%;    /* accent bg */
     --crm-accent-border:243 55% 38%;    /* accent border */
+
+    /* ── Shell v2 tokens (dark) ── */
+    --surface-1: 222 18% 11%;
+    --surface-2: 222 17% 14%;
+    --surface-3: 222 16% 18%;
+    --surface-4: 222 15% 22%;
+    --border-subtle: 222 14% 22%;
+    --text-1: 220 30% 97%;
+    --text-2: 220 18% 82%;
+    --text-3: 220 12% 62%;
+    --brand-green: 152 85% 48%;
+    --brand-yellow: 50 95% 60%;
+    --brand-red: 340 72% 60%;
+    --shadow-elev-1: 0 1px 2px hsl(0 0% 0% / 0.30), 0 1px 3px hsl(0 0% 0% / 0.40);
+    --shadow-elev-2: 0 4px 14px hsl(0 0% 0% / 0.35), 0 2px 6px hsl(0 0% 0% / 0.25);
+    --shadow-elev-3: 0 16px 40px hsl(0 0% 0% / 0.55), 0 6px 12px hsl(0 0% 0% / 0.35);
   }
 }
 
