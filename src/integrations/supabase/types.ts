@@ -3413,6 +3413,99 @@ export type Database = {
         }
         Relationships: []
       }
+      volunteer_applications: {
+        Row: {
+          availability: string | null
+          country: string | null
+          created_at: string
+          email: string
+          extra: Json
+          full_name: string
+          id: string
+          interests: string[]
+          motivation: string | null
+          phone: string | null
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          availability?: string | null
+          country?: string | null
+          created_at?: string
+          email: string
+          extra?: Json
+          full_name: string
+          id?: string
+          interests?: string[]
+          motivation?: string | null
+          phone?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          availability?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string
+          extra?: Json
+          full_name?: string
+          id?: string
+          interests?: string[]
+          motivation?: string | null
+          phone?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      volunteer_form_fields: {
+        Row: {
+          active: boolean
+          created_at: string
+          field_type: string
+          id: string
+          key: string
+          label: string
+          options: Json
+          position: number
+          required: boolean
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          field_type: string
+          id?: string
+          key: string
+          label: string
+          options?: Json
+          position?: number
+          required?: boolean
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          field_type?: string
+          id?: string
+          key?: string
+          label?: string
+          options?: Json
+          position?: number
+          required?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       integration_secrets_status: {
