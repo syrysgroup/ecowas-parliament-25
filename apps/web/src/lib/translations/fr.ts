@@ -16,6 +16,8 @@ export const fr: Record<string, string> = {
   "nav.contact": "Contact",
   "nav.events": "Événements",
   "nav.eventsMedia": "Événements & Médias",
+  "nav.newsMedia": "Actualités & Médias",
+  "nav.marketplace": "Marché",
   "nav.people": "Personnes",
   "nav.volunteer": "Bénévolat",
   "nav.partners": "Partenaires",
@@ -34,6 +36,7 @@ export const fr: Record<string, string> = {
   // ─── Footer ───────────────────────────────────────────────────────
   "footer.programme": "Programme",
   "footer.organisation": "Organisation",
+  "footer.about": "À propos",
   "footer.getInvolved": "Participer",
   "footer.subscribe": "Restez informé  abonnez-vous aux mises à jour",
   "footer.subscribeDesc": "Annonces d'événements · Actualités · Partenaires · Délégués",

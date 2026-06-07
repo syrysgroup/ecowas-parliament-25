@@ -21,6 +21,13 @@ const dbLogoUrl = get("site_logo_url", "");
 const dbSiteName = get("site_name", "");					
 const ctaLabel = navCms?.cta_label ?? t("nav.partnerWithUs");					
 const ctaHref = navCms?.cta_href ?? "/sponsors";					
+const siteNames: Record<Locale, string> = {
+en: dbSiteName || "ECOWAS Parliament Initiatives",
+fr: "Initiatives du Parlement de la CEDEAO",
+pt: "Iniciativas do Parlamento da CEDEAO",
+};
+const primaryName = siteNames[locale];
+const secondaryNames = (Object.keys(siteNames) as Locale[]).filter(l => l !== locale).map(l => siteNames[l]);
 const [mobileOpen, setMobileOpen] = useState(false);					
 const [openDrop, setOpenDrop] = useState<string | null>(null);					
 const [langOpen, setLangOpen] = useState(false);					
@@ -40,53 +47,54 @@ document.addEventListener("mousedown", handler);
 return () => document.removeEventListener("mousedown", handler);					
 }, []);					
 					
-const navLinks = [					
-{ label: t("nav.home"), to: "/" },					
-{					
-label: t("nav.about"),					
-to: "/about",					
-children: [					
-{ label: t("nav.ecowasParliament"), to: "/ecowas-parliament" },					
+const navLinks = [
+{ label: t("nav.home"), to: "/" },
+{
+label: t("nav.about"),
+to: "/about",
+children: [
+{ label: t("nav.parliamentInitiative"), to: "/about" },
+{ label: t("nav.ecowasParliament"), to: "/ecowas-parliament" },
 { label: "Virtual 360° Tour", to: "/parliament-tour" },
-{ label: t("nav.parliamentInitiative"), to: "/about" },					
-],					
-},					
-{					
-label: t("nav.programmes"),					
-to: "/programmes/youth",					
-children: [					
-{ label: t("prog.youth"), to: "/programmes/youth" },					
-{ label: t("prog.trade"), to: "/programmes/trade" },					
-{ label: t("prog.women"), to: "/programmes/women" },					
-{ label: t("prog.civic"), to: "/programmes/civic" },					
-{ label: t("prog.culture"), to: "/programmes/culture" },					
-{ label: t("prog.awards"), to: "/programmes/awards" },					
-{ label: t("prog.parliament"), to: "/programmes/parliament" },					
-],					
-},					
-{					
-label: t("nav.eventsMedia"),					
-to: "/events",					
-children: [					
-{ label: t("nav.events"), to: "/events" },					
-{ label: t("nav.timeline"), to: "/timeline" },					
-{ label: t("nav.news"), to: "/news" },					
-{ label: t("nav.documents"), to: "/documents" },					
-{ label: t("common.mediaKit"), to: "/media-kit" },					
-],					
-},					
-{					
-label: t("nav.stakeholdersPartners"),					
-to: "/stakeholders",					
-children: [					
-{ label: t("nav.stakeholdersPartners"), to: "/stakeholders" },					
-{ label: "Sponsors", to: "/sponsors" },					
-],					
-},					
-{ label: t("nav.team"), to: "/team" },					
-{ label: t("nav.volunteer"), to: "/volunteer" },					
-{ label: t("nav.contact"), to: "/contact" },					
-];					
+{ label: t("nav.team"), to: "/team" },
+{ label: t("nav.timeline"), to: "/timeline" },
+],
+},
+{
+label: t("nav.programmes"),
+to: "/programmes/youth",
+children: [
+{ label: t("prog.youth"), to: "/programmes/youth" },
+{ label: t("prog.trade"), to: "/programmes/trade" },
+{ label: t("prog.women"), to: "/programmes/women" },
+{ label: t("prog.civic"), to: "/programmes/civic" },
+{ label: t("prog.culture"), to: "/programmes/culture" },
+{ label: t("prog.awards"), to: "/programmes/awards" },
+{ label: t("prog.parliament"), to: "/programmes/parliament" },
+],
+},
+{
+label: t("nav.newsMedia"),
+to: "/news",
+children: [
+{ label: t("nav.news"), to: "/news" },
+{ label: t("nav.events"), to: "/events" },
+{ label: t("nav.documents"), to: "/documents" },
+{ label: t("common.mediaKit"), to: "/media-kit" },
+],
+},
+{
+label: t("nav.getInvolved"),
+to: "/volunteer",
+children: [
+{ label: t("nav.volunteer"), to: "/volunteer" },
+{ label: t("common.sponsor"), to: "/sponsors" },
+{ label: t("nav.marketplace"), to: "/marketplace" },
+{ label: t("nav.stakeholdersPartners"), to: "/stakeholders" },
+],
+},
+{ label: t("nav.contact"), to: "/contact" },
+];
 					
 const isActive = (to: string) =>					
 location.pathname === to || (to !== "/" && location.pathname.startsWith(to));					
@@ -106,10 +114,12 @@ className="h-12 w-12 object-contain"
 width={48} height={48} decoding="async" fetchPriority="high"					
 />					
 </div>					
-<div className="hidden sm:block">					
-<p className="text-sm font-bold text-foreground leading-tight">{dbSiteName || "ECOWAS Parliament Initiatives"}</p>					
-<p className="text-[10px] text-muted-foreground leading-tight">Parlement de la CEDEAO</p>					
-</div>					
+<div className="hidden sm:block">
+<p className="text-sm font-bold text-foreground leading-tight">{primaryName}</p>
+{secondaryNames.map(name => (
+<p key={name} className="text-[10px] text-muted-foreground leading-tight">{name}</p>
+))}
+</div>
 </Link>					
 					
 {/* Desktop nav */}					
@@ -215,7 +225,7 @@ l === locale ? "text-primary bg-primary/5 font-bold" : "text-foreground/70 hover
 )}					
 </div>					
 					
-<ThemeToggle className="hidden xl:flex" />					
+<ThemeToggle variant="full" className="hidden xl:flex" />					
 					
 <Button asChild size="sm" className="hidden xl:flex">					
 <Link to={ctaHref}>{ctaLabel}</Link>					

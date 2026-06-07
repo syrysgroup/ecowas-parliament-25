@@ -12,7 +12,8 @@
       "Bash(dir \"E:\\\\Projects\\\\Implementation\" /b)",
       "Bash(git -C \"E:/Projects/Implementation\" status --porcelain=v1 -uall)",
       "Bash(git -C \"E:/Projects/Implementation\" check-ignore -v \".blackboxrules\" \".blackbox/\")",
-      "Bash(git -C \"E:/Projects/Implementation\" ls-files --others --exclude-standard)"
+      "Bash(git -C \"E:/Projects/Implementation\" ls-files --others --exclude-standard)",
+      "Bash(node -e ' *)"
     ]
   }
 }

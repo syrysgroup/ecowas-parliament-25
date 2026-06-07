@@ -25,7 +25,7 @@ const Footer = () => {
 
   const footerLinks = [
     {
-      heading: t("footer.programme"),
+      heading: t("nav.programmes"),
       links: [
         { label: t("prog.youth"), to: "/programmes/youth" },
         { label: t("prog.trade"), to: "/programmes/trade" },
@@ -37,24 +37,24 @@ const Footer = () => {
       ],
     },
     {
-      heading: t("footer.organisation"),
+      heading: t("footer.about"),
       links: [
-        { label: t("nav.about"), to: "/about" },
-        { label: t("nav.timeline"), to: "/timeline" },
+        { label: t("nav.parliamentInitiative"), to: "/about" },
+        { label: t("nav.ecowasParliament"), to: "/ecowas-parliament" },
         { label: t("nav.team"), to: "/team" },
-        { label: t("nav.stakeholders"), to: "/stakeholders" },
-        { label: t("nav.news"), to: "/news" },
-        { label: t("nav.documents"), to: "/documents" },
-        { label: t("nav.events"), to: "/events" },
+        { label: t("nav.timeline"), to: "/timeline" },
       ],
     },
     {
       heading: t("footer.getInvolved"),
       links: [
+        { label: t("nav.volunteer"), to: "/volunteer" },
         { label: t("common.sponsor"), to: "/sponsors" },
-        { label: t("common.mediaKit"), to: "/media-kit" },
-        { label: t("common.contact"), to: "/contact" },
-        { label: t("common.volunteer"), to: "/volunteer" },
+        { label: t("nav.marketplace"), to: "/marketplace" },
+        { label: t("nav.stakeholdersPartners"), to: "/stakeholders" },
+        { label: t("nav.news"), to: "/news" },
+        { label: t("nav.events"), to: "/events" },
+        { label: t("nav.documents"), to: "/documents" },
       ],
     },
   ];
