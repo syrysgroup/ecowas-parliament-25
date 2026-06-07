@@ -1,27 +1,22 @@
-# Fix All Problems — Execution TODO
+# TODO
 
-## Phase 1: Critical runtime/security
-- [x] Investigate and fix `supabase/functions/track-visitor/index.ts` 500 on POST
-- [x] Re-test `track-visitor` with curl (OPTIONS + POST)
-- [~] Audit selected high-impact edge functions for auth/RLS guard consistency
-- [x] Verify `admin-reset-password` deployment status against hosted Supabase project
+- [x] Update `apps/admin/src/components/crm/modules/NewsEditorModule.tsx`
+  - [x] Add flyer upload field (`flyer_image_url`) in article dialog
+  - [x] Persist `flyer_image_url` in save payload
+  - [x] Keep existing cover image behavior unchanged
+  - [x] Ensure event tagging remains available and clear
 
-## Phase 2: Code quality stabilization
-- [x] Run and capture lint error categories for `apps/web`
-- [~] Fix `apps/web` lint **errors** (then warnings)
-- [ ] Re-run `apps/web` lint + build
-- [x] Run and capture lint error categories for `apps/admin`
-- [~] Fix `apps/admin` lint **errors** (then warnings)
-- [ ] Re-run `apps/admin` lint + build
+- [x] Update `apps/web/src/pages/news/NewsDetail.tsx`
+  - [x] Load linked event details from `event_id`
+  - [x] Display a clear tagged-event panel on read page
+  - [x] Display flyer automatically on article page when present
+  - [x] Add open-flyer action while keeping inline Instagram-style preview
 
-## Phase 3: Test coverage
-- [~] Add baseline admin smoke tests
-- [ ] Run `apps/admin` tests and ensure they execute
-- [ ] Re-run `apps/web` tests to ensure no regressions
+- [ ] Fix TS errors in `apps/admin/src/components/crm/modules/NewsEditorModule.tsx`
+  - [ ] Add safe parser for `external_links` (`Json | null` -> `ExternalLink[]`)
+  - [ ] Replace unsafe cast in dialog state initialization
+  - [ ] Normalize Supabase query rows into `NewsRow` without incompatible map callback typing
 
-## Phase 4: Integration verification
-- [~] Re-test key edge functions (happy/error/edge where auth allows)
-- [x] Re-verify independent run/build for web + admin
-- [ ] Summarize resolved issues and remaining blockers (if any)
-
-## Notes from current run
+- [ ] Validate changes
+  - [ ] Run targeted checks/build for admin and web
+  - [ ] Mark completed items

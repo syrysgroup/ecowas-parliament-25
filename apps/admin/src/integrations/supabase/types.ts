@@ -1353,6 +1353,7 @@ export type Database = {
           excerpt: string | null
           external_links: Json | null
           fact_checked: boolean
+          flyer_image_url: string | null
           id: string
           image_caption: string | null
           location: string | null
@@ -1375,6 +1376,7 @@ export type Database = {
           excerpt?: string | null
           external_links?: Json | null
           fact_checked?: boolean
+          flyer_image_url?: string | null
           id?: string
           image_caption?: string | null
           location?: string | null
@@ -1397,6 +1399,7 @@ export type Database = {
           excerpt?: string | null
           external_links?: Json | null
           fact_checked?: boolean
+          flyer_image_url?: string | null
           id?: string
           image_caption?: string | null
           location?: string | null

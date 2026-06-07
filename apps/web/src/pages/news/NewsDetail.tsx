@@ -7,7 +7,7 @@ import AnimatedSection from "@/components/shared/AnimatedSection";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, ExternalLink, Share2, Copy, CheckCircle2, Mail, Clock, MapPin, User } from "lucide-react";
+import { ArrowLeft, ExternalLink, Share2, Copy, CheckCircle2, Mail, Clock, MapPin, User, Calendar } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { toast } from "@/components/ui/sonner";
 import newsImg1 from "@/assets/news-1.jpg";
@@ -41,6 +41,22 @@ const NewsDetail = () => {
       return data;
     },
     enabled: !!slug,
+  });
+
+  const { data: taggedEvent } = useQuery({
+    queryKey: ["news-article-tagged-event", (article as any)?.event_id],
+    queryFn: async () => {
+      const eventId = (article as any)?.event_id as string | undefined;
+      if (!eventId) return null;
+      const { data } = await supabase
+        .from("events")
+        .select("id, title, date, location")
+        .eq("id", eventId)
+        .eq("is_published", true)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!(article as any)?.event_id,
   });
 
   const { data: moreNews = [] } = useQuery({
@@ -111,6 +127,7 @@ const NewsDetail = () => {
   const sidebarNews = moreNews.slice(0, 4);
   const gridNews = moreNews.slice(0, 3);
   const heroImage = article.cover_image_url || newsImg1;
+  const flyerImage = (a.flyer_image_url as string | undefined) || "";
 
   return (
     <Layout>
@@ -198,6 +215,51 @@ const NewsDetail = () => {
                   <p className="text-lg md:text-xl text-foreground leading-relaxed font-medium border-l-4 border-primary pl-5">
                     {article.excerpt}
                   </p>
+                </AnimatedSection>
+              )}
+
+              {/* Tagged Event */}
+              {taggedEvent && (
+                <AnimatedSection>
+                  <div className="rounded-2xl border border-primary/30 bg-primary/5 p-4 md:p-5">
+                    <div className="flex items-start gap-3">
+                      <div className="w-9 h-9 rounded-full bg-primary/15 text-primary flex items-center justify-center flex-shrink-0">
+                        <Calendar className="h-4 w-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs uppercase tracking-wide text-primary font-semibold">Tagged Event</p>
+                        <h3 className="text-base md:text-lg font-bold text-foreground mt-0.5">{taggedEvent.title}</h3>
+                        <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                          <span>{format(parseISO(taggedEvent.date), "d MMMM yyyy")}</span>
+                          {taggedEvent.location && <span>{taggedEvent.location}</span>}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </AnimatedSection>
+              )}
+
+              {/* Flyer */}
+              {flyerImage && (
+                <AnimatedSection>
+                  <div className="rounded-2xl border border-border bg-card p-4 md:p-5">
+                    <div className="flex items-center justify-between gap-3 mb-3">
+                      <h3 className="text-base md:text-lg font-bold text-foreground">Event Flyer</h3>
+                      <Button asChild variant="outline" size="sm" className="h-8 text-xs">
+                        <a href={flyerImage} target="_blank" rel="noreferrer">
+                          Open flyer
+                        </a>
+                      </Button>
+                    </div>
+                    <div className="w-full max-w-[360px] aspect-[4/5] rounded-xl overflow-hidden border border-border bg-muted">
+                      <img
+                        src={flyerImage}
+                        alt={`${article.title} flyer`}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                      />
+                    </div>
+                  </div>
                 </AnimatedSection>
               )}
 

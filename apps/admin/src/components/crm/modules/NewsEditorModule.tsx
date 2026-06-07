@@ -14,22 +14,52 @@ import { generateId } from "@/utils/id";
 import { usePermissions } from "@/hooks/usePermissions";
 import { toast } from "@/components/ui/sonner";
 import RichTextEditor from "./news/RichTextEditor";
+import type { Json } from "@/integrations/supabase/types";
 
 interface ExternalLink { title: string; url: string; publication?: string; }
 
+const isExternalLinkRecord = (value: unknown): value is ExternalLink => {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const candidate = value as Record<string, unknown>;
+  const title = candidate.title;
+  const url = candidate.url;
+  const publication = candidate.publication;
+
+  if (typeof title !== "string" || typeof url !== "string") return false;
+  if (publication !== undefined && publication !== null && typeof publication !== "string") return false;
+
+  return true;
+};
+
+const parseExternalLinks = (value: Json | null): ExternalLink[] => {
+  if (!Array.isArray(value)) return [];
+  return value.reduce<ExternalLink[]>((acc, item) => {
+    if (isExternalLinkRecord(item)) acc.push(item);
+    return acc;
+  }, []);
+};
+
 interface NewsRow {
-  id: string; title: string; slug: string; excerpt: string | null;
-  content: string | null; cover_image_url: string | null; author_id: string | null;
-  status: string; published_at: string | null; created_at: string;
-  external_links?: ExternalLink[];
-  source_doc?: string | null;
-  fact_checked?: boolean;
-  deck?: string | null;
-  author_name?: string | null;
-  location?: string | null;
-  category?: string | null;
-  image_caption?: string | null;
-  event_id?: string | null;
+  id: string;
+  title: string;
+  slug: string;
+  excerpt: string | null;
+  content: string | null;
+  cover_image_url: string | null;
+  author_id: string | null;
+  status: string;
+  published_at: string | null;
+  created_at: string;
+  external_links: Json | null;
+  source_doc: string | null;
+  fact_checked: boolean;
+  deck: string | null;
+  author_name: string | null;
+  location: string | null;
+  category: string | null;
+  image_caption: string | null;
+  event_id: string | null;
+  flyer_image_url: string | null;
 }
 
 const ECOWAS_AUTHOR = "ECOWAS Parliament Initiative";
@@ -39,6 +69,7 @@ function ArticleDialog({ open, onClose, article }: { open: boolean; onClose: () 
   const { user } = useAuthContext();
   const qc = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
+  const flyerFileRef = useRef<HTMLInputElement>(null);
   const isEdit = !!article;
 
   const [title, setTitle] = useState(article?.title ?? "");
@@ -46,12 +77,13 @@ function ArticleDialog({ open, onClose, article }: { open: boolean; onClose: () 
   const [excerpt, setExcerpt] = useState(article?.excerpt ?? "");
   const [content, setContent] = useState(article?.content ?? "");
   const [coverUrl, setCoverUrl] = useState(article?.cover_image_url ?? "");
+  const [flyerUrl, setFlyerUrl] = useState(article?.flyer_image_url ?? "");
   const [status, setStatus] = useState(article?.status ?? "draft");
   const [uploading, setUploading] = useState(false);
   const [sourceDoc, setSourceDoc] = useState(article?.source_doc ?? "");
   const [factChecked, setFactChecked] = useState(article?.fact_checked ?? false);
   const [externalLinks, setExternalLinks] = useState<ExternalLink[]>(
-    (article?.external_links as ExternalLink[]) ?? []
+    parseExternalLinks(article?.external_links ?? null)
   );
   const [deck, setDeck] = useState(article?.deck ?? "");
   const [authorName, setAuthorName] = useState(article?.author_name ?? "");
@@ -72,13 +104,14 @@ function ArticleDialog({ open, onClose, article }: { open: boolean; onClose: () 
     },
   });
 
-  const handleUpload = async (file: File) => {
+  const handleUpload = async (file: File, target: "cover" | "flyer") => {
     setUploading(true);
     try {
       const path = `${generateId()}.${file.name.split(".").pop()}`;
       await supabase.storage.from("news-images").upload(path, file);
       const { data: { publicUrl } } = supabase.storage.from("news-images").getPublicUrl(path);
-      setCoverUrl(publicUrl);
+      if (target === "cover") setCoverUrl(publicUrl);
+      else setFlyerUrl(publicUrl);
     } finally { setUploading(false); }
   };
 
@@ -100,6 +133,7 @@ function ArticleDialog({ open, onClose, article }: { open: boolean; onClose: () 
         excerpt: excerpt || null,
         content: content || null,
         cover_image_url: coverUrl || null,
+        flyer_image_url: flyerUrl || null,
         status,
         updated_at: new Date().toISOString(),
         external_links: externalLinks.filter(l => l.url.trim()),
@@ -137,9 +171,22 @@ function ArticleDialog({ open, onClose, article }: { open: boolean; onClose: () 
           <div className="space-y-2">
             <Label className="text-[11px] text-crm-text-dim">Cover Image</Label>
             {coverUrl && <img src={coverUrl} alt="" className="w-full h-40 object-cover rounded-lg border border-crm-border" />}
-            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={e => e.target.files?.[0] && handleUpload(e.target.files[0])} />
+            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={e => e.target.files?.[0] && handleUpload(e.target.files[0], "cover")} />
             <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()} disabled={uploading}
-              className="border-crm-border text-crm-text-muted text-xs gap-1"><Image size={12} /> {uploading ? "Uploading…" : "Upload"}</Button>
+              className="border-crm-border text-crm-text-muted text-xs gap-1"><Image size={12} /> {uploading ? "Uploading…" : "Upload Cover"}</Button>
+          </div>
+
+          {/* Flyer Image */}
+          <div className="space-y-2">
+            <Label className="text-[11px] text-crm-text-dim">Flyer Image (Instagram style)</Label>
+            {flyerUrl && (
+              <div className="w-full max-w-[280px] aspect-[4/5] rounded-lg overflow-hidden border border-crm-border bg-crm-surface">
+                <img src={flyerUrl} alt="" className="w-full h-full object-cover" />
+              </div>
+            )}
+            <input ref={flyerFileRef} type="file" accept="image/*" className="hidden" onChange={e => e.target.files?.[0] && handleUpload(e.target.files[0], "flyer")} />
+            <Button type="button" variant="outline" size="sm" onClick={() => flyerFileRef.current?.click()} disabled={uploading}
+              className="border-crm-border text-crm-text-muted text-xs gap-1"><Image size={12} /> {uploading ? "Uploading…" : "Upload Flyer"}</Button>
           </div>
 
           {/* Image caption */}
@@ -320,13 +367,32 @@ export default function NewsEditorModule() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [page, setPage] = useState(0);
 
-  const { data: articles = [], isLoading } = useQuery<NewsRow[]>({
+  const { data: articlesData = [], isLoading } = useQuery<NewsRow[]>({
     queryKey: ["news-editor"],
-    queryFn: async () => {
+    queryFn: async (): Promise<NewsRow[]> => {
       const { data } = await supabase.from("news_articles").select("*").order("created_at", { ascending: false });
-      return data ?? [];
+      return (data ?? []).map((row) => ({
+        ...row,
+        excerpt: row.excerpt ?? null,
+        content: row.content ?? null,
+        cover_image_url: row.cover_image_url ?? null,
+        author_id: row.author_id ?? null,
+        published_at: row.published_at ?? null,
+        external_links: row.external_links ?? [],
+        source_doc: row.source_doc ?? null,
+        fact_checked: row.fact_checked ?? false,
+        deck: row.deck ?? null,
+        author_name: row.author_name ?? null,
+        location: row.location ?? null,
+        category: row.category ?? null,
+        image_caption: row.image_caption ?? null,
+        event_id: row.event_id ?? null,
+        flyer_image_url: typeof row.flyer_image_url === "string" ? row.flyer_image_url : null,
+      } as NewsRow));
     },
   });
+
+  const articles: NewsRow[] = articlesData;
 
   const filtered = articles.filter(a => {
     if (statusFilter !== "all" && a.status !== statusFilter) return false;
@@ -454,9 +520,9 @@ export default function NewsEditorModule() {
                   <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded border ${a.status === "published" ? "bg-emerald-950 text-emerald-400 border-emerald-800" : "bg-crm-surface text-crm-text-muted border-crm-border"}`}>
                     {a.status}
                   </span>
-                  {(a.external_links?.length ?? 0) > 0 && (
+                  {(Array.isArray(a.external_links) ? a.external_links.length : 0) > 0 && (
                     <span className="text-[9px] font-mono px-1.5 py-0.5 rounded border bg-blue-950 text-blue-400 border-blue-800">
-                      {a.external_links!.length} links
+                      {Array.isArray(a.external_links) ? a.external_links.length : 0} links
                     </span>
                   )}
                   {a.author_name && (
