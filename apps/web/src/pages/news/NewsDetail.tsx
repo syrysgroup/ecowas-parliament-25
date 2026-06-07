@@ -128,6 +128,7 @@ const NewsDetail = () => {
   const gridNews = moreNews.slice(0, 3);
   const heroImage = article.cover_image_url || newsImg1;
   const flyerImage = (a.flyer_image_url as string | undefined) || "";
+  const eventDetailUrl = (taggedEvent?.id || a.event_id) ? `/events/${taggedEvent?.id || a.event_id}` : "";
 
   return (
     <Layout>
@@ -221,21 +222,41 @@ const NewsDetail = () => {
               {/* Tagged Event */}
               {taggedEvent && (
                 <AnimatedSection>
-                  <div className="rounded-2xl border border-primary/30 bg-primary/5 p-4 md:p-5">
-                    <div className="flex items-start gap-3">
-                      <div className="w-9 h-9 rounded-full bg-primary/15 text-primary flex items-center justify-center flex-shrink-0">
-                        <Calendar className="h-4 w-4" />
+                  {eventDetailUrl ? (
+                    <Link to={eventDetailUrl} className="block rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50">
+                      <div className="rounded-2xl border border-primary/30 bg-primary/5 p-4 md:p-5 hover:bg-primary/10 transition-colors">
+                        <div className="flex items-start gap-3">
+                          <div className="w-9 h-9 rounded-full bg-primary/15 text-primary flex items-center justify-center flex-shrink-0">
+                            <Calendar className="h-4 w-4" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-xs uppercase tracking-wide text-primary font-semibold">Tagged Event</p>
+                            <h3 className="text-base md:text-lg font-bold text-foreground mt-0.5">{taggedEvent.title}</h3>
+                            <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                              <span>{format(parseISO(taggedEvent.date), "d MMMM yyyy")}</span>
+                              {taggedEvent.location && <span>{taggedEvent.location}</span>}
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                      <div className="min-w-0">
-                        <p className="text-xs uppercase tracking-wide text-primary font-semibold">Tagged Event</p>
-                        <h3 className="text-base md:text-lg font-bold text-foreground mt-0.5">{taggedEvent.title}</h3>
-                        <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
-                          <span>{format(parseISO(taggedEvent.date), "d MMMM yyyy")}</span>
-                          {taggedEvent.location && <span>{taggedEvent.location}</span>}
+                    </Link>
+                  ) : (
+                    <div className="rounded-2xl border border-primary/30 bg-primary/5 p-4 md:p-5">
+                      <div className="flex items-start gap-3">
+                        <div className="w-9 h-9 rounded-full bg-primary/15 text-primary flex items-center justify-center flex-shrink-0">
+                          <Calendar className="h-4 w-4" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs uppercase tracking-wide text-primary font-semibold">Tagged Event</p>
+                          <h3 className="text-base md:text-lg font-bold text-foreground mt-0.5">{taggedEvent.title}</h3>
+                          <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                            <span>{format(parseISO(taggedEvent.date), "d MMMM yyyy")}</span>
+                            {taggedEvent.location && <span>{taggedEvent.location}</span>}
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
+                  )}
                 </AnimatedSection>
               )}
 
@@ -245,20 +266,33 @@ const NewsDetail = () => {
                   <div className="rounded-2xl border border-border bg-card p-4 md:p-5">
                     <div className="flex items-center justify-between gap-3 mb-3">
                       <h3 className="text-base md:text-lg font-bold text-foreground">Event Flyer</h3>
-                      <Button asChild variant="outline" size="sm" className="h-8 text-xs">
-                        <a href={flyerImage} target="_blank" rel="noreferrer">
-                          Open flyer
-                        </a>
-                      </Button>
+                      {eventDetailUrl && (
+                        <Button asChild variant="outline" size="sm" className="h-8 text-xs">
+                          <Link to={eventDetailUrl}>
+                            View event
+                          </Link>
+                        </Button>
+                      )}
                     </div>
-                    <div className="w-full max-w-[360px] aspect-[4/5] rounded-xl overflow-hidden border border-border bg-muted">
-                      <img
-                        src={flyerImage}
-                        alt={`${article.title} flyer`}
-                        className="w-full h-full object-cover"
-                        loading="lazy"
-                      />
-                    </div>
+                    {eventDetailUrl ? (
+                      <Link to={eventDetailUrl} className="block w-full max-w-[360px] aspect-[4/5] rounded-xl overflow-hidden border border-border bg-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50">
+                        <img
+                          src={flyerImage}
+                          alt={`${article.title} flyer`}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                        />
+                      </Link>
+                    ) : (
+                      <div className="w-full max-w-[360px] aspect-[4/5] rounded-xl overflow-hidden border border-border bg-muted">
+                        <img
+                          src={flyerImage}
+                          alt={`${article.title} flyer`}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                        />
+                      </div>
+                    )}
                   </div>
                 </AnimatedSection>
               )}
