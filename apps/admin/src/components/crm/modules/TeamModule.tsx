@@ -69,8 +69,8 @@ export default function TeamModule() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h2 className="text-lg font-bold text-crm-text">Team Directory</h2>
-          <p className="text-[12px] text-crm-text-muted mt-0.5">
+          <h2 className="text-lg font-bold text-[hsl(var(--text-1))]">Team Directory</h2>
+          <p className="text-[12px] text-[hsl(var(--text-2))] mt-0.5">
             {members.length} team member{members.length !== 1 ? "s" : ""} with system roles
           </p>
         </div>
@@ -78,7 +78,7 @@ export default function TeamModule() {
           <select
             value={filterRole}
             onChange={e => setFilterRole(e.target.value as AppRole | "")}
-            className="bg-crm-card border border-crm-border text-crm-text-secondary text-xs rounded-lg px-3 py-1.5 focus:outline-none focus:border-emerald-700"
+            className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border-subtle))] text-[hsl(var(--text-2))] text-xs rounded-lg px-3 py-1.5 focus:outline-none focus:border-emerald-700"
           >
             <option value="">All roles</option>
             {allRoles.map(r => (
@@ -86,13 +86,13 @@ export default function TeamModule() {
             ))}
           </select>
           <div className="relative">
-            <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-crm-text-dim" />
+            <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[hsl(var(--text-3))]" />
             <input
               type="text"
               placeholder="Search…"
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="bg-crm-card border border-crm-border text-crm-text-secondary text-xs rounded-lg pl-7 pr-3 py-1.5 w-40 focus:outline-none focus:border-emerald-700 placeholder:text-crm-text-faint"
+              className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border-subtle))] text-[hsl(var(--text-2))] text-xs rounded-lg pl-7 pr-3 py-1.5 w-40 focus:outline-none focus:border-emerald-700 placeholder:text-[hsl(var(--text-3))]"
             />
           </div>
         </div>
@@ -106,10 +106,10 @@ export default function TeamModule() {
 
       {!isLoading && filtered.length === 0 && (
         <div className="flex flex-col items-center justify-center min-h-[40vh] gap-3 text-center">
-          <div className="h-14 w-14 rounded-2xl bg-crm-surface border border-crm-border flex items-center justify-center">
-            <Users className="h-6 w-6 text-crm-text-dim" />
+          <div className="h-14 w-14 rounded-2xl bg-[hsl(var(--surface-3))] border border-[hsl(var(--border-subtle))] flex items-center justify-center">
+            <Users className="h-6 w-6 text-[hsl(var(--text-3))]" />
           </div>
-          <p className="text-sm text-crm-text-muted">
+          <p className="text-sm text-[hsl(var(--text-2))]">
             {search || filterRole ? "No members match your filter." : "No team members found."}
           </p>
         </div>
@@ -124,15 +124,15 @@ export default function TeamModule() {
             return (
               <div
                 key={member.id}
-                className="bg-crm-card border border-crm-border rounded-xl p-4 flex items-start gap-3 hover:border-crm-border-hover transition-colors"
+                className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border-subtle))] rounded-xl p-4 flex items-start gap-3 hover:border-[hsl(var(--border-subtle))] transition-colors"
               >
-                <div className="w-10 h-10 rounded-full bg-crm-border flex items-center justify-center text-sm font-bold text-emerald-400 flex-shrink-0 uppercase">
+                <div className="w-10 h-10 rounded-full bg-[hsl(var(--surface-2))]-border flex items-center justify-center text-sm font-bold text-emerald-400 flex-shrink-0 uppercase">
                   {initials}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-[13px] font-semibold text-crm-text truncate">{member.full_name}</p>
-                  <p className="text-[11px] text-crm-text-muted truncate">{member.email}</p>
-                  <p className="text-[10px] text-crm-text-dim mt-0.5">{member.country}</p>
+                  <p className="text-[13px] font-semibold text-[hsl(var(--text-1))] truncate">{member.full_name}</p>
+                  <p className="text-[11px] text-[hsl(var(--text-2))] truncate">{member.email}</p>
+                  <p className="text-[10px] text-[hsl(var(--text-3))] mt-0.5">{member.country}</p>
                   <div className="flex flex-wrap gap-1 mt-2">
                     {member.roles.map(role => {
                       const m = CRM_ROLE_META[role];

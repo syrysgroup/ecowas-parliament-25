@@ -67,14 +67,14 @@ function RoleCard({
       className={`w-full text-left px-3 py-2.5 rounded-xl border transition-all flex items-center gap-3 group ${
         selected
           ? "border-emerald-700 bg-emerald-950/60 ring-1 ring-emerald-700/50"
-          : "border-crm-border bg-crm-surface/30 hover:bg-crm-surface/60 hover:border-crm-border/80"
+          : "border-[hsl(var(--border-subtle))] bg-[hsl(var(--surface-3))]/30 hover:bg-[hsl(var(--surface-3))]/60 hover:border-[hsl(var(--border-subtle))]/80"
       }`}
     >
       {/* Color swatch */}
       <div className={`w-2 h-6 rounded-full ${meta.bgColour} border ${meta.borderColour} shrink-0`} />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <span className={`text-[12px] font-semibold ${selected ? meta.colour : "text-crm-text"}`}>
+          <span className={`text-[12px] font-semibold ${selected ? meta.colour : "text-[hsl(var(--text-1))]"}`}>
             {meta.label}
           </span>
           <span className={`text-[8px] font-mono px-1.5 py-0.5 rounded border ${meta.bgColour} ${meta.colour} ${meta.borderColour}`}>
@@ -82,14 +82,14 @@ function RoleCard({
           </span>
         </div>
         <div className="flex items-center gap-2 mt-0.5">
-          <span className="text-[10px] text-crm-text-faint">Tier {meta.tier}</span>
-          <span className="text-crm-text-faint">·</span>
-          <span className="text-[10px] text-crm-text-faint flex items-center gap-1">
+          <span className="text-[10px] text-[hsl(var(--text-3))]">Tier {meta.tier}</span>
+          <span className="text-[hsl(var(--text-3))]">·</span>
+          <span className="text-[10px] text-[hsl(var(--text-3))] flex items-center gap-1">
             <Users size={9} /> {userCount} {userCount === 1 ? "user" : "users"}
           </span>
         </div>
       </div>
-      <ChevronRight size={13} className={`text-crm-text-faint shrink-0 transition-transform ${selected ? "rotate-90 text-emerald-400" : ""}`} />
+      <ChevronRight size={13} className={`text-[hsl(var(--text-3))] shrink-0 transition-transform ${selected ? "rotate-90 text-emerald-400" : ""}`} />
     </button>
   );
 }
@@ -119,11 +119,11 @@ function RolePermissionsPanel({
   return (
     <div className="space-y-4">
       {/* Role header */}
-      <div className="flex items-center gap-3 pb-3 border-b border-crm-border">
+      <div className="flex items-center gap-3 pb-3 border-b border-[hsl(var(--border-subtle))]">
         <div className={`px-3 py-1 rounded-full text-[11px] font-semibold border ${meta.bgColour} ${meta.colour} ${meta.borderColour}`}>
           {meta.label}
         </div>
-        <span className="text-[11px] text-crm-text-faint">Tier {meta.tier}</span>
+        <span className="text-[11px] text-[hsl(var(--text-3))]">Tier {meta.tier}</span>
         {isLocked && (
           <div className="flex items-center gap-1 ml-auto text-[10px] text-amber-400">
             <Lock size={10} /> Full access — cannot be restricted
@@ -141,15 +141,15 @@ function RolePermissionsPanel({
         </div>
       ) : (
         <>
-          <div className="overflow-x-auto border border-crm-border rounded-lg">
+          <div className="overflow-x-auto border border-[hsl(var(--border-subtle))] rounded-lg">
             <table className="w-full text-[11px]">
               <thead>
-                <tr className="border-b border-crm-border bg-crm-surface/50">
-                  <th className="text-left py-2 px-3 text-crm-text-dim font-semibold sticky left-0 bg-crm-surface/90 z-10 min-w-[160px]">
+                <tr className="border-b border-[hsl(var(--border-subtle))] bg-[hsl(var(--surface-3))]/50">
+                  <th className="text-left py-2 px-3 text-[hsl(var(--text-3))] font-semibold sticky left-0 bg-[hsl(var(--surface-3))]/90 z-10 min-w-[160px]">
                     Module
                   </th>
                   {ACTIONS.map(action => (
-                    <th key={action} className="text-center py-2 px-3 text-crm-text-dim font-semibold min-w-[64px]">
+                    <th key={action} className="text-center py-2 px-3 text-[hsl(var(--text-3))] font-semibold min-w-[64px]">
                       {action.replace("can_", "").charAt(0).toUpperCase() + action.replace("can_", "").slice(1)}
                     </th>
                   ))}
@@ -159,8 +159,8 @@ function RolePermissionsPanel({
                 {PERM_MODULES.map(module => {
                   const key = `${role}:${module}`;
                   return (
-                    <tr key={module} className="border-b border-crm-border/50 hover:bg-crm-surface/30">
-                      <td className="py-2 px-3 text-crm-text font-medium capitalize sticky left-0 bg-crm-card z-10">
+                    <tr key={module} className="border-b border-[hsl(var(--border-subtle))]/50 hover:bg-[hsl(var(--surface-3))]/30">
+                      <td className="py-2 px-3 text-[hsl(var(--text-1))] font-medium capitalize sticky left-0 bg-[hsl(var(--surface-1))] z-10">
                         {module.replace(/-/g, " ")}
                       </td>
                       {ACTIONS.map(action => {
@@ -196,7 +196,7 @@ function RolePermissionsPanel({
           )}
 
           {!canEdit && (
-            <div className="flex items-center gap-2 text-[11px] text-crm-text-faint">
+            <div className="flex items-center gap-2 text-[11px] text-[hsl(var(--text-3))]">
               <Lock size={11} /> View-only — admin or super admin can edit permissions
             </div>
           )}
@@ -261,7 +261,7 @@ function UsersWithRole({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <p className="text-[11px] font-semibold text-crm-text-dim uppercase tracking-wider">
+        <p className="text-[11px] font-semibold text-[hsl(var(--text-3))] uppercase tracking-wider">
           Users with this role ({users.length})
         </p>
         {canManage && !adding && (
@@ -275,7 +275,7 @@ function UsersWithRole({
       </div>
 
       {users.length === 0 ? (
-        <p className="text-[11px] text-crm-text-faint py-2">
+        <p className="text-[11px] text-[hsl(var(--text-3))] py-2">
           No users currently have this role.
         </p>
       ) : (
@@ -283,17 +283,17 @@ function UsersWithRole({
           {users.map((u: any) => (
             <div
               key={u.user_id}
-              className="flex items-center gap-2.5 p-2 rounded-lg bg-crm-surface/40 border border-crm-border/50 group"
+              className="flex items-center gap-2.5 p-2 rounded-lg bg-[hsl(var(--surface-3))]/40 border border-[hsl(var(--border-subtle))]/50 group"
             >
               <Avatar name={u.full_name} src={u.avatar_url} size="sm" />
               <div className="flex-1 min-w-0">
-                <p className="text-[12px] font-medium text-crm-text truncate">{u.full_name}</p>
-                {u.title && <p className="text-[10px] text-crm-text-faint truncate">{u.title}</p>}
+                <p className="text-[12px] font-medium text-[hsl(var(--text-1))] truncate">{u.full_name}</p>
+                {u.title && <p className="text-[10px] text-[hsl(var(--text-3))] truncate">{u.title}</p>}
               </div>
               {canManage && (
                 <button
                   onClick={() => handleRemove(u.user_id, u.full_name)}
-                  className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-950 text-crm-text-faint hover:text-red-400 transition-all"
+                  className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-950 text-[hsl(var(--text-3))] hover:text-red-400 transition-all"
                   title="Remove role"
                 >
                   <X size={11} />
@@ -414,8 +414,8 @@ export default function RolesModule() {
           <ShieldCheck size={16} className="text-emerald-400" />
         </div>
         <div>
-          <h2 className="text-lg font-bold text-crm-text">Roles & Permissions</h2>
-          <p className="text-[12px] text-crm-text-muted">
+          <h2 className="text-lg font-bold text-[hsl(var(--text-1))]">Roles & Permissions</h2>
+          <p className="text-[12px] text-[hsl(var(--text-2))]">
             Manage what each role can access and do across the CRM
           </p>
         </div>
@@ -433,12 +433,12 @@ export default function RolesModule() {
       <div className="flex flex-col lg:flex-row gap-5 min-h-0">
         {/* ── Left: Role cards ── */}
         <div className="w-full lg:w-[280px] lg:shrink-0 space-y-1.5">
-          <p className="text-[10px] font-semibold text-crm-text-dim uppercase tracking-wider px-1 mb-2">
+          <p className="text-[10px] font-semibold text-[hsl(var(--text-3))] uppercase tracking-wider px-1 mb-2">
             Select a role
           </p>
 
           {/* Tier 1 */}
-          <p className="text-[9px] text-crm-text-faint uppercase tracking-widest px-1 pt-1">Tier 1</p>
+          <p className="text-[9px] text-[hsl(var(--text-3))] uppercase tracking-widest px-1 pt-1">Tier 1</p>
           {ALL_ROLES.filter(r => CRM_ROLE_META[r].tier === 1).map(role => (
             <RoleCard
               key={role}
@@ -449,7 +449,7 @@ export default function RolesModule() {
             />
           ))}
 
-          <p className="text-[9px] text-crm-text-faint uppercase tracking-widest px-1 pt-2">Tier 2 — Staff</p>
+          <p className="text-[9px] text-[hsl(var(--text-3))] uppercase tracking-widest px-1 pt-2">Tier 2 — Staff</p>
           {ALL_ROLES.filter(r => CRM_ROLE_META[r].tier === 2).map(role => (
             <RoleCard
               key={role}
@@ -460,7 +460,7 @@ export default function RolesModule() {
             />
           ))}
 
-          <p className="text-[9px] text-crm-text-faint uppercase tracking-widest px-1 pt-2">Tier 3 — External</p>
+          <p className="text-[9px] text-[hsl(var(--text-3))] uppercase tracking-widest px-1 pt-2">Tier 3 — External</p>
           {ALL_ROLES.filter(r => CRM_ROLE_META[r].tier === 3).map(role => (
             <RoleCard
               key={role}
@@ -480,10 +480,10 @@ export default function RolesModule() {
             </div>
           ) : (
             <>
-              <div className="bg-crm-card border border-crm-border rounded-xl overflow-hidden">
-                <div className="flex items-center gap-2 px-4 py-3 border-b border-crm-border">
-                  <ShieldCheck size={13} className="text-crm-text-dim" />
-                  <h3 className="text-[12px] font-semibold text-crm-text-secondary">Module Permissions</h3>
+              <div className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border-subtle))] rounded-xl overflow-hidden">
+                <div className="flex items-center gap-2 px-4 py-3 border-b border-[hsl(var(--border-subtle))]">
+                  <ShieldCheck size={13} className="text-[hsl(var(--text-3))]" />
+                  <h3 className="text-[12px] font-semibold text-[hsl(var(--text-2))]">Module Permissions</h3>
                 </div>
                 <div className="p-4">
                   <RolePermissionsPanel
@@ -498,10 +498,10 @@ export default function RolesModule() {
                 </div>
               </div>
 
-              <div className="bg-crm-card border border-crm-border rounded-xl overflow-hidden">
-                <div className="flex items-center gap-2 px-4 py-3 border-b border-crm-border">
-                  <Users size={13} className="text-crm-text-dim" />
-                  <h3 className="text-[12px] font-semibold text-crm-text-secondary">
+              <div className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border-subtle))] rounded-xl overflow-hidden">
+                <div className="flex items-center gap-2 px-4 py-3 border-b border-[hsl(var(--border-subtle))]">
+                  <Users size={13} className="text-[hsl(var(--text-3))]" />
+                  <h3 className="text-[12px] font-semibold text-[hsl(var(--text-2))]">
                     Users — {CRM_ROLE_META[selectedRole].label}
                   </h3>
                 </div>
