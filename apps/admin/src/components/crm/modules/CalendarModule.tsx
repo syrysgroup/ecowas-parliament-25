@@ -17,6 +17,8 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Checkbox } from "@/components/ui/checkbox";
+import { PageHeader } from "@/components/shell/primitives";
+import { Calendar as CalendarIcon } from "lucide-react";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const COLOUR_OPTIONS = [
