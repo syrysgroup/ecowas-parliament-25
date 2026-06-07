@@ -291,6 +291,135 @@ const SECTION_TEMPLATES: Record<string, { label: string; fields: { key: string; 
       { key: "full_pack_url",         label: "Full Pack Download URL", type: "text"     },
     ],
   },
+
+  // ── Home — additional editable sections (Phase 2) ──────────────────────────
+  home_marquee: {
+    label: "Homepage — Marquee Strip",
+    fields: [
+      { key: "items", label: "Marquee Items (JSON array of strings, e.g. [\"Item 1\",\"Item 2\"])", type: "textarea" },
+    ],
+  },
+  home_parliament25: {
+    label: "Homepage — Parliament@25 Section",
+    fields: [
+      { key: "badge",        label: "Badge", type: "text" },
+      { key: "title",        label: "Title", type: "text" },
+      { key: "title_accent", label: "Title Accent Word", type: "text" },
+      { key: "description",  label: "Description", type: "textarea" },
+      { key: "cta_label",    label: "CTA Label", type: "text" },
+      { key: "cta_href",     label: "CTA Link URL", type: "text" },
+      { key: "image_url",    label: "Image URL", type: "text" },
+    ],
+  },
+  parliament_tour: {
+    label: "Homepage — 360° Parliament Tour Spotlight",
+    fields: [
+      { key: "badge",        label: "Badge", type: "text" },
+      { key: "title",        label: "Title", type: "text" },
+      { key: "title_accent", label: "Title Accent Word", type: "text" },
+      { key: "description",  label: "Description", type: "textarea" },
+      { key: "image_url",    label: "Background / Preview Image URL", type: "text" },
+      { key: "cta_label",    label: "CTA Label", type: "text" },
+      { key: "cta_href",     label: "CTA Link URL", type: "text" },
+    ],
+  },
+  home_marketplace: {
+    label: "Homepage — Marketplace Spotlight",
+    fields: [
+      { key: "badge",          label: "Badge", type: "text" },
+      { key: "title",          label: "Title", type: "text" },
+      { key: "title_accent",   label: "Title Accent Word", type: "text" },
+      { key: "subtitle",       label: "Subtitle", type: "textarea" },
+      { key: "cta_label",      label: "CTA Label", type: "text" },
+      { key: "cta_href",       label: "CTA Link URL", type: "text" },
+      { key: "feature1_label", label: "Feature 1 — Label", type: "text" },
+      { key: "feature1_sub",   label: "Feature 1 — Sub", type: "text" },
+      { key: "feature2_label", label: "Feature 2 — Label", type: "text" },
+      { key: "feature2_sub",   label: "Feature 2 — Sub", type: "text" },
+      { key: "feature3_label", label: "Feature 3 — Label", type: "text" },
+      { key: "feature3_sub",   label: "Feature 3 — Sub", type: "text" },
+    ],
+  },
+  home_sponsor_placeholder: {
+    label: "Homepage — Sponsor Placeholder Section",
+    fields: [
+      { key: "badge",       label: "Badge", type: "text" },
+      { key: "title",       label: "Title", type: "text" },
+      { key: "description", label: "Description", type: "textarea" },
+      { key: "cta_label",   label: "CTA Label", type: "text" },
+      { key: "cta_href",    label: "CTA Link URL", type: "text" },
+      { key: "image_url",   label: "Image URL", type: "text" },
+    ],
+  },
+  home_events: {
+    label: "Homepage — Events Section Header",
+    fields: [
+      { key: "badge",     label: "Badge", type: "text" },
+      { key: "title",     label: "Title", type: "text" },
+      { key: "subtitle",  label: "Subtitle", type: "textarea" },
+      { key: "cta_label", label: "CTA Label", type: "text" },
+      { key: "cta_href",  label: "CTA Link URL", type: "text" },
+    ],
+  },
+  home_latest_news: {
+    label: "Homepage — Latest News Header",
+    fields: [
+      { key: "badge",       label: "Badge", type: "text" },
+      { key: "title",       label: "Title", type: "text" },
+      { key: "subtitle",    label: "Subtitle", type: "textarea" },
+      { key: "empty_state", label: "Empty State Text", type: "text" },
+      { key: "cta_label",   label: "CTA Label", type: "text" },
+      { key: "cta_href",    label: "CTA Link URL", type: "text" },
+    ],
+  },
+  home_partners_strip: {
+    label: "Homepage — Partners Strip Header",
+    fields: [
+      { key: "title", label: "Title", type: "text" },
+    ],
+  },
+
+  // ── Timeline page ──────────────────────────────────────────────────────────
+  timeline_hero: {
+    label: "Timeline — Hero",
+    fields: [
+      { key: "badge",        label: "Badge", type: "text" },
+      { key: "title",        label: "Title (use | to split lines)", type: "text" },
+      { key: "title_accent", label: "Title Accent Word", type: "text" },
+      { key: "description",  label: "Description", type: "textarea" },
+      { key: "stat1_value",  label: "Stat 1 Value", type: "text" },
+      { key: "stat1_label",  label: "Stat 1 Label", type: "text" },
+      { key: "stat2_value",  label: "Stat 2 Value", type: "text" },
+      { key: "stat2_label",  label: "Stat 2 Label", type: "text" },
+      { key: "stat3_value",  label: "Stat 3 Value", type: "text" },
+      { key: "stat3_label",  label: "Stat 3 Label", type: "text" },
+      { key: "stat4_value",  label: "Stat 4 Value", type: "text" },
+      { key: "stat4_label",  label: "Stat 4 Label", type: "text" },
+    ],
+  },
+  timeline_launch_highlights: {
+    label: "Timeline — Launch Highlights Gallery",
+    fields: [
+      { key: "badge",    label: "Badge", type: "text" },
+      { key: "title",    label: "Title", type: "text" },
+      { key: "subtitle", label: "Subtitle", type: "textarea" },
+      { key: "items",    label: 'Items JSON — [{"title":"","caption":"","image_url":""}]', type: "textarea" },
+    ],
+  },
+  timeline_cta: {
+    label: "Timeline — Closing CTA",
+    fields: [
+      { key: "title",       label: "Title", type: "text" },
+      { key: "description", label: "Description", type: "textarea" },
+      { key: "buttons",     label: 'Buttons JSON — [{"label":"","href":"","variant":"default|outline"}]', type: "textarea" },
+    ],
+  },
+
+  // ── About / Parliament initiative — extra fields ──────────────────────────
+  // The existing parliament_initiative template above already has the legacy
+  // fields. The new optional fields hero_image_url and intro_eyebrow are added
+  // here in spirit but rendered via the generic field fallback. To expose them
+  // explicitly, edit `parliament_initiative` above.
 };
 
 function SectionEditor({
