@@ -397,34 +397,32 @@ export default function DocumentsModule() {
 
   return (
     <div className="space-y-5">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-bold text-crm-text">Documents</h2>
-          <p className="text-[12px] text-crm-text-muted mt-0.5">
-            Upload and manage shared files, MoU templates, budget documents, and reports
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Select value={filterLang} onValueChange={setFilterLang}>
-            <SelectTrigger className="bg-crm-surface border-crm-border text-crm-text text-xs h-8 w-28">
-              <Globe size={11} className="mr-1" /><SelectValue />
-            </SelectTrigger>
-            <SelectContent className="bg-crm-card border-crm-border">
-              <SelectItem value="all" className="text-crm-text text-xs">All langs</SelectItem>
-              {LANGUAGES.map(l => (
-                <SelectItem key={l.value} value={l.value} className="text-crm-text text-xs">{l.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {isAdmin && (
-            <Button size="sm" onClick={() => setAddOpen(true)}
-              className="bg-emerald-700 hover:bg-emerald-600 text-white text-xs gap-1.5">
-              <Plus size={13} /> Upload Document
-            </Button>
-          )}
-        </div>
-      </div>
+      <PageHeader
+        icon={FolderOpen}
+        title="Documents"
+        description="Upload and manage shared files, MoU templates, budget documents, and reports"
+        actions={
+          <>
+            <Select value={filterLang} onValueChange={setFilterLang}>
+              <SelectTrigger className="bg-crm-surface border-crm-border text-crm-text text-xs h-8 w-28">
+                <Globe size={11} className="mr-1" /><SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-crm-card border-crm-border">
+                <SelectItem value="all" className="text-crm-text text-xs">All langs</SelectItem>
+                {LANGUAGES.map(l => (
+                  <SelectItem key={l.value} value={l.value} className="text-crm-text text-xs">{l.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {isAdmin && (
+              <Button size="sm" onClick={() => setAddOpen(true)}
+                className="bg-emerald-700 hover:bg-emerald-600 text-white text-xs gap-1.5">
+                <Plus size={13} /> Upload Document
+              </Button>
+            )}
+          </>
+        }
+      />
 
       {isLoading && (
         <div className="flex items-center justify-center h-40">
@@ -433,12 +431,11 @@ export default function DocumentsModule() {
       )}
 
       {!isLoading && filteredDocs.length === 0 && (
-        <div className="flex flex-col items-center justify-center min-h-[40vh] gap-3 text-center">
-          <div className="h-14 w-14 rounded-2xl bg-crm-surface border border-crm-border flex items-center justify-center">
-            <FolderOpen className="h-6 w-6 text-crm-text-dim" />
-          </div>
-          <p className="text-sm text-crm-text-muted">No documents uploaded yet.</p>
-        </div>
+        <EmptyState
+          icon={FolderOpen}
+          title="No documents yet"
+          description={isAdmin ? "Upload your first document to get started." : "Documents will appear here once uploaded."}
+        />
       )}
 
       {!isLoading && filteredDocs.length > 0 && (
