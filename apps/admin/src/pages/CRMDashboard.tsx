@@ -51,6 +51,7 @@ const MediaAccreditationModule = lazy(() => import("@/components/crm/modules/Med
 const LegalPagesModule   = lazy(() => import("@/components/crm/modules/LegalPagesModule"));
 const YouthSubPillarsModule = lazy(() => import("@/components/crm/modules/YouthSubPillarsModule"));
 const SponsorPortalConfigModule = lazy(() => import("@/components/crm/modules/SponsorPortalConfigModule"));
+const TimelineModule = lazy(() => import("@/components/crm/modules/TimelineModule"));
 
 function ModuleLoader() {
   return (
