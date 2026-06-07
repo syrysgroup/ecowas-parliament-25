@@ -46,6 +46,11 @@ const NewsletterModule = lazy(() => import("@/components/crm/modules/NewsletterM
 const MediaLibraryModule = lazy(() => import("@/components/crm/modules/MediaLibraryModule"));
 const SEOModule          = lazy(() => import("@/components/crm/modules/SEOModule"));
 const PanoramaModule     = lazy(() => import("@/components/crm/modules/PanoramaModule"));
+const VolunteerModule    = lazy(() => import("@/components/crm/modules/VolunteerModule"));
+const MediaAccreditationModule = lazy(() => import("@/components/crm/modules/MediaAccreditationModule"));
+const LegalPagesModule   = lazy(() => import("@/components/crm/modules/LegalPagesModule"));
+const YouthSubPillarsModule = lazy(() => import("@/components/crm/modules/YouthSubPillarsModule"));
+const SponsorPortalConfigModule = lazy(() => import("@/components/crm/modules/SponsorPortalConfigModule"));
 
 function ModuleLoader() {
   return (
@@ -169,6 +174,11 @@ export default function CRMDashboard() {
       case "invoices":           return <InvoiceModule />;
       case "profile":            return <ProfileModule />;
       case "roles":              return <RolesModule />;
+      case "volunteer":          return <Suspense fallback={<ModuleLoader />}><VolunteerModule /></Suspense>;
+      case "media-accreditation":return <Suspense fallback={<ModuleLoader />}><MediaAccreditationModule /></Suspense>;
+      case "legal-pages":        return <Suspense fallback={<ModuleLoader />}><LegalPagesModule /></Suspense>;
+      case "youth-sub-pillars":  return <Suspense fallback={<ModuleLoader />}><YouthSubPillarsModule /></Suspense>;
+      case "sponsor-portal-config": return <Suspense fallback={<ModuleLoader />}><SponsorPortalConfigModule /></Suspense>;
       default:                   return useShellV2
         ? <DashboardModuleV2 onNavigate={navigateSection} />
         : <DashboardModule onNavigate={navigateSection} />;
