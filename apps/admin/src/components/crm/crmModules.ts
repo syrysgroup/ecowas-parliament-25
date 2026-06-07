@@ -366,6 +366,15 @@ export const CRM_MODULES: CRMModule[] = [
     isStub: false,
     group: "CONTENT",
   },
+  {
+    id: "timeline",
+    label: "Programme Timeline",
+    icon: Milestone,
+    section: "timeline",
+    allowedRoles: ["super_admin", "admin", "website_editor", "programme_lead", "communications_officer"],
+    isStub: false,
+    group: "CONTENT",
+  },
 
   // ── ANALYTICS & FINANCE ───────────────────────────────────────────────────
   {
