@@ -180,6 +180,7 @@ export default function CRMDashboard() {
       case "legal-pages":        return <Suspense fallback={<ModuleLoader />}><LegalPagesModule /></Suspense>;
       case "youth-sub-pillars":  return <Suspense fallback={<ModuleLoader />}><YouthSubPillarsModule /></Suspense>;
       case "sponsor-portal-config": return <Suspense fallback={<ModuleLoader />}><SponsorPortalConfigModule /></Suspense>;
+      case "timeline":               return <Suspense fallback={<ModuleLoader />}><TimelineModule /></Suspense>;
       default:                   return useShellV2
         ? <DashboardModuleV2 onNavigate={navigateSection} />
         : <DashboardModule onNavigate={navigateSection} />;
