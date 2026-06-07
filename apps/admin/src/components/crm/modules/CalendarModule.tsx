@@ -17,6 +17,8 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Checkbox } from "@/components/ui/checkbox";
+import { PageHeader } from "@/components/shell/primitives";
+import { Calendar as CalendarIcon } from "lucide-react";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const COLOUR_OPTIONS = [
@@ -280,7 +282,19 @@ export default function CalendarModule() {
   };
 
   return (
-    <div className="flex gap-4 h-full">
+    <div className="space-y-4">
+      <PageHeader
+        icon={CalendarIcon}
+        title="Calendar"
+        description="Personal and global events for the workspace"
+        actions={canCreate ? (
+          <Button size="sm" onClick={() => openAdd()}
+            className="bg-emerald-700 hover:bg-emerald-600 text-white text-xs gap-1.5">
+            <Plus size={13} /> Add Event
+          </Button>
+        ) : null}
+      />
+      <div className="flex gap-4 h-full">
       {/* Left Sidebar */}
       <div className="w-56 flex-shrink-0 space-y-5 hidden lg:block">
         {canCreate && (
@@ -432,6 +446,7 @@ export default function CalendarModule() {
         event={sheetEvent}
         defaultDate={sheetDefaultDate}
       />
+    </div>
     </div>
   );
 }

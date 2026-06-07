@@ -13,6 +13,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { sendNotification } from "@/lib/sendNotification";
 import { DEFAULT_AVATAR } from "@/lib/constants";
+import { PageHeader } from "@/components/shell/primitives";
+import { CheckSquare } from "lucide-react";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const COLUMNS = [
@@ -468,21 +470,17 @@ export default function TaskBoardModule() {
 
   return (
     <div className="space-y-4 h-full">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-[11px] font-mono uppercase tracking-widest text-crm-text-dim">Task Board</h2>
-          <p className="text-[13px] font-semibold text-crm-text mt-0.5">
-            {(isSuperAdmin || isProjectDirector) ? "All Tasks" : "My Tasks"}
-          </p>
-        </div>
-        {canCreate && (
+      <PageHeader
+        icon={CheckSquare}
+        title="Task Board"
+        description={(isSuperAdmin || isProjectDirector) ? "All tasks across the workspace" : "Tasks assigned to you"}
+        actions={canCreate ? (
           <Button size="sm" onClick={() => setCreateOpen(true)}
             className="bg-emerald-700 hover:bg-emerald-600 text-white text-xs gap-1.5">
             <Plus size={13} /> New Task
           </Button>
-        )}
-      </div>
+        ) : null}
+      />
 
       {/* Kanban columns */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 pb-4">
