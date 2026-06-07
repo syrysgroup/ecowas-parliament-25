@@ -39,6 +39,7 @@ import {
   FileLock,
   Sparkles,
   Briefcase,
+  Milestone,
 } from "lucide-react";
 
 export type ModuleGroup =
@@ -90,6 +91,7 @@ export type ModuleId =
   | "legal-pages"
   | "youth-sub-pillars"
   | "sponsor-portal-config"
+  | "timeline"
   | "super-admin";
 
 export interface CRMModule {
@@ -361,6 +363,15 @@ export const CRM_MODULES: CRMModule[] = [
     icon: Briefcase,
     section: "sponsor-portal-config",
     allowedRoles: ["super_admin", "admin", "sponsor_manager"],
+    isStub: false,
+    group: "CONTENT",
+  },
+  {
+    id: "timeline",
+    label: "Programme Timeline",
+    icon: Milestone,
+    section: "timeline",
+    allowedRoles: ["super_admin", "admin", "website_editor", "programme_lead", "communications_officer"],
     isStub: false,
     group: "CONTENT",
   },

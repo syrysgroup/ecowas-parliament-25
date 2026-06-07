@@ -1,93 +1,80 @@
-# Phase 2 — Home + About + Timeline sweep
+# Phase 2 — Full Admin Control of Home, About & Timeline + i18n Fix
 
-Pure plumbing: no visual redesign. Every user-facing string and image on `/`, `/about`, and `/timeline` becomes editable from the admin CRM, with admin-uploaded images flowing through the existing `cms-media` bucket.
+Three deliverables in one turn:
+1. **Translation buttons** — audit and fix language switcher on `/web` (and admin if broken).
+2. **Admin coverage sweep** — every string, image, CTA on `/`, `/about`, `/timeline` becomes editable from `/crm`.
+3. **Timeline → DB** — replace the hardcoded 11-event array with a managed `timeline_events` table + admin module.
 
-## Scope by page
+---
 
-### 1. About (`/about`) — small clean-up
-Already reads `parliament_initiative` from `site_content`. Remaining gaps:
-- Add `hero_image_url` field so the hero gradient can be replaced/overlaid with an admin-uploaded image.
-- Add `intro_eyebrow` (badge above hero title) — currently absent.
-- No new tables.
+## 1. Translation buttons audit
 
-### 2. Home (`/`) — finish the CMS sweep
-Already wired: hero, speaker, quote, about, countdown, pillars, did_you_know, anniversary, anniversary_stats, mandate, implementing_partners, institutional_partners, newsletter, sponsor_cta, stats. Sections that still contain hardcoded copy/images:
+Investigate `LanguageSwitcher`/locale toggle in `apps/web` (and `apps/admin` if present):
+- Confirm `I18nProvider` is mounted above the switcher in `App.tsx`.
+- Confirm the click handler calls `setLocale("en"|"fr"|"pt")` and that the value is persisted (localStorage) and re-renders consumers.
+- Verify all three translation files (`en.ts`, `fr.ts`, `pt.ts`) export the same key set — log missing keys.
+- Fix any broken wiring (common cause: button updates state but `useTranslation` reads from a stale module-level variable instead of context).
+- Smoke test: click EN → FR → PT, observe Navbar/Footer/Home hero strings change.
 
-| Component | New `site_content` key | Fields |
-|---|---|---|
-| `MarqueeStrip` | `home_marquee` | `items` (JSON array of strings) |
-| `Parliament25Section` | `home_parliament25` | `badge`, `title`, `title_accent`, `description`, `cta_label`, `cta_href`, `image_url` |
-| `ParliamentTourSpotlight` | `parliament_tour` *(exists, add)* | `image_url`, `cta_label`, `cta_href` |
-| `MarketplaceSpotlight` | `home_marketplace` | `badge`, `title`, `title_accent`, `subtitle`, `cta_label`, `cta_href`, `feature1_label`, `feature1_sub` … `feature3_*` |
-| `SponsorPlaceholderSection` | `home_sponsor_placeholder` | `badge`, `title`, `description`, `cta_label`, `cta_href`, `image_url` |
-| `EventsSection` (header copy only) | `home_events` | `badge`, `title`, `subtitle`, `cta_label`, `cta_href` |
-| `LatestNews` (header copy only) | `home_latest_news` | `badge`, `title`, `subtitle`, `empty_state`, `cta_label`, `cta_href` |
-| `PartnersStrip` | `home_partners_strip` | `title` |
-| `AnniversarySection` body copy | extend existing `anniversary` | add `cta_label`, `cta_href`, `image_url` |
+No DB work for this part.
 
-All new keys added to `SECTION_TEMPLATES` in `SiteContentModule.tsx`. Image fields rendered with the existing `ImageUploadOrUrl` widget (already used elsewhere in that module).
+---
 
-### 3. Timeline (`/timeline`) — convert to DB
-Currently a hardcoded `events` array of 11 entries + a hardcoded "Official Launch Highlights" gallery + page hero/stats.
+## 2. Database migration — `phase2_timeline_and_content_seeds`
 
-**New table** `timeline_events`:
-```
-id uuid pk, month_label text, sort_order int,
-country text, city text, title text, description text,
-programme text,              -- maps to programmeMap key
-deliverables text[],          -- array of bullets
-highlight boolean default false,
-is_published boolean default true,
-created_at, updated_at
-```
-- RLS: `anon SELECT WHERE is_published`, `authenticated` full via `has_role(... 'admin'|'super_admin')`.
-- GRANTs follow the standard public-table block.
-- Seed migration inserts the 11 existing events verbatim so the page renders identically on day 1.
+Use exactly the SQL the user supplied:
 
-**Page hero + announcement gallery** go to `site_content`:
-- `timeline_hero`: `badge`, `title`, `title_accent`, `description`, `stat1_value`/`label` … `stat4_*`.
-- `timeline_launch_highlights`: `badge`, `title`, `subtitle`, `items` (JSON array of `{title, caption, image_url}`).
-- `timeline_cta`: `title`, `description`, `primary_label`/`href`, plus N secondary buttons as JSON.
+- `CREATE TABLE public.timeline_events` (month_label, sort_order, country, city, title, description, programme, deliverables[], highlight, is_published, timestamps).
+- GRANTs: `anon SELECT`, `authenticated` full, `service_role` ALL.
+- RLS enabled.
+- Policies:
+  - Public read where `is_published = true`.
+  - Staff (super_admin, admin, content_manager, website_editor) read-all / insert / update.
+  - Delete restricted to super_admin, admin, content_manager.
+- `set_updated_at` trigger + sort/published indexes.
+- Seed the 11 existing 2026 events verbatim.
+- Seed empty `site_content` rows for: `home_marquee`, `home_parliament25`, `home_marketplace`, `home_sponsor_placeholder`, `home_events`, `home_latest_news`, `home_partners_strip`, `timeline_hero`, `timeline_launch_highlights`, `timeline_cta`.
+- Extend existing `anniversary`, `parliament_tour`, `parliament_initiative` rows with new optional keys (`cta_label`, `cta_href`, `image_url`, `hero_image_url`, `intro_eyebrow`) without overwriting existing values.
 
-**New admin module** `TimelineModule.tsx` (group: `CONTENT`, roles: admin/super_admin/content_manager):
-- Tab 1 *Events* — table + drawer CRUD (RHF + Zod), drag-to-reorder via `sort_order`, programme dropdown reuses the existing programme key set, deliverables editable as a chip list, publish toggle, highlight toggle.
-- Tab 2 *Page Content* — three sub-cards bound to the three `site_content` keys above (reuses `SiteContentModule`'s field renderer or inlines a small editor with `ImageUploadOrUrl` for the highlight images).
+---
 
-Registered in `crmModules.ts` (`section: "timeline"`, `group: "CONTENT"`) and lazy-loaded in `CRMDashboard.tsx`.
+## 3. Admin (`apps/admin`)
 
-Public `Timeline.tsx` rewired to:
-- `useQuery` against `timeline_events` ordered by `sort_order`.
-- Filters stay client-side but are built from the distinct `programme` values returned.
-- Hero, stats, gallery, CTA all read from `site_content` with safe fallbacks.
+### 3a. Extend `SiteContentModule.tsx`
+Add to `SECTION_TEMPLATES` the field definitions for all 10 new keys + the extended fields on the 3 existing keys. Image fields use the existing `ImageUploadOrUrl` widget (uploads to `cms-media`). `home_marquee.items` and `timeline_launch_highlights.items` use a repeater field.
 
-## Migration
+### 3b. New module `TimelineModule.tsx`
+- Group: `CONTENT`. Roles: `super_admin`, `admin`, `content_manager`, `website_editor`.
+- **Tab "Events"** — TanStack table of `timeline_events`, drawer CRUD (RHF + Zod), drag-reorder via `sort_order`, programme dropdown (reuses programme key set), deliverables as chip list, `is_published` + `highlight` toggles, delete confirm.
+- **Tab "Page content"** — three cards bound to `timeline_hero`, `timeline_launch_highlights`, `timeline_cta` (inline editors, reuses `SiteContentModule` field renderer).
+- Register in `crmModules.ts` (`section: "timeline"`, `group: "CONTENT"`) and lazy-load in `CRMDashboard.tsx`.
 
-One migration (`phase2_timeline_and_content_seeds`):
-1. `CREATE TABLE public.timeline_events …`
-2. `GRANT SELECT ON public.timeline_events TO anon;`
-   `GRANT SELECT, INSERT, UPDATE, DELETE ON public.timeline_events TO authenticated;`
-   `GRANT ALL ON public.timeline_events TO service_role;`
-3. `ENABLE ROW LEVEL SECURITY`
-4. Policies: anon read-published, authenticated admin/super_admin/content_manager full access via `has_role`.
-5. `updated_at` trigger.
-6. Seed: 11 existing timeline events.
-7. Seed `site_content` rows for every new key listed above (empty defaults; the page falls back to the legacy string when a value is missing so nothing breaks before an editor fills them in).
+---
 
-No new buckets, no schema changes to existing tables (besides additive `site_content` rows). No new auth roles.
+## 4. Public web (`apps/web`)
 
-## Validation checklist (run at the end)
+Each component gets `useSiteContent("<key>")` with `cms?.field ?? t("fallback.key")` fallbacks — zero visual change before an editor fills values.
 
-1. `rg -n '"[A-Z][a-z]+ [a-z]+' apps/web/src/components/home apps/web/src/pages/Timeline.tsx apps/web/src/pages/About.tsx` returns only design-system labels and dev-only strings.
-2. `rg -n 'src="/.*\.(jpg|png|webp|svg)"' apps/web/src/components/home apps/web/src/pages/Timeline.tsx apps/web/src/pages/About.tsx` returns nothing user-facing.
-3. Edit any new field in `/crm/site-content` or `/crm/timeline`, reload the public page, see the change without a redeploy.
+Components to rewire:
+- `MarqueeStrip` → `home_marquee.items`
+- `Parliament25Section` → `home_parliament25`
+- `ParliamentTourSpotlight` → `parliament_tour` (image_url, CTA)
+- `MarketplaceSpotlight` → `home_marketplace` (incl. 3 feature pairs)
+- `SponsorPlaceholderSection` → `home_sponsor_placeholder`
+- `EventsSection` header → `home_events`
+- `LatestNews` header → `home_latest_news`
+- `PartnersStrip` → `home_partners_strip`
+- `AnniversarySection` → extended `anniversary` keys
+- `About.tsx` hero → `parliament_initiative.hero_image_url` + `intro_eyebrow`
+- `Timeline.tsx` → `useQuery` against `timeline_events`, hero/stats/gallery/CTA from the three `timeline_*` site_content rows. Filters built from distinct `programme` values returned.
 
-## Out of scope (deferred to later phases)
+---
 
-- Programme-pillar pages (Phase 3).
-- Parliament, 360° tour, country pages (Phase 4).
-- Navbar/footer link list editor, cookie-consent text (Phase 4).
-- Any visual redesign of the three target pages.
+## Validation
+1. `rg -n 'src="/.*\.(jpg|png|webp|svg)"' apps/web/src/components/home apps/web/src/pages/Timeline.tsx apps/web/src/pages/About.tsx` returns nothing user-facing.
+2. Toggle language buttons → strings change across Navbar, Home, Footer.
+3. Edit a timeline event or any new site_content key in `/crm`, reload public page, change appears without redeploy.
+4. Unpublish an event → disappears from public timeline, still visible in admin.
 
-## Estimated size
-
-~1 migration, 1 new admin module, 1 module extension (`SiteContentModule` templates), 3 public pages re-wired (Home aggregate ≈ 9 components touched, About 1 field added, Timeline rewritten to DB). Ships in a single turn; you can verify on preview before approving Phase 3.
+## Out of scope (Phase 3+)
+Programme-pillar pages, Parliament/360°/country pages, nav/footer link list editor, cookie-consent text, any visual redesign.

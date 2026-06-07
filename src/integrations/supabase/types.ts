@@ -3484,6 +3484,54 @@ export type Database = {
         }
         Relationships: []
       }
+      timeline_events: {
+        Row: {
+          city: string
+          country: string
+          created_at: string
+          deliverables: string[]
+          description: string
+          highlight: boolean
+          id: string
+          is_published: boolean
+          month_label: string
+          programme: string
+          sort_order: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          city?: string
+          country?: string
+          created_at?: string
+          deliverables?: string[]
+          description?: string
+          highlight?: boolean
+          id?: string
+          is_published?: boolean
+          month_label: string
+          programme?: string
+          sort_order?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          city?: string
+          country?: string
+          created_at?: string
+          deliverables?: string[]
+          description?: string
+          highlight?: boolean
+          id?: string
+          is_published?: boolean
+          month_label?: string
+          programme?: string
+          sort_order?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_email_settings: {
         Row: {
           auto_connect: boolean | null
