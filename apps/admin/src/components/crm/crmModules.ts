@@ -91,6 +91,7 @@ export type ModuleId =
   | "legal-pages"
   | "youth-sub-pillars"
   | "sponsor-portal-config"
+  | "timeline"
   | "super-admin";
 
 export interface CRMModule {
