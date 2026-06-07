@@ -193,8 +193,8 @@ function RecipientField({ label, chips, onChange, userId }: RecipientFieldProps)
   }, []);
 
   return (
-    <div className="flex items-start gap-2 py-1.5 border-b border-crm-border/60 relative" ref={wrapRef}>
-      <span className="text-[11px] font-semibold text-crm-text-muted w-7 pt-0.5 shrink-0">{label}</span>
+    <div className="flex items-start gap-2 py-1.5 border-b border-[hsl(var(--border-subtle))]/60 relative" ref={wrapRef}>
+      <span className="text-[11px] font-semibold text-[hsl(var(--text-2))] w-7 pt-0.5 shrink-0">{label}</span>
       <div className="flex flex-wrap gap-1 flex-1 min-w-0">
         {chips.map(c => (
           <span key={c} className="flex items-center gap-1 bg-primary/15 text-primary text-[11px] rounded-full px-2 py-0.5 font-medium">
@@ -216,26 +216,26 @@ function RecipientField({ label, chips, onChange, userId }: RecipientFieldProps)
               onChange(chips.slice(0, -1));
             }
           }}
-          className="flex-1 min-w-[100px] bg-transparent outline-none text-[12px] text-crm-text placeholder-crm-text-faint"
+          className="flex-1 min-w-[100px] bg-transparent outline-none text-[12px] text-[hsl(var(--text-1))] placeholder:text-[hsl(var(--text-3))]"
           placeholder={chips.length === 0 ? "Add recipients…" : ""}
           autoCapitalize="none" autoCorrect="off"
         />
       </div>
       {open && suggestions.length > 0 && (
-        <div className="absolute left-0 top-full mt-0.5 z-[200] w-full max-w-xs bg-crm-card border border-crm-border rounded-xl shadow-2xl overflow-hidden">
+        <div className="absolute left-0 top-full mt-0.5 z-[200] w-full max-w-xs bg-[hsl(var(--surface-1))] border border-[hsl(var(--border-subtle))] rounded-xl shadow-2xl overflow-hidden">
           {suggestions.map(c => (
             <button
               key={c.id}
               type="button"
               onMouseDown={e => { e.preventDefault(); confirm(c.email_address); }}
-              className="flex items-center gap-2.5 w-full px-3 py-2 hover:bg-crm-surface text-left transition-colors"
+              className="flex items-center gap-2.5 w-full px-3 py-2 hover:bg-[hsl(var(--surface-3))] text-left transition-colors"
             >
               <div className={`w-7 h-7 rounded-full ${getAvatarColor(c.display_name || c.email_address)} flex items-center justify-center text-white text-[10px] font-bold shrink-0`}>
                 {getInitials(c.display_name || c.email_address)}
               </div>
               <div className="min-w-0">
-                <div className="text-[12px] font-medium text-crm-text truncate">{c.display_name ?? c.email_address}</div>
-                {c.display_name && <div className="text-[11px] text-crm-text-muted truncate">{c.email_address}</div>}
+                <div className="text-[12px] font-medium text-[hsl(var(--text-1))] truncate">{c.display_name ?? c.email_address}</div>
+                {c.display_name && <div className="text-[11px] text-[hsl(var(--text-2))] truncate">{c.email_address}</div>}
               </div>
             </button>
           ))}
@@ -570,22 +570,22 @@ function ComposeModal({ account, replyTo, replyToAll, forwardOf, onClose, onSent
   const title = replyTo || replyToAll ? "Reply" : forwardOf ? "Forward" : "New Message";
 
   const windowCls = expanded
-    ? "fixed inset-4 md:inset-8 z-[150] rounded-2xl flex flex-col bg-crm-card border border-crm-border shadow-2xl"
-    : "fixed bottom-0 right-4 md:bottom-4 md:right-6 z-[150] w-full md:w-[480px] max-h-[90vh] md:max-h-[560px] rounded-t-2xl md:rounded-2xl flex flex-col bg-crm-card border border-crm-border shadow-2xl";
+    ? "fixed inset-4 md:inset-8 z-[150] rounded-2xl flex flex-col bg-[hsl(var(--surface-1))] border border-[hsl(var(--border-subtle))] shadow-2xl"
+    : "fixed bottom-0 right-4 md:bottom-4 md:right-6 z-[150] w-full md:w-[480px] max-h-[90vh] md:max-h-[560px] rounded-t-2xl md:rounded-2xl flex flex-col bg-[hsl(var(--surface-1))] border border-[hsl(var(--border-subtle))] shadow-2xl";
 
   return (
     <div className={windowCls}>
       {/* Title bar */}
-      <div className="flex items-center justify-between px-4 py-2.5 bg-crm-surface/80 rounded-t-2xl border-b border-crm-border shrink-0 cursor-pointer select-none" onClick={() => minimized && setMinimized(false)}>
-        <span className="text-[13px] font-semibold text-crm-text truncate">{title}</span>
+      <div className="flex items-center justify-between px-4 py-2.5 bg-[hsl(var(--surface-3))]/80 rounded-t-2xl border-b border-[hsl(var(--border-subtle))] shrink-0 cursor-pointer select-none" onClick={() => minimized && setMinimized(false)}>
+        <span className="text-[13px] font-semibold text-[hsl(var(--text-1))] truncate">{title}</span>
         <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
-          <button onClick={() => setMinimized(v => !v)} className="p-1 rounded hover:bg-crm-border transition-colors text-crm-text-muted" title="Minimise">
+          <button onClick={() => setMinimized(v => !v)} className="p-1 rounded hover:bg-[hsl(var(--surface-2))]-border transition-colors text-[hsl(var(--text-2))]" title="Minimise">
             {minimized ? <ChevronDown size={14} /> : <ChevronLeft size={14} className="rotate-90" />}
           </button>
-          <button onClick={() => setExpanded(v => !v)} className="p-1 rounded hover:bg-crm-border transition-colors text-crm-text-muted" title={expanded ? "Restore" : "Expand"}>
+          <button onClick={() => setExpanded(v => !v)} className="p-1 rounded hover:bg-[hsl(var(--surface-2))]-border transition-colors text-[hsl(var(--text-2))]" title={expanded ? "Restore" : "Expand"}>
             <Zap size={14} />
           </button>
-          <button onClick={handleClose} className="p-1 rounded hover:bg-red-500/20 transition-colors text-crm-text-muted hover:text-red-400" title="Close">
+          <button onClick={handleClose} className="p-1 rounded hover:bg-red-500/20 transition-colors text-[hsl(var(--text-2))] hover:text-red-400" title="Close">
             <X size={14} />
           </button>
         </div>
@@ -594,58 +594,58 @@ function ComposeModal({ account, replyTo, replyToAll, forwardOf, onClose, onSent
       {!minimized && (
         <>
           {/* Recipients */}
-          <div className="px-3 pt-2 pb-1 border-b border-crm-border shrink-0">
+          <div className="px-3 pt-2 pb-1 border-b border-[hsl(var(--border-subtle))] shrink-0">
             <RecipientField label="To" chips={toChips} onChange={setToChips} userId={userId} />
             {showCc && <RecipientField label="Cc" chips={ccChips} onChange={setCcChips} userId={userId} />}
             {showBcc && <RecipientField label="Bcc" chips={bccChips} onChange={setBccChips} userId={userId} />}
             <div className="flex justify-end gap-2 pt-1">
-              <button type="button" onClick={() => setShowCc(v => !v)} className={`text-[11px] font-medium transition-colors ${showCc ? "text-primary" : "text-crm-text-muted hover:text-crm-text"}`}>Cc</button>
-              <button type="button" onClick={() => setShowBcc(v => !v)} className={`text-[11px] font-medium transition-colors ${showBcc ? "text-primary" : "text-crm-text-muted hover:text-crm-text"}`}>Bcc</button>
+              <button type="button" onClick={() => setShowCc(v => !v)} className={`text-[11px] font-medium transition-colors ${showCc ? "text-primary" : "text-[hsl(var(--text-2))] hover:text-[hsl(var(--text-1))]"}`}>Cc</button>
+              <button type="button" onClick={() => setShowBcc(v => !v)} className={`text-[11px] font-medium transition-colors ${showBcc ? "text-primary" : "text-[hsl(var(--text-2))] hover:text-[hsl(var(--text-1))]"}`}>Bcc</button>
             </div>
           </div>
 
           {/* Subject */}
-          <div className="px-3 py-2 border-b border-crm-border shrink-0">
+          <div className="px-3 py-2 border-b border-[hsl(var(--border-subtle))] shrink-0">
             <input
               value={subject} onChange={e => setSubject(e.target.value)}
               placeholder="Subject"
-              className="w-full bg-transparent text-[13px] text-crm-text outline-none placeholder-crm-text-faint font-medium"
+              className="w-full bg-transparent text-[13px] text-[hsl(var(--text-1))] outline-none placeholder:text-[hsl(var(--text-3))] font-medium"
             />
           </div>
 
           {/* Toolbar */}
-          <div className="flex items-center gap-0.5 px-2 py-1 border-b border-crm-border/50 shrink-0 flex-wrap">
+          <div className="flex items-center gap-0.5 px-2 py-1 border-b border-[hsl(var(--border-subtle))]/50 shrink-0 flex-wrap">
             {([["Bold","bold",Bold],["Italic","italic",Italic],["Underline","underline",Underline]] as [string,string,React.ElementType][]).map(([t,cmd,Icon]) => (
               <button key={cmd} type="button" onMouseDown={e => { e.preventDefault(); execFmt(cmd); }} title={t}
-                className="p-1.5 rounded hover:bg-crm-surface text-crm-text-muted hover:text-crm-text transition-colors">
+                className="p-1.5 rounded hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-2))] hover:text-[hsl(var(--text-1))] transition-colors">
                 <Icon size={13} />
               </button>
             ))}
-            <span className="w-px h-4 bg-crm-border mx-0.5" />
-            <button type="button" onMouseDown={e => { e.preventDefault(); execFmt("insertUnorderedList"); }} title="Bullet list" className="p-1.5 rounded hover:bg-crm-surface text-crm-text-muted hover:text-crm-text transition-colors"><List size={13} /></button>
-            <button type="button" onMouseDown={e => { e.preventDefault(); execFmt("insertOrderedList"); }} title="Numbered list" className="p-1.5 rounded hover:bg-crm-surface text-crm-text-muted hover:text-crm-text transition-colors"><ListOrdered size={13} /></button>
-            <button type="button" onMouseDown={e => { e.preventDefault(); insertLink(); }} title="Insert link" className="p-1.5 rounded hover:bg-crm-surface text-crm-text-muted hover:text-crm-text transition-colors"><Link size={13} /></button>
-            <span className="w-px h-4 bg-crm-border mx-0.5" />
+            <span className="w-px h-4 bg-[hsl(var(--surface-2))]-border mx-0.5" />
+            <button type="button" onMouseDown={e => { e.preventDefault(); execFmt("insertUnorderedList"); }} title="Bullet list" className="p-1.5 rounded hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-2))] hover:text-[hsl(var(--text-1))] transition-colors"><List size={13} /></button>
+            <button type="button" onMouseDown={e => { e.preventDefault(); execFmt("insertOrderedList"); }} title="Numbered list" className="p-1.5 rounded hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-2))] hover:text-[hsl(var(--text-1))] transition-colors"><ListOrdered size={13} /></button>
+            <button type="button" onMouseDown={e => { e.preventDefault(); insertLink(); }} title="Insert link" className="p-1.5 rounded hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-2))] hover:text-[hsl(var(--text-1))] transition-colors"><Link size={13} /></button>
+            <span className="w-px h-4 bg-[hsl(var(--surface-2))]-border mx-0.5" />
             {/* Templates */}
             <div className="relative">
-              <button type="button" onClick={() => setShowTemplates(v => !v)} title="Templates" className="p-1.5 rounded hover:bg-crm-surface text-crm-text-muted hover:text-crm-text transition-colors flex items-center gap-1 text-[11px]">
+              <button type="button" onClick={() => setShowTemplates(v => !v)} title="Templates" className="p-1.5 rounded hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-2))] hover:text-[hsl(var(--text-1))] transition-colors flex items-center gap-1 text-[11px]">
                 <Zap size={12} /> Templates
               </button>
               {showTemplates && (
-                <div className="absolute left-0 top-full mt-1 z-[250] w-52 bg-crm-card border border-crm-border rounded-xl shadow-2xl py-1" onClick={() => setShowTemplates(false)}>
-                  {templates.length === 0 && <p className="px-3 py-2 text-[11px] text-crm-text-muted">No templates saved</p>}
+                <div className="absolute left-0 top-full mt-1 z-[250] w-52 bg-[hsl(var(--surface-1))] border border-[hsl(var(--border-subtle))] rounded-xl shadow-2xl py-1" onClick={() => setShowTemplates(false)}>
+                  {templates.length === 0 && <p className="px-3 py-2 text-[11px] text-[hsl(var(--text-2))]">No templates saved</p>}
                   {templates.map(t => (
-                    <button key={t.id} type="button" onClick={() => applyTemplate(t)} className="w-full text-left px-3 py-2 text-[12px] text-crm-text hover:bg-crm-surface transition-colors truncate">{t.name}</button>
+                    <button key={t.id} type="button" onClick={() => applyTemplate(t)} className="w-full text-left px-3 py-2 text-[12px] text-[hsl(var(--text-1))] hover:bg-[hsl(var(--surface-3))] transition-colors truncate">{t.name}</button>
                   ))}
-                  <hr className="border-crm-border my-1" />
+                  <hr className="border-[hsl(var(--border-subtle))] my-1" />
                   {saveTemplateMode ? (
                     <div className="px-2 py-1 flex items-center gap-1">
-                      <input autoFocus value={templateName} onChange={e => setTemplateName(e.target.value)} onKeyDown={e => e.key === "Enter" && saveAsTemplate()} placeholder="Template name" className="flex-1 text-[11px] bg-crm-surface border border-crm-border rounded px-2 py-1 outline-none text-crm-text" />
+                      <input autoFocus value={templateName} onChange={e => setTemplateName(e.target.value)} onKeyDown={e => e.key === "Enter" && saveAsTemplate()} placeholder="Template name" className="flex-1 text-[11px] bg-[hsl(var(--surface-3))] border border-[hsl(var(--border-subtle))] rounded px-2 py-1 outline-none text-[hsl(var(--text-1))]" />
                       <button type="button" onClick={saveAsTemplate} className="p-1 text-primary hover:bg-primary/10 rounded"><Check size={12} /></button>
-                      <button type="button" onClick={() => setSaveTemplateMode(false)} className="p-1 text-crm-text-faint hover:text-crm-text rounded"><X size={12} /></button>
+                      <button type="button" onClick={() => setSaveTemplateMode(false)} className="p-1 text-[hsl(var(--text-3))] hover:text-[hsl(var(--text-1))] rounded"><X size={12} /></button>
                     </div>
                   ) : (
-                    <button type="button" onClick={() => setSaveTemplateMode(true)} className="w-full text-left px-3 py-2 text-[11px] text-crm-text-muted hover:text-crm-text hover:bg-crm-surface transition-colors flex items-center gap-2">
+                    <button type="button" onClick={() => setSaveTemplateMode(true)} className="w-full text-left px-3 py-2 text-[11px] text-[hsl(var(--text-2))] hover:text-[hsl(var(--text-1))] hover:bg-[hsl(var(--surface-3))] transition-colors flex items-center gap-2">
                       <Plus size={11} /> Save current as template
                     </button>
                   )}
@@ -666,9 +666,9 @@ function ComposeModal({ account, replyTo, replyToAll, forwardOf, onClose, onSent
 
           {/* Attachments strip */}
           {attachments.length > 0 && (
-            <div className="px-3 pb-1 flex flex-wrap gap-1.5 border-t border-crm-border/50 pt-1.5 shrink-0">
+            <div className="px-3 pb-1 flex flex-wrap gap-1.5 border-t border-[hsl(var(--border-subtle))]/50 pt-1.5 shrink-0">
               {attachments.map((a, i) => (
-                <span key={i} className="flex items-center gap-1 bg-crm-surface border border-crm-border rounded-full px-2 py-0.5 text-[11px] text-crm-text-muted">
+                <span key={i} className="flex items-center gap-1 bg-[hsl(var(--surface-3))] border border-[hsl(var(--border-subtle))] rounded-full px-2 py-0.5 text-[11px] text-[hsl(var(--text-2))]">
                   <Paperclip size={10} /> {a.name} <button type="button" onClick={() => setAttachments(p => p.filter((_, j) => j !== i))}><X size={9} className="hover:text-red-400" /></button>
                 </span>
               ))}
@@ -677,16 +677,16 @@ function ComposeModal({ account, replyTo, replyToAll, forwardOf, onClose, onSent
 
           {/* Undo countdown overlay */}
           {undoCountdown > 0 && (
-            <div className="px-3 py-2 bg-crm-surface/90 border-t border-crm-border flex items-center gap-3 shrink-0">
-              <Loader2 size={12} className="animate-spin text-crm-text-muted" />
-              <span className="text-[12px] text-crm-text-muted flex-1">Sending in {undoCountdown}s…</span>
+            <div className="px-3 py-2 bg-[hsl(var(--surface-3))]/90 border-t border-[hsl(var(--border-subtle))] flex items-center gap-3 shrink-0">
+              <Loader2 size={12} className="animate-spin text-[hsl(var(--text-2))]" />
+              <span className="text-[12px] text-[hsl(var(--text-2))] flex-1">Sending in {undoCountdown}s…</span>
               <button type="button" onClick={handleUndo} className="text-[12px] text-primary font-semibold hover:underline">Undo</button>
             </div>
           )}
 
           {/* Bottom toolbar */}
           {undoCountdown === 0 && (
-            <div className="flex items-center gap-2 px-3 py-2 border-t border-crm-border shrink-0">
+            <div className="flex items-center gap-2 px-3 py-2 border-t border-[hsl(var(--border-subtle))] shrink-0">
               <button
                 type="button" onClick={handleSend}
                 disabled={sending || toChips.length === 0}
@@ -696,22 +696,22 @@ function ComposeModal({ account, replyTo, replyToAll, forwardOf, onClose, onSent
                 Send
               </button>
               <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFileSelect} />
-              <button type="button" onClick={() => fileInputRef.current?.click()} title="Attach file" className="p-1.5 rounded-full hover:bg-crm-surface text-crm-text-muted hover:text-crm-text transition-colors"><Paperclip size={15} /></button>
-              <button type="button" onClick={handleSaveDraft} title="Save draft" disabled={savingDraft} className="p-1.5 rounded-full hover:bg-crm-surface text-crm-text-muted hover:text-crm-text transition-colors disabled:opacity-50">
+              <button type="button" onClick={() => fileInputRef.current?.click()} title="Attach file" className="p-1.5 rounded-full hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-2))] hover:text-[hsl(var(--text-1))] transition-colors"><Paperclip size={15} /></button>
+              <button type="button" onClick={handleSaveDraft} title="Save draft" disabled={savingDraft} className="p-1.5 rounded-full hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-2))] hover:text-[hsl(var(--text-1))] transition-colors disabled:opacity-50">
                 {savingDraft ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
               </button>
               <div className="flex-1" />
               {autoSaveStatus === "pending" && (
-                <span className="text-[10px] text-crm-text-faint flex items-center gap-1">
+                <span className="text-[10px] text-[hsl(var(--text-3))] flex items-center gap-1">
                   <Clock size={9} className="animate-pulse" /> Saving…
                 </span>
               )}
               {autoSaveStatus === "saved" && (
-                <span className="text-[10px] text-crm-text-faint flex items-center gap-1">
+                <span className="text-[10px] text-[hsl(var(--text-3))] flex items-center gap-1">
                   <Check size={9} className="text-green-500" /> Saved
                 </span>
               )}
-              <button type="button" onClick={handleClose} title="Discard" className="p-1.5 rounded-full hover:bg-red-500/15 text-crm-text-muted hover:text-red-400 transition-colors"><Trash2 size={15} /></button>
+              <button type="button" onClick={handleClose} title="Discard" className="p-1.5 rounded-full hover:bg-red-500/15 text-[hsl(var(--text-2))] hover:text-red-400 transition-colors"><Trash2 size={15} /></button>
             </div>
           )}
         </>
@@ -830,12 +830,12 @@ function EmailDetailPane({ email, onBack, onReply, onReplyAll, onForward, onStar
   return (
     <div className="flex flex-col h-full overflow-hidden" onClick={() => { setShowMoveMenu(false); setShowMoreMenu(false); setShowLabelMenu(false); }}>
       {/* Header: subject + actions */}
-      <div className="flex items-start gap-3 px-4 py-3 border-b border-crm-border shrink-0">
-        <button onClick={onBack} className="p-1.5 rounded-full hover:bg-crm-surface text-crm-text-muted transition-colors shrink-0 md:hidden">
+      <div className="flex items-start gap-3 px-4 py-3 border-b border-[hsl(var(--border-subtle))] shrink-0">
+        <button onClick={onBack} className="p-1.5 rounded-full hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-2))] transition-colors shrink-0 md:hidden">
           <ChevronLeft size={18} />
         </button>
         <div className="flex-1 min-w-0">
-          <h2 className="text-[15px] font-semibold text-crm-text leading-tight">{email.subject}</h2>
+          <h2 className="text-[15px] font-semibold text-[hsl(var(--text-1))] leading-tight">{email.subject}</h2>
           {assignedLabels.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-1">
               {assignedLabels.map(l => (
@@ -848,18 +848,18 @@ function EmailDetailPane({ email, onBack, onReply, onReplyAll, onForward, onStar
           )}
         </div>
         <div className="flex items-center gap-0.5 shrink-0" onClick={e => e.stopPropagation()}>
-          <button onClick={() => onArchive(email.id)} title="Archive" className="p-1.5 rounded-full hover:bg-crm-surface text-crm-text-muted transition-colors"><Archive size={16} /></button>
-          <button onClick={() => onTrash(email.id)} title="Delete" className="p-1.5 rounded-full hover:bg-crm-surface text-crm-text-muted transition-colors"><Trash2 size={16} /></button>
-          <button onClick={() => onStar(email.id, !email.is_starred)} title="Star" className={`p-1.5 rounded-full hover:bg-crm-surface transition-colors ${email.is_starred ? "text-amber-400" : "text-crm-text-muted"}`}>
+          <button onClick={() => onArchive(email.id)} title="Archive" className="p-1.5 rounded-full hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-2))] transition-colors"><Archive size={16} /></button>
+          <button onClick={() => onTrash(email.id)} title="Delete" className="p-1.5 rounded-full hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-2))] transition-colors"><Trash2 size={16} /></button>
+          <button onClick={() => onStar(email.id, !email.is_starred)} title="Star" className={`p-1.5 rounded-full hover:bg-[hsl(var(--surface-3))] transition-colors ${email.is_starred ? "text-amber-400" : "text-[hsl(var(--text-2))]"}`}>
             <Star size={16} fill={email.is_starred ? "currentColor" : "none"} />
           </button>
           {/* Label dropdown */}
           <div className="relative">
-            <button onClick={() => setShowLabelMenu(v => !v)} title="Labels" className="p-1.5 rounded-full hover:bg-crm-surface text-crm-text-muted transition-colors"><Tag size={16} /></button>
+            <button onClick={() => setShowLabelMenu(v => !v)} title="Labels" className="p-1.5 rounded-full hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-2))] transition-colors"><Tag size={16} /></button>
             {showLabelMenu && (
-              <div className="absolute right-0 top-full mt-1 z-50 w-44 bg-crm-card border border-crm-border rounded-xl shadow-2xl py-1 max-h-56 overflow-y-auto">
-                {labels.length === 0 ? <p className="px-3 py-2 text-[11px] text-crm-text-muted">No labels yet</p> : labels.map(l => (
-                  <button key={l.id} onClick={() => toggleLabel(l.id)} className="w-full text-left px-3 py-2 text-[12px] text-crm-text hover:bg-crm-surface transition-colors flex items-center gap-2">
+              <div className="absolute right-0 top-full mt-1 z-50 w-44 bg-[hsl(var(--surface-1))] border border-[hsl(var(--border-subtle))] rounded-xl shadow-2xl py-1 max-h-56 overflow-y-auto">
+                {labels.length === 0 ? <p className="px-3 py-2 text-[11px] text-[hsl(var(--text-2))]">No labels yet</p> : labels.map(l => (
+                  <button key={l.id} onClick={() => toggleLabel(l.id)} className="w-full text-left px-3 py-2 text-[12px] text-[hsl(var(--text-1))] hover:bg-[hsl(var(--surface-3))] transition-colors flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: l.color }} />
                     {l.name}
                     {assignedLabelIds.includes(l.id) && <Check size={11} className="ml-auto text-primary" />}
@@ -870,42 +870,42 @@ function EmailDetailPane({ email, onBack, onReply, onReplyAll, onForward, onStar
           </div>
           {/* Move to folder */}
           <div className="relative">
-            <button onClick={() => setShowMoveMenu(v => !v)} title="Move" className="p-1.5 rounded-full hover:bg-crm-surface text-crm-text-muted transition-colors"><Folder size={16} /></button>
+            <button onClick={() => setShowMoveMenu(v => !v)} title="Move" className="p-1.5 rounded-full hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-2))] transition-colors"><Folder size={16} /></button>
             {showMoveMenu && (
-              <div className="absolute right-0 top-full mt-1 z-50 w-44 bg-crm-card border border-crm-border rounded-xl shadow-2xl py-1 max-h-56 overflow-y-auto">
+              <div className="absolute right-0 top-full mt-1 z-50 w-44 bg-[hsl(var(--surface-1))] border border-[hsl(var(--border-subtle))] rounded-xl shadow-2xl py-1 max-h-56 overflow-y-auto">
                 {movableFolders.map(f => (
-                  <button key={f.folderId} onClick={() => { onMove(email.id, f.folderId, f.folderName); setShowMoveMenu(false); }} className="w-full text-left px-3 py-2 text-[12px] text-crm-text hover:bg-crm-surface transition-colors">{f.folderName}</button>
+                  <button key={f.folderId} onClick={() => { onMove(email.id, f.folderId, f.folderName); setShowMoveMenu(false); }} className="w-full text-left px-3 py-2 text-[12px] text-[hsl(var(--text-1))] hover:bg-[hsl(var(--surface-3))] transition-colors">{f.folderName}</button>
                 ))}
               </div>
             )}
           </div>
           {/* More */}
           <div className="relative">
-            <button onClick={() => setShowMoreMenu(v => !v)} className="p-1.5 rounded-full hover:bg-crm-surface text-crm-text-muted transition-colors"><MoreVertical size={16} /></button>
+            <button onClick={() => setShowMoreMenu(v => !v)} className="p-1.5 rounded-full hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-2))] transition-colors"><MoreVertical size={16} /></button>
             {showMoreMenu && (
-              <div className="absolute right-0 top-full mt-1 z-50 w-48 bg-crm-card border border-crm-border rounded-xl shadow-2xl py-1">
-                <button onClick={() => { onMarkUnread(email.id); setShowMoreMenu(false); }} className="w-full text-left px-3 py-2 text-[12px] text-crm-text hover:bg-crm-surface transition-colors flex items-center gap-2"><Mail size={13} /> Mark as unread</button>
-                <button onClick={() => { setShowImages(v => !v); setShowMoreMenu(false); }} className="w-full text-left px-3 py-2 text-[12px] text-crm-text hover:bg-crm-surface transition-colors flex items-center gap-2">
+              <div className="absolute right-0 top-full mt-1 z-50 w-48 bg-[hsl(var(--surface-1))] border border-[hsl(var(--border-subtle))] rounded-xl shadow-2xl py-1">
+                <button onClick={() => { onMarkUnread(email.id); setShowMoreMenu(false); }} className="w-full text-left px-3 py-2 text-[12px] text-[hsl(var(--text-1))] hover:bg-[hsl(var(--surface-3))] transition-colors flex items-center gap-2"><Mail size={13} /> Mark as unread</button>
+                <button onClick={() => { setShowImages(v => !v); setShowMoreMenu(false); }} className="w-full text-left px-3 py-2 text-[12px] text-[hsl(var(--text-1))] hover:bg-[hsl(var(--surface-3))] transition-colors flex items-center gap-2">
                   {showImages ? <EyeOff size={13} /> : <Eye size={13} />} {showImages ? "Hide images" : "Show images"}
                 </button>
               </div>
             )}
           </div>
           {/* Prev/Next */}
-          <button onClick={onPrev} disabled={!hasPrev} className="p-1.5 rounded-full hover:bg-crm-surface text-crm-text-muted disabled:opacity-30 transition-colors"><ChevronLeft size={16} /></button>
-          <button onClick={onNext} disabled={!hasNext} className="p-1.5 rounded-full hover:bg-crm-surface text-crm-text-muted disabled:opacity-30 transition-colors"><ChevronRight size={16} /></button>
+          <button onClick={onPrev} disabled={!hasPrev} className="p-1.5 rounded-full hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-2))] disabled:opacity-30 transition-colors"><ChevronLeft size={16} /></button>
+          <button onClick={onNext} disabled={!hasNext} className="p-1.5 rounded-full hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-2))] disabled:opacity-30 transition-colors"><ChevronRight size={16} /></button>
         </div>
       </div>
 
       {/* Sender info */}
-      <div className="flex items-start gap-3 px-4 py-3 border-b border-crm-border shrink-0">
+      <div className="flex items-start gap-3 px-4 py-3 border-b border-[hsl(var(--border-subtle))] shrink-0">
         <div className={`w-9 h-9 rounded-full ${color} flex items-center justify-center text-white text-[12px] font-bold shrink-0`}>{initials}</div>
         <div className="flex-1 min-w-0">
           <div className="flex items-baseline justify-between gap-2">
-            <span className="text-[13px] font-semibold text-crm-text truncate">{email.from_name || email.from_address}</span>
-            <span className="text-[11px] text-crm-text-faint shrink-0">{email.sent_at ? format(parseISO(email.sent_at), "d MMM yyyy, h:mm a") : ""}</span>
+            <span className="text-[13px] font-semibold text-[hsl(var(--text-1))] truncate">{email.from_name || email.from_address}</span>
+            <span className="text-[11px] text-[hsl(var(--text-3))] shrink-0">{email.sent_at ? format(parseISO(email.sent_at), "d MMM yyyy, h:mm a") : ""}</span>
           </div>
-          <div className="text-[11px] text-crm-text-muted leading-tight mt-0.5">
+          <div className="text-[11px] text-[hsl(var(--text-2))] leading-tight mt-0.5">
             <span>{email.from_address}</span>
             {email.to_address && <span> → {email.to_address}</span>}
             {email.cc_address && <span> · Cc: {email.cc_address}</span>}
@@ -917,27 +917,27 @@ function EmailDetailPane({ email, onBack, onReply, onReplyAll, onForward, onStar
       <div className="flex-1 overflow-y-auto">
         <div className="px-4 py-4">
           {fetchingBody ? (
-            <div className="flex items-center gap-2 text-crm-text-muted text-[13px]"><Loader2 size={14} className="animate-spin" /> Loading…</div>
+            <div className="flex items-center gap-2 text-[hsl(var(--text-2))] text-[13px]"><Loader2 size={14} className="animate-spin" /> Loading…</div>
           ) : bodyHtml ? (
             /* Wrap in forced light-mode container so inline email styles (color:#222 etc.) are visible */
             <div style={{ background: "#ffffff", borderRadius: "8px", padding: "4px", colorScheme: "light" }}>
               <div className="text-[13px] leading-relaxed [&_a]:underline [&_img]:max-w-full [&_img]:rounded [&_table]:w-full [&_table]:border-collapse" dangerouslySetInnerHTML={{ __html: safeHtml }} />
             </div>
           ) : (
-            <p className="text-[13px] text-crm-text-secondary whitespace-pre-wrap">{email.body_text || "(No content)"}</p>
+            <p className="text-[13px] text-[hsl(var(--text-2))] whitespace-pre-wrap">{email.body_text || "(No content)"}</p>
           )}
 
           {/* Attachments */}
           {email.has_attachments && attachments.length > 0 && (
-            <div className="mt-5 border-t border-crm-border pt-4">
-              <p className="text-[12px] font-semibold text-crm-text-muted mb-2 flex items-center gap-1.5"><Paperclip size={13} /> {attachments.length} attachment{attachments.length > 1 ? "s" : ""}</p>
+            <div className="mt-5 border-t border-[hsl(var(--border-subtle))] pt-4">
+              <p className="text-[12px] font-semibold text-[hsl(var(--text-2))] mb-2 flex items-center gap-1.5"><Paperclip size={13} /> {attachments.length} attachment{attachments.length > 1 ? "s" : ""}</p>
               <div className="space-y-1.5">
                 {attachments.map(a => (
-                  <div key={a.attachmentId} className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg bg-crm-surface border border-crm-border">
+                  <div key={a.attachmentId} className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg bg-[hsl(var(--surface-3))] border border-[hsl(var(--border-subtle))]">
                     <div className="flex items-center gap-2 min-w-0">
-                      <FileText size={13} className="text-crm-text-muted shrink-0" />
-                      <span className="text-[12px] text-crm-text truncate">{a.fileName}</span>
-                      {a.fileSize > 0 && <span className="text-[10px] text-crm-text-faint shrink-0">({(a.fileSize / 1024).toFixed(0)} KB)</span>}
+                      <FileText size={13} className="text-[hsl(var(--text-2))] shrink-0" />
+                      <span className="text-[12px] text-[hsl(var(--text-1))] truncate">{a.fileName}</span>
+                      {a.fileSize > 0 && <span className="text-[10px] text-[hsl(var(--text-3))] shrink-0">({(a.fileSize / 1024).toFixed(0)} KB)</span>}
                     </div>
                     <button onClick={() => handleDownload(a)} disabled={downloadingId === a.attachmentId} className="flex items-center gap-1 px-2 py-1 rounded text-[11px] text-primary hover:bg-primary/10 disabled:opacity-50 transition-colors shrink-0">
                       {downloadingId === a.attachmentId ? <Loader2 size={11} className="animate-spin" /> : null} Download
@@ -950,19 +950,19 @@ function EmailDetailPane({ email, onBack, onReply, onReplyAll, onForward, onStar
 
           {/* Thread history */}
           {threadEmails.length > 0 && (
-            <div className="mt-5 border-t border-crm-border pt-3">
-              <button onClick={() => setShowThread(v => !v)} className="flex items-center gap-2 text-[12px] text-crm-text-muted hover:text-crm-text transition-colors mb-2">
+            <div className="mt-5 border-t border-[hsl(var(--border-subtle))] pt-3">
+              <button onClick={() => setShowThread(v => !v)} className="flex items-center gap-2 text-[12px] text-[hsl(var(--text-2))] hover:text-[hsl(var(--text-1))] transition-colors mb-2">
                 <ChevronDown size={13} className={`transition-transform ${showThread ? "rotate-180" : ""}`} />
                 {threadEmails.length} more message{threadEmails.length > 1 ? "s" : ""} in this thread
               </button>
               {showThread && threadEmails.map(te => (
-                <div key={te.id} className="mb-3 rounded-xl border border-crm-border bg-crm-surface/50 p-3">
+                <div key={te.id} className="mb-3 rounded-xl border border-[hsl(var(--border-subtle))] bg-[hsl(var(--surface-3))]/50 p-3">
                   <div className="flex items-center gap-2 mb-2">
                     <div className={`w-6 h-6 rounded-full ${getAvatarColor(te.from_name || te.from_address)} flex items-center justify-center text-white text-[9px] font-bold shrink-0`}>{getInitials(te.from_name || te.from_address)}</div>
-                    <span className="text-[12px] font-semibold text-crm-text">{te.from_name || te.from_address}</span>
-                    <span className="ml-auto text-[10px] text-crm-text-faint">{te.sent_at ? format(parseISO(te.sent_at), "d MMM, h:mm a") : ""}</span>
+                    <span className="text-[12px] font-semibold text-[hsl(var(--text-1))]">{te.from_name || te.from_address}</span>
+                    <span className="ml-auto text-[10px] text-[hsl(var(--text-3))]">{te.sent_at ? format(parseISO(te.sent_at), "d MMM, h:mm a") : ""}</span>
                   </div>
-                  <div className="text-[12px] text-crm-text-muted line-clamp-3">{te.body_text || "(No preview)"}</div>
+                  <div className="text-[12px] text-[hsl(var(--text-2))] line-clamp-3">{te.body_text || "(No preview)"}</div>
                 </div>
               ))}
             </div>
@@ -971,10 +971,10 @@ function EmailDetailPane({ email, onBack, onReply, onReplyAll, onForward, onStar
       </div>
 
       {/* Reply/Forward bar */}
-      <div className="flex items-center gap-2 px-4 py-3 border-t border-crm-border shrink-0">
+      <div className="flex items-center gap-2 px-4 py-3 border-t border-[hsl(var(--border-subtle))] shrink-0">
         <button onClick={() => onReply(email)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary hover:bg-primary/90 text-white text-[12px] font-semibold transition-colors"><Reply size={13} /> Reply</button>
-        <button onClick={() => onReplyAll(email)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-crm-border hover:bg-crm-surface text-crm-text-muted hover:text-crm-text text-[12px] transition-colors"><ReplyAll size={13} /> Reply All</button>
-        <button onClick={() => onForward(email)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-crm-border hover:bg-crm-surface text-crm-text-muted hover:text-crm-text text-[12px] transition-colors"><Forward size={13} /> Forward</button>
+        <button onClick={() => onReplyAll(email)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[hsl(var(--border-subtle))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-2))] hover:text-[hsl(var(--text-1))] text-[12px] transition-colors"><ReplyAll size={13} /> Reply All</button>
+        <button onClick={() => onForward(email)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[hsl(var(--border-subtle))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-2))] hover:text-[hsl(var(--text-1))] text-[12px] transition-colors"><Forward size={13} /> Forward</button>
       </div>
     </div>
   );
@@ -1361,12 +1361,12 @@ export default function EmailInboxModule() {
     return (
       <>
         <div className="flex flex-col items-center justify-center min-h-[60vh] gap-5 text-center px-4">
-          <div className="h-20 w-20 rounded-3xl bg-crm-surface border border-crm-border flex items-center justify-center shadow-inner">
-            <Mail className="h-9 w-9 text-crm-text-faint" />
+          <div className="h-20 w-20 rounded-3xl bg-[hsl(var(--surface-3))] border border-[hsl(var(--border-subtle))] flex items-center justify-center shadow-inner">
+            <Mail className="h-9 w-9 text-[hsl(var(--text-3))]" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-crm-text">No email account connected</h2>
-            <p className="text-sm text-crm-text-muted mt-1.5 max-w-md">Connect or request access to your custom @ecowasparliamentinitiatives.org email to send, receive, and manage emails directly from the CRM.</p>
+            <h2 className="text-xl font-bold text-[hsl(var(--text-1))]">No email account connected</h2>
+            <p className="text-sm text-[hsl(var(--text-2))] mt-1.5 max-w-md">Connect or request access to your custom @ecowasparliamentinitiatives.org email to send, receive, and manage emails directly from the CRM.</p>
           </div>
           <button onClick={() => setConnectOpen(true)} className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-primary hover:bg-primary/90 text-white text-sm font-semibold shadow-lg shadow-primary/25 transition-colors">
             <Mail size={16} /> Connect Email
@@ -1376,23 +1376,23 @@ export default function EmailInboxModule() {
         {/* Connect dialog */}
         {connectOpen && (
           <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-            <div className="bg-crm-card border border-crm-border rounded-2xl shadow-2xl w-full max-w-sm p-6 space-y-4">
+            <div className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border-subtle))] rounded-2xl shadow-2xl w-full max-w-sm p-6 space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-[15px] font-semibold text-crm-text">Connect Email</h3>
-                <button onClick={() => setConnectOpen(false)} className="p-1.5 rounded-full hover:bg-crm-surface text-crm-text-dim transition-colors"><X size={15} /></button>
+                <h3 className="text-[15px] font-semibold text-[hsl(var(--text-1))]">Connect Email</h3>
+                <button onClick={() => setConnectOpen(false)} className="p-1.5 rounded-full hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-3))] transition-colors"><X size={15} /></button>
               </div>
-              <p className="text-[12px] text-crm-text-muted">Enter your custom @ecowasparliamentinitiatives.org email address and app password provided by Admin.</p>
+              <p className="text-[12px] text-[hsl(var(--text-2))]">Enter your custom @ecowasparliamentinitiatives.org email address and app password provided by Admin.</p>
               {connectError && <div className="flex items-start gap-2 p-3 rounded-xl bg-red-950/40 border border-red-800/50"><AlertOctagon size={13} className="text-red-400 shrink-0 mt-0.5" /><p className="text-[11px] text-red-300">{connectError}</p></div>}
               <div className="space-y-3">
-                <div className="space-y-1"><label className="text-[11px] font-medium text-crm-text-dim">Email Address</label>
-                  <input type="email" value={connectEmail} onChange={e => { setConnectEmail(e.target.value); setConnectError(""); }} placeholder="you@example.com" className="w-full bg-crm-surface border border-crm-border text-crm-text text-[13px] rounded-xl px-3 py-2 focus:outline-none focus:border-primary placeholder:text-crm-text-faint" />
+                <div className="space-y-1"><label className="text-[11px] font-medium text-[hsl(var(--text-3))]">Email Address</label>
+                  <input type="email" value={connectEmail} onChange={e => { setConnectEmail(e.target.value); setConnectError(""); }} placeholder="you@example.com" className="w-full bg-[hsl(var(--surface-3))] border border-[hsl(var(--border-subtle))] text-[hsl(var(--text-1))] text-[13px] rounded-xl px-3 py-2 focus:outline-none focus:border-primary placeholder:text-[hsl(var(--text-3))]" />
                 </div>
-                <div className="space-y-1"><label className="text-[11px] font-medium text-crm-text-dim">Password</label>
-                  <input type="password" value={connectPassword} onChange={e => { setConnectPassword(e.target.value); setConnectError(""); }} onKeyDown={e => e.key === "Enter" && handleConnectEmail()} placeholder="••••••••" className="w-full bg-crm-surface border border-crm-border text-crm-text text-[13px] rounded-xl px-3 py-2 focus:outline-none focus:border-primary placeholder:text-crm-text-faint" />
+                <div className="space-y-1"><label className="text-[11px] font-medium text-[hsl(var(--text-3))]">Password</label>
+                  <input type="password" value={connectPassword} onChange={e => { setConnectPassword(e.target.value); setConnectError(""); }} onKeyDown={e => e.key === "Enter" && handleConnectEmail()} placeholder="••••••••" className="w-full bg-[hsl(var(--surface-3))] border border-[hsl(var(--border-subtle))] text-[hsl(var(--text-1))] text-[13px] rounded-xl px-3 py-2 focus:outline-none focus:border-primary placeholder:text-[hsl(var(--text-3))]" />
                 </div>
               </div>
               <div className="flex gap-3 pt-1">
-                <button onClick={() => setConnectOpen(false)} className="flex-1 py-2 text-[13px] text-crm-text-muted border border-crm-border rounded-xl hover:bg-crm-surface transition-colors">Cancel</button>
+                <button onClick={() => setConnectOpen(false)} className="flex-1 py-2 text-[13px] text-[hsl(var(--text-2))] border border-[hsl(var(--border-subtle))] rounded-xl hover:bg-[hsl(var(--surface-3))] transition-colors">Cancel</button>
                 <button onClick={handleConnectEmail} disabled={connecting || !connectEmail.trim() || !connectPassword.trim()} className="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl bg-primary hover:bg-primary/90 text-white text-[13px] font-semibold transition-colors disabled:opacity-50">
                   {connecting ? <><Loader2 size={13} className="animate-spin" /> Verifying…</> : <><Mail size={13} /> Connect</>}
                 </button>
@@ -1404,22 +1404,22 @@ export default function EmailInboxModule() {
         {/* Reauth dialog */}
         {reauthOpen && (
           <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-            <div className="bg-crm-card border border-crm-border rounded-2xl shadow-2xl w-full max-w-sm p-6 space-y-4">
+            <div className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border-subtle))] rounded-2xl shadow-2xl w-full max-w-sm p-6 space-y-4">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-full bg-amber-950 border border-amber-800 flex items-center justify-center shrink-0"><AlertOctagon size={16} className="text-amber-400" /></div>
-                <div><h3 className="text-[14px] font-semibold text-crm-text">Re-authentication Required</h3><p className="text-[11px] text-crm-text-muted">Your credentials need to be verified.</p></div>
+                <div><h3 className="text-[14px] font-semibold text-[hsl(var(--text-1))]">Re-authentication Required</h3><p className="text-[11px] text-[hsl(var(--text-2))]">Your credentials need to be verified.</p></div>
               </div>
               {reauthError && <div className="flex items-start gap-2 p-3 rounded-xl bg-red-950/40 border border-red-800/50"><AlertOctagon size={13} className="text-red-400 shrink-0 mt-0.5" /><p className="text-[11px] text-red-300">{reauthError}</p></div>}
               <div className="space-y-3">
-                <div className="space-y-1"><label className="text-[11px] font-medium text-crm-text-dim">Email</label>
-                  <input type="email" value={reauthEmail} onChange={e => setReauthEmail(e.target.value)} className="w-full bg-crm-surface border border-crm-border text-crm-text text-[13px] rounded-xl px-3 py-2 focus:outline-none focus:border-primary" />
+                <div className="space-y-1"><label className="text-[11px] font-medium text-[hsl(var(--text-3))]">Email</label>
+                  <input type="email" value={reauthEmail} onChange={e => setReauthEmail(e.target.value)} className="w-full bg-[hsl(var(--surface-3))] border border-[hsl(var(--border-subtle))] text-[hsl(var(--text-1))] text-[13px] rounded-xl px-3 py-2 focus:outline-none focus:border-primary" />
                 </div>
-                <div className="space-y-1"><label className="text-[11px] font-medium text-crm-text-dim">Password</label>
-                  <input type="password" value={reauthPassword} onChange={e => { setReauthPassword(e.target.value); setReauthError(""); }} onKeyDown={e => e.key === "Enter" && handleReauth()} autoFocus placeholder="••••••••" className="w-full bg-crm-surface border border-crm-border text-crm-text text-[13px] rounded-xl px-3 py-2 focus:outline-none focus:border-primary placeholder:text-crm-text-faint" />
+                <div className="space-y-1"><label className="text-[11px] font-medium text-[hsl(var(--text-3))]">Password</label>
+                  <input type="password" value={reauthPassword} onChange={e => { setReauthPassword(e.target.value); setReauthError(""); }} onKeyDown={e => e.key === "Enter" && handleReauth()} autoFocus placeholder="••••••••" className="w-full bg-[hsl(var(--surface-3))] border border-[hsl(var(--border-subtle))] text-[hsl(var(--text-1))] text-[13px] rounded-xl px-3 py-2 focus:outline-none focus:border-primary placeholder:text-[hsl(var(--text-3))]" />
                 </div>
               </div>
               <div className="flex gap-3 pt-1">
-                <button onClick={() => { setReauthOpen(false); setReauthPassword(""); setReauthError(""); }} className="flex-1 py-2 text-[13px] text-crm-text-muted border border-crm-border rounded-xl hover:bg-crm-surface transition-colors">Later</button>
+                <button onClick={() => { setReauthOpen(false); setReauthPassword(""); setReauthError(""); }} className="flex-1 py-2 text-[13px] text-[hsl(var(--text-2))] border border-[hsl(var(--border-subtle))] rounded-xl hover:bg-[hsl(var(--surface-3))] transition-colors">Later</button>
                 <button onClick={handleReauth} disabled={reauthSaving || !reauthPassword.trim()} className="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl bg-primary hover:bg-primary/90 text-white text-[13px] font-semibold transition-colors disabled:opacity-50">
                   {reauthSaving ? <><Loader2 size={13} className="animate-spin" /> Verifying…</> : <><Mail size={13} /> Reconnect</>}
                 </button>
@@ -1451,11 +1451,11 @@ export default function EmailInboxModule() {
           const isActive = !activeLabelId && activeFolder === f.id;
           return (
             <button key={f.id} onClick={() => { setActiveFolder(f.id); setActiveLabelId(null); setSelectedEmail(null); setSelectedIds(new Set()); setCurrentPage(0); setSidebarOpen(false); }}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-left transition-colors ${isActive ? "bg-primary/12 text-primary font-semibold" : "text-crm-text-muted hover:text-crm-text hover:bg-crm-surface"}`}>
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-left transition-colors ${isActive ? "bg-primary/12 text-primary font-semibold" : "text-[hsl(var(--text-2))] hover:text-[hsl(var(--text-1))] hover:bg-[hsl(var(--surface-3))]"}`}>
 
               <div className="flex items-center gap-2.5"><Icon size={16} className="shrink-0" /><span className="text-[13px]">{f.label}</span></div>
               {count != null && count > 0 && (
-                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${f.id === "inbox" ? "bg-primary/15 text-primary" : f.id === "spam" ? "bg-red-500/15 text-red-400" : "bg-crm-surface text-crm-text-muted"}`}>{count > 99 ? "99+" : count}</span>
+                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${f.id === "inbox" ? "bg-primary/15 text-primary" : f.id === "spam" ? "bg-red-500/15 text-red-400" : "bg-[hsl(var(--surface-3))] text-[hsl(var(--text-2))]"}`}>{count > 99 ? "99+" : count}</span>
               )}
             </button>
           );
@@ -1464,15 +1464,15 @@ export default function EmailInboxModule() {
         {/* Custom Zoho folders */}
         {zohoFolders.filter(f => !f.isSystemFolder).length > 0 && (
           <div className="pt-3">
-            <p className="text-[10px] font-semibold uppercase text-crm-text-faint tracking-wider px-3 mb-1.5">Folders</p>
+            <p className="text-[10px] font-semibold uppercase text-[hsl(var(--text-3))] tracking-wider px-3 mb-1.5">Folders</p>
             {zohoFolders.filter(f => !f.isSystemFolder).map(f => (
               <div key={f.folderId} className="group flex items-center">
                 <button onClick={() => { setActiveFolder(f.folderName); setActiveLabelId(null); setSelectedEmail(null); setSelectedIds(new Set()); setSidebarOpen(false); }}
-                  className={`flex-1 flex items-center justify-between px-3 py-2 rounded-xl text-left transition-colors ${activeFolder === f.folderName && !activeLabelId ? "bg-primary/12 text-primary font-semibold" : "text-crm-text-muted hover:text-crm-text hover:bg-crm-surface"}`}>
+                  className={`flex-1 flex items-center justify-between px-3 py-2 rounded-xl text-left transition-colors ${activeFolder === f.folderName && !activeLabelId ? "bg-primary/12 text-primary font-semibold" : "text-[hsl(var(--text-2))] hover:text-[hsl(var(--text-1))] hover:bg-[hsl(var(--surface-3))]"}`}>
                   <div className="flex items-center gap-2.5"><Folder size={16} /><span className="text-[13px] truncate">{f.folderName}</span></div>
-                  {f.unreadCount > 0 && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-crm-surface text-crm-text-muted">{f.unreadCount}</span>}
+                  {f.unreadCount > 0 && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[hsl(var(--surface-3))] text-[hsl(var(--text-2))]">{f.unreadCount}</span>}
                 </button>
-                <button onClick={() => handleDeleteFolder(f)} className="hidden group-hover:flex p-1 mr-1 rounded text-crm-text-faint hover:text-red-400 transition-colors"><X size={12} /></button>
+                <button onClick={() => handleDeleteFolder(f)} className="hidden group-hover:flex p-1 mr-1 rounded text-[hsl(var(--text-3))] hover:text-red-400 transition-colors"><X size={12} /></button>
               </div>
             ))}
           </div>
@@ -1482,12 +1482,12 @@ export default function EmailInboxModule() {
         <div className="pt-1">
           {newFolderInput ? (
             <div className="flex items-center gap-1 px-2 py-1">
-              <input autoFocus value={newFolderName} onChange={e => setNewFolderName(e.target.value)} onKeyDown={e => { if (e.key === "Enter") handleCreateFolder(); if (e.key === "Escape") { setNewFolderInput(false); setNewFolderName(""); } }} placeholder="Folder name" className="flex-1 bg-crm-surface border border-crm-border rounded-lg text-[12px] text-crm-text px-2 py-1 outline-none focus:border-primary" />
+              <input autoFocus value={newFolderName} onChange={e => setNewFolderName(e.target.value)} onKeyDown={e => { if (e.key === "Enter") handleCreateFolder(); if (e.key === "Escape") { setNewFolderInput(false); setNewFolderName(""); } }} placeholder="Folder name" className="flex-1 bg-[hsl(var(--surface-3))] border border-[hsl(var(--border-subtle))] rounded-lg text-[12px] text-[hsl(var(--text-1))] px-2 py-1 outline-none focus:border-primary" />
               <button onClick={handleCreateFolder} disabled={creatingFolder || !newFolderName.trim()} className="p-1 text-primary hover:bg-primary/10 rounded disabled:opacity-40">{creatingFolder ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}</button>
-              <button onClick={() => { setNewFolderInput(false); setNewFolderName(""); }} className="p-1 text-crm-text-faint hover:text-crm-text rounded"><X size={12} /></button>
+              <button onClick={() => { setNewFolderInput(false); setNewFolderName(""); }} className="p-1 text-[hsl(var(--text-3))] hover:text-[hsl(var(--text-1))] rounded"><X size={12} /></button>
             </div>
           ) : (
-            <button onClick={() => setNewFolderInput(true)} className="w-full flex items-center gap-2 px-3 py-1.5 text-[12px] text-crm-text-faint hover:text-crm-text-muted transition-colors">
+            <button onClick={() => setNewFolderInput(true)} className="w-full flex items-center gap-2 px-3 py-1.5 text-[12px] text-[hsl(var(--text-3))] hover:text-[hsl(var(--text-2))] transition-colors">
               <Plus size={13} /> New Folder
             </button>
           )}
@@ -1496,25 +1496,25 @@ export default function EmailInboxModule() {
         {/* Labels */}
         <div className="pt-3">
           <div className="flex items-center justify-between px-3 mb-1.5">
-            <p className="text-[10px] font-semibold uppercase text-crm-text-faint tracking-wider">Labels</p>
-            <button onClick={() => setCreatingLabel(v => !v)} className="text-crm-text-faint hover:text-crm-text transition-colors"><Plus size={12} /></button>
+            <p className="text-[10px] font-semibold uppercase text-[hsl(var(--text-3))] tracking-wider">Labels</p>
+            <button onClick={() => setCreatingLabel(v => !v)} className="text-[hsl(var(--text-3))] hover:text-[hsl(var(--text-1))] transition-colors"><Plus size={12} /></button>
           </div>
           {creatingLabel && (
             <div className="flex items-center gap-1 px-2 py-1 mb-1">
-              <input autoFocus value={newLabelName} onChange={e => setNewLabelName(e.target.value)} onKeyDown={e => { if (e.key === "Enter") createLabel(); if (e.key === "Escape") setCreatingLabel(false); }} placeholder="Label name" className="flex-1 bg-crm-surface border border-crm-border rounded-lg text-[12px] text-crm-text px-2 py-1 outline-none focus:border-primary" />
+              <input autoFocus value={newLabelName} onChange={e => setNewLabelName(e.target.value)} onKeyDown={e => { if (e.key === "Enter") createLabel(); if (e.key === "Escape") setCreatingLabel(false); }} placeholder="Label name" className="flex-1 bg-[hsl(var(--surface-3))] border border-[hsl(var(--border-subtle))] rounded-lg text-[12px] text-[hsl(var(--text-1))] px-2 py-1 outline-none focus:border-primary" />
               <input type="color" value={newLabelColor} onChange={e => setNewLabelColor(e.target.value)} className="w-6 h-6 rounded cursor-pointer border-0 bg-transparent" title="Label colour" />
               <button onClick={createLabel} className="p-1 text-primary hover:bg-primary/10 rounded"><Check size={12} /></button>
-              <button onClick={() => setCreatingLabel(false)} className="p-1 text-crm-text-faint hover:text-crm-text rounded"><X size={12} /></button>
+              <button onClick={() => setCreatingLabel(false)} className="p-1 text-[hsl(var(--text-3))] hover:text-[hsl(var(--text-1))] rounded"><X size={12} /></button>
             </div>
           )}
           {labels.map(l => (
             <div key={l.id} className="group flex items-center">
               <button onClick={() => { setActiveLabelId(l.id); setSelectedEmail(null); setSelectedIds(new Set()); setSidebarOpen(false); }}
-                className={`flex-1 flex items-center gap-2.5 px-3 py-2 rounded-xl text-left transition-colors ${activeLabelId === l.id ? "bg-primary/10 font-semibold" : "hover:bg-crm-surface"}`}>
+                className={`flex-1 flex items-center gap-2.5 px-3 py-2 rounded-xl text-left transition-colors ${activeLabelId === l.id ? "bg-primary/10 font-semibold" : "hover:bg-[hsl(var(--surface-3))]"}`}>
                 <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: l.color }} />
-                <span className="text-[13px] text-crm-text truncate">{l.name}</span>
+                <span className="text-[13px] text-[hsl(var(--text-1))] truncate">{l.name}</span>
               </button>
-              <button onClick={() => deleteLabel(l.id)} className="hidden group-hover:flex p-1 mr-1 rounded text-crm-text-faint hover:text-red-400 transition-colors"><X size={12} /></button>
+              <button onClick={() => deleteLabel(l.id)} className="hidden group-hover:flex p-1 mr-1 rounded text-[hsl(var(--text-3))] hover:text-red-400 transition-colors"><X size={12} /></button>
             </div>
           ))}
         </div>
@@ -1522,8 +1522,8 @@ export default function EmailInboxModule() {
 
       {/* Account footer */}
       {account && (
-        <div className="px-4 py-3 border-t border-crm-border shrink-0">
-          <p className="text-[10px] text-crm-text-faint font-mono break-all leading-tight">{account.email_address}</p>
+        <div className="px-4 py-3 border-t border-[hsl(var(--border-subtle))] shrink-0">
+          <p className="text-[10px] text-[hsl(var(--text-3))] font-mono break-all leading-tight">{account.email_address}</p>
           <div className="flex items-center gap-1.5 mt-1">
             {sessionStorage.getItem(sessionValidatedKey) === "ok"
               ? <><span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /><span className="text-[10px] text-emerald-400 font-medium">Connected</span></>
@@ -1537,43 +1537,43 @@ export default function EmailInboxModule() {
 
   // ── Main render ────────────────────────────────────────────────────────────
   return (
-    <div className="flex h-[calc(100vh-3.5rem)] -m-3 md:-m-6 overflow-hidden bg-crm-card border border-crm-border rounded-xl shadow-sm">
+    <div className="flex h-[calc(100vh-3.5rem)] -m-3 md:-m-6 overflow-hidden bg-[hsl(var(--surface-1))] border border-[hsl(var(--border-subtle))] rounded-xl shadow-sm">
 
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div className="fixed inset-0 z-40 md:hidden" onClick={() => setSidebarOpen(false)}>
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
-          <div className="absolute left-0 top-0 bottom-0 w-[260px] bg-crm-card border-r border-crm-border shadow-2xl z-50" onClick={e => e.stopPropagation()}>
+          <div className="absolute left-0 top-0 bottom-0 w-[260px] bg-[hsl(var(--surface-1))] border-r border-[hsl(var(--border-subtle))] shadow-2xl z-50" onClick={e => e.stopPropagation()}>
             {sidebarContent}
           </div>
         </div>
       )}
 
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex w-[220px] lg:w-[240px] shrink-0 border-r border-crm-border flex-col">
+      <aside className="hidden md:flex w-[220px] lg:w-[240px] shrink-0 border-r border-[hsl(var(--border-subtle))] flex-col">
         {sidebarContent}
       </aside>
 
       {/* Email list */}
-      <div className={`flex flex-col border-r border-crm-border overflow-hidden transition-all
+      <div className={`flex flex-col border-r border-[hsl(var(--border-subtle))] overflow-hidden transition-all
         ${selectedEmail ? "hidden md:flex md:w-[320px] lg:w-[360px] shrink-0" : "flex-1"}`}>
 
         {/* Top search bar */}
-        <div className="flex items-center gap-2 px-3 py-2.5 border-b border-crm-border shrink-0">
-          <button onClick={() => setSidebarOpen(true)} className="p-1.5 rounded-full hover:bg-crm-surface text-crm-text-muted transition-colors md:hidden"><Menu size={18} /></button>
-          <div className="flex-1 flex items-center gap-2 bg-crm-surface/60 rounded-full px-3 py-1.5 border border-crm-border/60 focus-within:border-primary/50 transition-colors">
-            <Search size={14} className="text-crm-text-faint shrink-0" />
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder='Search mail… (try "from:alice")' className="flex-1 bg-transparent text-[13px] text-crm-text placeholder-crm-text-faint outline-none min-w-0" />
-            {search && <button onClick={() => setSearch("")} className="text-crm-text-faint hover:text-crm-text"><X size={13} /></button>}
+        <div className="flex items-center gap-2 px-3 py-2.5 border-b border-[hsl(var(--border-subtle))] shrink-0">
+          <button onClick={() => setSidebarOpen(true)} className="p-1.5 rounded-full hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-2))] transition-colors md:hidden"><Menu size={18} /></button>
+          <div className="flex-1 flex items-center gap-2 bg-[hsl(var(--surface-3))]/60 rounded-full px-3 py-1.5 border border-[hsl(var(--border-subtle))]/60 focus-within:border-primary/50 transition-colors">
+            <Search size={14} className="text-[hsl(var(--text-3))] shrink-0" />
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder='Search mail… (try "from:alice")' className="flex-1 bg-transparent text-[13px] text-[hsl(var(--text-1))] placeholder:text-[hsl(var(--text-3))] outline-none min-w-0" />
+            {search && <button onClick={() => setSearch("")} className="text-[hsl(var(--text-3))] hover:text-[hsl(var(--text-1))]"><X size={13} /></button>}
           </div>
-          <button onClick={syncEmails} disabled={syncing} title="Sync" className="p-1.5 rounded-full hover:bg-crm-surface text-crm-text-muted transition-colors">
+          <button onClick={syncEmails} disabled={syncing} title="Sync" className="p-1.5 rounded-full hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-2))] transition-colors">
             <RefreshCw size={15} className={syncing ? "animate-spin" : ""} />
           </button>
         </div>
 
         {/* Filter chips */}
         {activeFilterChips.length > 0 && (
-          <div className="flex flex-wrap gap-1 px-3 py-1.5 border-b border-crm-border/60 shrink-0">
+          <div className="flex flex-wrap gap-1 px-3 py-1.5 border-b border-[hsl(var(--border-subtle))]/60 shrink-0">
             {activeFilterChips.map(c => (
               <span key={c.key} className="flex items-center gap-1 text-[11px] bg-primary/10 text-primary rounded-full px-2 py-0.5 border border-primary/20">
                 <Filter size={9} /> {c.label}
@@ -1584,33 +1584,33 @@ export default function EmailInboxModule() {
         )}
 
         {/* Toolbar */}
-        <div className="flex items-center gap-1 px-3 py-1.5 border-b border-crm-border shrink-0" onClick={() => setShowBulkMoveMenu(false)}>
+        <div className="flex items-center gap-1 px-3 py-1.5 border-b border-[hsl(var(--border-subtle))] shrink-0" onClick={() => setShowBulkMoveMenu(false)}>
           <div className="flex items-center gap-0.5 flex-1">
             <div className="px-1">
-              <Checkbox checked={filteredEmails.length > 0 && selectedIds.size === filteredEmails.length} onCheckedChange={() => { if (selectedIds.size === filteredEmails.length) setSelectedIds(new Set()); else setSelectedIds(new Set(filteredEmails.map(e => e.id))); }} className="border-crm-border" />
+              <Checkbox checked={filteredEmails.length > 0 && selectedIds.size === filteredEmails.length} onCheckedChange={() => { if (selectedIds.size === filteredEmails.length) setSelectedIds(new Set()); else setSelectedIds(new Set(filteredEmails.map(e => e.id))); }} className="border-[hsl(var(--border-subtle))]" />
             </div>
             {selectedIds.size > 0 && (
               <>
-                <span className="text-[11px] text-crm-text-muted px-1">{selectedIds.size} selected</span>
-                <button onClick={handleBulkMarkRead} disabled={bulkOperating} title="Mark read" className="p-1.5 rounded-full hover:bg-crm-surface text-crm-text-muted transition-colors disabled:opacity-40"><MailOpen size={15} /></button>
-                <button onClick={handleBulkArchive} disabled={bulkOperating} title="Archive" className="p-1.5 rounded-full hover:bg-crm-surface text-crm-text-muted transition-colors disabled:opacity-40"><Archive size={15} /></button>
-                <button onClick={handleBulkTrash} disabled={bulkOperating} title="Delete" className="p-1.5 rounded-full hover:bg-crm-surface text-crm-text-muted transition-colors disabled:opacity-40">
+                <span className="text-[11px] text-[hsl(var(--text-2))] px-1">{selectedIds.size} selected</span>
+                <button onClick={handleBulkMarkRead} disabled={bulkOperating} title="Mark read" className="p-1.5 rounded-full hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-2))] transition-colors disabled:opacity-40"><MailOpen size={15} /></button>
+                <button onClick={handleBulkArchive} disabled={bulkOperating} title="Archive" className="p-1.5 rounded-full hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-2))] transition-colors disabled:opacity-40"><Archive size={15} /></button>
+                <button onClick={handleBulkTrash} disabled={bulkOperating} title="Delete" className="p-1.5 rounded-full hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-2))] transition-colors disabled:opacity-40">
                   {bulkOperating ? <Loader2 size={15} className="animate-spin" /> : <Trash2 size={15} />}
                 </button>
                 <div className="relative" onClick={e => e.stopPropagation()}>
-                  <button onClick={() => setShowBulkMoveMenu(v => !v)} disabled={bulkOperating} title="Move" className="p-1.5 rounded-full hover:bg-crm-surface text-crm-text-muted transition-colors disabled:opacity-40 flex items-center gap-0.5">
+                  <button onClick={() => setShowBulkMoveMenu(v => !v)} disabled={bulkOperating} title="Move" className="p-1.5 rounded-full hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-2))] transition-colors disabled:opacity-40 flex items-center gap-0.5">
                     <Folder size={15} /><ChevronDown size={11} />
                   </button>
                   {showBulkMoveMenu && (
-                    <div className="absolute left-0 top-full mt-1 z-50 w-44 bg-crm-card border border-crm-border rounded-xl shadow-xl py-1 max-h-48 overflow-y-auto">
-                      {zohoFolders.map(f => <button key={f.folderId} onClick={() => handleBulkMove(f.folderId, f.folderName)} className="w-full text-left px-3 py-2 text-[12px] text-crm-text hover:bg-crm-surface transition-colors">{f.folderName}</button>)}
+                    <div className="absolute left-0 top-full mt-1 z-50 w-44 bg-[hsl(var(--surface-1))] border border-[hsl(var(--border-subtle))] rounded-xl shadow-xl py-1 max-h-48 overflow-y-auto">
+                      {zohoFolders.map(f => <button key={f.folderId} onClick={() => handleBulkMove(f.folderId, f.folderName)} className="w-full text-left px-3 py-2 text-[12px] text-[hsl(var(--text-1))] hover:bg-[hsl(var(--surface-3))] transition-colors">{f.folderName}</button>)}
                     </div>
                   )}
                 </div>
               </>
             )}
           </div>
-          <button onClick={() => setThreadView(v => !v)} title={threadView ? "Disable thread view" : "Enable thread view"} className={`p-1.5 rounded-full hover:bg-crm-surface transition-colors text-[10px] flex items-center gap-1 ${threadView ? "text-primary bg-primary/10" : "text-crm-text-muted"}`}>
+          <button onClick={() => setThreadView(v => !v)} title={threadView ? "Disable thread view" : "Enable thread view"} className={`p-1.5 rounded-full hover:bg-[hsl(var(--surface-3))] transition-colors text-[10px] flex items-center gap-1 ${threadView ? "text-primary bg-primary/10" : "text-[hsl(var(--text-2))]"}`}>
             <Clock size={13} /> <span className="hidden sm:inline">Threads</span>
           </button>
         </div>
@@ -1621,8 +1621,8 @@ export default function EmailInboxModule() {
             <div className="flex items-center justify-center h-32"><div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>
           ) : displayEmails.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-40 gap-2.5 px-4 text-center">
-              <MailOpen size={28} className="text-crm-text-faint" />
-              <p className="text-[13px] text-crm-text-faint">{search ? "No results for your search" : `No emails in ${activeLabelId ? "this label" : activeFolder}`}</p>
+              <MailOpen size={28} className="text-[hsl(var(--text-3))]" />
+              <p className="text-[13px] text-[hsl(var(--text-3))]">{search ? "No results for your search" : `No emails in ${activeLabelId ? "this label" : activeFolder}`}</p>
             </div>
           ) : displayEmails.map(email => {
             const isUnread = !email.is_read;
@@ -1637,17 +1637,17 @@ export default function EmailInboxModule() {
               <div
                 key={email.id}
                 onClick={() => handleSelectEmail(email)}
-                className={`group relative flex items-start gap-2.5 px-3 py-2.5 cursor-pointer border-b border-crm-border/40 transition-colors
-                  ${isSelected ? "bg-primary/8 border-l-2 border-l-primary" : isUnread ? "bg-crm-surface/30 hover:bg-crm-surface/60" : "hover:bg-crm-surface/40"}`}
+                className={`group relative flex items-start gap-2.5 px-3 py-2.5 cursor-pointer border-b border-[hsl(var(--border-subtle))]/40 transition-colors
+                  ${isSelected ? "bg-primary/8 border-l-2 border-l-primary" : isUnread ? "bg-[hsl(var(--surface-3))]/30 hover:bg-[hsl(var(--surface-3))]/60" : "hover:bg-[hsl(var(--surface-3))]/40"}`}
               >
                 {/* Checkbox */}
                 <div className={`shrink-0 mt-0.5 transition-opacity ${isChecked ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`} onClick={e => { e.stopPropagation(); const n = new Set(selectedIds); if (n.has(email.id)) n.delete(email.id); else n.add(email.id); setSelectedIds(n); }}>
-                  <Checkbox checked={isChecked} className="border-crm-border" />
+                  <Checkbox checked={isChecked} className="border-[hsl(var(--border-subtle))]" />
                 </div>
 
                 {/* Star */}
                 <button type="button" onClick={e => { e.stopPropagation(); toggleStar.mutate({ id: email.id, starred: !email.is_starred }); }}
-                  className={`shrink-0 mt-0.5 transition-colors ${email.is_starred ? "text-amber-400" : "text-crm-text-faint hover:text-amber-400 opacity-0 group-hover:opacity-100"}`}>
+                  className={`shrink-0 mt-0.5 transition-colors ${email.is_starred ? "text-amber-400" : "text-[hsl(var(--text-3))] hover:text-amber-400 opacity-0 group-hover:opacity-100"}`}>
                   <Star size={13} fill={email.is_starred ? "currentColor" : "none"} />
                 </button>
 
@@ -1657,24 +1657,24 @@ export default function EmailInboxModule() {
                 {/* Content */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-baseline justify-between gap-1">
-                    <span className={`text-[13px] truncate ${isUnread ? "font-semibold text-crm-text" : "text-crm-text-muted font-medium"}`}>{name}</span>
-                    <span className="text-[10px] text-crm-text-faint shrink-0">{relTime(email.sent_at)}</span>
+                    <span className={`text-[13px] truncate ${isUnread ? "font-semibold text-[hsl(var(--text-1))]" : "text-[hsl(var(--text-2))] font-medium"}`}>{name}</span>
+                    <span className="text-[10px] text-[hsl(var(--text-3))] shrink-0">{relTime(email.sent_at)}</span>
                   </div>
-                  <div className={`text-[12px] truncate leading-tight ${isUnread ? "text-crm-text font-medium" : "text-crm-text-muted"}`}>
+                  <div className={`text-[12px] truncate leading-tight ${isUnread ? "text-[hsl(var(--text-1))] font-medium" : "text-[hsl(var(--text-2))]"}`}>
                     {email.subject}
-                    {threadCount > 1 && <span className="ml-1 text-[10px] text-crm-text-faint bg-crm-surface rounded-full px-1.5">{threadCount}</span>}
+                    {threadCount > 1 && <span className="ml-1 text-[10px] text-[hsl(var(--text-3))] bg-[hsl(var(--surface-3))] rounded-full px-1.5">{threadCount}</span>}
                   </div>
                   <div className="flex items-center gap-1.5 mt-0.5">
-                    {email.has_attachments && <Paperclip size={10} className="text-crm-text-faint shrink-0" />}
-                    <span className="text-[11px] text-crm-text-faint truncate">{email.body_text?.slice(0, 80)}</span>
+                    {email.has_attachments && <Paperclip size={10} className="text-[hsl(var(--text-3))] shrink-0" />}
+                    <span className="text-[11px] text-[hsl(var(--text-3))] truncate">{email.body_text?.slice(0, 80)}</span>
                   </div>
                 </div>
 
                 {/* Hover quick actions */}
-                <div className="absolute right-2 top-1/2 -translate-y-1/2 hidden group-hover:flex items-center gap-0.5 bg-crm-card/95 border border-crm-border rounded-lg shadow-md px-1 py-0.5" onClick={e => e.stopPropagation()}>
-                  <button onClick={() => archiveEmail(email.id)} title="Archive" className="p-1 rounded hover:bg-crm-surface text-crm-text-faint hover:text-crm-text transition-colors"><Archive size={12} /></button>
-                  <button onClick={() => moveToTrash.mutate({ id: email.id, folder: activeFolder })} title={activeFolder === "trash" ? "Delete permanently" : "Delete"} className="p-1 rounded hover:bg-crm-surface text-crm-text-faint hover:text-red-400 transition-colors"><Trash2 size={12} /></button>
-                  <button onClick={() => markUnread.mutate(email.id)} title="Mark unread" className="p-1 rounded hover:bg-crm-surface text-crm-text-faint hover:text-crm-text transition-colors"><Mail size={12} /></button>
+                <div className="absolute right-2 top-1/2 -translate-y-1/2 hidden group-hover:flex items-center gap-0.5 bg-[hsl(var(--surface-1))]/95 border border-[hsl(var(--border-subtle))] rounded-lg shadow-md px-1 py-0.5" onClick={e => e.stopPropagation()}>
+                  <button onClick={() => archiveEmail(email.id)} title="Archive" className="p-1 rounded hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-3))] hover:text-[hsl(var(--text-1))] transition-colors"><Archive size={12} /></button>
+                  <button onClick={() => moveToTrash.mutate({ id: email.id, folder: activeFolder })} title={activeFolder === "trash" ? "Delete permanently" : "Delete"} className="p-1 rounded hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-3))] hover:text-red-400 transition-colors"><Trash2 size={12} /></button>
+                  <button onClick={() => markUnread.mutate(email.id)} title="Mark unread" className="p-1 rounded hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-3))] hover:text-[hsl(var(--text-1))] transition-colors"><Mail size={12} /></button>
                 </div>
               </div>
             );
@@ -1682,8 +1682,8 @@ export default function EmailInboxModule() {
         </div>
 
         {/* Pagination bar — always visible */}
-        <div className="flex items-center justify-between px-3 py-1.5 border-t border-crm-border shrink-0 bg-crm-surface/20">
-          <span className="text-[10px] text-crm-text-faint">
+        <div className="flex items-center justify-between px-3 py-1.5 border-t border-[hsl(var(--border-subtle))] shrink-0 bg-[hsl(var(--surface-3))]/20">
+          <span className="text-[10px] text-[hsl(var(--text-3))]">
             {allDisplayEmails.length === 0
               ? "0 emails"
               : `${pageStart}–${pageEnd} of ${allDisplayEmails.length}`}
@@ -1692,17 +1692,17 @@ export default function EmailInboxModule() {
             <button
               onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
               disabled={safePage === 0}
-              className="p-1 rounded hover:bg-crm-surface text-crm-text-muted disabled:opacity-25 transition-colors"
+              className="p-1 rounded hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-2))] disabled:opacity-25 transition-colors"
             >
               <ChevronLeft size={13} />
             </button>
-            <span className="text-[10px] text-crm-text-faint px-1 tabular-nums">
+            <span className="text-[10px] text-[hsl(var(--text-3))] px-1 tabular-nums">
               {totalPages > 1 ? `${safePage + 1} / ${totalPages}` : `${PAGE_SIZE}/page`}
             </span>
             <button
               onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))}
               disabled={safePage >= totalPages - 1}
-              className="p-1 rounded hover:bg-crm-surface text-crm-text-muted disabled:opacity-25 transition-colors"
+              className="p-1 rounded hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-2))] disabled:opacity-25 transition-colors"
             >
               <ChevronRight size={13} />
             </button>
@@ -1734,7 +1734,7 @@ export default function EmailInboxModule() {
           />
         </div>
       ) : (
-        <div className="flex-1 hidden md:flex flex-col items-center justify-center text-center px-8 gap-3 text-crm-text-faint">
+        <div className="flex-1 hidden md:flex flex-col items-center justify-center text-center px-8 gap-3 text-[hsl(var(--text-3))]">
           <Mail size={40} className="opacity-20" />
           <p className="text-[13px] opacity-50">Select an email to read</p>
         </div>
@@ -1754,22 +1754,22 @@ export default function EmailInboxModule() {
       {/* Reauth dialog (shown even when account exists) */}
       {reauthOpen && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-crm-card border border-crm-border rounded-2xl shadow-2xl w-full max-w-sm p-6 space-y-4">
+          <div className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border-subtle))] rounded-2xl shadow-2xl w-full max-w-sm p-6 space-y-4">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-full bg-amber-950 border border-amber-800 flex items-center justify-center shrink-0"><AlertOctagon size={16} className="text-amber-400" /></div>
-              <div><h3 className="text-[14px] font-semibold text-crm-text">Re-authentication Required</h3><p className="text-[11px] text-crm-text-muted">Your email credentials need to be verified.</p></div>
+              <div><h3 className="text-[14px] font-semibold text-[hsl(var(--text-1))]">Re-authentication Required</h3><p className="text-[11px] text-[hsl(var(--text-2))]">Your email credentials need to be verified.</p></div>
             </div>
             {reauthError && <div className="flex items-start gap-2 p-3 rounded-xl bg-red-950/40 border border-red-800/50"><AlertOctagon size={13} className="text-red-400 shrink-0 mt-0.5" /><p className="text-[11px] text-red-300">{reauthError}</p></div>}
             <div className="space-y-3">
-              <div className="space-y-1"><label className="text-[11px] font-medium text-crm-text-dim">Email</label>
-                <input type="email" value={reauthEmail} onChange={e => setReauthEmail(e.target.value)} className="w-full bg-crm-surface border border-crm-border text-crm-text text-[13px] rounded-xl px-3 py-2 focus:outline-none focus:border-primary" />
+              <div className="space-y-1"><label className="text-[11px] font-medium text-[hsl(var(--text-3))]">Email</label>
+                <input type="email" value={reauthEmail} onChange={e => setReauthEmail(e.target.value)} className="w-full bg-[hsl(var(--surface-3))] border border-[hsl(var(--border-subtle))] text-[hsl(var(--text-1))] text-[13px] rounded-xl px-3 py-2 focus:outline-none focus:border-primary" />
               </div>
-              <div className="space-y-1"><label className="text-[11px] font-medium text-crm-text-dim">Password</label>
-                <input type="password" value={reauthPassword} onChange={e => { setReauthPassword(e.target.value); setReauthError(""); }} onKeyDown={e => e.key === "Enter" && handleReauth()} autoFocus placeholder="••••••••" className="w-full bg-crm-surface border border-crm-border text-crm-text text-[13px] rounded-xl px-3 py-2 focus:outline-none focus:border-primary placeholder:text-crm-text-faint" />
+              <div className="space-y-1"><label className="text-[11px] font-medium text-[hsl(var(--text-3))]">Password</label>
+                <input type="password" value={reauthPassword} onChange={e => { setReauthPassword(e.target.value); setReauthError(""); }} onKeyDown={e => e.key === "Enter" && handleReauth()} autoFocus placeholder="••••••••" className="w-full bg-[hsl(var(--surface-3))] border border-[hsl(var(--border-subtle))] text-[hsl(var(--text-1))] text-[13px] rounded-xl px-3 py-2 focus:outline-none focus:border-primary placeholder:text-[hsl(var(--text-3))]" />
               </div>
             </div>
             <div className="flex gap-3 pt-1">
-              <button onClick={() => { setReauthOpen(false); setReauthPassword(""); setReauthError(""); }} className="flex-1 py-2 text-[13px] text-crm-text-muted border border-crm-border rounded-xl hover:bg-crm-surface transition-colors">Later</button>
+              <button onClick={() => { setReauthOpen(false); setReauthPassword(""); setReauthError(""); }} className="flex-1 py-2 text-[13px] text-[hsl(var(--text-2))] border border-[hsl(var(--border-subtle))] rounded-xl hover:bg-[hsl(var(--surface-3))] transition-colors">Later</button>
               <button onClick={handleReauth} disabled={reauthSaving || !reauthPassword.trim()} className="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl bg-primary hover:bg-primary/90 text-white text-[13px] font-semibold disabled:opacity-50 transition-colors">
                 {reauthSaving ? <><Loader2 size={13} className="animate-spin" /> Verifying…</> : <><Mail size={13} /> Reconnect</>}
               </button>

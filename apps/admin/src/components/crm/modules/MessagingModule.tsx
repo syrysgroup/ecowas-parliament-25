@@ -201,18 +201,18 @@ function Bubble({ msg, isOwn, showSender, onAvatarClick, isSending = false }: {
         )}
         {/* Task card */}
         {msg.task && (
-          <div className={`mb-1 px-3 py-2 rounded-xl border text-[11px] max-w-full ${isOwn ? "bg-emerald-900/60 border-emerald-700" : "bg-crm-surface border-crm-border"}`}>
+          <div className={`mb-1 px-3 py-2 rounded-xl border text-[11px] max-w-full ${isOwn ? "bg-emerald-900/60 border-emerald-700" : "bg-[hsl(var(--surface-3))] border-[hsl(var(--border-subtle))]"}`}>
             <div className="flex items-center gap-1.5 mb-1">
               <ListTodo size={11} className="text-emerald-400 shrink-0" />
-              <span className="font-semibold text-crm-text">Task</span>
+              <span className="font-semibold text-[hsl(var(--text-1))]">Task</span>
             </div>
-            <p className="text-crm-text font-medium">{msg.task.title}</p>
+            <p className="text-[hsl(var(--text-1))] font-medium">{msg.task.title}</p>
             <div className="flex items-center gap-2 mt-1">
               <StatusBadge status={msg.task.status} />
               <PriorityBadge priority={msg.task.priority} />
             </div>
             {msg.task.assignee && (
-              <p className="text-crm-text-faint mt-1">
+              <p className="text-[hsl(var(--text-3))] mt-1">
                 Assigned to {msg.task.assignee.full_name}
               </p>
             )}
@@ -221,20 +221,20 @@ function Bubble({ msg, isOwn, showSender, onAvatarClick, isSending = false }: {
         <div className={`px-3 py-2 rounded-2xl text-[13px] leading-relaxed break-words ${
           isOwn
             ? "bg-emerald-700 text-white rounded-br-md"
-            : "bg-crm-surface text-crm-text rounded-bl-md border border-crm-border/60"
+            : "bg-[hsl(var(--surface-3))] text-[hsl(var(--text-1))] rounded-bl-md border border-[hsl(var(--border-subtle))]/60"
         }`}>
           {renderMentions(msg.body)}
         </div>
         <div className={`flex items-center gap-1 mt-0.5 px-1 ${isOwn ? "flex-row-reverse" : ""}`}>
-          <span className="text-[9px] text-crm-text-faint">{format(parseISO(msg.sent_at), "h:mm a")}</span>
+          <span className="text-[9px] text-[hsl(var(--text-3))]">{format(parseISO(msg.sent_at), "h:mm a")}</span>
           {isOwn && (
             isSending
-              ? <Check size={11} className="text-crm-text-faint" title="Sending…" />
+              ? <Check size={11} className="text-[hsl(var(--text-3))]" title="Sending…" />
               : msg.read_at
                 ? <CheckCheck size={11} className="text-blue-400" title="Seen" />
                 : msg.delivered_at
-                  ? <CheckCheck size={11} className="text-crm-text-faint" title="Delivered" />
-                  : <Check size={11} className="text-crm-text-faint" title="Sent" />
+                  ? <CheckCheck size={11} className="text-[hsl(var(--text-3))]" title="Delivered" />
+                  : <Check size={11} className="text-[hsl(var(--text-3))]" title="Sent" />
           )}
         </div>
       </div>
@@ -243,13 +243,13 @@ function Bubble({ msg, isOwn, showSender, onAvatarClick, isSending = false }: {
 }
 
 function StatusBadge({ status }: { status: GroupTask["status"] }) {
-  const map = { todo: ["bg-crm-surface text-crm-text-muted", "To Do"], in_progress: ["bg-blue-950 text-blue-400", "In Progress"], done: ["bg-emerald-950 text-emerald-400", "Done"] };
+  const map = { todo: ["bg-[hsl(var(--surface-3))] text-[hsl(var(--text-2))]", "To Do"], in_progress: ["bg-blue-950 text-blue-400", "In Progress"], done: ["bg-emerald-950 text-emerald-400", "Done"] };
   const [cls, label] = map[status] || map.todo;
   return <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded ${cls}`}>{label}</span>;
 }
 
 function PriorityBadge({ priority }: { priority: GroupTask["priority"] }) {
-  const map = { low: "text-crm-text-faint", medium: "text-amber-400", high: "text-red-400" };
+  const map = { low: "text-[hsl(var(--text-3))]", medium: "text-amber-400", high: "text-red-400" };
   return <span className={`text-[9px] capitalize ${map[priority] || ""}`}>{priority}</span>;
 }
 
@@ -257,9 +257,9 @@ function PriorityBadge({ priority }: { priority: GroupTask["priority"] }) {
 function DaySep({ label }: { label: string }) {
   return (
     <div className="flex items-center gap-3 my-3">
-      <div className="flex-1 h-px bg-crm-border/40" />
-      <span className="text-[10px] text-crm-text-faint bg-crm-card px-2">{label}</span>
-      <div className="flex-1 h-px bg-crm-border/40" />
+      <div className="flex-1 h-px bg-[hsl(var(--surface-2))]-border/40" />
+      <span className="text-[10px] text-[hsl(var(--text-3))] bg-[hsl(var(--surface-1))] px-2">{label}</span>
+      <div className="flex-1 h-px bg-[hsl(var(--surface-2))]-border/40" />
     </div>
   );
 }
@@ -293,33 +293,33 @@ function GroupInfoPanel({
   const [tab, setTab] = useState<"members" | "tasks">("members");
 
   return (
-    <div className="w-full md:w-[300px] shrink-0 border-l border-crm-border flex flex-col bg-crm-card">
+    <div className="w-full md:w-[300px] shrink-0 border-l border-[hsl(var(--border-subtle))] flex flex-col bg-[hsl(var(--surface-1))]">
       {/* Header */}
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-crm-border">
-        <button onClick={onClose} className="p-1 rounded hover:bg-crm-surface text-crm-text-muted transition-colors">
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-[hsl(var(--border-subtle))]">
+        <button onClick={onClose} className="p-1 rounded hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-2))] transition-colors">
           <X size={15} />
         </button>
-        <span className="text-[13px] font-semibold text-crm-text flex-1">Group Info</span>
+        <span className="text-[13px] font-semibold text-[hsl(var(--text-1))] flex-1">Group Info</span>
       </div>
 
       {/* Group identity */}
-      <div className="flex flex-col items-center gap-2 py-5 px-4 border-b border-crm-border">
+      <div className="flex flex-col items-center gap-2 py-5 px-4 border-b border-[hsl(var(--border-subtle))]">
         <Av name={group.name} url={group.avatar_url} emoji={group.emoji} size={64} />
-        <p className="text-[15px] font-bold text-crm-text">{group.name}</p>
-        <p className="text-[11px] text-crm-text-faint">
+        <p className="text-[15px] font-bold text-[hsl(var(--text-1))]">{group.name}</p>
+        <p className="text-[11px] text-[hsl(var(--text-3))]">
           {group.type === "public" ? "Public group" : "Private group"} · {members.length} members
         </p>
         {group.description && (
-          <p className="text-[11px] text-crm-text-muted text-center">{group.description}</p>
+          <p className="text-[11px] text-[hsl(var(--text-2))] text-center">{group.description}</p>
         )}
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b border-crm-border">
+      <div className="flex border-b border-[hsl(var(--border-subtle))]">
         {(["members", "tasks"] as const).map(t => (
           <button key={t} onClick={() => setTab(t)}
             className={`flex-1 py-2 text-[11px] font-medium capitalize transition-colors ${
-              tab === t ? "text-emerald-400 border-b-2 border-emerald-500" : "text-crm-text-muted hover:text-crm-text"
+              tab === t ? "text-emerald-400 border-b-2 border-emerald-500" : "text-[hsl(var(--text-2))] hover:text-[hsl(var(--text-1))]"
             }`}>
             {t === "members" ? `Members (${members.length})` : `Tasks (${tasks.length})`}
           </button>
@@ -332,7 +332,7 @@ function GroupInfoPanel({
           <div className="py-1">
             {isAdmin && (
               <button onClick={onAddMember}
-                className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-crm-surface transition-colors text-left">
+                className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-[hsl(var(--surface-3))] transition-colors text-left">
                 <div className="w-8 h-8 rounded-full bg-emerald-950 border border-emerald-800 flex items-center justify-center">
                   <UserPlus size={14} className="text-emerald-400" />
                 </div>
@@ -340,20 +340,20 @@ function GroupInfoPanel({
               </button>
             )}
             {members.map(m => (
-              <div key={m.user_id} className="flex items-center gap-3 px-4 py-2.5 hover:bg-crm-surface/40 group">
+              <div key={m.user_id} className="flex items-center gap-3 px-4 py-2.5 hover:bg-[hsl(var(--surface-3))]/40 group">
                 <Av name={m.profile.full_name} url={m.profile.avatar_url} size={36} />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5">
-                    <p className="text-[12px] font-medium text-crm-text truncate">{m.profile.full_name}</p>
+                    <p className="text-[12px] font-medium text-[hsl(var(--text-1))] truncate">{m.profile.full_name}</p>
                     {m.user_id === group.created_by && (
                       <span className="text-[8px] font-mono bg-emerald-950 text-emerald-400 border border-emerald-800 rounded px-1">Admin</span>
                     )}
                   </div>
-                  <p className="text-[10px] text-crm-text-faint truncate">{m.profile.title || m.profile.email}</p>
+                  <p className="text-[10px] text-[hsl(var(--text-3))] truncate">{m.profile.title || m.profile.email}</p>
                 </div>
                 {isAdmin && m.user_id !== currentUserId && (
                   <button onClick={() => onRemoveMember(m.user_id)}
-                    className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-950 text-crm-text-faint hover:text-red-400 transition-all"
+                    className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-950 text-[hsl(var(--text-3))] hover:text-red-400 transition-all"
                     title="Remove from group">
                     <UserMinus size={13} />
                   </button>
@@ -362,7 +362,7 @@ function GroupInfoPanel({
             ))}
             {!isAdmin && (
               <button onClick={onLeaveGroup}
-                className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-red-950/20 text-red-400 transition-colors mt-2 border-t border-crm-border">
+                className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-red-950/20 text-red-400 transition-colors mt-2 border-t border-[hsl(var(--border-subtle))]">
                 <LogOut size={14} />
                 <span className="text-[12px]">Leave group</span>
               </button>
@@ -373,7 +373,7 @@ function GroupInfoPanel({
         {tab === "tasks" && (
           <div className="py-1">
             <button onClick={onCreateTask}
-              className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-crm-surface transition-colors text-left">
+              className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-[hsl(var(--surface-3))] transition-colors text-left">
               <div className="w-8 h-8 rounded-full bg-emerald-950 border border-emerald-800 flex items-center justify-center">
                 <Plus size={14} className="text-emerald-400" />
               </div>
@@ -382,20 +382,20 @@ function GroupInfoPanel({
 
             {tasks.length === 0 ? (
               <div className="px-4 py-6 text-center">
-                <ClipboardList size={24} className="text-crm-text-faint mx-auto mb-2" />
-                <p className="text-[11px] text-crm-text-faint">No tasks yet. Create one to track group progress.</p>
+                <ClipboardList size={24} className="text-[hsl(var(--text-3))] mx-auto mb-2" />
+                <p className="text-[11px] text-[hsl(var(--text-3))]">No tasks yet. Create one to track group progress.</p>
               </div>
             ) : (
               tasks.map(task => (
-                <div key={task.id} className="px-4 py-2.5 border-b border-crm-border/40 hover:bg-crm-surface/40">
+                <div key={task.id} className="px-4 py-2.5 border-b border-[hsl(var(--border-subtle))]/40 hover:bg-[hsl(var(--surface-3))]/40">
                   <div className="flex items-start justify-between gap-2">
-                    <p className="text-[12px] font-medium text-crm-text flex-1">{task.title}</p>
+                    <p className="text-[12px] font-medium text-[hsl(var(--text-1))] flex-1">{task.title}</p>
                     <PriorityBadge priority={task.priority} />
                   </div>
                   {task.assignee && (
                     <div className="flex items-center gap-1.5 mt-1">
                       <Av name={task.assignee.full_name} url={task.assignee.avatar_url} size={16} />
-                      <span className="text-[10px] text-crm-text-faint">{task.assignee.full_name}</span>
+                      <span className="text-[10px] text-[hsl(var(--text-3))]">{task.assignee.full_name}</span>
                     </div>
                   )}
                   {/* Status selector */}
@@ -404,8 +404,8 @@ function GroupInfoPanel({
                       <button key={s} onClick={() => onUpdateTaskStatus(task.id, s)}
                         className={`text-[9px] px-1.5 py-0.5 rounded transition-colors ${
                           task.status === s
-                            ? s === "done" ? "bg-emerald-700 text-white" : s === "in_progress" ? "bg-blue-700 text-white" : "bg-crm-surface text-crm-text-muted border border-crm-border"
-                            : "text-crm-text-faint hover:bg-crm-surface border border-transparent hover:border-crm-border"
+                            ? s === "done" ? "bg-emerald-700 text-white" : s === "in_progress" ? "bg-blue-700 text-white" : "bg-[hsl(var(--surface-3))] text-[hsl(var(--text-2))] border border-[hsl(var(--border-subtle))]"
+                            : "text-[hsl(var(--text-3))] hover:bg-[hsl(var(--surface-3))] border border-transparent hover:border-[hsl(var(--border-subtle))]"
                         }`}>
                         {s === "todo" ? "To Do" : s === "in_progress" ? "In Progress" : "Done"}
                       </button>
@@ -480,13 +480,13 @@ function CreateGroupDialog({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-crm-card border border-crm-border rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col">
+      <div className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border-subtle))] rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center gap-3 px-5 py-4 border-b border-crm-border">
-          <button onClick={onClose} className="p-1 rounded hover:bg-crm-surface text-crm-text-muted">
+        <div className="flex items-center gap-3 px-5 py-4 border-b border-[hsl(var(--border-subtle))]">
+          <button onClick={onClose} className="p-1 rounded hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-2))]">
             <X size={16} />
           </button>
-          <span className="text-[14px] font-bold text-crm-text flex-1">New Group</span>
+          <span className="text-[14px] font-bold text-[hsl(var(--text-1))] flex-1">New Group</span>
           <button onClick={handleCreate} disabled={creating || !name.trim()}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-700 hover:bg-emerald-600 disabled:opacity-50 text-white text-[12px] font-semibold rounded-full transition-colors">
             {creating ? <Loader2 size={12} className="animate-spin" /> : null}
@@ -499,17 +499,17 @@ function CreateGroupDialog({
           <div className="flex items-center gap-3">
             <div className="relative">
               <select value={emoji} onChange={e => setEmoji(e.target.value)}
-                className="appearance-none w-14 h-14 rounded-full bg-crm-surface border border-crm-border text-2xl text-center cursor-pointer outline-none">
+                className="appearance-none w-14 h-14 rounded-full bg-[hsl(var(--surface-3))] border border-[hsl(var(--border-subtle))] text-2xl text-center cursor-pointer outline-none">
                 {GROUP_EMOJIS.map(e => <option key={e} value={e}>{e}</option>)}
               </select>
             </div>
             <div className="flex-1 space-y-2">
               <Input value={name} onChange={e => setName(e.target.value)}
                 placeholder="Group name"
-                className="bg-crm-surface border-crm-border text-crm-text text-[13px] h-9" />
+                className="bg-[hsl(var(--surface-3))] border-[hsl(var(--border-subtle))] text-[hsl(var(--text-1))] text-[13px] h-9" />
               <Input value={desc} onChange={e => setDesc(e.target.value)}
                 placeholder="Description (optional)"
-                className="bg-crm-surface border-crm-border text-crm-text text-[13px] h-9" />
+                className="bg-[hsl(var(--surface-3))] border-[hsl(var(--border-subtle))] text-[hsl(var(--text-1))] text-[13px] h-9" />
             </div>
           </div>
 
@@ -518,7 +518,7 @@ function CreateGroupDialog({
             {(["private", "public"] as const).map(t => (
               <button key={t} onClick={() => setType(t)}
                 className={`flex-1 py-1.5 rounded-full text-[11px] font-medium capitalize border transition-colors ${
-                  type === t ? "bg-emerald-950 text-emerald-400 border-emerald-700" : "border-crm-border text-crm-text-muted hover:border-crm-border/80"
+                  type === t ? "bg-emerald-950 text-emerald-400 border-emerald-700" : "border-[hsl(var(--border-subtle))] text-[hsl(var(--text-2))] hover:border-[hsl(var(--border-subtle))]/80"
                 }`}>
                 {t}
               </button>
@@ -527,24 +527,24 @@ function CreateGroupDialog({
 
           {/* Member selection */}
           <div>
-            <p className="text-[11px] font-semibold text-crm-text-dim uppercase tracking-wider mb-2">
+            <p className="text-[11px] font-semibold text-[hsl(var(--text-3))] uppercase tracking-wider mb-2">
               Add members ({selected.size} selected)
             </p>
             <div className="relative mb-2">
-              <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-crm-text-faint" />
+              <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[hsl(var(--text-3))]" />
               <Input value={search} onChange={e => setSearch(e.target.value)}
                 placeholder="Search contacts…"
-                className="bg-crm-surface border-crm-border text-crm-text text-[12px] h-8 pl-8" />
+                className="bg-[hsl(var(--surface-3))] border-[hsl(var(--border-subtle))] text-[hsl(var(--text-1))] text-[12px] h-8 pl-8" />
             </div>
             <div className="space-y-0.5 max-h-52 overflow-y-auto">
               {filtered.map(c => (
                 <button key={c.id} onClick={() => toggle(c.id)}
-                  className="w-full flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-crm-surface transition-colors text-left">
-                  <Checkbox checked={selected.has(c.id)} className="border-crm-border shrink-0" />
+                  className="w-full flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-[hsl(var(--surface-3))] transition-colors text-left">
+                  <Checkbox checked={selected.has(c.id)} className="border-[hsl(var(--border-subtle))] shrink-0" />
                   <Av name={c.full_name} url={c.avatar_url} size={32} />
                   <div className="flex-1 min-w-0">
-                    <p className="text-[12px] font-medium text-crm-text truncate">{c.full_name}</p>
-                    <p className="text-[10px] text-crm-text-faint truncate">{c.title || c.email}</p>
+                    <p className="text-[12px] font-medium text-[hsl(var(--text-1))] truncate">{c.full_name}</p>
+                    <p className="text-[10px] text-[hsl(var(--text-3))] truncate">{c.title || c.email}</p>
                   </div>
                 </button>
               ))}
@@ -595,27 +595,27 @@ function CreateTaskDialog({
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-crm-card border border-crm-border rounded-2xl shadow-2xl w-full max-w-sm p-5 space-y-4">
+      <div className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border-subtle))] rounded-2xl shadow-2xl w-full max-w-sm p-5 space-y-4">
         <div className="flex items-center justify-between">
-          <p className="text-[14px] font-bold text-crm-text">New Group Task</p>
-          <button onClick={onClose} className="p-1 rounded hover:bg-crm-surface text-crm-text-muted"><X size={15} /></button>
+          <p className="text-[14px] font-bold text-[hsl(var(--text-1))]">New Group Task</p>
+          <button onClick={onClose} className="p-1 rounded hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-2))]"><X size={15} /></button>
         </div>
         <div className="space-y-3">
           <Input value={title} onChange={e => setTitle(e.target.value)}
             placeholder="Task title…"
-            className="bg-crm-surface border-crm-border text-crm-text text-[13px]" autoFocus />
+            className="bg-[hsl(var(--surface-3))] border-[hsl(var(--border-subtle))] text-[hsl(var(--text-1))] text-[13px]" autoFocus />
           <div className="flex gap-2">
             {(["low", "medium", "high"] as const).map(p => (
               <button key={p} onClick={() => setPriority(p)}
                 className={`flex-1 py-1.5 rounded-full text-[11px] font-medium capitalize border transition-colors ${
                   priority === p
-                    ? p === "high" ? "bg-red-950 text-red-400 border-red-800" : p === "medium" ? "bg-amber-950 text-amber-400 border-amber-800" : "bg-crm-surface text-crm-text-muted border-crm-border"
-                    : "border-crm-border text-crm-text-faint hover:border-crm-border/80"
+                    ? p === "high" ? "bg-red-950 text-red-400 border-red-800" : p === "medium" ? "bg-amber-950 text-amber-400 border-amber-800" : "bg-[hsl(var(--surface-3))] text-[hsl(var(--text-2))] border-[hsl(var(--border-subtle))]"
+                    : "border-[hsl(var(--border-subtle))] text-[hsl(var(--text-3))] hover:border-[hsl(var(--border-subtle))]/80"
                 }`}>{p}</button>
             ))}
           </div>
           <select value={assigneeId ?? ""} onChange={e => setAssigneeId(e.target.value || null)}
-            className="w-full bg-crm-surface border border-crm-border text-crm-text text-[12px] rounded-xl px-3 py-2 outline-none">
+            className="w-full bg-[hsl(var(--surface-3))] border border-[hsl(var(--border-subtle))] text-[hsl(var(--text-1))] text-[12px] rounded-xl px-3 py-2 outline-none">
             <option value="">Unassigned</option>
             {members.map(m => (
               <option key={m.user_id} value={m.user_id}>{m.profile.full_name}</option>
@@ -663,36 +663,36 @@ function AddMemberDialog({
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-crm-card border border-crm-border rounded-2xl shadow-2xl w-full max-w-sm flex flex-col max-h-[80vh]">
-        <div className="flex items-center gap-3 px-4 py-3.5 border-b border-crm-border">
-          <button onClick={onClose} className="p-1 rounded hover:bg-crm-surface text-crm-text-muted"><X size={15} /></button>
-          <p className="flex-1 text-[13px] font-bold text-crm-text">Add Members</p>
+      <div className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border-subtle))] rounded-2xl shadow-2xl w-full max-w-sm flex flex-col max-h-[80vh]">
+        <div className="flex items-center gap-3 px-4 py-3.5 border-b border-[hsl(var(--border-subtle))]">
+          <button onClick={onClose} className="p-1 rounded hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-2))]"><X size={15} /></button>
+          <p className="flex-1 text-[13px] font-bold text-[hsl(var(--text-1))]">Add Members</p>
           <button onClick={handleAdd} disabled={saving || selected.size === 0}
             className="px-3 py-1 bg-emerald-700 hover:bg-emerald-600 disabled:opacity-50 text-white text-[11px] font-semibold rounded-full">
             Add {selected.size > 0 ? `(${selected.size})` : ""}
           </button>
         </div>
-        <div className="px-4 py-2 border-b border-crm-border">
+        <div className="px-4 py-2 border-b border-[hsl(var(--border-subtle))]">
           <div className="relative">
-            <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-crm-text-faint" />
+            <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[hsl(var(--text-3))]" />
             <Input value={search} onChange={e => setSearch(e.target.value)}
-              placeholder="Search…" className="bg-crm-surface border-crm-border text-crm-text text-[12px] h-8 pl-8" />
+              placeholder="Search…" className="bg-[hsl(var(--surface-3))] border-[hsl(var(--border-subtle))] text-[hsl(var(--text-1))] text-[12px] h-8 pl-8" />
           </div>
         </div>
         <div className="flex-1 overflow-y-auto py-1">
           {available.map(c => (
             <button key={c.id} onClick={() => { const n = new Set(selected); n.has(c.id) ? n.delete(c.id) : n.add(c.id); setSelected(n); }}
-              className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-crm-surface transition-colors text-left">
-              <Checkbox checked={selected.has(c.id)} className="border-crm-border shrink-0" />
+              className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-[hsl(var(--surface-3))] transition-colors text-left">
+              <Checkbox checked={selected.has(c.id)} className="border-[hsl(var(--border-subtle))] shrink-0" />
               <Av name={c.full_name} url={c.avatar_url} size={32} />
               <div className="flex-1 min-w-0">
-                <p className="text-[12px] font-medium text-crm-text truncate">{c.full_name}</p>
-                <p className="text-[10px] text-crm-text-faint truncate">{c.title || c.email}</p>
+                <p className="text-[12px] font-medium text-[hsl(var(--text-1))] truncate">{c.full_name}</p>
+                <p className="text-[10px] text-[hsl(var(--text-3))] truncate">{c.title || c.email}</p>
               </div>
             </button>
           ))}
           {available.length === 0 && (
-            <p className="text-center text-[11px] text-crm-text-faint py-6">No contacts to add</p>
+            <p className="text-center text-[11px] text-[hsl(var(--text-3))] py-6">No contacts to add</p>
           )}
         </div>
       </div>
@@ -742,16 +742,16 @@ function WhatsAppBroadcastPanel() {
   return (
     <div className="p-6 max-w-xl space-y-5">
       <div>
-        <p className="text-[15px] font-semibold text-crm-text">WhatsApp Broadcast</p>
-        <p className="text-[12px] text-crm-text-muted mt-1">Send approved parliament content to WhatsApp subscribers. Requires <span className="font-mono text-amber-400">WHATSAPP_ACCESS_TOKEN</span> in Secrets Vault.</p>
+        <p className="text-[15px] font-semibold text-[hsl(var(--text-1))]">WhatsApp Broadcast</p>
+        <p className="text-[12px] text-[hsl(var(--text-2))] mt-1">Send approved parliament content to WhatsApp subscribers. Requires <span className="font-mono text-amber-400">WHATSAPP_ACCESS_TOKEN</span> in Secrets Vault.</p>
       </div>
       <div className="space-y-3">
         <div className="space-y-1.5">
-          <label className="text-[11px] font-mono text-crm-text-muted uppercase tracking-wide">Content</label>
+          <label className="text-[11px] font-mono text-[hsl(var(--text-2))] uppercase tracking-wide">Content</label>
           <select
             value={contentId}
             onChange={e => setContentId(e.target.value)}
-            className="w-full bg-crm-surface border border-crm-border rounded-lg px-3 py-2 text-[13px] text-crm-text focus:outline-none focus:ring-1 focus:ring-emerald-700"
+            className="w-full bg-[hsl(var(--surface-3))] border border-[hsl(var(--border-subtle))] rounded-lg px-3 py-2 text-[13px] text-[hsl(var(--text-1))] focus:outline-none focus:ring-1 focus:ring-emerald-700"
           >
             <option value="">— Select approved/published content —</option>
             {approved.map(c => (
@@ -760,11 +760,11 @@ function WhatsAppBroadcastPanel() {
           </select>
         </div>
         <div className="space-y-1.5">
-          <label className="text-[11px] font-mono text-crm-text-muted uppercase tracking-wide">Language</label>
+          <label className="text-[11px] font-mono text-[hsl(var(--text-2))] uppercase tracking-wide">Language</label>
           <div className="flex gap-2">
             {(["en", "fr", "pt"] as const).map(l => (
               <button key={l} onClick={() => setLanguage(l)}
-                className={`text-[11px] font-mono px-4 py-1.5 rounded-lg border transition-colors ${language === l ? "bg-emerald-950 border-emerald-800 text-emerald-300" : "border-crm-border text-crm-text-muted hover:text-crm-text"}`}>
+                className={`text-[11px] font-mono px-4 py-1.5 rounded-lg border transition-colors ${language === l ? "bg-emerald-950 border-emerald-800 text-emerald-300" : "border-[hsl(var(--border-subtle))] text-[hsl(var(--text-2))] hover:text-[hsl(var(--text-1))]"}`}>
                 {l.toUpperCase()}
               </button>
             ))}
@@ -776,12 +776,12 @@ function WhatsAppBroadcastPanel() {
           {sending ? "Sending…" : "Send Broadcast"}
         </Button>
       </div>
-      <div className="bg-crm-surface border border-crm-border rounded-lg p-4 space-y-2">
-        <p className="text-[10px] font-mono text-crm-text-faint uppercase tracking-wide">3 Meta-Approved Templates</p>
+      <div className="bg-[hsl(var(--surface-3))] border border-[hsl(var(--border-subtle))] rounded-lg p-4 space-y-2">
+        <p className="text-[10px] font-mono text-[hsl(var(--text-3))] uppercase tracking-wide">3 Meta-Approved Templates</p>
         {["SESSION_SUMMARY", "WEEKLY_DIGEST", "URGENT_UPDATE"].map(t => (
           <p key={t} className="text-[11px] font-mono text-amber-400">• {t}</p>
         ))}
-        <p className="text-[11px] text-crm-text-faint mt-2">Templates must be submitted to and approved by Meta before use. The weekly digest sends automatically every Friday at 4PM WAT.</p>
+        <p className="text-[11px] text-[hsl(var(--text-3))] mt-2">Templates must be submitted to and approved by Meta before use. The weekly digest sends automatically every Friday at 4PM WAT.</p>
       </div>
     </div>
   );
@@ -838,16 +838,16 @@ function TelegramBroadcastPanel() {
   return (
     <div className="p-6 max-w-xl space-y-5">
       <div>
-        <p className="text-[15px] font-semibold text-crm-text">Telegram Channel Post</p>
-        <p className="text-[12px] text-crm-text-muted mt-1">Post to EN/FR/PT Telegram channels. Requires <span className="font-mono text-blue-400">TELEGRAM_BOT_TOKEN</span> and channel IDs in Secrets Vault.</p>
+        <p className="text-[15px] font-semibold text-[hsl(var(--text-1))]">Telegram Channel Post</p>
+        <p className="text-[12px] text-[hsl(var(--text-2))] mt-1">Post to EN/FR/PT Telegram channels. Requires <span className="font-mono text-blue-400">TELEGRAM_BOT_TOKEN</span> and channel IDs in Secrets Vault.</p>
       </div>
       <div className="space-y-3">
         <div className="space-y-1.5">
-          <label className="text-[11px] font-mono text-crm-text-muted uppercase tracking-wide">Content</label>
+          <label className="text-[11px] font-mono text-[hsl(var(--text-2))] uppercase tracking-wide">Content</label>
           <select
             value={contentId}
             onChange={e => setContentId(e.target.value)}
-            className="w-full bg-crm-surface border border-crm-border rounded-lg px-3 py-2 text-[13px] text-crm-text focus:outline-none focus:ring-1 focus:ring-blue-700"
+            className="w-full bg-[hsl(var(--surface-3))] border border-[hsl(var(--border-subtle))] rounded-lg px-3 py-2 text-[13px] text-[hsl(var(--text-1))] focus:outline-none focus:ring-1 focus:ring-blue-700"
           >
             <option value="">— Select approved/published content —</option>
             {approved.map(c => (
@@ -856,11 +856,11 @@ function TelegramBroadcastPanel() {
           </select>
         </div>
         <div className="space-y-1.5">
-          <label className="text-[11px] font-mono text-crm-text-muted uppercase tracking-wide">Channels</label>
+          <label className="text-[11px] font-mono text-[hsl(var(--text-2))] uppercase tracking-wide">Channels</label>
           <div className="flex gap-2">
             {(["en", "fr", "pt"] as const).map(l => (
               <button key={l} onClick={() => toggleLang(l)}
-                className={`text-[11px] font-mono px-4 py-1.5 rounded-lg border transition-colors ${languages.has(l) ? "bg-blue-950 border-blue-800 text-blue-300" : "border-crm-border text-crm-text-muted hover:text-crm-text"}`}>
+                className={`text-[11px] font-mono px-4 py-1.5 rounded-lg border transition-colors ${languages.has(l) ? "bg-blue-950 border-blue-800 text-blue-300" : "border-[hsl(var(--border-subtle))] text-[hsl(var(--text-2))] hover:text-[hsl(var(--text-1))]"}`}>
                 {l.toUpperCase()}
               </button>
             ))}
@@ -1151,10 +1151,10 @@ export default function MessagingModule() {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-3.5rem)] -m-3 md:-m-6 overflow-hidden bg-crm-card border border-crm-border rounded-xl">
+    <div className="flex flex-col h-[calc(100vh-3.5rem)] -m-3 md:-m-6 overflow-hidden bg-[hsl(var(--surface-1))] border border-[hsl(var(--border-subtle))] rounded-xl">
 
       {/* ── Module tab bar ── */}
-      <div className="flex items-center gap-0 border-b border-crm-border px-4 bg-crm-card shrink-0">
+      <div className="flex items-center gap-0 border-b border-[hsl(var(--border-subtle))] px-4 bg-[hsl(var(--surface-1))] shrink-0">
         {([
           { id: "chat",      label: "Chat",               icon: MessageSquare },
           { id: "whatsapp",  label: "WhatsApp Broadcast", icon: Send },
@@ -1166,7 +1166,7 @@ export default function MessagingModule() {
                 ? id === "whatsapp" ? "border-emerald-500 text-emerald-400"
                   : id === "telegram" ? "border-blue-500 text-blue-400"
                   : "border-amber-500 text-amber-400"
-                : "border-transparent text-crm-text-faint hover:text-crm-text-muted"
+                : "border-transparent text-[hsl(var(--text-3))] hover:text-[hsl(var(--text-2))]"
             }`}>
             <Icon size={11} />
             {label}
@@ -1180,33 +1180,33 @@ export default function MessagingModule() {
       {/* ── Chat UI (hidden when other tabs active) ── */}
       <div className={`flex flex-1 overflow-hidden ${moduleTab !== "chat" ? "hidden" : ""}`}>
       {/* ── Sidebar ── */}
-      <div className={`flex-col w-full md:w-[320px] md:max-w-[320px] shrink-0 border-r border-crm-border
-        absolute md:relative inset-0 z-10 md:z-auto bg-crm-card
+      <div className={`flex-col w-full md:w-[320px] md:max-w-[320px] shrink-0 border-r border-[hsl(var(--border-subtle))]
+        absolute md:relative inset-0 z-10 md:z-auto bg-[hsl(var(--surface-1))]
         ${mobileShowChat ? "hidden md:flex" : "flex"}`}>
 
         {/* Sidebar header */}
-        <div className="flex items-center gap-2 px-4 py-3 border-b border-crm-border bg-crm-card">
-          <p className="text-[15px] font-bold text-crm-text flex-1">Messages</p>
+        <div className="flex items-center gap-2 px-4 py-3 border-b border-[hsl(var(--border-subtle))] bg-[hsl(var(--surface-1))]">
+          <p className="text-[15px] font-bold text-[hsl(var(--text-1))] flex-1">Messages</p>
           <button onClick={() => setShowNewDm(true)}
             title="New direct message"
-            className="p-2 rounded-full hover:bg-crm-surface text-crm-text-muted hover:text-crm-text transition-colors">
+            className="p-2 rounded-full hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-2))] hover:text-[hsl(var(--text-1))] transition-colors">
             <MessageSquare size={16} />
           </button>
           <button onClick={() => setShowNewGroup(true)}
             title="New group"
-            className="p-2 rounded-full hover:bg-crm-surface text-crm-text-muted hover:text-crm-text transition-colors">
+            className="p-2 rounded-full hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-2))] hover:text-[hsl(var(--text-1))] transition-colors">
             <Users size={16} />
           </button>
         </div>
 
         {/* Search */}
-        <div className="px-3 py-2 border-b border-crm-border/50">
-          <div className="flex items-center gap-2 bg-crm-surface/60 rounded-full px-3 py-1.5 border border-crm-border/40">
-            <Search size={13} className="text-crm-text-faint shrink-0" />
+        <div className="px-3 py-2 border-b border-[hsl(var(--border-subtle))]/50">
+          <div className="flex items-center gap-2 bg-[hsl(var(--surface-3))]/60 rounded-full px-3 py-1.5 border border-[hsl(var(--border-subtle))]/40">
+            <Search size={13} className="text-[hsl(var(--text-3))] shrink-0" />
             <input value={search} onChange={e => setSearch(e.target.value)}
               placeholder="Search chats…"
-              className="flex-1 bg-transparent text-[12px] text-crm-text placeholder-crm-text-faint outline-none" />
-            {search && <button onClick={() => setSearch("")}><X size={11} className="text-crm-text-faint" /></button>}
+              className="flex-1 bg-transparent text-[12px] text-[hsl(var(--text-1))] placeholder:text-[hsl(var(--text-3))] outline-none" />
+            {search && <button onClick={() => setSearch("")}><X size={11} className="text-[hsl(var(--text-3))]" /></button>}
           </div>
         </div>
 
@@ -1214,29 +1214,29 @@ export default function MessagingModule() {
         <div className="flex-1 overflow-y-auto">
           {chatListItems.length === 0 && (
             <div className="flex flex-col items-center justify-center h-40 gap-2 px-4 text-center">
-              <MessageSquare size={24} className="text-crm-text-faint" />
-              <p className="text-[11px] text-crm-text-faint">No chats yet.<br/>Create a group or start a DM.</p>
+              <MessageSquare size={24} className="text-[hsl(var(--text-3))]" />
+              <p className="text-[11px] text-[hsl(var(--text-3))]">No chats yet.<br/>Create a group or start a DM.</p>
             </div>
           )}
 
           {/* Groups section */}
           {chatListItems.filter(i => i.kind === "group").length > 0 && (
             <>
-              <div className="px-4 py-1.5 sticky top-0 bg-crm-card/90 backdrop-blur z-10">
-                <p className="text-[9px] font-bold text-crm-text-faint uppercase tracking-widest">Groups</p>
+              <div className="px-4 py-1.5 sticky top-0 bg-[hsl(var(--surface-1))]/90 backdrop-blur z-10">
+                <p className="text-[9px] font-bold text-[hsl(var(--text-3))] uppercase tracking-widest">Groups</p>
               </div>
               {chatListItems.filter(i => i.kind === "group").map(item => {
                 const isActive = view?.type === "group" && view.id === item.id;
                 return (
                   <button key={item.id}
                     onClick={() => { setView({ type: "group", id: item.id }); setMobileShowChat(true); setShowPanel(false); }}
-                    className={`w-full flex items-center gap-3 px-4 py-3 transition-colors text-left border-b border-crm-border/20 ${isActive ? "bg-crm-surface" : "hover:bg-crm-surface/60"}`}>
+                    className={`w-full flex items-center gap-3 px-4 py-3 transition-colors text-left border-b border-[hsl(var(--border-subtle))]/20 ${isActive ? "bg-[hsl(var(--surface-3))]" : "hover:bg-[hsl(var(--surface-3))]/60"}`}>
                     <Av name={item.name} url={item.avatarUrl} emoji={item.emoji} size={42} />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-baseline justify-between gap-1">
-                        <p className="text-[13px] font-semibold text-crm-text truncate">{item.name}</p>
+                        <p className="text-[13px] font-semibold text-[hsl(var(--text-1))] truncate">{item.name}</p>
                       </div>
-                      <p className="text-[11px] text-crm-text-faint truncate">{item.sub}</p>
+                      <p className="text-[11px] text-[hsl(var(--text-3))] truncate">{item.sub}</p>
                     </div>
                   </button>
                 );
@@ -1247,29 +1247,29 @@ export default function MessagingModule() {
           {/* DMs section */}
           {chatListItems.filter(i => i.kind === "dm").length > 0 && (
             <>
-              <div className="px-4 py-1.5 sticky top-0 bg-crm-card/90 backdrop-blur z-10">
-                <p className="text-[9px] font-bold text-crm-text-faint uppercase tracking-widest">Direct Messages</p>
+              <div className="px-4 py-1.5 sticky top-0 bg-[hsl(var(--surface-1))]/90 backdrop-blur z-10">
+                <p className="text-[9px] font-bold text-[hsl(var(--text-3))] uppercase tracking-widest">Direct Messages</p>
               </div>
               {chatListItems.filter(i => i.kind === "dm").map(item => {
                 const isActive = view?.type === "dm" && view.peerId === item.id;
                 return (
                   <button key={item.id}
                     onClick={() => { setView({ type: "dm", peerId: item.id, peerName: item.name, peerAvatar: item.avatarUrl }); setMobileShowChat(true); }}
-                    className={`w-full flex items-center gap-3 px-4 py-3 transition-colors text-left border-b border-crm-border/20 ${isActive ? "bg-crm-surface" : "hover:bg-crm-surface/60"}`}>
+                    className={`w-full flex items-center gap-3 px-4 py-3 transition-colors text-left border-b border-[hsl(var(--border-subtle))]/20 ${isActive ? "bg-[hsl(var(--surface-3))]" : "hover:bg-[hsl(var(--surface-3))]/60"}`}>
                     <div className="relative shrink-0">
                       <Av name={item.name} url={item.avatarUrl} size={42} />
-                      <span className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-crm-card ${item.online ? "bg-emerald-500" : "bg-crm-surface"}`} />
+                      <span className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-crm-card ${item.online ? "bg-emerald-500" : "bg-[hsl(var(--surface-3))]"}`} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-baseline justify-between gap-1">
-                        <p className="text-[13px] font-semibold text-crm-text truncate">{item.name}</p>
-                        {item.time && <span className="text-[10px] text-crm-text-faint shrink-0">{item.time}</span>}
+                        <p className="text-[13px] font-semibold text-[hsl(var(--text-1))] truncate">{item.name}</p>
+                        {item.time && <span className="text-[10px] text-[hsl(var(--text-3))] shrink-0">{item.time}</span>}
                       </div>
                       <div className="flex items-center justify-between gap-1">
                         <div className="min-w-0 flex-1">
-                          <p className="text-[11px] text-crm-text-faint truncate">{item.sub}</p>
+                          <p className="text-[11px] text-[hsl(var(--text-3))] truncate">{item.sub}</p>
                           {!item.online && presence[item.id]?.last_seen_at && (
-                            <p className="text-[9px] text-crm-text-faint/70 truncate mt-0.5">
+                            <p className="text-[9px] text-[hsl(var(--text-3))]/70 truncate mt-0.5">
                               {formatPresence(presence[item.id])}
                             </p>
                           )}
@@ -1290,25 +1290,25 @@ export default function MessagingModule() {
       </div>
 
       {/* ── Chat area ── */}
-      <div className={`flex-col flex-1 min-w-0 absolute md:relative inset-0 z-20 md:z-auto bg-crm-bg
+      <div className={`flex-col flex-1 min-w-0 absolute md:relative inset-0 z-20 md:z-auto bg-[hsl(var(--surface-2))]-bg
         ${mobileShowChat ? "flex" : "hidden md:flex"}`}
         style={{ backgroundImage: "radial-gradient(circle at 1px 1px, rgba(255,255,255,0.02) 1px, transparent 0)", backgroundSize: "24px 24px" }}>
 
         {!view ? (
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center space-y-3 px-8">
-              <div className="w-20 h-20 rounded-full bg-crm-surface border border-crm-border mx-auto flex items-center justify-center">
+              <div className="w-20 h-20 rounded-full bg-[hsl(var(--surface-3))] border border-[hsl(var(--border-subtle))] mx-auto flex items-center justify-center">
                 <MessageSquare size={32} className="text-emerald-700" />
               </div>
-              <p className="text-[14px] font-semibold text-crm-text">Select a chat</p>
-              <p className="text-[12px] text-crm-text-faint">Choose a group or contact to start messaging</p>
+              <p className="text-[14px] font-semibold text-[hsl(var(--text-1))]">Select a chat</p>
+              <p className="text-[12px] text-[hsl(var(--text-3))]">Choose a group or contact to start messaging</p>
               <div className="flex gap-2 justify-center pt-2">
                 <button onClick={() => setShowNewGroup(true)}
                   className="flex items-center gap-1.5 px-4 py-2 bg-emerald-700 hover:bg-emerald-600 text-white text-[12px] font-semibold rounded-full transition-colors">
                   <Users size={13} /> New Group
                 </button>
                 <button onClick={() => setShowNewDm(true)}
-                  className="flex items-center gap-1.5 px-4 py-2 border border-crm-border text-crm-text-muted hover:bg-crm-surface text-[12px] rounded-full transition-colors">
+                  className="flex items-center gap-1.5 px-4 py-2 border border-[hsl(var(--border-subtle))] text-[hsl(var(--text-2))] hover:bg-[hsl(var(--surface-3))] text-[12px] rounded-full transition-colors">
                   <MessageSquare size={13} /> New Message
                 </button>
               </div>
@@ -1319,9 +1319,9 @@ export default function MessagingModule() {
             {/* Chat column */}
             <div className="flex flex-col flex-1 min-w-0 min-h-0">
               {/* Header */}
-              <div className="flex items-center gap-3 px-4 py-3 border-b border-crm-border/60 bg-crm-card shrink-0">
+              <div className="flex items-center gap-3 px-4 py-3 border-b border-[hsl(var(--border-subtle))]/60 bg-[hsl(var(--surface-1))] shrink-0">
                 <button onClick={() => { setMobileShowChat(false); setShowPanel(false); }}
-                  className="md:hidden p-1 rounded text-crm-text-muted hover:text-crm-text">
+                  className="md:hidden p-1 rounded text-[hsl(var(--text-2))] hover:text-[hsl(var(--text-1))]">
                   <ArrowLeft size={18} />
                 </button>
                 <button onClick={() => view.type === "group" && setShowPanel(v => !v)} className="shrink-0">
@@ -1330,16 +1330,16 @@ export default function MessagingModule() {
                     : <div className="relative">
                         <Av name={activeDmPeer?.peerName ?? ""} url={activeDmPeer?.peerAvatar} size={38} />
                         {activeDmPeer && (
-                          <span className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-crm-card ${presence[activeDmPeer.peerId]?.online ? "bg-emerald-500" : "bg-crm-surface"}`} />
+                          <span className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-crm-card ${presence[activeDmPeer.peerId]?.online ? "bg-emerald-500" : "bg-[hsl(var(--surface-3))]"}`} />
                         )}
                       </div>
                   }
                 </button>
                 <div className="flex-1 min-w-0 cursor-pointer" onClick={() => view.type === "group" && setShowPanel(v => !v)}>
-                  <p className="text-[14px] font-bold text-crm-text truncate">
+                  <p className="text-[14px] font-bold text-[hsl(var(--text-1))] truncate">
                     {view.type === "group" ? activeGroup?.name : activeDmPeer?.peerName}
                   </p>
-                  <p className="text-[10px] text-crm-text-faint">
+                  <p className="text-[10px] text-[hsl(var(--text-3))]">
                     {view.type === "group"
                       ? `${members.length} members${groupTasks.filter(t => t.status !== "done").length > 0 ? ` · ${groupTasks.filter(t => t.status !== "done").length} open task${groupTasks.filter(t => t.status !== "done").length > 1 ? "s" : ""}` : ""}`
                       : formatPresence(presence[activeDmPeer?.peerId ?? ""])
@@ -1349,12 +1349,12 @@ export default function MessagingModule() {
                 <div className="flex items-center gap-1">
                   {view.type === "group" && (
                     <button onClick={() => setShowPanel(v => !v)}
-                      className={`p-2 rounded-full transition-colors ${showPanel ? "bg-emerald-950 text-emerald-400" : "hover:bg-crm-surface text-crm-text-muted"}`}
+                      className={`p-2 rounded-full transition-colors ${showPanel ? "bg-emerald-950 text-emerald-400" : "hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-2))]"}`}
                       title="Group info & tasks">
                       <ClipboardList size={16} />
                     </button>
                   )}
-                  <button className="p-2 rounded-full hover:bg-crm-surface text-crm-text-muted transition-colors">
+                  <button className="p-2 rounded-full hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-2))] transition-colors">
                     <MoreVertical size={16} />
                   </button>
                 </div>
@@ -1384,7 +1384,7 @@ export default function MessagingModule() {
                 ))}
                 {messages.length === 0 && !optimisticMsg && (
                   <div className="flex flex-col items-center justify-center h-40 gap-2 text-center">
-                    <p className="text-[12px] text-crm-text-faint">No messages yet. Say hello! 👋</p>
+                    <p className="text-[12px] text-[hsl(var(--text-3))]">No messages yet. Say hello! 👋</p>
                   </div>
                 )}
                 {/* Optimistic message — single tick while insert is in flight */}
@@ -1402,17 +1402,17 @@ export default function MessagingModule() {
               </div>
 
               {/* Input */}
-              <div className="px-3 py-3 border-t border-crm-border/60 bg-crm-card shrink-0">
-                <div className="relative flex items-end gap-2 bg-crm-surface border border-crm-border/60 rounded-2xl px-3 py-2 focus-within:border-emerald-700/60 transition-colors">
+              <div className="px-3 py-3 border-t border-[hsl(var(--border-subtle))]/60 bg-[hsl(var(--surface-1))] shrink-0">
+                <div className="relative flex items-end gap-2 bg-[hsl(var(--surface-3))] border border-[hsl(var(--border-subtle))]/60 rounded-2xl px-3 py-2 focus-within:border-emerald-700/60 transition-colors">
                   {/* @mention autocomplete popup */}
                   {showMentions && view.type === "group" && (
-                    <div className="absolute bottom-full left-0 right-0 mb-1 bg-crm-card border border-crm-border rounded-xl shadow-xl max-h-52 overflow-y-auto z-50">
+                    <div className="absolute bottom-full left-0 right-0 mb-1 bg-[hsl(var(--surface-1))] border border-[hsl(var(--border-subtle))] rounded-xl shadow-xl max-h-52 overflow-y-auto z-50">
                       <button
                         type="button"
                         onMouseDown={e => { e.preventDefault(); const lastAt = body.lastIndexOf("@"); setBody(body.slice(0, lastAt) + "@all "); setShowMentions(false); }}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-[12px] hover:bg-crm-surface transition-colors text-left">
+                        className="w-full flex items-center gap-2 px-3 py-2 text-[12px] hover:bg-[hsl(var(--surface-3))] transition-colors text-left">
                         <span className="font-bold text-emerald-400">@all</span>
-                        <span className="text-crm-text-faint">Notify everyone</span>
+                        <span className="text-[hsl(var(--text-3))]">Notify everyone</span>
                       </button>
                       {members
                         .filter(m => m.user_id !== user?.id && m.profile.full_name.toLowerCase().includes(mentionQuery.toLowerCase()))
@@ -1427,9 +1427,9 @@ export default function MessagingModule() {
                               setBody(body.slice(0, lastAt) + `@${mention} `);
                               setShowMentions(false);
                             }}
-                            className="w-full flex items-center gap-2 px-3 py-2 text-[12px] hover:bg-crm-surface transition-colors text-left">
+                            className="w-full flex items-center gap-2 px-3 py-2 text-[12px] hover:bg-[hsl(var(--surface-3))] transition-colors text-left">
                             <Av name={m.profile.full_name} url={m.profile.avatar_url} size={22} />
-                            <span className="text-crm-text truncate">{m.profile.full_name}</span>
+                            <span className="text-[hsl(var(--text-1))] truncate">{m.profile.full_name}</span>
                           </button>
                         ))}
                     </div>
@@ -1437,7 +1437,7 @@ export default function MessagingModule() {
                   {view.type === "group" && (
                     <button onClick={() => setShowCreateTask(true)}
                       title="Create group task"
-                      className="p-1 rounded text-crm-text-faint hover:text-emerald-400 transition-colors self-center shrink-0">
+                      className="p-1 rounded text-[hsl(var(--text-3))] hover:text-emerald-400 transition-colors self-center shrink-0">
                       <ListTodo size={16} />
                     </button>
                   )}
@@ -1467,7 +1467,7 @@ export default function MessagingModule() {
                     onBlur={() => setTimeout(() => setShowMentions(false), 150)}
                     placeholder={view.type === "group" ? "Type a message… (@ to mention)" : "Type a message…"}
                     rows={1}
-                    className="flex-1 bg-transparent text-[13px] text-crm-text placeholder-crm-text-faint outline-none resize-none max-h-32 overflow-y-auto"
+                    className="flex-1 bg-transparent text-[13px] text-[hsl(var(--text-1))] placeholder:text-[hsl(var(--text-3))] outline-none resize-none max-h-32 overflow-y-auto"
                     style={{ lineHeight: "1.5" }}
                   />
                   <button
@@ -1504,23 +1504,23 @@ export default function MessagingModule() {
       {/* ── New DM: pick a contact ── */}
       {showNewDm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-crm-card border border-crm-border rounded-2xl shadow-2xl w-full max-w-sm flex flex-col max-h-[80vh]">
-            <div className="flex items-center gap-3 px-4 py-3.5 border-b border-crm-border">
-              <button onClick={() => setShowNewDm(false)} className="p-1 rounded hover:bg-crm-surface text-crm-text-muted"><X size={15} /></button>
-              <p className="flex-1 text-[13px] font-bold text-crm-text">New Message</p>
+          <div className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border-subtle))] rounded-2xl shadow-2xl w-full max-w-sm flex flex-col max-h-[80vh]">
+            <div className="flex items-center gap-3 px-4 py-3.5 border-b border-[hsl(var(--border-subtle))]">
+              <button onClick={() => setShowNewDm(false)} className="p-1 rounded hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-2))]"><X size={15} /></button>
+              <p className="flex-1 text-[13px] font-bold text-[hsl(var(--text-1))]">New Message</p>
             </div>
             <div className="flex-1 overflow-y-auto py-1">
               {contacts.map(c => (
                 <button key={c.id}
                   onClick={() => { setView({ type: "dm", peerId: c.id, peerName: c.full_name, peerAvatar: c.avatar_url }); setMobileShowChat(true); setShowNewDm(false); }}
-                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-crm-surface transition-colors text-left">
+                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[hsl(var(--surface-3))] transition-colors text-left">
                   <div className="relative">
                     <Av name={c.full_name} url={c.avatar_url} size={38} />
-                    <span className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-crm-card ${presence[c.id]?.online ? "bg-emerald-500" : "bg-crm-surface"}`} />
+                    <span className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-crm-card ${presence[c.id]?.online ? "bg-emerald-500" : "bg-[hsl(var(--surface-3))]"}`} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-medium text-crm-text truncate">{c.full_name}</p>
-                    <p className="text-[10px] text-crm-text-faint truncate">{c.title || c.email}</p>
+                    <p className="text-[13px] font-medium text-[hsl(var(--text-1))] truncate">{c.full_name}</p>
+                    <p className="text-[10px] text-[hsl(var(--text-3))] truncate">{c.title || c.email}</p>
                   </div>
                 </button>
               ))}
