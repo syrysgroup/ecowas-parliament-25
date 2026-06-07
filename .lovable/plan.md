@@ -1,68 +1,57 @@
-# Phase 2 — Module Migration (parity pass)
+# Batch 2 — Communications (Email + Chat) restyle
 
-Goal: re-skin every existing CRM module onto the Phase 1 shell primitives (`PageHeader`, `Surface`, `StatCard`, `EmptyState`, new tokens) without touching data, queries, mutations, or business logic. Each batch ends in a shippable state.
+Re-skin EmailInboxModule (1,782 LOC) and MessagingModule (1,564 LOC) onto the Phase 1 primitives. **Chrome only** — every Supabase call, Zoho integration, query, mutation, thread/draft/presence hook stays byte-identical.
 
-## Ground rules (apply to every module)
+## Ground rules (carried from Phase 2 plan)
 
-- Wrap the module in `PageHeader` (icon + title + description + actions). Remove module-local title bars.
-- Replace `bg-crm*`, `text-crm*`, raw greys, and ad-hoc hex with the new semantic tokens (`--surface-1..4`, `--text-1/2/3`, `--border-subtle`, `--brand-*`).
-- Use `Surface` for cards/panels; `StatCard` for KPI tiles; `EmptyState` for zero-data; shadcn `Skeleton` for loading; toast on error.
-- Keyboard: ensure primary action has a shortcut (documented in the header tooltip). Cmd+K already global.
-- Mobile: verify at 375px — stack columns, hide non-essential toolbar bits.
-- Data layer (`useQuery`, mutations, Supabase calls, edge function calls) is untouched.
-- After each batch: visual diff at desktop + mobile, smoke-test primary CRUD path, then move on.
+- Wrap each module in `PageHeader` (icon + title + description + actions). Drop module-local title bars.
+- Replace every `bg-crm*`, `text-crm*`, `border-crm*`, and raw hex/grey with semantic tokens: `--surface-1..4`, `--text-1/2/3`, `--border-subtle`, `--brand-*`.
+- Panels/cards → `Surface`. Zero-state lists → `EmptyState`. Loading → shadcn `Skeleton`. Errors → toast.
+- Data layer untouched: no edits to `useQuery`, mutation functions, supabase calls, edge function calls, hotkeys that drive behavior, or the compose/undo-send/draft/template logic.
+- Verify at desktop + 375px mobile after each module.
 
-## Migration batches (sequential, each independently shippable)
+## Files touched
 
-**Batch 1 — Core workspace**
-Dashboard, Tasks, Calendar, Documents.
-Dashboard becomes `DashboardModuleV2`: KPI strip (StatCard), pending approvals, upcoming events, recent activity, quick actions wired to Command Palette.
+1. `apps/admin/src/components/crm/modules/EmailInboxModule.tsx`
+   - Top toolbar (folder switcher, search, pagination, sync button) → `PageHeader` with actions slot.
+   - Folder list + thread list + reading pane wrappers → `Surface`.
+   - Empty inbox / empty folder / no-search-results → `EmptyState`.
+   - Compose popover (lines ~570–700) and contact autocomplete (lines ~196–240) keep their structure; only color classes swap to tokens.
+   - `EmailSignaturePanel.tsx` gets the same token swap (small file, sibling component).
 
-**Batch 2 — Communications**
-Email Inbox, Chat (Messaging). Chrome-only restyle — Zoho integration, threads, drafts, presence all untouched. Per memory, business logic stays.
+2. `apps/admin/src/components/crm/modules/MessagingModule.tsx`
+   - Conversation list pane, message thread pane, composer → `Surface` wrappers.
+   - Header bar → `PageHeader` (title "Messaging", new-conversation action).
+   - Empty conversation list / no messages yet → `EmptyState`.
+   - Presence dot, typing indicator, avatar groups: only color tokens change.
 
-**Batch 3 — People & Access**
-People & Access, Roles, Team. Standard list+detail pattern via `Surface` + side panel.
+## Token mapping (applied everywhere)
 
-**Batch 4 — Content cluster** (after this batch, `shellV2` flag flips to default-on)
-News Editor, Events Manager, CMS, Site Content, Media Library.
+```text
+bg-crm-card        → bg-[hsl(var(--surface-1))]
+bg-crm-surface     → bg-[hsl(var(--surface-3))]
+border-crm-border  → border-[hsl(var(--border-subtle))]
+text-crm-text      → text-[hsl(var(--text-1))]
+text-crm-text-muted→ text-[hsl(var(--text-2))]
+text-crm-text-dim/faint → text-[hsl(var(--text-3))]
+primary (kept)     → text/bg-[hsl(var(--brand-green))]
+```
 
-**Batch 5 — Partners & Marketplace**
-Sponsors & Partners (incl. Partners tab per memory), Marketplace, Stakeholders, Media Kit.
+A short codemod-style pass per file, then manual review of the compose popover (most custom styling lives there).
 
-**Batch 6 — Programmes & Parliament**
-Programme Pillars, Parliament Content, Parliament Ops, Panorama.
+## Explicitly out of scope
 
-**Batch 7 — Analytics & Finance**
-Analytics, Geo Analytics, Sponsor Metrics, Finance, Invoices, SEO.
+- Zoho IMAP/SMTP sync, `sync-emails`, `send-email`, `save-draft`, `fetch-email-body`, `manage-folders`, `download-attachment` edge functions.
+- Pagination logic (25/page) and trash-folder hard-delete confirmation (per memory).
+- Draft persistence, undo-send countdown, template save/apply, signature insertion behavior.
+- Messaging realtime channel, presence, typing, optimistic send.
+- Any DB or RLS change.
 
-**Batch 8 — Outreach**
-Marketing, Newsletter, Contact Submissions.
+## Verification
 
-**Batch 9 — Admin surfaces**
-Super Admin Hub (preserve `Tab` union + `NAV` array pattern, restyle sub-tabs in `superadmin/`), Settings, Profile.
+- Type-check passes.
+- Open `/?shellV2=1`, switch to Inbox: folder switch, open thread, compose + send, save draft, switch folders, search. Repeat in `?shellV2=0` to confirm no regression.
+- Open Messaging: list loads, open conversation, send message, see presence.
+- 375px viewport spot-check for both.
 
-## Flag lifecycle
-
-- Batches 1–4: behind `?shellV2=1` + Settings toggle (current behavior).
-- After Batch 4 verified: `shellV2` defaults to ON; old `CRMLayout` kept as `?shellV2=0` escape hatch.
-- After Batch 9 verified: remove legacy `CRMLayout` + `bg-crm*` token aliases in a final cleanup commit.
-
-## Technical notes
-
-- No DB migrations in this phase.
-- `crmModules.ts` registry untouched (no new entries, no removals).
-- `usePermissions`, `is_crm_staff()`, `getModulesForRoles()` untouched.
-- Lazy-loaded modules stay lazy; eagerly-imported stay eager.
-- Each batch lands as its own coherent change so you can review/revert per batch.
-
-## Out of scope (unchanged from master plan)
-
-- Email/Messaging logic rewrites.
-- New modules (those are Phase 3).
-- Public website changes.
-- DB schema changes.
-
-## Open question
-
-Start Batch 1 now? Or want me to land the `DashboardModuleV2` first as a standalone preview before touching Tasks/Calendar/Documents?
+Flag remains `?shellV2=1`. After this batch, only Batches 3 and 4 remain before the flag flips default-on.

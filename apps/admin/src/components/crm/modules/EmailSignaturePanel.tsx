@@ -111,16 +111,16 @@ export default function EmailSignaturePanel() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
       {/* Form */}
-      <div className="bg-crm-card border border-crm-border rounded-xl p-5 space-y-4">
-        <h3 className="text-[13px] font-semibold text-crm-text flex items-center gap-2">
+      <div className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border-subtle))] rounded-xl p-5 space-y-4">
+        <h3 className="text-[13px] font-semibold text-[hsl(var(--text-1))] flex items-center gap-2">
           <PenLine size={14} className="text-emerald-400" />
           Email Signature
         </h3>
 
         <div className="space-y-1">
-          <Label className="text-[10px] text-crm-text-muted uppercase tracking-wider">Title</Label>
+          <Label className="text-[10px] text-[hsl(var(--text-2))] uppercase tracking-wider">Title</Label>
           <Select value={honorific} onValueChange={setHonorific}>
-            <SelectTrigger className="bg-crm-surface border-crm-border text-crm-text-secondary text-sm h-9">
+            <SelectTrigger className="bg-[hsl(var(--surface-3))] border-[hsl(var(--border-subtle))] text-[hsl(var(--text-2))] text-sm h-9">
               <SelectValue placeholder="Select title…" />
             </SelectTrigger>
             <SelectContent>
@@ -133,37 +133,37 @@ export default function EmailSignaturePanel() {
 
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1">
-            <Label className="text-[10px] text-crm-text-muted uppercase tracking-wider">First Name</Label>
+            <Label className="text-[10px] text-[hsl(var(--text-2))] uppercase tracking-wider">First Name</Label>
             <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="First name"
-              className="bg-crm-surface border-crm-border text-crm-text-secondary text-sm h-9" />
+              className="bg-[hsl(var(--surface-3))] border-[hsl(var(--border-subtle))] text-[hsl(var(--text-2))] text-sm h-9" />
           </div>
           <div className="space-y-1">
-            <Label className="text-[10px] text-crm-text-muted uppercase tracking-wider">Last Name</Label>
+            <Label className="text-[10px] text-[hsl(var(--text-2))] uppercase tracking-wider">Last Name</Label>
             <Input value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Last name"
-              className="bg-crm-surface border-crm-border text-crm-text-secondary text-sm h-9" />
+              className="bg-[hsl(var(--surface-3))] border-[hsl(var(--border-subtle))] text-[hsl(var(--text-2))] text-sm h-9" />
           </div>
         </div>
 
         <div className="space-y-1">
-          <Label className="text-[10px] text-crm-text-muted uppercase tracking-wider">Position</Label>
+          <Label className="text-[10px] text-[hsl(var(--text-2))] uppercase tracking-wider">Position</Label>
           <Input value={position} onChange={(e) => setPosition(e.target.value)} placeholder="e.g. Programme Officer"
-            className="bg-crm-surface border-crm-border text-crm-text-secondary text-sm h-9" />
+            className="bg-[hsl(var(--surface-3))] border-[hsl(var(--border-subtle))] text-[hsl(var(--text-2))] text-sm h-9" />
         </div>
 
         <div className="space-y-1">
-          <Label className="text-[10px] text-crm-text-muted uppercase tracking-wider">Mobile Number</Label>
+          <Label className="text-[10px] text-[hsl(var(--text-2))] uppercase tracking-wider">Mobile Number</Label>
           <Input value={mobile} onChange={(e) => setMobile(e.target.value)} placeholder="+234 814 560 62 67"
-            className="bg-crm-surface border-crm-border text-crm-text-secondary text-sm h-9" />
+            className="bg-[hsl(var(--surface-3))] border-[hsl(var(--border-subtle))] text-[hsl(var(--text-2))] text-sm h-9" />
         </div>
 
         <div className="flex items-center justify-between pt-1">
-          <Label className="text-[11px] text-crm-text-muted">Append signature on send</Label>
+          <Label className="text-[11px] text-[hsl(var(--text-2))]">Append signature on send</Label>
           <Switch checked={isActive} onCheckedChange={setIsActive} />
         </div>
 
-        <div className="pt-2 border-t border-crm-border">
+        <div className="pt-2 border-t border-[hsl(var(--border-subtle))]">
           {emailAddress ? (
-            <p className="text-[11px] text-crm-text-muted">
+            <p className="text-[11px] text-[hsl(var(--text-2))]">
               Your signature email: <span className="text-emerald-400 font-medium">{emailAddress}</span>
             </p>
           ) : (
@@ -180,8 +180,8 @@ export default function EmailSignaturePanel() {
 
       {/* Live Preview */}
       <div className="space-y-2">
-        <h3 className="text-[13px] font-semibold text-crm-text">Live Preview</h3>
-        <div className="border border-crm-border rounded-xl p-5 bg-white">
+        <h3 className="text-[13px] font-semibold text-[hsl(var(--text-1))]">Live Preview</h3>
+        <div className="border border-[hsl(var(--border-subtle))] rounded-xl p-5 bg-white">
           <div style={{ fontFamily: "Arial, sans-serif", fontSize: 13, color: "#222", paddingTop: 12, borderTop: "2px solid #006633" }}>
             <strong style={{ fontSize: 14, color: "#111" }}>
               {previewName || "Your Name"}
