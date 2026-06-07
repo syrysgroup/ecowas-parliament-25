@@ -1258,7 +1258,7 @@ export default function MessagingModule() {
                     className={`w-full flex items-center gap-3 px-4 py-3 transition-colors text-left border-b border-[hsl(var(--border-subtle))]/20 ${isActive ? "bg-[hsl(var(--surface-3))]" : "hover:bg-[hsl(var(--surface-3))]/60"}`}>
                     <div className="relative shrink-0">
                       <Av name={item.name} url={item.avatarUrl} size={42} />
-                      <span className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-crm-card ${item.online ? "bg-emerald-500" : "bg-[hsl(var(--surface-3))]"}`} />
+                      <span className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-[hsl(var(--surface-1))] ${item.online ? "bg-emerald-500" : "bg-[hsl(var(--surface-3))]"}`} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-baseline justify-between gap-1">
@@ -1330,7 +1330,7 @@ export default function MessagingModule() {
                     : <div className="relative">
                         <Av name={activeDmPeer?.peerName ?? ""} url={activeDmPeer?.peerAvatar} size={38} />
                         {activeDmPeer && (
-                          <span className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-crm-card ${presence[activeDmPeer.peerId]?.online ? "bg-emerald-500" : "bg-[hsl(var(--surface-3))]"}`} />
+                          <span className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-[hsl(var(--surface-1))] ${presence[activeDmPeer.peerId]?.online ? "bg-emerald-500" : "bg-[hsl(var(--surface-3))]"}`} />
                         )}
                       </div>
                   }
@@ -1516,7 +1516,7 @@ export default function MessagingModule() {
                   className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[hsl(var(--surface-3))] transition-colors text-left">
                   <div className="relative">
                     <Av name={c.full_name} url={c.avatar_url} size={38} />
-                    <span className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-crm-card ${presence[c.id]?.online ? "bg-emerald-500" : "bg-[hsl(var(--surface-3))]"}`} />
+                    <span className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-[hsl(var(--surface-1))] ${presence[c.id]?.online ? "bg-emerald-500" : "bg-[hsl(var(--surface-3))]"}`} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-[13px] font-medium text-[hsl(var(--text-1))] truncate">{c.full_name}</p>
