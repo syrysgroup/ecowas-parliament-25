@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 // Eager — core modules used immediately
 import DashboardModule    from "@/components/crm/modules/DashboardModule";
+import DashboardModuleV2  from "@/components/crm/modules/v2/DashboardModuleV2";
 import TaskBoardModule    from "@/components/crm/modules/TaskBoardModule";
 
 import CalendarModule     from "@/components/crm/modules/CalendarModule";
