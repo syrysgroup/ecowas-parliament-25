@@ -133,7 +133,9 @@ export default function CRMDashboard() {
   // Map section key → component (keep-alive: components are mounted once and hidden, not unmounted)
   const getModuleForSection = (sec: string): ReactNode => {
     switch (sec) {
-      case "":                return <DashboardModule onNavigate={navigateSection} />;
+      case "":                return useShellV2
+        ? <DashboardModuleV2 onNavigate={navigateSection} />
+        : <DashboardModule onNavigate={navigateSection} />;
       case "tasks":           return <TaskBoardModule />;
       case "calendar":        return <CalendarModule />;
       case "team":            return <TeamModule />;
@@ -167,7 +169,9 @@ export default function CRMDashboard() {
       case "invoices":           return <InvoiceModule />;
       case "profile":            return <ProfileModule />;
       case "roles":              return <RolesModule />;
-      default:                   return <DashboardModule onNavigate={navigateSection} />;
+      default:                   return useShellV2
+        ? <DashboardModuleV2 onNavigate={navigateSection} />
+        : <DashboardModule onNavigate={navigateSection} />;
     }
   };
 
