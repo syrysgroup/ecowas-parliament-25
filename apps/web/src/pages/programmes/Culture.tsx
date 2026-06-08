@@ -33,7 +33,10 @@ const Culture = () => {
       <section className="py-20 bg-gradient-hero text-primary-foreground">
         <div className="container">
           <Button asChild variant="secondary" className="mb-6">
-            <Link to="/"><ArrowLeft className="mr-2 h-4 w-4" />Back to Home</Link>
+            <Link to="/">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Home
+            </Link>
           </Button>
           <div className="flex items-center gap-3 mb-4">
             <Palette className="h-6 w-6" />
