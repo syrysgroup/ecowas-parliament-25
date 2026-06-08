@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import NotFound from "@/pages/NotFound";
 import Layout from "@/components/layout/Layout";
 import AnimatedSection from "@/components/shared/AnimatedSection";
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,7 @@ import FlagImg from "@/components/shared/FlagImg";
 import ProgrammeSponsorMarquee from "@/components/shared/ProgrammeSponsorMarquee";
 import ProgrammeSponsorsFooter from "@/components/shared/ProgrammeSponsorsFooter";
 import CommitteeStakeholders from "@/components/shared/CommitteeStakeholders";
+import { useProgrammeVisibility } from "@/hooks/useProgrammeVisibility";
 
 const categories = [
   { title: "Legislative Excellence Award", desc: "For outstanding contributions to lawmaking and regional policy development that have advanced the ECOWAS integration agenda.", icon: <Scale className="h-6 w-6" />, color: "bg-primary/10 text-primary" },
@@ -48,7 +50,24 @@ const objectives = [
   "Foster a culture of accountability and service among elected representatives",
 ];
 
-const Awards = () => (
+const Awards = () => {
+  const { isLoading, isVisible } = useProgrammeVisibility("awards");
+
+  if (isLoading) {
+  return (
+    <Layout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+        </div>
+    </Layout>
+  );
+  }
+
+  if (!isVisible) {
+    return <NotFound />;
+  }
+
+  return (
   <Layout>
     <ProgrammeSponsorMarquee programme="awards" />
     {/* Hero */}
@@ -279,6 +298,7 @@ const Awards = () => (
     <CommitteeStakeholders programmeSlug="awards" />
     <ProgrammeSponsorsFooter programme="awards" />
   </Layout>
-);
+  );
+};
 
 export default Awards;

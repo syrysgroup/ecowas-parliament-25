@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import NotFound from "@/pages/NotFound";
 import Layout from "@/components/layout/Layout";
 import AnimatedSection from "@/components/shared/AnimatedSection";
 import HeroIllustration from "@/components/shared/HeroIllustration";
@@ -14,6 +15,7 @@ import FlagImg from "@/components/shared/FlagImg";
 import ProgrammeSponsorMarquee from "@/components/shared/ProgrammeSponsorMarquee";
 import ProgrammeSponsorsFooter from "@/components/shared/ProgrammeSponsorsFooter";
 import CommitteeStakeholders from "@/components/shared/CommitteeStakeholders";
+import { useProgrammeVisibility } from "@/hooks/useProgrammeVisibility";
 
 const caravanStops = [
   { type: "Airports", desc: "Branded installations at major West African airports reaching thousands of travellers daily.", icon: <Plane className="h-6 w-6" /> },
@@ -69,7 +71,24 @@ const objectives = [
   "Build public understanding of the ECOWAS Parliament Initiatives's role and impact",
 ];
 
-const Civic = () => (
+const Civic = () => {
+  const { isLoading, isVisible } = useProgrammeVisibility("civic");
+
+  if (isLoading) {
+  return (
+    <Layout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+        </div>
+    </Layout>
+  );
+  }
+
+  if (!isVisible) {
+    return <NotFound />;
+  }
+
+  return (
   <Layout>
     <ProgrammeSponsorMarquee programme="civic" />
     {/* Hero */}
@@ -268,6 +287,7 @@ const Civic = () => (
     <CommitteeStakeholders programmeSlug="civic" />
     <ProgrammeSponsorsFooter programme="civic" />
   </Layout>
-);
+  );
+};
 
 export default Civic;

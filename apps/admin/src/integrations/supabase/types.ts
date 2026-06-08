@@ -1721,6 +1721,7 @@ export type Database = {
         Row: {
           color: string | null
           created_at: string
+          description: string | null
           display_order: number
           emoji: string | null
           icon_bg: string | null
@@ -1737,6 +1738,7 @@ export type Database = {
         Insert: {
           color?: string | null
           created_at?: string
+          description?: string | null
           display_order?: number
           emoji?: string | null
           icon_bg?: string | null
@@ -1753,6 +1755,7 @@ export type Database = {
         Update: {
           color?: string | null
           created_at?: string
+          description?: string | null
           display_order?: number
           emoji?: string | null
           icon_bg?: string | null

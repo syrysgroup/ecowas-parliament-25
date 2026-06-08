@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import NotFound from "@/pages/NotFound";
 import Layout from "@/components/layout/Layout";
 import AnimatedSection from "@/components/shared/AnimatedSection";
 import HeroIllustration from "@/components/shared/HeroIllustration";
@@ -17,9 +18,25 @@ import {
 } from "lucide-react";
 import { useTranslation } from "@/lib/i18n";
 import FlagImg from "@/components/shared/FlagImg";
+import { useProgrammeVisibility } from "@/hooks/useProgrammeVisibility";
 
 const Trade = () => {
   const { t } = useTranslation();
+  const { isLoading, isVisible } = useProgrammeVisibility("trade");
+
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+        </div>
+      </Layout>
+    );
+  }
+
+  if (!isVisible) {
+    return <NotFound />;
+  }
 
   const t2tSteps = [
     { step: "01", title: t("trade.t2t.step1.title"), desc: t("trade.t2t.step1.desc"), icon: <FileSearch className="h-6 w-6" /> },

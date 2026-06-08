@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Plus, Pencil, Trash2, ChevronUp, ChevronDown, Eye, EyeOff } from "lucide-react";
@@ -8,6 +8,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -319,6 +320,7 @@ function PillarsTab() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<PillarRow | undefined>();
   const [deleting, setDeleting] = useState<PillarRow | undefined>();
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const { data: pillars = [], isLoading } = useQuery<PillarRow[]>({
     queryKey: ["programme_pillars"],
@@ -375,8 +377,63 @@ function PillarsTab() {
     onError: (err: any) => toast({ title: "Error", description: err.message, variant: "destructive" }),
   });
 
+  const bulkSetActiveMutation = useMutation({
+    mutationFn: async (is_active: boolean) => {
+      await Promise.all(
+        [...selectedIds].map((id) =>
+          supabase.from("programme_pillars").update({ is_active }).eq("id", id)
+        )
+      );
+    },
+    onSuccess: (_d, isActive) => {
+      qc.invalidateQueries({ queryKey: ["programme_pillars"] });
+      setSelectedIds(new Set());
+      toast({ title: isActive ? "Selected programmes shown" : "Selected programmes hidden" });
+    },
+    onError: (err: any) => toast({ title: "Error", description: err.message, variant: "destructive" }),
+  });
+
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async () => {
+      await Promise.all(
+        [...selectedIds].map((id) =>
+          supabase.from("programme_pillars").delete().eq("id", id)
+        )
+      );
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["programme_pillars"] });
+      setSelectedIds(new Set());
+      toast({ title: "Selected programmes deleted" });
+    },
+    onError: (err: any) => toast({ title: "Error", description: err.message, variant: "destructive" }),
+  });
+
   const openCreate = () => { setEditing(undefined); setDialogOpen(true); };
   const openEdit = (p: PillarRow) => { setEditing(p); setDialogOpen(true); };
+
+  const allSelected = useMemo(
+    () => pillars.length > 0 && pillars.every((p) => selectedIds.has(p.id)),
+    [pillars, selectedIds]
+  );
+
+  const selectedCount = selectedIds.size;
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (allSelected) {
+      setSelectedIds(new Set());
+      return;
+    }
+    setSelectedIds(new Set(pillars.map((p) => p.id)));
+  };
 
   return (
     <div className="space-y-4">
@@ -392,14 +449,63 @@ function PillarsTab() {
         )}
       </div>
 
+      {selectedCount > 0 && (
+        <div className="flex items-center gap-2 bg-crm-surface border border-crm-border rounded-lg px-3 py-2">
+          <span className="text-[11px] text-crm-text-muted">{selectedCount} selected</span>
+          {canEdit(MODULE) && (
+            <>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => bulkSetActiveMutation.mutate(true)}
+                disabled={bulkSetActiveMutation.isPending}
+                className="border-emerald-800 text-emerald-400 text-[10px] h-6 px-2"
+              >
+                Show
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => bulkSetActiveMutation.mutate(false)}
+                disabled={bulkSetActiveMutation.isPending}
+                className="border-amber-800 text-amber-400 text-[10px] h-6 px-2"
+              >
+                Hide
+              </Button>
+            </>
+          )}
+          {canDelete(MODULE) && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => bulkDeleteMutation.mutate()}
+              disabled={bulkDeleteMutation.isPending}
+              className="border-red-800 text-red-400 text-[10px] h-6 px-2"
+            >
+              Delete
+            </Button>
+          )}
+        </div>
+      )}
+
       {isLoading ? (
         <div className="flex justify-center py-12">
           <div className="w-6 h-6 border-2 border-emerald-700 border-t-emerald-400 rounded-full animate-spin" />
         </div>
       ) : (
         <div className="space-y-2">
+          {pillars.length > 0 && (
+            <div className="flex items-center gap-2 px-2">
+              <Checkbox
+                checked={allSelected}
+                onCheckedChange={toggleSelectAll}
+              />
+              <span className="text-[10px] text-crm-text-dim">Select all</span>
+            </div>
+          )}
           {pillars.map((p, idx) => (
             <div key={p.id} className="flex items-center gap-3 bg-crm-card border border-crm-border rounded-xl px-4 py-3">
+              <Checkbox checked={selectedIds.has(p.id)} onCheckedChange={() => toggleSelect(p.id)} />
               {/* Reorder buttons */}
               <div className="flex flex-col gap-0.5">
                 <Button variant="ghost" size="icon" className="h-5 w-5 text-crm-text-dim hover:text-crm-text"
@@ -521,7 +627,7 @@ function PageContentTab() {
   const [ctaUrl, setCtaUrl] = useState("");
   const [heroSaving, setHeroSaving] = useState(false);
 
-  const { data: pillars = [] } = useQuery<PillarRow[]>({
+  const { data: pillars = [] } = useQuery<Pick<PillarRow, 'id' | 'slug' | 'title' | 'emoji'>[]>({
     queryKey: ["programme_pillars"],
     queryFn: async () => {
       const { data, error } = await supabase.from("programme_pillars").select("id,slug,title,emoji").order("display_order");
