@@ -583,7 +583,7 @@ export default function RolesModule() {
       <div className="flex flex-col lg:flex-row gap-5 min-h-0">
         {/* ── Left: Role cards ── */}
         <div className="w-full lg:w-[280px] lg:shrink-0 space-y-1.5">
-          <div className="flex items-center justify-between px-1 mb-2">
+          <div className="relative flex items-center justify-between px-1 mb-2">
             <p className="text-[10px] font-semibold text-[hsl(var(--text-3))] uppercase tracking-wider">
               Select a role
             </p>
