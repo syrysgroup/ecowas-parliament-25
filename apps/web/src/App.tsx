@@ -129,6 +129,10 @@ const App = () => (
               <Route path="/terms"   element={<LegalPage pageKey="terms" />} />
               <Route path="/cookies" element={<LegalPage pageKey="cookies" />} />
 
+              {/* Admin-driven CMS pages and forms */}
+              <Route path="/p/:slug" element={<CMSPage />} />
+              <Route path="/forms/:slug" element={<CMSForm />} />
+
               {/* Marketplace */}
               <Route path="/marketplace" element={<Marketplace />} />
               <Route path="/marketplace/sell" element={<MarketplaceSell />} />
