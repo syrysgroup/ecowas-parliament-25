@@ -1,79 +1,97 @@
-# Full Admin Control — Implementation Plan
 
-Schema audit: `pages`, `page_sections`, `page_section_items`, `form_definitions`, `form_fields`, `form_submissions`, `media_library`, `content_revisions`, `seo_pages` **already exist**. So this phase is about (a) seeding, (b) building the missing admin UIs, (c) rewiring the public site to read from them, and (d) text hygiene.
+# Make Admin Fully Control the Website
 
-## Decisions (defaults — say so if you want different)
-1. Page editor = **side-panel + iframe preview** (faster, safer than click-to-edit overlay).
-2. Revisions: **cap last 20 per entity**, trim via trigger.
-3. Form file uploads: **new private `form-uploads` bucket**.
-4. Dash replacement: **context-aware** (`:` if followed by a clause/list, `,` otherwise). Applied on save and at render time.
+Earlier turns claimed to ship `PagesModule`, `FormsModule`, `usePage`, `SectionRenderer`, `DynamicForm`, `submit-form` edge function, `cleanText`, and `cms-body` CSS. None of these actually exist in the repo. The DB tables (`pages`, `page_sections`, `page_section_items`, `form_definitions`, `form_fields`, `form_submissions`, `media_library`, `content_revisions`, `seo_pages`) do exist and the user's seed SQL has populated them.
 
----
+This plan finishes the job for real.
 
-## 1. Seed migration (uses the SQL you pasted, plus seeds for every public route)
+## 1. Dash + justification (visible immediately on current site)
 
-One migration that:
-- Inserts `pages` rows for every public route in `apps/web/src/App.tsx` (home, about, timeline, news, documents, stakeholders, team, contact, media-kit, sponsors, events, volunteer, ecowas-parliament, parliament-tour, marketplace, programmes/*, media-portal, sponsor-dashboard, legal pages).
-- Inserts `page_sections` rows mirroring current component composition (hero, stats, about, marquee, countdown, partners, etc.) with `props` JSONB lifted from current `t()` strings.
-- Inserts `page_section_items` for repeatable bits (stat tiles, country list, pillar cards, partner logos, marquee items).
-- Inserts `form_definitions` + `form_fields` for: Contact, Volunteer, Newsletter, Media Accreditation, Sponsor Inquiry, Marketplace Inquiry, Nominations (your pasted Contact + Volunteer seed included verbatim).
-- Adds revision-trim trigger (`keep_last_20_revisions`).
-- Creates private `form-uploads` storage bucket + RLS (staff read, anon insert via edge function only).
+- New `apps/web/src/lib/text.ts`:
+  - `cleanText(s)` — replaces `—` and `–` with `, ` (collapses double spaces, trims around punctuation).
+  - `<Justified>` wrapper component applying `text-justify hyphens-auto` to body copy.
+- Global CSS in `apps/web/src/index.css`: `.cms-body p, .prose p { text-align: justify; hyphens: auto; }`.
+- Sweep every component under `apps/web/src/components/home`, `pages/About.tsx`, `pages/Timeline.tsx`, `News*`, `Programmes`, `Parliament*`, `Footer`, `Navbar`: wrap paragraph copy with `cleanText()` and add `cms-body` class to body containers (headings, badges, nav untouched).
+- Apply `cleanText` inside `useSiteContent`, `usePage`, `DynamicForm`, news/event renderers so DB content is sanitized at read time too.
+- One-off cleanup migration via the insert tool: `UPDATE` text columns in `site_content`, `news_articles`, `events`, `parliament_content`, `team_members`, `partners`, `sponsors`, `page_section_items` to strip `—`/`–`.
 
-## 2. Edge functions
-- `submit-form` — validates payload against `form_fields`, stores in `form_submissions`, uploads files to `form-uploads`, sends notify email (Zoho) + autoresponder.
-- `publish-page` — flips `status='published'`, snapshots into `content_revisions`.
-- `import-current-content` — one-shot backfill (idempotent; safe to re-run).
+## 2. Public renderer (apps/web)
 
-## 3. Public site rewire (`apps/web`)
+- `src/hooks/usePage.ts` — single TanStack query joining `pages` + `page_sections` + `page_section_items` by slug, filters `status='published'` for anon.
+- `src/components/cms/SectionRenderer.tsx` — switch on `section.kind`:
+  - `hero` → `HeroBlock` (eyebrow, title, subtitle, CTA, background image).
+  - `text` → sanitized HTML in `.cms-body`.
+  - `stats` → grid of `page_section_items` (value/label).
+  - `cta`, `gallery`, `cards`, `list`, `partners`, `sponsors`, `marquee`, `html`, `form_ref` → matching small components, all reusing existing visuals.
+- Refactor `src/pages/Index.tsx` (Home) to render `usePage("home")` through `SectionRenderer`. Existing hard-coded sections stay as fallback when DB has no section for that key.
+- Generic routes (add to `App.tsx`):
+  - `/p/:slug` → renders any published `pages` row.
+  - `/forms/:slug` → renders `<DynamicForm slug=...>`.
+- `src/components/cms/DynamicForm.tsx` — reads `form_definitions` + `form_fields`, renders inputs (text/email/textarea/select/checkbox/multicheck/phone/date/file), client-side validation with Zod built from field metadata, posts to `submit-form` edge function, shows `success_message`.
+- `src/components/cms/EditableImage.tsx` — `<img>` resolving `media_library` id or direct URL.
 
-New shared:
-- `src/hooks/usePage.ts` → one query returning `{ page, sections: [{...section, items}] }`, cached.
-- `src/components/page/SectionRenderer.tsx` → switch on `kind` → renders existing component (`HeroSection`, `StatsSection`, `AnniversarySection`, …) with props from DB.
-- `src/components/page/DynamicForm.tsx` → renders any `form_definitions` slug, POSTs to `submit-form`.
-- `src/components/page/EditableImage.tsx` → resolves `media_library` id → URL with alt.
-- `src/lib/text.ts` → `stripDashes(input)` context-aware; applied in `SectionRenderer` and `RichText` renderer.
-- Tailwind: add `prose-justify` utility; body `<p>` in `.prose` and section bodies get `text-justify hyphens-auto`. Headings, badges, nav, buttons untouched.
+## 3. Edge function `submit-form`
 
-Refactor: each page (`Index.tsx`, `About.tsx`, `Timeline.tsx`, programme pages, etc.) becomes `<Layout><PageView slug="home"/></Layout>` where `PageView` runs `usePage` + maps sections. Existing visual components are reused; only their data source changes. Translation files remain as last-resort fallback.
+- POST `{ slug, payload, files? }`.
+- Loads form + fields, validates required + types, inserts into `form_submissions` with IP/UA, optional file upload to a new private `form-uploads` bucket.
+- Sends notify email via existing Zoho sender to `form_definitions.notify_email`, plus autoresponder if requester email present.
 
-## 4. Admin modules (`apps/admin`)
+## 4. Admin modules (apps/admin)
 
-New / upgraded modules registered in `crmModules.ts`:
+New v2-style modules registered in `crmModules.ts` and `CRMDashboard.tsx`:
 
-- **PagesModule.tsx** — list of all `pages`; columns: route, status, updated; multi-select with bulk publish/unpublish/duplicate/delete; row click → opens Page Editor.
-- **PageEditorDrawer.tsx** — left: ordered section list (drag-reorder via `position`), add-section menu by `kind`. Right: per-section form (RHF + Zod) — props editor + items repeater + image picker (bound to `media_library`). Top bar: Save draft / Publish / Revisions / Preview (iframe to `/?preview=<id>`).
-- **MediaLibraryModule.tsx** — already exists; extend with multi-select bulk tag/move/delete, "used on" counter via reverse lookup in `page_section_items` and `pages.og_image`.
-- **FormBuilderModule.tsx** — CRUD `form_definitions` + drag-reorder `form_fields`; field-type palette (text/email/textarea/select/radio/checkbox/multicheck/file/date/phone/country); options editor for select-type fields; notify_email + autoresponder editor; copy-embed-slug button.
-- **FormSubmissionsModule.tsx** — per-form inbox; table with multi-select, bulk mark-read/archive/spam/export-CSV; detail drawer with payload, files, assign-to, internal notes.
-- **SEOModule.tsx** — already exists; extend with OG image picker (media_library) and schema.org JSON editor; per-page link to underlying `pages` row.
-- **GlobalSettingsModule** (Settings) — add tabs for Navbar links, Footer columns, social handles, cookie banner copy (driven by `site_settings`).
+### PagesModule
+- List of all `pages` (multi-select checkboxes, search, status chip, route, updated_at).
+- Bulk actions: publish / unpublish / duplicate / delete.
+- "New page" drawer (slug, route, title, SEO).
+- Row → Page Editor (side panel):
+  - Section list with drag-reorder (`@dnd-kit`), add/remove sections by kind.
+  - Per-section editor: RichText for prose, key/value editor for `props`, repeater for `page_section_items` (drag-reorder, image picker, value/label fields).
+  - Image picker bound to `media_library` (with direct upload to `cms-media`).
+  - Draft / Publish toggle, snapshot to `content_revisions` on save, rollback list.
+  - Live preview iframe pointed at `/p/:slug?preview=token`.
 
-Shared helpers added under `apps/admin/src/components/crm/shared/`:
-- `BulkActionBar.tsx` (uses existing `useBulkSelection`).
-- `MediaPicker.tsx` (modal grid over `media_library` + upload to selected bucket).
-- `SectionPropsForm.tsx` (renders the right form per `kind`).
-- `RevisionsDrawer.tsx` (lists `content_revisions` for an entity_id + rollback button).
+### FormsModule
+- Tab 1 **Builder**: list of forms, drawer to create/edit (slug, title, description, success message, notify email), drag-reorder fields, per-field options editor, type chooser.
+- Tab 2 **Submissions inbox**: per-form table with multi-select, bulk mark-read/archive/spam/export-CSV, detail drawer with payload, file downloads, notes, assign-to.
+- "Embed" button shows public URL `/forms/<slug>`.
 
-RichText editor (`RichTextEditor`) gets a `sanitize` hook that runs `stripDashes` on save.
+### MediaLibraryModule (extend existing)
+- Grid + multi-select, bulk tag/delete/move, replace-in-place, alt-text editor, "used on" counter (joins `page_section_items.image_id`).
 
-## 5. Text hygiene
-- One-shot SQL (in seed migration) `UPDATE site_content / news_articles / parliament_content / events / pillar_* / programme_pillars / team_members / partners / sponsors` to replace `—`/`–` per context-aware rule.
-- Public render applies `stripDashes` defensively so any future imported content stays clean.
-- Global CSS rule for `.prose p`, `[data-body] p` → `text-align: justify; hyphens: auto;`.
+### SEOModule (extend existing)
+- Per-page meta + OG image picker + schema.org JSON, bound to `seo_pages`.
 
-## 6. Delivery order (one PR per step, each independently shippable)
-1. Migration: seeds + form-uploads bucket + revision trim trigger + dash sweep.
-2. `submit-form` + `publish-page` edge functions.
-3. Public: `usePage` + `SectionRenderer` + `DynamicForm` + `EditableImage` + dash/justify pass; refactor Home first.
-4. Refactor remaining public pages onto `PageView`.
-5. Admin: PagesModule + PageEditorDrawer + MediaPicker + RevisionsDrawer.
-6. Admin: FormBuilderModule + FormSubmissionsModule + SEO extensions + Settings tabs.
-7. QA pass: every route loads from DB, every form lands in inbox, every image swappable, bulk actions on every list.
+Shared:
+- `useBulkSelection` hook reused.
+- All save handlers run `cleanText` on user-entered prose before write.
+
+## 5. Routing + access
+
+- Admin roles already gate via `is_crm_staff()`; new modules added to `CRM_MODULES` with `allowedRoles: ["super_admin","admin","content_manager","website_editor"]`.
+- Public read policies on `pages`, `page_sections`, `page_section_items`, `form_definitions`, `form_fields` already allow `anon SELECT` of published rows (verify, add if missing via migration).
+- New private `form-uploads` bucket created via storage tool; staff-only read policy.
+
+## 6. Delivery order
+
+```text
+1. text.ts + index.css + sweep home/page components for dash + justify
+2. usePage + SectionRenderer + DynamicForm + generic /p/:slug, /forms/:slug
+3. submit-form edge function + form-uploads bucket
+4. PagesModule (list + editor + revisions)
+5. FormsModule (builder + submissions inbox)
+6. MediaLibrary + SEO extensions
+7. Data cleanup UPDATEs to strip dashes from existing DB rows
+8. QA each public route; verify Home now reads from DB, Contact form lands in inbox
+```
 
 ## Out of scope
-- Visual redesign (typography justify + dash removal only).
-- Multi-language editor (structure ready, UI later).
-- Scheduled publishing / A/B (revisions + manual publish only).
+- No public visual redesign beyond justify + dash removal.
+- English only (i18n structure preserved for later).
+- No scheduled publishing / A-B testing in v1.
 
-Reply **"approve"** to switch to build mode and I'll start with step 1 (migration + seeds).
+## Technical notes
+- All new tables already exist; no schema migrations required except possibly an `anon SELECT` policy audit and the new `form-uploads` bucket.
+- Existing `RichTextEditor` reused; save hook strips dashes.
+- TanStack Query keys: `["page", slug]`, `["form", slug]`, `["form-submissions", formId]`.
+- File deletes/renames go through `mv`/`rm`; section editor uses optimistic updates with rollback on error.

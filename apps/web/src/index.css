@@ -325,12 +325,23 @@
 }
 
 /* CMS body copy: justified with auto hyphens.
-   Apply via `.cms-body` (paragraphs only — keep headings & nav left-aligned). */
-.cms-body, .cms-body p {
+   Apply via `.cms-body` on a wrapper (paragraphs only, keep headings/nav/buttons untouched). */
+.cms-body p {
   text-align: justify;
   hyphens: auto;
   text-justify: inter-word;
 }
-.cms-body h1, .cms-body h2, .cms-body h3, .cms-body h4 {
+.cms-body h1,
+.cms-body h2,
+.cms-body h3,
+.cms-body h4,
+.cms-body h5,
+.cms-body h6,
+.cms-body button,
+.cms-body a,
+.cms-body nav,
+.cms-body [role="button"],
+.cms-body .no-justify {
   text-align: left;
+  hyphens: manual;
 }

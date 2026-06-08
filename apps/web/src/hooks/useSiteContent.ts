@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { cleanDeep } from "@/lib/text";
 
 export function useSiteContent(sectionKey: string) {
   return useQuery({
@@ -10,7 +11,8 @@ export function useSiteContent(sectionKey: string) {
         .select("content")
         .eq("section_key", sectionKey)
         .maybeSingle();
-      return (data?.content as Record<string, string>) ?? null;
+      const raw = (data?.content as Record<string, string>) ?? null;
+      return raw ? cleanDeep(raw) : null;
     },
     staleTime: 5 * 60 * 1000,
   });

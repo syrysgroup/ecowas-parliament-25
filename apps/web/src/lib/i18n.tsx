@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useCallback, useEffect, ReactNode 
 import { en } from "./translations/en";
 import { fr } from "./translations/fr";
 import { pt } from "./translations/pt";
+import { cleanText } from "./text";
 
 export type Locale = "en" | "fr" | "pt";
 
@@ -50,7 +51,8 @@ export function I18nProvider({ children }: { children: ReactNode }) {
           str = str.replace(new RegExp(`\\{${k}\\}`, "g"), String(v));
         });
       }
-      return str;
+      // Strip em/en dashes from every translated string at render time.
+      return cleanText(str);
     },
     [locale]
   );
