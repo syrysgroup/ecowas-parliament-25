@@ -6,6 +6,7 @@ import { format, parseISO } from "date-fns";
 import { Mail, Users, UserMinus, Trash2, UserCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useBulkSelection } from "@/hooks/useBulkSelection";
 import { BulkActionBar } from "@/components/crm/shared/BulkActionBar";
@@ -13,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 
 interface Subscriber {
   id: string; email: string; subscribed_at: string; unsubscribed_at: string | null;
+  country: string | null; language: string | null;
 }
 
 export default function NewsletterModule() {
@@ -22,13 +24,16 @@ export default function NewsletterModule() {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
   const [filter, setFilter] = useState<"all" | "active" | "unsubscribed">("all");
+  const [countryFilter, setCountryFilter] = useState<string>("all");
+  const [langFilter, setLangFilter] = useState<"all" | "en" | "fr" | "pt">("all");
 
   const { data: subscribers = [], isLoading } = useQuery<Subscriber[]>({
     queryKey: ["newsletter-subscribers"],
     queryFn: async () => {
       const { data } = await supabase.from("newsletter_subscribers")
-        .select("*").order("subscribed_at", { ascending: false });
-      return data ?? [];
+        .select("id, email, subscribed_at, unsubscribed_at, country, language")
+        .order("subscribed_at", { ascending: false });
+      return (data ?? []) as Subscriber[];
     },
   });
 
@@ -68,11 +73,11 @@ export default function NewsletterModule() {
   const active      = subscribers.filter(s => !s.unsubscribed_at);
   const unsubscribed = subscribers.filter(s => s.unsubscribed_at);
 
-  const displayed = filter === "active"
-    ? active
-    : filter === "unsubscribed"
-    ? unsubscribed
-    : subscribers;
+  const distinctCountries = [...new Set(subscribers.map(s => s.country).filter(Boolean))].sort() as string[];
+
+  const base = filter === "active" ? active : filter === "unsubscribed" ? unsubscribed : subscribers;
+  const langFiltered = langFilter === "all" ? base : base.filter(s => (s.language ?? "en").toLowerCase() === langFilter);
+  const displayed = countryFilter === "all" ? langFiltered : langFiltered.filter(s => s.country === countryFilter);
 
   const bulk = useBulkSelection(displayed);
 
@@ -126,7 +131,7 @@ export default function NewsletterModule() {
       </div>
 
       {/* Filter tabs */}
-      <div className="flex gap-2">
+      <div className="flex gap-2 flex-wrap">
         {([["all", "All", subscribers.length], ["active", "Active", active.length], ["unsubscribed", "Unsubscribed", unsubscribed.length]] as [string, string, number][]).map(([val, label, count]) => (
           <button
             key={val}
@@ -140,6 +145,36 @@ export default function NewsletterModule() {
             {label}: {count}
           </button>
         ))}
+      </div>
+
+      {/* Language + country filters */}
+      <div className="flex flex-wrap gap-2 items-center">
+        <div className="flex gap-1.5">
+          {(["all", "en", "fr", "pt"] as const).map(l => (
+            <button key={l} onClick={() => setLangFilter(l)}
+              className={`text-[10px] font-mono px-2.5 py-1 rounded-lg border transition-colors uppercase ${
+                langFilter === l
+                  ? "bg-emerald-950 text-emerald-400 border-emerald-800"
+                  : "bg-crm-surface text-crm-text-muted border-crm-border hover:border-crm-border-hover"
+              }`}>
+              {l === "all" ? "All langs" : l.toUpperCase()}
+            </button>
+          ))}
+        </div>
+        {distinctCountries.length > 0 && (
+          <Select value={countryFilter} onValueChange={setCountryFilter}>
+            <SelectTrigger className="bg-crm-surface border-crm-border text-crm-text text-xs h-7 w-44">
+              <SelectValue placeholder="All countries" />
+            </SelectTrigger>
+            <SelectContent className="bg-crm-card border-crm-border">
+              <SelectItem value="all" className="text-xs">All countries</SelectItem>
+              {distinctCountries.map(c => <SelectItem key={c} value={c} className="text-xs">{c}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        )}
+        {(langFilter !== "all" || countryFilter !== "all") && (
+          <span className="text-[10px] text-crm-text-dim">{displayed.length} shown</span>
+        )}
       </div>
 
       {isLoading && <div className="flex justify-center py-12"><div className="w-6 h-6 border-2 border-emerald-700 border-t-emerald-400 rounded-full animate-spin" /></div>}
@@ -180,6 +215,12 @@ export default function NewsletterModule() {
                   <span className={`text-[12px] flex-1 min-w-0 truncate ${s.unsubscribed_at ? "text-crm-text-faint line-through" : "text-crm-text"}`}>
                     {s.email}
                   </span>
+                  {s.country && (
+                    <span className="text-[10px] text-crm-text-dim shrink-0 hidden sm:inline">{s.country}</span>
+                  )}
+                  {s.language && (
+                    <span className="text-[9px] font-mono text-crm-text-dim bg-crm-surface border border-crm-border rounded px-1 py-0.5 shrink-0 uppercase">{s.language}</span>
+                  )}
                   <span className="text-[10px] text-crm-text-dim shrink-0">{format(parseISO(s.subscribed_at), "d MMM yyyy")}</span>
                   {s.unsubscribed_at && (
                     <span className="text-[9px] font-mono text-red-400 bg-red-950 border border-red-800 rounded px-1.5 py-0.5 shrink-0">Unsub</span>

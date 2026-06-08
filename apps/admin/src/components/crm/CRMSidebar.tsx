@@ -5,6 +5,7 @@ import { useAuthContext } from "@/contexts/AuthContext";
 import { getModulesForRoles, MODULE_GROUPS, type ModuleGroup } from "./crmModules";
 import { CRM_ROLE_META } from "./crmRoles";
 import { supabase } from "@/integrations/supabase/client";
+import { useUnreadCounts } from "@/hooks/useUnreadCounts";
 
 const STORAGE_KEY = "crm_sidebar_collapsed";
 
@@ -25,6 +26,8 @@ function SidebarContent({
   setCollapsed: (v: boolean) => void;
 }) {
   const { user, roles, signOut } = useAuthContext();
+
+  const badgeCounts = useUnreadCounts();
 
   const { data: emailUnreadCount = 0 } = useQuery<number>({
     queryKey: ["email-inbox-unread", user?.id],
@@ -197,6 +200,16 @@ function SidebarContent({
                         ) : showLabels ? (
                           <span className="ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-destructive/15 border border-destructive/30 text-destructive flex-shrink-0 animate-bounce-in">
                             {emailUnreadCount > 99 ? "99+" : emailUnreadCount}
+                          </span>
+                        ) : null
+                      )}
+                      {/* Submission unread/pending badges */}
+                      {mod.section !== "email-inbox" && (badgeCounts[mod.section as keyof typeof badgeCounts] ?? 0) > 0 && (
+                        collapsed ? (
+                          <span className="absolute top-0.5 right-0.5 w-2.5 h-2.5 rounded-full bg-destructive animate-bounce-in" />
+                        ) : showLabels ? (
+                          <span className="ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-destructive/15 border border-destructive/30 text-destructive flex-shrink-0 animate-bounce-in">
+                            {badgeCounts[mod.section as keyof typeof badgeCounts] > 99 ? "99+" : badgeCounts[mod.section as keyof typeof badgeCounts]}
                           </span>
                         ) : null
                       )}

@@ -23,6 +23,7 @@ interface Submission {
   phone: string | null;
   message: string | null;
   source_page: string | null;
+  enquiry_type: string | null;
   created_at: string;
   is_read: boolean;
   assigned_to: string | null;
@@ -30,6 +31,13 @@ interface Submission {
   notes: string | null;
   assignee?: Profile | null;
 }
+
+const ENQUIRY_SLUGS = ["general", "press", "sponsorship", "event", "youth", "programme", "government", "other"] as const;
+const ENQUIRY_LABELS: Record<string, string> = {
+  general: "General", press: "Press", sponsorship: "Sponsorship",
+  event: "Event", youth: "Youth", programme: "Programme",
+  government: "Government", other: "Other",
+};
 
 const STATUS_STYLES: Record<string, string> = {
   open:        "bg-amber-950 text-amber-400 border-amber-800",
@@ -66,6 +74,8 @@ export default function ContactSubmissionsModule() {
   const qc = useQueryClient();
 
   const [filter, setFilter]             = useState<"all" | "unread" | "read" | "mine">("unread");
+  const [enquiryTypeFilter, setEnquiryTypeFilter] = useState<"all" | string>("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "open" | "in_progress" | "resolved">("all");
   const [expandedId, setExpandedId]     = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [editingNotes, setEditingNotes] = useState<Record<string, string>>({});
@@ -139,11 +149,16 @@ export default function ContactSubmissionsModule() {
   const read   = submissions.filter(s => s.is_read);
   const mine   = submissions.filter(s => s.assigned_to === user?.id);
 
-  const displayed =
+  const activeEnquiryTypes = ENQUIRY_SLUGS.filter(t => submissions.some(s => s.enquiry_type === t));
+
+  const base =
     filter === "unread" ? unread :
     filter === "read"   ? read :
     filter === "mine"   ? mine :
     submissions;
+
+  const statusFiltered = statusFilter === "all" ? base : base.filter(s => s.status === statusFilter);
+  const displayed = enquiryTypeFilter === "all" ? statusFiltered : statusFiltered.filter(s => s.enquiry_type === enquiryTypeFilter);
 
   const bulk = useBulkSelection(displayed);
 
@@ -195,7 +210,7 @@ export default function ContactSubmissionsModule() {
         )}
       </div>
 
-      {/* Filter tabs */}
+      {/* Read state filter */}
       <div className="flex gap-2 flex-wrap">
         {([
           ["unread", "Unread",   unread.length],
@@ -215,6 +230,51 @@ export default function ContactSubmissionsModule() {
             {label}: {count}
           </button>
         ))}
+      </div>
+
+      {/* Enquiry type filter */}
+      {activeEnquiryTypes.length > 0 && (
+        <div className="flex gap-1.5 flex-wrap">
+          {(["all", ...activeEnquiryTypes] as const).map((t) => {
+            const count = t === "all" ? base.length : base.filter(s => s.enquiry_type === t).length;
+            return (
+              <button
+                key={t}
+                onClick={() => setEnquiryTypeFilter(t)}
+                className={`text-[10px] font-mono px-2 py-0.5 rounded border transition-colors ${
+                  enquiryTypeFilter === t
+                    ? "bg-blue-950 text-blue-400 border-blue-800"
+                    : "bg-crm-surface text-crm-text-dim border-crm-border hover:border-crm-border-hover"
+                }`}
+              >
+                {t === "all" ? "All types" : ENQUIRY_LABELS[t] ?? t} ({count})
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Status filter */}
+      <div className="flex gap-1.5 flex-wrap">
+        {(["all", "open", "in_progress", "resolved"] as const).map((s) => {
+          const count = s === "all" ? base.length : base.filter(sub => sub.status === s).length;
+          return (
+            <button
+              key={s}
+              onClick={() => setStatusFilter(s)}
+              className={`text-[10px] font-mono px-2 py-0.5 rounded border transition-colors ${
+                statusFilter === s
+                  ? s === "resolved" ? "bg-emerald-950 text-emerald-400 border-emerald-800"
+                  : s === "in_progress" ? "bg-blue-950 text-blue-400 border-blue-800"
+                  : s === "open" ? "bg-amber-950 text-amber-400 border-amber-800"
+                  : "bg-crm-accent text-crm-text border-crm-accent"
+                  : "bg-crm-surface text-crm-text-dim border-crm-border hover:border-crm-border-hover"
+              }`}
+            >
+              {s === "all" ? "All statuses" : s === "in_progress" ? "In Progress" : s.charAt(0).toUpperCase() + s.slice(1)} ({count})
+            </button>
+          );
+        })}
       </div>
 
       {isLoading && (
@@ -277,6 +337,12 @@ export default function ContactSubmissionsModule() {
                     <span className={`text-[9px] font-mono border rounded px-1.5 py-0.5 ${STATUS_STYLES[s.status]}`}>
                       {STATUS_LABELS[s.status]}
                     </span>
+                    {/* Enquiry type badge */}
+                    {s.enquiry_type && (
+                      <span className="text-[9px] font-mono border rounded px-1.5 py-0.5 bg-blue-950 text-blue-400 border-blue-800">
+                        {ENQUIRY_LABELS[s.enquiry_type] ?? s.enquiry_type}
+                      </span>
+                    )}
                     {/* Assignee badge */}
                     {s.assignee && (
                       <span className="flex items-center gap-1 text-[9px] font-mono text-crm-text-dim bg-crm-surface border border-crm-border rounded px-1.5 py-0.5">

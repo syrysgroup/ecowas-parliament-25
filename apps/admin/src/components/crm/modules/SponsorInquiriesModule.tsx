@@ -90,6 +90,7 @@ export default function SponsorInquiriesModule() {
 
   const [filter, setFilter] = useState<"all" | InquiryStatus>("all");
   const [typeFilter, setTypeFilter] = useState<"all" | RequestType>("all");
+  const [tierFilter, setTierFilter] = useState<"all" | string>("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
@@ -182,8 +183,11 @@ export default function SponsorInquiriesModule() {
   const typeFiltered =
     typeFilter === "all" ? inquiries : inquiries.filter((i) => (i.request_type ?? "inquiry") === typeFilter);
 
-  const displayed =
+  const statusFiltered =
     filter === "all" ? typeFiltered : typeFiltered.filter((i) => i.status === filter);
+
+  const displayed =
+    tierFilter === "all" ? statusFiltered : statusFiltered.filter((i) => (i.preferred_tier ?? "").toLowerCase() === tierFilter);
 
   const bulk = useBulkSelection(displayed);
 
@@ -255,6 +259,33 @@ export default function SponsorInquiriesModule() {
               }`}
             >
               {tab === "all" ? "All" : STATUS_LABELS[tab]} ({count})
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Tier filter pills */}
+      <div className="flex gap-1.5 flex-wrap">
+        {(["all", "presenting", "platinum", "gold", "silver", "bronze", "standard"] as const).map((t) => {
+          const count = t === "all" ? inquiries.length : inquiries.filter(i => (i.preferred_tier ?? "").toLowerCase() === t).length;
+          if (t !== "all" && count === 0) return null;
+          return (
+            <button
+              key={t}
+              onClick={() => setTierFilter(t)}
+              className={`px-2.5 py-1 rounded-lg text-[10px] font-mono border transition-colors capitalize ${
+                tierFilter === t
+                  ? t === "presenting" ? "bg-violet-950 text-violet-300 border-violet-800"
+                  : t === "platinum"   ? "bg-purple-950 text-purple-300 border-purple-800"
+                  : t === "gold"       ? "bg-amber-950 text-amber-300 border-amber-800"
+                  : t === "silver"     ? "bg-slate-800 text-slate-300 border-slate-600"
+                  : t === "bronze"     ? "bg-orange-950 text-orange-300 border-orange-800"
+                  : t === "standard"   ? "bg-zinc-800 text-zinc-300 border-zinc-600"
+                  : "bg-crm-accent text-crm-text border-crm-accent"
+                  : "bg-crm-surface text-crm-text-muted border-crm-border hover:border-crm-border-hover"
+              }`}
+            >
+              {t === "all" ? "All tiers" : t} ({count})
             </button>
           );
         })}

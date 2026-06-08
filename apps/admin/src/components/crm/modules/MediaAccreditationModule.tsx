@@ -23,10 +23,14 @@ interface MA {
 
 const STATUS = ["pending", "approved", "rejected", "revoked"] as const;
 
+const OUTLET_TYPES = ["TV", "Radio", "Print", "Online", "Freelance"] as const;
+
 function Queue() {
   const qc = useQueryClient();
   const { toast } = useToast();
   const [filter, setFilter] = useState<string>("all");
+  const [outletFilter, setOutletFilter] = useState<string>("all");
+  const [countryFilter, setCountryFilter] = useState<string>("all");
   const [sel, setSel] = useState<MA | undefined>();
 
   const { data: items = [], isLoading } = useQuery<MA[]>({
@@ -81,7 +85,10 @@ function Queue() {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["media-accreditations"] }); setSel(undefined); toast({ title: "Deleted" }); },
   });
 
-  const filtered = filter === "all" ? items : items.filter(i => i.status === filter);
+  const distinctCountries = [...new Set(items.map(i => i.country).filter(Boolean))].sort() as string[];
+  const statusFiltered = filter === "all" ? items : items.filter(i => i.status === filter);
+  const outletFiltered = outletFilter === "all" ? statusFiltered : statusFiltered.filter(i => (i.outlet_type ?? "").toLowerCase() === outletFilter.toLowerCase());
+  const filtered = countryFilter === "all" ? outletFiltered : outletFiltered.filter(i => i.country === countryFilter);
 
   return (
     <div className="space-y-4">
@@ -95,6 +102,33 @@ function Queue() {
           ))}
         </div>
         <Button size="sm" variant="outline" onClick={exportCsv} className="text-xs h-7 gap-1"><Download size={11} /> CSV</Button>
+      </div>
+
+      {/* Outlet type + country filters */}
+      <div className="flex flex-wrap gap-2 items-center">
+        <div className="flex flex-wrap gap-1.5">
+          {(["all", ...OUTLET_TYPES] as const).map(t => (
+            <button key={t} onClick={() => setOutletFilter(t)}
+              className={`text-[10px] font-mono px-2 py-0.5 rounded border transition-colors ${
+                outletFilter === t
+                  ? "bg-blue-950 text-blue-400 border-blue-800"
+                  : "bg-crm-surface text-crm-text-dim border-crm-border hover:border-crm-border-hover"
+              }`}>
+              {t === "all" ? "All outlets" : t}
+            </button>
+          ))}
+        </div>
+        {distinctCountries.length > 0 && (
+          <Select value={countryFilter} onValueChange={setCountryFilter}>
+            <SelectTrigger className="bg-crm-surface border-crm-border text-crm-text text-xs h-7 w-40">
+              <SelectValue placeholder="All countries" />
+            </SelectTrigger>
+            <SelectContent className="bg-crm-card border-crm-border">
+              <SelectItem value="all" className="text-xs">All countries</SelectItem>
+              {distinctCountries.map(c => <SelectItem key={c} value={c} className="text-xs">{c}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        )}
       </div>
 
       {isLoading ? <Loader2 className="h-5 w-5 animate-spin mx-auto" /> : filtered.length === 0 ? (

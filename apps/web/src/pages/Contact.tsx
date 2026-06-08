@@ -41,6 +41,7 @@ export default function Contact() {
  t("contact.enquiry.event"), t("contact.enquiry.youth"), t("contact.enquiry.programme"),
  t("contact.enquiry.government"), t("contact.enquiry.other"),
  ];
+ const ENQUIRY_SLUGS = ["general", "press", "sponsorship", "event", "youth", "programme", "government", "other"];
 
  const [enquiryType, setEnquiryType] = useState(ENQUIRY_TYPES[0]);
  const [form, setForm] = useState({ name: "", organisation: "", email: "", phone: "", subject: "", message: "" });
@@ -66,6 +67,7 @@ export default function Contact() {
 
  const handleSubmit = async (e: React.FormEvent) => {
  e.preventDefault();
+ const enquirySlug = ENQUIRY_SLUGS[ENQUIRY_TYPES.indexOf(enquiryType)] ?? "general";
  try {
  await supabase.from("contact_submissions").insert({
  name: form.name,
@@ -73,7 +75,8 @@ export default function Contact() {
  phone: form.phone || null,
  message: `[${enquiryType}] ${form.subject}\n\n${form.message}`,
  source_page: "/contact",
- });
+ enquiry_type: enquirySlug,
+ } as any);
  } catch (_) { /* fire and forget */ }
  setSubmitted(true);
  };

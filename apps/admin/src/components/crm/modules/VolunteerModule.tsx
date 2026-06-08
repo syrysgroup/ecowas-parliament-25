@@ -50,6 +50,8 @@ function ApplicationsInbox() {
   const qc = useQueryClient();
   const { toast } = useToast();
   const [filter, setFilter] = useState<string>("all");
+  const [countryFilter, setCountryFilter] = useState<string>("all");
+  const [interestFilter, setInterestFilter] = useState<string>("all");
   const [selected, setSelected] = useState<Application | undefined>();
 
   const { data: apps = [], isLoading } = useQuery<Application[]>({
@@ -91,7 +93,12 @@ function ApplicationsInbox() {
     },
   });
 
-  const filtered = filter === "all" ? apps : apps.filter(a => a.status === filter);
+  const distinctCountries = [...new Set(apps.map(a => a.country).filter(Boolean))].sort() as string[];
+  const distinctInterests = [...new Set(apps.flatMap(a => a.interests ?? []))].filter(Boolean).sort();
+
+  const statusFiltered = filter === "all" ? apps : apps.filter(a => a.status === filter);
+  const countryFiltered = countryFilter === "all" ? statusFiltered : statusFiltered.filter(a => a.country === countryFilter);
+  const filtered = interestFilter === "all" ? countryFiltered : countryFiltered.filter(a => (a.interests ?? []).includes(interestFilter));
   const counts = STATUS.reduce((acc, s) => { acc[s] = apps.filter(a => a.status === s).length; return acc; }, {} as Record<string, number>);
 
   return (
@@ -103,6 +110,35 @@ function ApplicationsInbox() {
           <Button key={s} size="sm" variant={filter === s ? "default" : "outline"} onClick={() => setFilter(s)}
             className="text-xs h-7 capitalize">{s} ({counts[s] ?? 0})</Button>
         ))}
+      </div>
+
+      {/* Country + interest filters */}
+      <div className="flex flex-wrap gap-2 items-center">
+        {distinctCountries.length > 0 && (
+          <Select value={countryFilter} onValueChange={setCountryFilter}>
+            <SelectTrigger className="bg-crm-surface border-crm-border text-crm-text text-xs h-7 w-40">
+              <SelectValue placeholder="All countries" />
+            </SelectTrigger>
+            <SelectContent className="bg-crm-card border-crm-border">
+              <SelectItem value="all" className="text-xs">All countries</SelectItem>
+              {distinctCountries.map(c => <SelectItem key={c} value={c} className="text-xs">{c}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        )}
+        {distinctInterests.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            <button onClick={() => setInterestFilter("all")}
+              className={`text-[10px] font-mono px-2 py-0.5 rounded border transition-colors ${interestFilter === "all" ? "bg-emerald-950 text-emerald-400 border-emerald-800" : "bg-crm-surface text-crm-text-dim border-crm-border hover:border-crm-border-hover"}`}>
+              All interests
+            </button>
+            {distinctInterests.map(i => (
+              <button key={i} onClick={() => setInterestFilter(i)}
+                className={`text-[10px] font-mono px-2 py-0.5 rounded border transition-colors capitalize ${interestFilter === i ? "bg-emerald-950 text-emerald-400 border-emerald-800" : "bg-crm-surface text-crm-text-dim border-crm-border hover:border-crm-border-hover"}`}>
+                {i}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {isLoading ? (

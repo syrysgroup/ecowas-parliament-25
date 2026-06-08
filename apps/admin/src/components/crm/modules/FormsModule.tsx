@@ -221,6 +221,8 @@ function safeParseOptions(s: string) {
 
 function SubmissionsInbox({ formId }: { formId: string }) {
   const qc = useQueryClient();
+  const [subFilter, setSubFilter] = useState<"all" | "new" | "read" | "archived" | "spam">("all");
+
   const { data: subs = [] } = useQuery({
     queryKey: ["admin-subs", formId],
     queryFn: async () => {
@@ -228,7 +230,9 @@ function SubmissionsInbox({ formId }: { formId: string }) {
       return (data ?? []) as Sub[];
     },
   });
-  const bulk = useBulkSelection(subs);
+
+  const displayedSubs = subFilter === "all" ? subs : subs.filter(s => s.status === subFilter);
+  const bulk = useBulkSelection(displayedSubs);
 
   const setStatus = useMutation({
     mutationFn: async (status: string) => {
@@ -248,7 +252,7 @@ function SubmissionsInbox({ formId }: { formId: string }) {
   });
 
   const exportCsv = () => {
-    const rows = subs.filter((s) => bulk.selectedCount === 0 || bulk.isSelected(s.id));
+    const rows = displayedSubs.filter((s) => bulk.selectedCount === 0 || bulk.isSelected(s.id));
     const keys = Array.from(new Set(rows.flatMap((r) => Object.keys(r.payload ?? {}))));
     const csv = [["id","created_at","status",...keys].join(",")]
       .concat(rows.map((r) => [r.id, r.created_at, r.status, ...keys.map((k) => JSON.stringify(r.payload?.[k] ?? ""))].join(",")))
@@ -262,6 +266,24 @@ function SubmissionsInbox({ formId }: { formId: string }) {
 
   return (
     <div className="mt-4 space-y-2">
+      {/* Status filter tabs */}
+      <div className="flex flex-wrap gap-1.5">
+        {(["all", "new", "read", "archived", "spam"] as const).map(f => (
+          <button key={f} onClick={() => setSubFilter(f)}
+            className={`text-[10px] font-mono px-2.5 py-1 rounded-lg border transition-colors capitalize ${
+              subFilter === f
+                ? f === "spam" ? "bg-red-950 text-red-400 border-red-800"
+                : f === "archived" ? "bg-zinc-800 text-zinc-300 border-zinc-600"
+                : f === "read" ? "bg-blue-950 text-blue-400 border-blue-800"
+                : f === "new" ? "bg-emerald-950 text-emerald-400 border-emerald-800"
+                : "bg-muted text-foreground border-border"
+                : "bg-card text-muted-foreground border-border hover:border-foreground/30"
+            }`}>
+            {f === "all" ? `All (${subs.length})` : `${f.charAt(0).toUpperCase()}${f.slice(1)} (${subs.filter(s => s.status === f).length})`}
+          </button>
+        ))}
+      </div>
+
       <div className="flex items-center gap-2">
         <Button size="sm" variant="outline" onClick={() => bulk.toggleAll()}>{bulk.allSelected ? "Unselect all" : "Select all"}</Button>
         {bulk.selectedCount > 0 && (
@@ -276,7 +298,7 @@ function SubmissionsInbox({ formId }: { formId: string }) {
         <Button size="sm" variant="outline" onClick={exportCsv} className="ml-auto">Export CSV</Button>
       </div>
       <div className="border border-border rounded">
-        {subs.map((s) => (
+        {displayedSubs.map((s) => (
           <div key={s.id} className="border-b border-border p-3 flex items-start gap-2">
             <Checkbox checked={bulk.isSelected(s.id)} onCheckedChange={() => bulk.toggle(s.id)} />
             <div className="flex-1 min-w-0">
@@ -288,7 +310,7 @@ function SubmissionsInbox({ formId }: { formId: string }) {
             </div>
           </div>
         ))}
-        {subs.length === 0 && <p className="p-4 text-sm text-muted-foreground">No submissions yet.</p>}
+        {displayedSubs.length === 0 && <p className="p-4 text-sm text-muted-foreground">{subFilter === "all" ? "No submissions yet." : `No ${subFilter} submissions.`}</p>}
       </div>
     </div>
   );

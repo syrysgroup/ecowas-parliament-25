@@ -236,8 +236,13 @@ function MilestonesTab({ pillarId }: { pillarId: string }) {
   );
 }
 
+const YOUTH_STATUSES = ["pending", "reviewing", "shortlisted", "accepted", "rejected"] as const;
+
 function SubmissionsTab({ pillarId }: { pillarId: string }) {
   const qc = useQueryClient();
+  const [statusFilter, setStatusFilter] = useState<"all" | string>("all");
+  const [countryFilter, setCountryFilter] = useState<string>("all");
+
   const { data: items = [] } = useQuery<Submission[]>({
     queryKey: ["youth-submissions", pillarId],
     queryFn: async () => {
@@ -253,10 +258,45 @@ function SubmissionsTab({ pillarId }: { pillarId: string }) {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["youth-submissions", pillarId] }),
   });
 
+  const distinctCountries = [...new Set(items.map(s => s.country).filter(Boolean))].sort() as string[];
+  const statusFiltered = statusFilter === "all" ? items : items.filter(s => s.status === statusFilter);
+  const displayed = countryFilter === "all" ? statusFiltered : statusFiltered.filter(s => s.country === countryFilter);
+
   return (
-    <div className="space-y-2">
-      {items.length === 0 && <p className="text-xs text-crm-text-muted text-center py-6">No submissions yet.</p>}
-      {items.map(s => (
+    <div className="space-y-3">
+      {/* Status filter tabs */}
+      <div className="flex flex-wrap gap-1.5">
+        {(["all", ...YOUTH_STATUSES] as const).map(f => (
+          <button key={f} onClick={() => setStatusFilter(f)}
+            className={`text-[10px] font-mono px-2.5 py-1 rounded-lg border transition-colors capitalize ${
+              statusFilter === f
+                ? f === "accepted" ? "bg-emerald-950 text-emerald-400 border-emerald-800"
+                : f === "rejected" ? "bg-red-950 text-red-400 border-red-800"
+                : f === "shortlisted" ? "bg-amber-950 text-amber-400 border-amber-800"
+                : f === "reviewing" ? "bg-blue-950 text-blue-400 border-blue-800"
+                : "bg-crm-accent text-crm-text border-crm-accent"
+                : "bg-crm-surface text-crm-text-dim border-crm-border hover:border-crm-border-hover"
+            }`}>
+            {f === "all" ? `All (${items.length})` : `${f.charAt(0).toUpperCase()}${f.slice(1)} (${items.filter(s => s.status === f).length})`}
+          </button>
+        ))}
+      </div>
+
+      {/* Country filter */}
+      {distinctCountries.length > 0 && (
+        <Select value={countryFilter} onValueChange={setCountryFilter}>
+          <SelectTrigger className="bg-crm-surface border-crm-border text-crm-text text-xs h-7 w-44">
+            <SelectValue placeholder="All countries" />
+          </SelectTrigger>
+          <SelectContent className="bg-crm-card border-crm-border">
+            <SelectItem value="all" className="text-xs">All countries</SelectItem>
+            {distinctCountries.map(c => <SelectItem key={c} value={c} className="text-xs">{c}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      )}
+
+      {displayed.length === 0 && <p className="text-xs text-crm-text-muted text-center py-6">No submissions yet.</p>}
+      {displayed.map(s => (
         <div key={s.id} className="bg-crm-card border border-crm-border rounded-lg px-3 py-2">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 flex-1">
