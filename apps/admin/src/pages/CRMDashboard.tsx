@@ -42,6 +42,7 @@ const CMSModule       = lazy(() => import("@/components/crm/modules/CMSModule"))
 const NewsEditorModule = lazy(() => import("@/components/crm/modules/NewsEditorModule"));
 const SiteContentModule = lazy(() => import("@/components/crm/modules/SiteContentModule"));
 const ContactSubmissionsModule = lazy(() => import("@/components/crm/modules/ContactSubmissionsModule"));
+const SponsorInquiriesModule   = lazy(() => import("@/components/crm/modules/SponsorInquiriesModule"));
 const NewsletterModule = lazy(() => import("@/components/crm/modules/NewsletterModule"));
 const MediaLibraryModule = lazy(() => import("@/components/crm/modules/MediaLibraryModule"));
 const SEOModule          = lazy(() => import("@/components/crm/modules/SEOModule"));
@@ -169,6 +170,7 @@ export default function CRMDashboard() {
       case "news-editor":     return <Suspense fallback={<ModuleLoader />}><NewsEditorModule /></Suspense>;
       case "site-content":    return <Suspense fallback={<ModuleLoader />}><SiteContentModule /></Suspense>;
       case "contact-submissions": return <Suspense fallback={<ModuleLoader />}><ContactSubmissionsModule /></Suspense>;
+      case "sponsor-inquiries":   return <Suspense fallback={<ModuleLoader />}><SponsorInquiriesModule /></Suspense>;
       case "newsletter":      return <Suspense fallback={<ModuleLoader />}><NewsletterModule /></Suspense>;
       case "media-library":   return <Suspense fallback={<ModuleLoader />}><MediaLibraryModule /></Suspense>;
       case "programme-pillars":  return <ProgrammePillarsModule />;

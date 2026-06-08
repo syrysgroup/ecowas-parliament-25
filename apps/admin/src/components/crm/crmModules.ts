@@ -42,6 +42,7 @@ import {
   Milestone,
   FilePlus,
   ClipboardList,
+  UserCheck,
 } from "lucide-react";
 
 export type ModuleGroup =
@@ -93,6 +94,7 @@ export type ModuleId =
   | "legal-pages"
   | "youth-sub-pillars"
   | "sponsor-portal-config"
+  | "sponsor-inquiries"
   | "timeline"
   | "pages"
   | "forms"
@@ -480,6 +482,15 @@ export const CRM_MODULES: CRMModule[] = [
     icon: Contact,
     section: "contact-submissions",
     allowedRoles: ALL_STAFF,
+    isStub: false,
+    group: "MARKETING",
+  },
+  {
+    id: "sponsor-inquiries",
+    label: "Sponsor Inquiries",
+    icon: UserCheck,
+    section: "sponsor-inquiries",
+    allowedRoles: ["super_admin", "admin", "sponsor_manager"],
     isStub: false,
     group: "MARKETING",
   },
