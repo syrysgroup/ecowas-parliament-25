@@ -1,97 +1,93 @@
+# Roles & Permissions — Full Unification Plan
 
-# Make Admin Fully Control the Website
+Consolidates the audit findings. Ships in one phase as a single migration plus coordinated UI changes in `apps/admin` and `apps/web`.
 
-Earlier turns claimed to ship `PagesModule`, `FormsModule`, `usePage`, `SectionRenderer`, `DynamicForm`, `submit-form` edge function, `cleanText`, and `cms-body` CSS. None of these actually exist in the repo. The DB tables (`pages`, `page_sections`, `page_section_items`, `form_definitions`, `form_fields`, `form_submissions`, `media_library`, `content_revisions`, `seo_pages`) do exist and the user's seed SQL has populated them.
+---
 
-This plan finishes the job for real.
+## 1. Migration: `20260608120000_roles_permissions_unification.sql`
 
-## 1. Dash + justification (visible immediately on current site)
+**Enum + helper sync**
+- `ALTER TYPE public.app_role ADD VALUE IF NOT EXISTS 'budget_officer';`
+- `ALTER TYPE public.app_role ADD VALUE IF NOT EXISTS 'staff';`
+- Rebuild `public.is_crm_staff(uuid)` to include both (`media` and `sponsor` stay excluded).
 
-- New `apps/web/src/lib/text.ts`:
-  - `cleanText(s)` — replaces `—` and `–` with `, ` (collapses double spaces, trims around punctuation).
-  - `<Justified>` wrapper component applying `text-justify hyphens-auto` to body copy.
-- Global CSS in `apps/web/src/index.css`: `.cms-body p, .prose p { text-align: justify; hyphens: auto; }`.
-- Sweep every component under `apps/web/src/components/home`, `pages/About.tsx`, `pages/Timeline.tsx`, `News*`, `Programmes`, `Parliament*`, `Footer`, `Navbar`: wrap paragraph copy with `cleanText()` and add `cms-body` class to body containers (headings, badges, nav untouched).
-- Apply `cleanText` inside `useSiteContent`, `usePage`, `DynamicForm`, news/event renderers so DB content is sanitized at read time too.
-- One-off cleanup migration via the insert tool: `UPDATE` text columns in `site_content`, `news_articles`, `events`, `parliament_content`, `team_members`, `partners`, `sponsors`, `page_section_items` to strip `—`/`–`.
+**`role_permissions` integrity**
+- Dedupe existing rows by `(role, module)` keeping latest.
+- `ALTER TABLE public.role_permissions ADD CONSTRAINT role_permissions_role_module_key UNIQUE (role, module);`
+- Drop the `Admins manage permissions` policy. Keep `Super admins manage permissions` (super_admin only writes). Keep authenticated read.
 
-## 2. Public renderer (apps/web)
+**Backfill seeds** for the 10 missing modules — idempotent `INSERT … ON CONFLICT (role, module) DO UPDATE`:
+- `volunteer` — admin (full); communications_officer, programme_lead, moderator (view/create/edit)
+- `media-accreditation` — admin (full); communications_officer, marketing_manager (view/create/edit)
+- `legal-pages` — admin (full); website_editor (view/create/edit)
+- `youth-sub-pillars` — admin (full); website_editor, programme_lead (view/create/edit)
+- `sponsor-portal-config` — admin (full); sponsor_manager (view/create/edit)
+- `timeline` — admin (full); website_editor, programme_lead, communications_officer (view/create/edit)
+- `pages` — admin (full); website_editor, communications_officer (view/create/edit)
+- `forms` — admin (full); website_editor, communications_officer (view/create/edit)
+- `marketplace` — admin (full); project_director, programme_lead, sponsor_manager (view/create/edit)
+- `parliament-tour` — admin (full); website_editor, communications_officer (view/create/edit)
+- `media` role: `profile` (view/edit), `settings` (view)
 
-- `src/hooks/usePage.ts` — single TanStack query joining `pages` + `page_sections` + `page_section_items` by slug, filters `status='published'` for anon.
-- `src/components/cms/SectionRenderer.tsx` — switch on `section.kind`:
-  - `hero` → `HeroBlock` (eyebrow, title, subtitle, CTA, background image).
-  - `text` → sanitized HTML in `.cms-body`.
-  - `stats` → grid of `page_section_items` (value/label).
-  - `cta`, `gallery`, `cards`, `list`, `partners`, `sponsors`, `marquee`, `html`, `form_ref` → matching small components, all reusing existing visuals.
-- Refactor `src/pages/Index.tsx` (Home) to render `usePage("home")` through `SectionRenderer`. Existing hard-coded sections stay as fallback when DB has no section for that key.
-- Generic routes (add to `App.tsx`):
-  - `/p/:slug` → renders any published `pages` row.
-  - `/forms/:slug` → renders `<DynamicForm slug=...>`.
-- `src/components/cms/DynamicForm.tsx` — reads `form_definitions` + `form_fields`, renders inputs (text/email/textarea/select/checkbox/multicheck/phone/date/file), client-side validation with Zod built from field metadata, posts to `submit-form` edge function, shows `success_message`.
-- `src/components/cms/EditableImage.tsx` — `<img>` resolving `media_library` id or direct URL.
-
-## 3. Edge function `submit-form`
-
-- POST `{ slug, payload, files? }`.
-- Loads form + fields, validates required + types, inserts into `form_submissions` with IP/UA, optional file upload to a new private `form-uploads` bucket.
-- Sends notify email via existing Zoho sender to `form_definitions.notify_email`, plus autoresponder if requester email present.
-
-## 4. Admin modules (apps/admin)
-
-New v2-style modules registered in `crmModules.ts` and `CRMDashboard.tsx`:
-
-### PagesModule
-- List of all `pages` (multi-select checkboxes, search, status chip, route, updated_at).
-- Bulk actions: publish / unpublish / duplicate / delete.
-- "New page" drawer (slug, route, title, SEO).
-- Row → Page Editor (side panel):
-  - Section list with drag-reorder (`@dnd-kit`), add/remove sections by kind.
-  - Per-section editor: RichText for prose, key/value editor for `props`, repeater for `page_section_items` (drag-reorder, image picker, value/label fields).
-  - Image picker bound to `media_library` (with direct upload to `cms-media`).
-  - Draft / Publish toggle, snapshot to `content_revisions` on save, rollback list.
-  - Live preview iframe pointed at `/p/:slug?preview=token`.
-
-### FormsModule
-- Tab 1 **Builder**: list of forms, drawer to create/edit (slug, title, description, success message, notify email), drag-reorder fields, per-field options editor, type chooser.
-- Tab 2 **Submissions inbox**: per-form table with multi-select, bulk mark-read/archive/spam/export-CSV, detail drawer with payload, file downloads, notes, assign-to.
-- "Embed" button shows public URL `/forms/<slug>`.
-
-### MediaLibraryModule (extend existing)
-- Grid + multi-select, bulk tag/delete/move, replace-in-place, alt-text editor, "used on" counter (joins `page_section_items.image_id`).
-
-### SEOModule (extend existing)
-- Per-page meta + OG image picker + schema.org JSON, bound to `seo_pages`.
-
-Shared:
-- `useBulkSelection` hook reused.
-- All save handlers run `cleanText` on user-entered prose before write.
-
-## 5. Routing + access
-
-- Admin roles already gate via `is_crm_staff()`; new modules added to `CRM_MODULES` with `allowedRoles: ["super_admin","admin","content_manager","website_editor"]`.
-- Public read policies on `pages`, `page_sections`, `page_section_items`, `form_definitions`, `form_fields` already allow `anon SELECT` of published rows (verify, add if missing via migration).
-- New private `form-uploads` bucket created via storage tool; staff-only read policy.
-
-## 6. Delivery order
-
-```text
-1. text.ts + index.css + sweep home/page components for dash + justify
-2. usePage + SectionRenderer + DynamicForm + generic /p/:slug, /forms/:slug
-3. submit-form edge function + form-uploads bucket
-4. PagesModule (list + editor + revisions)
-5. FormsModule (builder + submissions inbox)
-6. MediaLibrary + SEO extensions
-7. Data cleanup UPDATEs to strip dashes from existing DB rows
-8. QA each public route; verify Home now reads from DB, Contact form lands in inbox
+**`custom_roles` (new table)** — runtime role labels mapped to a base enum, no schema change per role.
 ```
+id uuid pk, key text unique, label text, description text,
+base_role app_role not null, created_by uuid, created_at, updated_at
+```
+GRANT authenticated SELECT, service_role ALL. RLS: read = authenticated; write = super_admin only.
 
-## Out of scope
-- No public visual redesign beyond justify + dash removal.
-- English only (i18n structure preserved for later).
-- No scheduled publishing / A-B testing in v1.
+**Audit log triggers** on `role_permissions` and `user_roles` writes → insert into `admin_activity_logs` (`action`, `entity_type`, `entity_id`, `payload jsonb`, `actor_user_id = auth.uid()`).
+
+---
+
+## 2. Admin code (`apps/admin/`)
+
+**New files**
+- `src/components/crm/permRegistry.ts` — exports `PERM_MODULES` (derived from `CRM_MODULES`, excluding `super-admin`) and `PERM_ROLES` (derived from `AppRole` minus `super_admin`, including `media`).
+
+**Edits**
+- `PermissionManagerPanel.tsx`
+  - Import `PERM_MODULES` / `PERM_ROLES` from `permRegistry`.
+  - Replace destructive `DELETE … + INSERT` with chunked `upsert` on the new unique constraint.
+  - Render a locked all-true Super Admin row at top with tooltip.
+  - Gate edit UI on `isSuperAdmin` (admin is read-only).
+  - "Reseed from registry" button: inserts missing `(role, module)` rows defaulting to each module's `allowedRoles` so newly registered modules appear immediately.
+- `RolesModule.tsx`
+  - "Add custom role" drawer (super_admin only) → inserts into `custom_roles`.
+  - `canManage={isSuperAdmin || isAdmin}` for non-super_admin role assignment (matches RLS).
+  - Custom role creation + permission matrix editing super_admin only.
+- `usePermissions.ts` — add `canManageRoles` flag (super_admin only).
+- `crmModules.ts` — add brief comment on `finance` entry documenting intentional exclusion of `admin`; `allowedRoles` remain default seeds, runtime check stays on `canView()`.
+
+---
+
+## 3. Web code (`apps/web/`)
+
+- Sync `AppRole` and `CRM_STAFF_ROLES` in `src/contexts/AuthContext.tsx` (already in sync — verify after enum addition).
+- Mirror `usePermissions.ts` updates so sponsor/media portals share semantics.
+
+---
+
+## 4. Verification
+
+1. `supabase db push`; check `SELECT enum_range(NULL::app_role);` includes both new values.
+2. Permissions UI as super_admin: all 41 modules visible; Super Admin row locked-true; toggles persist via upsert.
+3. Login as `communications_officer` → `volunteer`, `pages`, `forms`, `parliament-tour` load without redirect.
+4. Login as `admin` → Permissions matrix loads read-only; user role assignment for non-super_admin works.
+5. Login as `media` → profile/settings reachable, CRM modules hidden.
+6. Edit a permission cell → row appears in `admin_activity_logs` with actor.
+7. Create a custom role → row in `custom_roles`; assignable from user drawer.
+
+---
 
 ## Technical notes
-- All new tables already exist; no schema migrations required except possibly an `anon SELECT` policy audit and the new `form-uploads` bucket.
-- Existing `RichTextEditor` reused; save hook strips dashes.
-- TanStack Query keys: `["page", slug]`, `["form", slug]`, `["form-submissions", formId]`.
-- File deletes/renames go through `mv`/`rm`; section editor uses optimistic updates with rollback on error.
+
+- Postgres enum values cannot be added inside a transaction with later use of that value. The migration splits enum additions and seed inserts using `COMMIT;` between blocks, or runs the seed in a follow-up migration if the runner enforces single-transaction. Plan: two-file split if needed (`…_unification_enum.sql` then `…_unification_seed.sql`).
+- `custom_roles.base_role` lets us scale role names without enum churn. Display label resolves at render time; permissions remain keyed to `app_role`.
+- All web/admin code defers to the DB matrix via `usePermissions`; `allowedRoles` in `crmModules.ts` is only used for the reseed button defaults and sidebar fallback during initial load.
+
+## Out of scope
+
+- Sponsor/media portal module-level permissions (separate surface).
+- Roles UI re-theming.
+- Row-level ACLs beyond existing `has_role` helpers.
