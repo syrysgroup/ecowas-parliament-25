@@ -251,6 +251,16 @@ export default function ContactSubmissionsModule() {
             >
               {/* ── Card header (always visible) ── */}
               <div className="flex items-start gap-3 p-4">
+                {isAdmin && (
+                  <div className="pt-1">
+                    <Checkbox
+                      checked={bulk.isSelected(s.id)}
+                      onCheckedChange={() => bulk.toggle(s.id)}
+                      className="border-crm-border"
+                      aria-label={`Select submission from ${s.name ?? "Anonymous"}`}
+                    />
+                  </div>
+                )}
                 <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${
                   !s.is_read ? "bg-emerald-900/40" : "bg-crm-surface"
                 }`}>
