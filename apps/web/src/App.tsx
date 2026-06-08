@@ -34,6 +34,8 @@ import EcowasParliament from "./pages/EcowasParliament";
 import SponsorDashboard from "./pages/SponsorDashboard";
 import ParliamentTour from "./pages/ParliamentTour";
 import LegalPage from "./pages/LegalPage";
+import CMSPage from "./pages/CMSPage";
+import CMSForm from "./pages/CMSForm";
 
 // Marketplace
 import Marketplace from "./pages/marketplace/Marketplace";
@@ -126,6 +128,10 @@ const App = () => (
               <Route path="/privacy" element={<LegalPage pageKey="privacy" />} />
               <Route path="/terms"   element={<LegalPage pageKey="terms" />} />
               <Route path="/cookies" element={<LegalPage pageKey="cookies" />} />
+
+              {/* Admin-driven CMS pages and forms */}
+              <Route path="/p/:slug" element={<CMSPage />} />
+              <Route path="/forms/:slug" element={<CMSForm />} />
 
               {/* Marketplace */}
               <Route path="/marketplace" element={<Marketplace />} />
