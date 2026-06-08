@@ -10,38 +10,38 @@ import { usePage } from "@/hooks/usePage";
  * with no developer change.
  */
 export default function CMSPage() {
-  const { slug = "" } = useParams();
-  const { data: page, isLoading } = usePage(slug);
+ const { slug = "" } = useParams();
+ const { data: page, isLoading } = usePage(slug);
 
-  if (isLoading) {
-    return (
-      <Layout>
-        <div className="container py-20 text-center text-muted-foreground">Loading…</div>
-      </Layout>
-    );
-  }
+ if (isLoading) {
+ return (
+ <Layout>
+ <div className="container py-20 text-center text-muted-foreground">Loading…</div>
+ </Layout>
+ );
+ }
 
-  if (!page) {
-    return (
-      <Layout>
-        <div className="container py-20 text-center">
-          <h1 className="text-3xl font-bold mb-2">Page not found</h1>
-          <p className="text-muted-foreground">The page “{slug}” is not published.</p>
-        </div>
-      </Layout>
-    );
-  }
+ if (!page) {
+ return (
+ <Layout>
+ <div className="container py-20 text-center">
+ <h1 className="text-3xl font-bold mb-2">Page not found</h1>
+ <p className="text-muted-foreground">The page “{slug}” is not published.</p>
+ </div>
+ </Layout>
+ );
+ }
 
-  return (
-    <Layout>
-      <SEOHead
-        title={page.title}
-        description={page.description ?? undefined}
-        image={page.og_image ?? undefined}
-      />
-      {page.sections.map((s) => (
-        <SectionRenderer key={s.id} section={s} />
-      ))}
-    </Layout>
-  );
+ return (
+ <Layout>
+ <SEOHead
+ title={page.title}
+ description={page.description ?? undefined}
+ image={page.og_image ?? undefined}
+ />
+ {page.sections.map((s) => (
+ <SectionRenderer key={s.id} section={s} />
+ ))}
+ </Layout>
+ );
 }

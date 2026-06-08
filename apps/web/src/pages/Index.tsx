@@ -20,29 +20,29 @@ import NewsletterSection from "@/components/home/NewsletterSection";
 import SponsorCTA from "@/components/home/SponsorCTA";
 
 const Index = () => {
-  return (
-    <Layout>
-      <HeroSection />
-      <SpeakerSection />
-      <MarqueeStrip />
-      <CountdownTimer />
-      <CountriesSection />
-      <AnniversarySection />
-      <PeopleMandateSection />
-      <ParliamentTourSpotlight />
-      <PillarsGrid />
-      <MarketplaceSpotlight />
-      <ImplementingPartnersSection />
-      <InstitutionalPartnersSection />
-      <SponsorPlaceholderSection />
-      <EventsSection />
-      <StatsSection />
-      <DidYouKnow />
-      <LatestNews />
-      <NewsletterSection />
-      <SponsorCTA />
-    </Layout>
-  );
+ return (
+ <Layout>
+ <HeroSection />
+ <SpeakerSection />
+ <MarqueeStrip />
+ <CountdownTimer />
+ <CountriesSection />
+ <AnniversarySection />
+ <PeopleMandateSection />
+ <ParliamentTourSpotlight />
+ <PillarsGrid />
+ <MarketplaceSpotlight />
+ <ImplementingPartnersSection />
+ <InstitutionalPartnersSection />
+ <SponsorPlaceholderSection />
+ <EventsSection />
+ <StatsSection />
+ <DidYouKnow />
+ <LatestNews />
+ <NewsletterSection />
+ <SponsorCTA />
+ </Layout>
+ );
 };
 
 export default Index;

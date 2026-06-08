@@ -15,10 +15,10 @@ const localeLabels: Record<Locale, string> = { en: "EN", fr: "FR", pt: "PT" };
 const localeOrder: Locale[] = ["en", "fr", "pt"];
 
 type ProgrammeNavRow = {
-  slug: string;
-  title: string | null;
-  route: string | null;
-  is_active: boolean;
+ slug: string;
+ title: string | null;
+ route: string | null;
+ is_active: boolean;
 };
 					
 const Navbar = () => {					
