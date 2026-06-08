@@ -114,7 +114,10 @@ function RolePermissionsPanel({
 }) {
   const meta = CRM_ROLE_META[role];
   const isLocked = role === "super_admin";
-  const canEdit = viewerIsSuperAdmin || isAdmin;
+  // Only super_admin can write to role_permissions (matches RLS).
+  // `isAdmin` retained in the prop signature for compatibility but no longer grants edit.
+  void isAdmin;
+  const canEdit = viewerIsSuperAdmin;
 
   return (
     <div className="space-y-4">
