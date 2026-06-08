@@ -436,9 +436,14 @@ export default function RolesModule() {
       <div className="flex flex-col lg:flex-row gap-5 min-h-0">
         {/* ── Left: Role cards ── */}
         <div className="w-full lg:w-[280px] lg:shrink-0 space-y-1.5">
-          <p className="text-[10px] font-semibold text-[hsl(var(--text-3))] uppercase tracking-wider px-1 mb-2">
-            Select a role
-          </p>
+          <div className="flex items-center justify-between px-1 mb-2">
+            <p className="text-[10px] font-semibold text-[hsl(var(--text-3))] uppercase tracking-wider">
+              Select a role
+            </p>
+            {isSuperAdmin && <CustomRoleCreator />}
+          </div>
+          <CustomRolesList />
+
 
           {/* Tier 1 */}
           <p className="text-[9px] text-[hsl(var(--text-3))] uppercase tracking-widest px-1 pt-1">Tier 1</p>
