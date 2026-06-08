@@ -69,13 +69,13 @@ export default function CRMDashboard() {
   const navigate = useNavigate();
   const { canView } = usePermissions();
 
-  // Shell v2 opt-in: ?shellV2=1 sets it; localStorage persists; ?shellV2=0 clears it.
+  // Shell v2 is now the default (Phase 1). Opt-out with ?shellV2=0; ?shellV2=1 forces back.
   const [useShellV2] = useState<boolean>(() => {
-    if (typeof window === "undefined") return false;
+    if (typeof window === "undefined") return true;
     const p = new URLSearchParams(window.location.search);
-    if (p.get("shellV2") === "1") { localStorage.setItem("shellV2", "1"); return true; }
-    if (p.get("shellV2") === "0") { localStorage.removeItem("shellV2"); return false; }
-    return localStorage.getItem("shellV2") === "1";
+    if (p.get("shellV2") === "0") { localStorage.setItem("shellV2", "0"); return false; }
+    if (p.get("shellV2") === "1") { localStorage.removeItem("shellV2"); return true; }
+    return localStorage.getItem("shellV2") !== "0";
   });
 
   // ── Keep-alive: track which sections have been mounted so they stay in the DOM ──
