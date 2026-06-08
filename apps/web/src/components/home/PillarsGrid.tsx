@@ -8,19 +8,21 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslation } from "@/lib/i18n";
 
 interface PillarRow {
- id: string;
- slug: string;
- title: string | null;
- description: string | null;
- emoji: string | null;
- color: string | null;
- icon_bg: string | null;
- route: string | null;
- progress_percent: number;
- lead_name: string | null;
- sponsors: string[];
- display_order: number;
+  id: string;
+  slug: string;
+  title: string | null;
+  description: string | null;
+  emoji: string | null;
+  color: string | null;
+  icon_bg: string | null;
+  route: string | null;
+  progress_percent: number;
+  lead_name: string | null;
+  sponsors: string[];
+  display_order: number;
+  is_active: boolean;
 }
+
 
 const PillarsGrid = () => {
  const { t } = useTranslation();
@@ -28,12 +30,12 @@ const PillarsGrid = () => {
  const { data: pillars = [], isLoading } = useQuery({
  queryKey: ["programme_pillars"],
  queryFn: async (): Promise<PillarRow[]> => {
- const { data, error } = await supabase
- .from("programme_pillars" as any)
- .select("*")
- .eq("is_active", true)
- .order("display_order");
- if (error) throw error;
+      const { data, error } = await supabase
+        .from("programme_pillars" as any)
+        .select("*")
+        .order("display_order");
+      if (error) throw error;
+
  return (data as unknown as PillarRow[]) ?? [];
  },
  staleTime: 5 * 60 * 1000,
@@ -64,53 +66,93 @@ const PillarsGrid = () => {
  ? Array.from({ length: 7 }).map((_, i) => (
  <Skeleton key={i} className="h-44 rounded-2xl" />
  ))
- : pillars.map((pillar, i) => (
- <AnimatedSection key={pillar.id} delay={i * 80}>
- <Link
- to={pillar.route ?? `/programmes/${pillar.slug}`}
- className="group relative block p-5 rounded-2xl border border-border bg-card hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 overflow-hidden"
- >
- <div
- className="absolute top-0 left-0 right-0 h-[3px] origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300"
- style={{ background: pillar.color ?? "hsl(152 100% 26%)" }}
- />
- <div className={`w-11 h-11 rounded-lg ${pillar.icon_bg ?? "bg-primary/10"} flex items-center justify-center text-xl mb-3.5 group-hover:scale-110 group-hover:-rotate-3 transition-transform duration-300`}>
- {pillar.emoji}
- </div>
- <h3 className="text-base font-bold text-card-foreground mb-2 leading-tight group-hover:text-primary transition-colors">
- {pillar.title || t(`pillars.${pillar.slug}.title`)}
- </h3>
- <p className="text-xs text-muted-foreground leading-relaxed mb-3.5">
- {pillar.description || t(`pillars.${pillar.slug}.desc`)}
- </p>
- <div className="flex items-center gap-3">
- <span className="text-[11px] font-semibold text-muted-foreground">{pillar.progress_percent}%</span>
- <div className="flex-1">
- <Progress value={pillar.progress_percent} className="h-[3px]" />
- </div>
- <span className="text-[10px] text-muted-foreground">{pillar.lead_name}</span>
- </div>
- <div className="max-h-0 overflow-hidden group-hover:max-h-16 group-hover:border-t group-hover:border-border group-hover:mt-3.5 group-hover:pt-3 transition-all duration-300">
- <p className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
- {t("pillars.sponsors")}
- </p>
- <div className="flex gap-1.5 flex-wrap">
- {(pillar.sponsors ?? []).length > 0 ? (
- pillar.sponsors.map((s) => (
- <span key={s} className="text-[10px] px-2 py-0.5 rounded bg-primary/10 border border-primary/20 text-primary font-semibold">
- {s}
- </span>
- ))
- ) : (
- <span className="text-[10px] px-2 py-0.5 rounded bg-muted border border-border text-muted-foreground font-semibold italic opacity-50">
- {t("pillars.open")}
- </span>
- )}
- </div>
- </div>
- </Link>
- </AnimatedSection>
- ))}
+            : pillars.map((pillar, i) => {
+                const isComingSoon = !pillar.is_active;
+                const cardInner = (
+                  <>
+                    {!isComingSoon && (
+                      <div
+                        className="absolute top-0 left-0 right-0 h-[3px] origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300"
+                        style={{ background: pillar.color ?? "hsl(152 100% 26%)" }}
+                      />
+                    )}
+                    {isComingSoon && (
+                      <span className="absolute top-3 right-3 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-muted border border-border text-muted-foreground">
+                        {t("pillars.comingSoon") ?? "Coming soon"}
+                      </span>
+                    )}
+                    <div
+                      className={`w-11 h-11 rounded-lg ${
+                        isComingSoon ? "bg-muted" : pillar.icon_bg ?? "bg-primary/10"
+                      } flex items-center justify-center text-xl mb-3.5 ${
+                        !isComingSoon ? "group-hover:scale-110 group-hover:-rotate-3 transition-transform duration-300" : ""
+                      }`}
+                    >
+                      {pillar.emoji}
+                    </div>
+                    <h3
+                      className={`text-base font-bold mb-2 leading-tight transition-colors ${
+                        isComingSoon ? "text-muted-foreground" : "text-card-foreground group-hover:text-primary"
+                      }`}
+                    >
+                      {pillar.title || t(`pillars.${pillar.slug}.title`)}
+                    </h3>
+                    <p className="text-xs text-muted-foreground leading-relaxed mb-3.5">
+                      {pillar.description || t(`pillars.${pillar.slug}.desc`)}
+                    </p>
+                    {!isComingSoon && (
+                      <div className="flex items-center gap-3">
+                        <span className="text-[11px] font-semibold text-muted-foreground">{pillar.progress_percent}%</span>
+                        <div className="flex-1">
+                          <Progress value={pillar.progress_percent} className="h-[3px]" />
+                        </div>
+                        <span className="text-[10px] text-muted-foreground">{pillar.lead_name}</span>
+                      </div>
+                    )}
+                    {!isComingSoon && (
+                      <div className="max-h-0 overflow-hidden group-hover:max-h-16 group-hover:border-t group-hover:border-border group-hover:mt-3.5 group-hover:pt-3 transition-all duration-300">
+                        <p className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
+                          {t("pillars.sponsors")}
+                        </p>
+                        <div className="flex gap-1.5 flex-wrap">
+                          {(pillar.sponsors ?? []).length > 0 ? (
+                            pillar.sponsors.map((s) => (
+                              <span key={s} className="text-[10px] px-2 py-0.5 rounded bg-primary/10 border border-primary/20 text-primary font-semibold">
+                                {s}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="text-[10px] px-2 py-0.5 rounded bg-muted border border-border text-muted-foreground font-semibold italic opacity-50">
+                              {t("pillars.open")}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                );
+
+                return (
+                  <AnimatedSection key={pillar.id} delay={i * 80}>
+                    {isComingSoon ? (
+                      <div
+                        aria-disabled
+                        className="group relative block p-5 rounded-2xl border border-border bg-card overflow-hidden opacity-60 grayscale cursor-not-allowed"
+                      >
+                        {cardInner}
+                      </div>
+                    ) : (
+                      <Link
+                        to={pillar.route ?? `/programmes/${pillar.slug}`}
+                        className="group relative block p-5 rounded-2xl border border-border bg-card hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 overflow-hidden"
+                      >
+                        {cardInner}
+                      </Link>
+                    )}
+                  </AnimatedSection>
+                );
+              })}
+
  </div>
  </div>
  </section>
