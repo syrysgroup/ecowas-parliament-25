@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Pencil, Trash2, ExternalLink } from "lucide-react";
+import { Plus, Pencil, Trash2, ExternalLink, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -10,7 +10,10 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
+import { useBulkSelection } from "@/hooks/useBulkSelection";
+import { BulkActionBar } from "@/components/crm/shared/BulkActionBar";
 import ImageUploadOrUrl from "@/components/shared/ImageUploadOrUrl";
 
 interface StakeholderRow {
@@ -136,6 +139,7 @@ export default function StakeholdersModule() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<StakeholderRow | undefined>();
   const [deleting, setDeleting] = useState<StakeholderRow | undefined>();
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
 
   const { data: stakeholders = [], isLoading } = useQuery<StakeholderRow[]>({
     queryKey: ["stakeholder-profiles"],
@@ -162,6 +166,34 @@ export default function StakeholdersModule() {
     onError: (err: any) => toast({ title: "Error", description: err.message, variant: "destructive" }),
   });
 
+  const bulk = useBulkSelection(stakeholders);
+
+  const bulkDelete = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase.from("stakeholder_profiles").delete().in("id", ids);
+      if (error) throw error;
+    },
+    onSuccess: (_d, ids) => {
+      qc.invalidateQueries({ queryKey: ["stakeholder-profiles"] });
+      bulk.reset();
+      setConfirmBulkDelete(false);
+      toast({ title: `Deleted ${ids.length} stakeholder${ids.length !== 1 ? "s" : ""}` });
+    },
+    onError: (err: any) => toast({ title: "Error", description: err.message, variant: "destructive" }),
+  });
+
+  const bulkToggleActive = useMutation({
+    mutationFn: async ({ ids, is_active }: { ids: string[]; is_active: boolean }) => {
+      const { error } = await supabase.from("stakeholder_profiles").update({ is_active }).in("id", ids);
+      if (error) throw error;
+    },
+    onSuccess: (_d, { ids, is_active }) => {
+      qc.invalidateQueries({ queryKey: ["stakeholder-profiles"] });
+      bulk.reset();
+      toast({ title: `${is_active ? "Showed" : "Hid"} ${ids.length} stakeholder${ids.length !== 1 ? "s" : ""}` });
+    },
+  });
+
   const openCreate = () => { setEditing(undefined); setDialogOpen(true); };
   const openEdit = (s: StakeholderRow) => { setEditing(s); setDialogOpen(true); };
 
@@ -169,6 +201,7 @@ export default function StakeholdersModule() {
     acc[cat] = stakeholders.filter(s => s.category === cat);
     return acc;
   }, {} as Record<string, StakeholderRow[]>);
+
 
   return (
     <div className="space-y-5">
@@ -215,7 +248,13 @@ export default function StakeholdersModule() {
                 <p className="text-[11px] font-bold uppercase tracking-wider text-crm-text-dim mb-2 capitalize">{cat}</p>
                 <div className="space-y-2">
                   {items.map(s => (
-                    <div key={s.id} className="flex items-center gap-3 bg-crm-card border border-crm-border rounded-xl px-4 py-3">
+                    <div key={s.id} className={`flex items-center gap-3 bg-crm-card border rounded-xl px-4 py-3 transition-colors ${bulk.isSelected(s.id) ? "border-emerald-700 ring-1 ring-emerald-700/40" : "border-crm-border"}`}>
+                      <Checkbox
+                        checked={bulk.isSelected(s.id)}
+                        onCheckedChange={() => bulk.toggle(s.id)}
+                        className="border-crm-border"
+                        aria-label={`Select ${s.name}`}
+                      />
                       {s.image_url ? (
                         <img src={s.image_url} alt={s.name}
                           className="w-10 h-10 rounded-full object-cover flex-shrink-0"
@@ -270,6 +309,46 @@ export default function StakeholdersModule() {
           <AlertDialogFooter>
             <AlertDialogCancel className="border-crm-border text-crm-text text-xs h-8">Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={() => deleting && deleteMutation.mutate(deleting.id)}
+              className="bg-red-600 hover:bg-red-700 text-white text-xs h-8">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <BulkActionBar count={bulk.selectedCount} onClear={bulk.reset}>
+        <Button size="sm" variant="outline"
+          onClick={() => bulkToggleActive.mutate({ ids: bulk.selectedIds, is_active: true })}
+          disabled={bulkToggleActive.isPending}
+          className="h-7 text-xs gap-1 border-emerald-800 text-emerald-400 hover:bg-emerald-950">
+          <Eye size={11} /> Show
+        </Button>
+        <Button size="sm" variant="outline"
+          onClick={() => bulkToggleActive.mutate({ ids: bulk.selectedIds, is_active: false })}
+          disabled={bulkToggleActive.isPending}
+          className="h-7 text-xs gap-1 border-crm-border">
+          <EyeOff size={11} /> Hide
+        </Button>
+        <Button size="sm" variant="destructive"
+          onClick={() => setConfirmBulkDelete(true)}
+          disabled={bulkDelete.isPending}
+          className="h-7 text-xs gap-1">
+          <Trash2 size={11} /> Delete
+        </Button>
+      </BulkActionBar>
+
+      <AlertDialog open={confirmBulkDelete} onOpenChange={setConfirmBulkDelete}>
+        <AlertDialogContent className="bg-crm-card border-crm-border">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-crm-text text-sm">Delete {bulk.selectedCount} stakeholder{bulk.selectedCount !== 1 ? "s" : ""}?</AlertDialogTitle>
+            <AlertDialogDescription className="text-crm-text-muted text-xs">
+              The selected profile{bulk.selectedCount !== 1 ? "s" : ""} will be permanently removed from the public Stakeholders page.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-crm-border text-crm-text text-xs h-8">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => bulkDelete.mutate(bulk.selectedIds)}
               className="bg-red-600 hover:bg-red-700 text-white text-xs h-8">
               Delete
             </AlertDialogAction>

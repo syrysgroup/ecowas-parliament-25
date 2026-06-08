@@ -7,6 +7,12 @@ import {
   Mail, Phone, Globe, MessageSquare, Check, Trash2, Inbox,
   ExternalLink, ChevronDown, ChevronUp, User, Pencil, X,
 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { useBulkSelection } from "@/hooks/useBulkSelection";
+import { BulkActionBar } from "@/components/crm/shared/BulkActionBar";
+import { useToast } from "@/hooks/use-toast";
 
 interface Profile { id: string; full_name: string | null; email: string | null; }
 
@@ -64,6 +70,8 @@ export default function ContactSubmissionsModule() {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [editingNotes, setEditingNotes] = useState<Record<string, string>>({});
   const [savingNotes, setSavingNotes]   = useState<Record<string, boolean>>({});
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
+  const { toast } = useToast();
 
   // Fetch submissions — admins get all, assigned users get only theirs (via RLS)
   const { data: submissions = [], isLoading } = useQuery<Submission[]>({
@@ -137,6 +145,34 @@ export default function ContactSubmissionsModule() {
     filter === "mine"   ? mine :
     submissions;
 
+  const bulk = useBulkSelection(displayed);
+
+  const bulkDelete = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase.from("contact_submissions").delete().in("id", ids);
+      if (error) throw error;
+    },
+    onSuccess: (_d, ids) => {
+      qc.invalidateQueries({ queryKey: ["contact-submissions"] });
+      bulk.reset();
+      setConfirmBulkDelete(false);
+      toast({ title: `Deleted ${ids.length} submission${ids.length !== 1 ? "s" : ""}` });
+    },
+    onError: (e: any) => toast({ title: "Bulk delete failed", description: e.message, variant: "destructive" }),
+  });
+
+  const bulkPatch = useMutation({
+    mutationFn: async ({ ids, patch }: { ids: string[]; patch: Record<string, unknown> }) => {
+      const { error } = await supabase.from("contact_submissions").update(patch).in("id", ids);
+      if (error) throw error;
+    },
+    onSuccess: (_d, { ids }) => {
+      qc.invalidateQueries({ queryKey: ["contact-submissions"] });
+      bulk.reset();
+      toast({ title: `Updated ${ids.length} submission${ids.length !== 1 ? "s" : ""}` });
+    },
+  });
+
   const canEdit = (s: Submission) => isAdmin || s.assigned_to === user?.id;
 
   return (
@@ -187,6 +223,20 @@ export default function ContactSubmissionsModule() {
         </div>
       )}
 
+      {isAdmin && displayed.length > 0 && (
+        <div className="flex items-center gap-3 px-3 py-2 rounded-lg border border-crm-border bg-crm-surface/50">
+          <Checkbox
+            checked={bulk.allSelected ? true : bulk.someSelected ? "indeterminate" : false}
+            onCheckedChange={() => bulk.toggleAll()}
+            className="border-crm-border"
+            aria-label="Select all visible"
+          />
+          <span className="text-[10px] font-mono uppercase text-crm-text-dim">
+            {bulk.selectedCount > 0 ? `${bulk.selectedCount} selected` : `Select all (${displayed.length})`}
+          </span>
+        </div>
+      )}
+
       <div className="space-y-2">
         {displayed.map(s => {
           const isExpanded = expandedId === s.id;
@@ -201,6 +251,16 @@ export default function ContactSubmissionsModule() {
             >
               {/* ── Card header (always visible) ── */}
               <div className="flex items-start gap-3 p-4">
+                {isAdmin && (
+                  <div className="pt-1">
+                    <Checkbox
+                      checked={bulk.isSelected(s.id)}
+                      onCheckedChange={() => bulk.toggle(s.id)}
+                      className="border-crm-border"
+                      aria-label={`Select submission from ${s.name ?? "Anonymous"}`}
+                    />
+                  </div>
+                )}
                 <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${
                   !s.is_read ? "bg-emerald-900/40" : "bg-crm-surface"
                 }`}>
@@ -417,6 +477,54 @@ export default function ContactSubmissionsModule() {
           </p>
         </div>
       )}
+
+      {isAdmin && (
+        <BulkActionBar count={bulk.selectedCount} onClear={bulk.reset}>
+          <Button size="sm" variant="outline"
+            onClick={() => bulkPatch.mutate({ ids: bulk.selectedIds, patch: { is_read: true } })}
+            disabled={bulkPatch.isPending}
+            className="h-7 text-xs gap-1 border-emerald-800 text-emerald-400 hover:bg-emerald-950">
+            <Check size={11} /> Mark read
+          </Button>
+          <Button size="sm" variant="outline"
+            onClick={() => bulkPatch.mutate({ ids: bulk.selectedIds, patch: { is_read: false } })}
+            disabled={bulkPatch.isPending}
+            className="h-7 text-xs gap-1 border-crm-border">
+            <Inbox size={11} /> Mark unread
+          </Button>
+          <Button size="sm" variant="outline"
+            onClick={() => bulkPatch.mutate({ ids: bulk.selectedIds, patch: { status: "resolved" } })}
+            disabled={bulkPatch.isPending}
+            className="h-7 text-xs gap-1 border-emerald-800 text-emerald-400 hover:bg-emerald-950">
+            Resolve
+          </Button>
+          <Button size="sm" variant="destructive"
+            onClick={() => setConfirmBulkDelete(true)}
+            disabled={bulkDelete.isPending}
+            className="h-7 text-xs gap-1">
+            <Trash2 size={11} /> Delete
+          </Button>
+        </BulkActionBar>
+      )}
+
+      <AlertDialog open={confirmBulkDelete} onOpenChange={setConfirmBulkDelete}>
+        <AlertDialogContent className="bg-crm-card border-crm-border">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-crm-text text-sm">Delete {bulk.selectedCount} submission{bulk.selectedCount !== 1 ? "s" : ""}?</AlertDialogTitle>
+            <AlertDialogDescription className="text-crm-text-muted text-xs">
+              The selected submission{bulk.selectedCount !== 1 ? "s" : ""} will be permanently removed. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-crm-border text-crm-text text-xs h-8">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => bulkDelete.mutate(bulk.selectedIds)}
+              className="bg-red-600 hover:bg-red-700 text-white text-xs h-8">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
