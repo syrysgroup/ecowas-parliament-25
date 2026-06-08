@@ -145,6 +145,34 @@ export default function ContactSubmissionsModule() {
     filter === "mine"   ? mine :
     submissions;
 
+  const bulk = useBulkSelection(displayed);
+
+  const bulkDelete = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase.from("contact_submissions").delete().in("id", ids);
+      if (error) throw error;
+    },
+    onSuccess: (_d, ids) => {
+      qc.invalidateQueries({ queryKey: ["contact-submissions"] });
+      bulk.reset();
+      setConfirmBulkDelete(false);
+      toast({ title: `Deleted ${ids.length} submission${ids.length !== 1 ? "s" : ""}` });
+    },
+    onError: (e: any) => toast({ title: "Bulk delete failed", description: e.message, variant: "destructive" }),
+  });
+
+  const bulkPatch = useMutation({
+    mutationFn: async ({ ids, patch }: { ids: string[]; patch: Record<string, unknown> }) => {
+      const { error } = await supabase.from("contact_submissions").update(patch).in("id", ids);
+      if (error) throw error;
+    },
+    onSuccess: (_d, { ids }) => {
+      qc.invalidateQueries({ queryKey: ["contact-submissions"] });
+      bulk.reset();
+      toast({ title: `Updated ${ids.length} submission${ids.length !== 1 ? "s" : ""}` });
+    },
+  });
+
   const canEdit = (s: Submission) => isAdmin || s.assigned_to === user?.id;
 
   return (
@@ -192,6 +220,20 @@ export default function ContactSubmissionsModule() {
       {isLoading && (
         <div className="flex justify-center py-12">
           <div className="w-6 h-6 border-2 border-emerald-700 border-t-emerald-400 rounded-full animate-spin" />
+        </div>
+      )}
+
+      {isAdmin && displayed.length > 0 && (
+        <div className="flex items-center gap-3 px-3 py-2 rounded-lg border border-crm-border bg-crm-surface/50">
+          <Checkbox
+            checked={bulk.allSelected ? true : bulk.someSelected ? "indeterminate" : false}
+            onCheckedChange={() => bulk.toggleAll()}
+            className="border-crm-border"
+            aria-label="Select all visible"
+          />
+          <span className="text-[10px] font-mono uppercase text-crm-text-dim">
+            {bulk.selectedCount > 0 ? `${bulk.selectedCount} selected` : `Select all (${displayed.length})`}
+          </span>
         </div>
       )}
 
