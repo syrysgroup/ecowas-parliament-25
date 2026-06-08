@@ -248,7 +248,13 @@ export default function StakeholdersModule() {
                 <p className="text-[11px] font-bold uppercase tracking-wider text-crm-text-dim mb-2 capitalize">{cat}</p>
                 <div className="space-y-2">
                   {items.map(s => (
-                    <div key={s.id} className="flex items-center gap-3 bg-crm-card border border-crm-border rounded-xl px-4 py-3">
+                    <div key={s.id} className={`flex items-center gap-3 bg-crm-card border rounded-xl px-4 py-3 transition-colors ${bulk.isSelected(s.id) ? "border-emerald-700 ring-1 ring-emerald-700/40" : "border-crm-border"}`}>
+                      <Checkbox
+                        checked={bulk.isSelected(s.id)}
+                        onCheckedChange={() => bulk.toggle(s.id)}
+                        className="border-crm-border"
+                        aria-label={`Select ${s.name}`}
+                      />
                       {s.image_url ? (
                         <img src={s.image_url} alt={s.name}
                           className="w-10 h-10 rounded-full object-cover flex-shrink-0"
