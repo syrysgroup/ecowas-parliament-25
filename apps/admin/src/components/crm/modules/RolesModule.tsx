@@ -422,11 +422,13 @@ export default function RolesModule() {
         </div>
       </div>
 
-      {(!isSuperAdmin && !isAdmin) && (
+      {!isSuperAdmin && (
         <div className="flex items-start gap-2 p-3 bg-amber-950/40 border border-amber-800 rounded-lg">
           <AlertTriangle size={12} className="text-amber-400 shrink-0 mt-0.5" />
           <p className="text-[11px] text-amber-300">
-            You have view-only access. Admin or Super Admin can edit permissions.
+            {isAdmin
+              ? "You can assign or revoke roles for users, but only Super Admin can edit the permissions matrix."
+              : "View-only access. Only Super Admin can edit permissions or assign roles."}
           </p>
         </div>
       )}
