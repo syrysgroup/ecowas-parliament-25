@@ -1,6 +1,6 @@
 import { useParams } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
-import SEOHead from "@/components/SEOHead";
+import { SEOHead } from "@/components/SEOHead";
 import SectionRenderer from "@/components/cms/SectionRenderer";
 import { usePage } from "@/hooks/usePage";
 
