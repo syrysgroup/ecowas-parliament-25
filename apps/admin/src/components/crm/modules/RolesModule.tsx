@@ -511,7 +511,7 @@ export default function RolesModule() {
                 <div className="p-4">
                   <UsersWithRole
                     role={selectedRole}
-                    canManage={isSuperAdmin}
+                    canManage={isSuperAdmin || (isAdmin && selectedRole !== "super_admin")}
                   />
                 </div>
               </div>
