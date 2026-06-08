@@ -34,6 +34,8 @@ import EcowasParliament from "./pages/EcowasParliament";
 import SponsorDashboard from "./pages/SponsorDashboard";
 import ParliamentTour from "./pages/ParliamentTour";
 import LegalPage from "./pages/LegalPage";
+import CMSPage from "./pages/CMSPage";
+import CMSForm from "./pages/CMSForm";
 
 // Marketplace
 import Marketplace from "./pages/marketplace/Marketplace";
