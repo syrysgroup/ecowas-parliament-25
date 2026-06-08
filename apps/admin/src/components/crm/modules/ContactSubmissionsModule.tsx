@@ -477,6 +477,54 @@ export default function ContactSubmissionsModule() {
           </p>
         </div>
       )}
+
+      {isAdmin && (
+        <BulkActionBar count={bulk.selectedCount} onClear={bulk.reset}>
+          <Button size="sm" variant="outline"
+            onClick={() => bulkPatch.mutate({ ids: bulk.selectedIds, patch: { is_read: true } })}
+            disabled={bulkPatch.isPending}
+            className="h-7 text-xs gap-1 border-emerald-800 text-emerald-400 hover:bg-emerald-950">
+            <Check size={11} /> Mark read
+          </Button>
+          <Button size="sm" variant="outline"
+            onClick={() => bulkPatch.mutate({ ids: bulk.selectedIds, patch: { is_read: false } })}
+            disabled={bulkPatch.isPending}
+            className="h-7 text-xs gap-1 border-crm-border">
+            <Inbox size={11} /> Mark unread
+          </Button>
+          <Button size="sm" variant="outline"
+            onClick={() => bulkPatch.mutate({ ids: bulk.selectedIds, patch: { status: "resolved" } })}
+            disabled={bulkPatch.isPending}
+            className="h-7 text-xs gap-1 border-emerald-800 text-emerald-400 hover:bg-emerald-950">
+            Resolve
+          </Button>
+          <Button size="sm" variant="destructive"
+            onClick={() => setConfirmBulkDelete(true)}
+            disabled={bulkDelete.isPending}
+            className="h-7 text-xs gap-1">
+            <Trash2 size={11} /> Delete
+          </Button>
+        </BulkActionBar>
+      )}
+
+      <AlertDialog open={confirmBulkDelete} onOpenChange={setConfirmBulkDelete}>
+        <AlertDialogContent className="bg-crm-card border-crm-border">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-crm-text text-sm">Delete {bulk.selectedCount} submission{bulk.selectedCount !== 1 ? "s" : ""}?</AlertDialogTitle>
+            <AlertDialogDescription className="text-crm-text-muted text-xs">
+              The selected submission{bulk.selectedCount !== 1 ? "s" : ""} will be permanently removed. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-crm-border text-crm-text text-xs h-8">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => bulkDelete.mutate(bulk.selectedIds)}
+              className="bg-red-600 hover:bg-red-700 text-white text-xs h-8">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
