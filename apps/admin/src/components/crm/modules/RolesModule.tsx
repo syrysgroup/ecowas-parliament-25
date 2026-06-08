@@ -310,6 +310,153 @@ function UsersWithRole({
   );
 }
 
+// ─── Custom roles ────────────────────────────────────────────────────────────
+// Custom roles are named labels that map to one of the 16 base AppRole values.
+// Permissions are configured against the base role; the custom label is shown
+// in the UI for clarity. Only super_admin can create/edit/delete.
+function CustomRoleCreator() {
+  const { toast } = useToast();
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [label, setLabel] = useState("");
+  const [key, setKey] = useState("");
+  const [description, setDescription] = useState("");
+  const [baseRole, setBaseRole] = useState<AppRole>("staff");
+  const [saving, setSaving] = useState(false);
+
+  const submit = async () => {
+    if (!label.trim() || !key.trim()) {
+      toast({ title: "Label and key are required", variant: "destructive" });
+      return;
+    }
+    setSaving(true);
+    try {
+      const { error } = await supabase.from("custom_roles" as any).insert({
+        key: key.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "_"),
+        label: label.trim(),
+        description: description.trim() || null,
+        base_role: baseRole,
+      });
+      if (error) throw new Error(error.message);
+      toast({ title: `Custom role "${label}" created` });
+      setOpen(false);
+      setLabel(""); setKey(""); setDescription(""); setBaseRole("staff");
+      qc.invalidateQueries({ queryKey: ["custom-roles"] });
+    } catch (err: any) {
+      toast({ title: "Failed to create role", description: err.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (!open) {
+    return (
+      <button
+        onClick={() => setOpen(true)}
+        className="flex items-center gap-1 text-[10px] text-emerald-400 hover:text-emerald-300"
+      >
+        <Plus size={10} /> Custom role
+      </button>
+    );
+  }
+
+  return (
+    <div className="absolute z-50 mt-6 right-0 w-72 p-3 rounded-xl border border-[hsl(var(--border-subtle))] bg-[hsl(var(--surface-1))] shadow-xl space-y-2">
+      <div className="flex items-center justify-between">
+        <p className="text-[11px] font-semibold text-[hsl(var(--text-1))]">New custom role</p>
+        <button onClick={() => setOpen(false)} className="text-[hsl(var(--text-3))] hover:text-[hsl(var(--text-1))]">
+          <X size={12} />
+        </button>
+      </div>
+      <input
+        value={label}
+        onChange={(e) => { setLabel(e.target.value); if (!key) setKey(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, "_")); }}
+        placeholder="Label (e.g. Regional Lead)"
+        className="w-full text-[11px] bg-[hsl(var(--surface-3))] border border-[hsl(var(--border-subtle))] rounded px-2 py-1.5 text-[hsl(var(--text-1))]"
+      />
+      <input
+        value={key}
+        onChange={(e) => setKey(e.target.value)}
+        placeholder="key (e.g. regional_lead)"
+        className="w-full text-[11px] bg-[hsl(var(--surface-3))] border border-[hsl(var(--border-subtle))] rounded px-2 py-1.5 text-[hsl(var(--text-1))] font-mono"
+      />
+      <select
+        value={baseRole}
+        onChange={(e) => setBaseRole(e.target.value as AppRole)}
+        className="w-full text-[11px] bg-[hsl(var(--surface-3))] border border-[hsl(var(--border-subtle))] rounded px-2 py-1.5 text-[hsl(var(--text-1))]"
+      >
+        {ALL_ROLES.filter(r => r !== "super_admin").map(r => (
+          <option key={r} value={r}>Inherits from: {CRM_ROLE_META[r]?.label ?? r}</option>
+        ))}
+      </select>
+      <textarea
+        value={description}
+        onChange={(e) => setDescription(e.target.value)}
+        placeholder="Description (optional)"
+        rows={2}
+        className="w-full text-[11px] bg-[hsl(var(--surface-3))] border border-[hsl(var(--border-subtle))] rounded px-2 py-1.5 text-[hsl(var(--text-1))]"
+      />
+      <Button size="sm" onClick={submit} disabled={saving} className="w-full bg-emerald-700 hover:bg-emerald-600 text-white text-xs gap-1.5">
+        {saving ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
+        Create role
+      </Button>
+    </div>
+  );
+}
+
+function CustomRolesList() {
+  const { isSuperAdmin } = useAuthContext();
+  const { toast } = useToast();
+  const qc = useQueryClient();
+  const { data: rows = [] } = useQuery({
+    queryKey: ["custom-roles"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("custom_roles" as any).select("*").order("created_at", { ascending: false });
+      if (error) return [];
+      return data ?? [];
+    },
+  });
+
+  const remove = async (id: string, label: string) => {
+    if (!confirm(`Delete custom role "${label}"?`)) return;
+    const { error } = await supabase.from("custom_roles" as any).delete().eq("id", id);
+    if (error) {
+      toast({ title: "Delete failed", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: `Deleted "${label}"` });
+    qc.invalidateQueries({ queryKey: ["custom-roles"] });
+  };
+
+  if (!rows.length) return null;
+
+  return (
+    <div className="mb-3 p-2 rounded-lg border border-emerald-900/50 bg-emerald-950/20 space-y-1">
+      <p className="text-[9px] uppercase tracking-wider text-emerald-400 px-1">Custom roles</p>
+      {(rows as any[]).map((r) => (
+        <div key={r.id} className="flex items-center gap-2 px-1.5 py-1 group">
+          <Sparkles size={9} className="text-emerald-400 shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-[11px] text-[hsl(var(--text-1))] truncate font-medium">{r.label}</p>
+            <p className="text-[9px] text-[hsl(var(--text-3))] truncate">
+              inherits {r.base_role}
+            </p>
+          </div>
+          {isSuperAdmin && (
+            <button
+              onClick={() => remove(r.id, r.label)}
+              className="opacity-0 group-hover:opacity-100 text-[hsl(var(--text-3))] hover:text-red-400 transition-all"
+              title="Delete custom role"
+            >
+              <X size={10} />
+            </button>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 export default function RolesModule() {
   const { isSuperAdmin, isAdmin } = useAuthContext();
