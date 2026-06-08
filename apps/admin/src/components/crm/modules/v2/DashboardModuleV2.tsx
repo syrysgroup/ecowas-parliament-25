@@ -138,12 +138,16 @@ export default function DashboardModuleV2({ onNavigate }: { onNavigate: (s: stri
         }
       />
 
-      {/* KPI strip */}
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
-        <StatCard label="Total users" value={stats.data?.users ?? "—"} icon={Users} tone="brand" />
-        <StatCard label="Pending invites" value={stats.data?.invites ?? "—"} icon={UserPlus} tone="warn" />
-        <StatCard label="Active sponsors" value={stats.data?.sponsors ?? "—"} icon={Handshake} tone="default" />
-        <StatCard label="Open tasks" value={stats.data?.tasks ?? "—"} icon={CheckSquare} tone="danger" />
+      {/* KPI strip — operational signals */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-8 gap-3 mb-6">
+        <StatCard label="Open tasks"        value={stats.data?.tasks       ?? "—"} icon={CheckSquare}    tone="brand"   />
+        <StatCard label="Pending invites"   value={stats.data?.invites     ?? "—"} icon={UserPlus}       tone="warn"    />
+        <StatCard label="New submissions"   value={stats.data?.submissions ?? "—"} icon={Inbox}          tone="default" />
+        <StatCard label="Volunteer apps"    value={stats.data?.volunteers  ?? "—"} icon={HeartHandshake} tone="default" />
+        <StatCard label="Media requests"    value={stats.data?.media       ?? "—"} icon={IdCard}         tone="default" />
+        <StatCard label="Overdue invoices"  value={stats.data?.invoices    ?? "—"} icon={FileText}       tone="danger"  />
+        <StatCard label="Active sponsors"   value={stats.data?.sponsors    ?? "—"} icon={Handshake}      tone="default" />
+        <StatCard label="Total users"       value={stats.data?.users       ?? "—"} icon={Users}          tone="default" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
