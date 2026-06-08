@@ -5,7 +5,7 @@ import { useAuthContext } from "@/contexts/AuthContext";
 import { format, parseISO } from "date-fns";
 import {
   Mail, Phone, Globe, ChevronDown, ChevronUp, Trash2,
-  ExternalLink, Pencil, X, Check,
+  ExternalLink, Pencil, X, Check, PhoneCall, FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -19,6 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 
 // ─── Types ────────────────────────────────────────────────────────────────
 type InquiryStatus = "new" | "contacted" | "qualified" | "converted" | "declined";
+type RequestType = "inquiry" | "concept_note" | "briefing_call";
 
 interface SponsorInquiry {
   id: string;
@@ -31,6 +32,7 @@ interface SponsorInquiry {
   preferred_tier: string | null;
   message: string | null;
   status: InquiryStatus;
+  request_type: RequestType;
   notes: string | null;
   assigned_to: string | null;
   created_at: string;
@@ -87,6 +89,7 @@ export default function SponsorInquiriesModule() {
   const { toast } = useToast();
 
   const [filter, setFilter] = useState<"all" | InquiryStatus>("all");
+  const [typeFilter, setTypeFilter] = useState<"all" | RequestType>("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
@@ -172,10 +175,15 @@ export default function SponsorInquiriesModule() {
 
   // ─── Derived ──────────────────────────────────────────────────────────────
   const byStatus = (s: InquiryStatus) => inquiries.filter((i) => i.status === s);
+  const byType = (t: RequestType) => inquiries.filter((i) => (i.request_type ?? "inquiry") === t);
   const newCount = byStatus("new").length;
+  const callCount = byType("briefing_call").length;
+
+  const typeFiltered =
+    typeFilter === "all" ? inquiries : inquiries.filter((i) => (i.request_type ?? "inquiry") === typeFilter);
 
   const displayed =
-    filter === "all" ? inquiries : inquiries.filter((i) => i.status === filter);
+    filter === "all" ? typeFiltered : typeFiltered.filter((i) => i.status === filter);
 
   const bulk = useBulkSelection(displayed);
 
@@ -202,12 +210,36 @@ export default function SponsorInquiriesModule() {
         <div>
           <h2 className="text-lg font-bold text-crm-text">Sponsor Inquiries</h2>
           <p className="text-[12px] text-crm-text-muted mt-0.5">
-            {newCount} new · {inquiries.length} total
+            {newCount} new · {callCount > 0 ? `${callCount} call request${callCount !== 1 ? "s" : ""} · ` : ""}{inquiries.length} total
           </p>
         </div>
       </div>
 
-      {/* Filter tabs */}
+      {/* Type filter pills */}
+      <div className="flex gap-2 flex-wrap">
+        {(["all", "inquiry", "concept_note", "briefing_call"] as const).map((t) => {
+          const count =
+            t === "all" ? inquiries.length :
+            t === "briefing_call" ? callCount :
+            byType(t as RequestType).length;
+          const label = t === "all" ? "All types" : t === "concept_note" ? "Concept notes" : t === "briefing_call" ? "Briefing calls" : "Inquiries";
+          return (
+            <button
+              key={t}
+              onClick={() => setTypeFilter(t)}
+              className={`px-3 py-1.5 rounded-lg text-[11px] font-mono border transition-colors ${
+                typeFilter === t
+                  ? "bg-crm-accent text-crm-text border-crm-accent"
+                  : "bg-crm-surface text-crm-text-muted border-crm-border hover:border-crm-border-hover"
+              }`}
+            >
+              {label} ({count})
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Status filter tabs */}
       <div className="flex gap-2 flex-wrap">
         {(["all", ...ALL_STATUSES] as const).map((tab) => {
           const count =
@@ -309,6 +341,20 @@ export default function SponsorInquiriesModule() {
                       >
                         {STATUS_LABELS[inquiry.status]}
                       </span>
+
+                      {/* Request type badge */}
+                      {inquiry.request_type === "briefing_call" && (
+                        <span className="flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-full border bg-amber-950 text-amber-400 border-amber-800">
+                          <PhoneCall className="h-2.5 w-2.5" />
+                          Call request
+                        </span>
+                      )}
+                      {inquiry.request_type === "concept_note" && (
+                        <span className="flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-full border bg-blue-950 text-blue-400 border-blue-800">
+                          <FileText className="h-2.5 w-2.5" />
+                          Concept note
+                        </span>
+                      )}
 
                       {/* Tier badge */}
                       {inquiry.preferred_tier && (
