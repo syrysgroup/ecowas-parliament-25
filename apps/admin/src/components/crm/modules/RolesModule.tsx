@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ShieldCheck, Users, ChevronRight, Lock, Check,
-  Loader2, AlertTriangle, Save, X, Plus,
+  Loader2, AlertTriangle, Save, X, Plus, Sparkles,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthContext";
