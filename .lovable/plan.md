@@ -1,94 +1,116 @@
-# Plan — Fix quoted name, Culture.tsx error, and finish admin CRUD coverage
 
-## 1. Root cause of the `"ECOWAS Parliament Initiatives"` quotes
+# Full Admin Control of the Public Website
 
-The DB row `site_settings.site_name` is a JSONB **string** whose actual content is `"ECOWAS Parliament Initiatives"` — the quote characters are part of the string. This happened because `BrandingSettings.tsx` calls `JSON.stringify(name)` and stores the result into a JSONB column, double-encoding it. Every consumer (Navbar, SEOHead, `useSiteSettings.get`) then renders the value with literal quotes.
+Goal: the public site (`apps/web`) reads 100% of its content (copy, hero images, photos, lists, links, SEO, forms) from Supabase. The admin (`apps/admin`) provides CRUD for every page, section, image, and form — with bulk actions, multi-select, drafts, and publish workflow.
 
-**Fix (3 layers):**
-1. **Data migration** — strip surrounding quotes from any double-encoded string settings:
-   ```sql
-   UPDATE site_settings
-   SET value = to_jsonb(btrim(value #>> '{}', '"'))
-   WHERE jsonb_typeof(value) = 'string'
-     AND value #>> '{}' LIKE '"%"';
-   ```
-2. **`BrandingSettings.tsx`** — stop calling `JSON.stringify(...)` when writing strings to JSONB. Pass the raw string; Supabase encodes it correctly.
-3. **`useSiteSettings.ts` (web + admin)** — defensive: if a returned string still starts and ends with `"`, strip them once. Prevents recurrence if any other writer double-encodes.
+This plan also: kills every `—` / `–` in user-visible copy, justifies body text, and wires every public form into the admin inbox + form builder.
 
-After this the Navbar, footer, `<title>`, SEO meta, and every page that reads `site_name` will show `ECOWAS Parliament Initiatives` cleanly.
+---
 
-## 2. Culture.tsx TS17008 error
+## 1. Content audit — what becomes editable
 
-The current `apps/web/src/pages/programmes/Culture.tsx` is only 57 lines and is syntactically valid — there is no unclosed `<Layout>` or `<section>`. The errors at lines 93/196 are from a stale editor/IDE buffer (likely an unsaved revision). I will:
-- Re-read and re-save the file as-is to flush the linter cache.
-- Verify build passes (`tsc` runs automatically on save).
-- If the user actually wants a richer Culture page, propose a separate enhancement — this plan only ensures no compile errors.
+Every public route gets a page record + section records. Audited from `apps/web/src/pages` and `components/home`:
 
-## 3. Programmes menu — dynamic, alpha-sorted, respect hide
+- Home (`Hero`, `Speaker`, `Marquee`, `Countdown`, `Countries`, `Anniversary`, `PeopleMandate`, `ParliamentTourSpotlight`, `PillarsGrid`, `MarketplaceSpotlight`, `ImplementingPartners`, `InstitutionalPartners`, `SponsorPlaceholder`, `Events`, `Stats`, `DidYouKnow`, `LatestNews`, `Newsletter`, `SponsorCTA`)
+- About, Timeline, News (+ detail), Documents, Stakeholders (+ detail), Team, Contact, Media Kit, Sponsors (+ detail), Events (+ detail), Volunteer, ECOWAS Parliament, Parliament Tour, Marketplace (all sub-routes), Programmes (youth + innovators + smart + trade + women + civic + culture + awards + parliament + dynamic `:slug`), Media Portal, Sponsor Dashboard, Auth pages, Footer, Navbar, Cookie Consent, Legal pages.
 
-Today `Navbar.tsx` already queries `programme_pillars`, but it does not enforce alphabetical order and the hide toggle is not consistently respected for menu/footer/home grid.
+Anything not already DB-backed gets migrated (most home sections currently use `t()` fallbacks only).
 
-**Changes:**
-- Single source of truth: `programme_pillars` table (already exists, with `is_active`, `title`, `route`, `slug`, `display_order`).
-- Navbar dropdown query: `select … where is_active = true order by title asc` (override `display_order` for the menu, per the user's explicit "alphabetical" request). Same change in mobile sheet.
-- Footer programmes list, homepage `ProgrammePillarsSection`, and any `programmes/` route guard (`useProgrammeVisibility`) all read from the same filtered, alpha-sorted list.
-- `App.tsx` keeps the static `/programmes/:slug` route, but `PillarPage` already 404s when `is_active=false`. Confirm `Culture.tsx`, `Civic.tsx`, etc. all go through `useProgrammeVisibility` (most do; audit and fix any that don't).
-- Admin `ProgrammePillarsModule` already supports create/edit/hide; verify the **Eye/EyeOff** toggle flips `is_active` and invalidates the `["programmes-nav"]` query so the web menu updates within ~30 s (or immediately via realtime subscription — add a lightweight `supabase.channel` listener in Navbar).
+---
 
-Result: adding a new pillar in admin instantly shows it in the menu (sorted A→Z); hiding it removes it from the menu, footer, homepage grid, and 404s the route.
+## 2. Data model (new + extended tables)
 
-## 4. Audit: every page / every word editable from admin
+New unified content model layered on top of existing `site_content` / `cms_pages`:
 
-Goal: no hard-coded copy on `apps/web`. Pass over each public page and ensure it reads from a CMS row (`site_content`, `programme_pillars`, `news_articles`, `events`, `team_members`, `partners`, `sponsors`, `timeline_events`, `parliament_content`, `media_kits`, `documents`, etc.). For anything still hard-coded, add a `site_content` key + admin editor template.
+- `pages` — slug, route, title, status (draft/published), seo, og_image, published_at, updated_by
+- `page_sections` — page_id, key, kind (`hero|text|stat|cta|gallery|list|html|form_ref|partners|sponsors|cards|marquee|countdown|tour|events|news|newsletter`), position, props (JSONB), visible
+- `page_section_items` — section_id, position, data (JSONB), image_id (for repeatable items: stats, tags, cards, partners, etc.)
+- `media_assets` — already covered by storage buckets; add `media_library` table for searchable picker (bucket, path, alt, credit, tags, width, height, uploaded_by)
+- `form_definitions` — slug, title, description, success_message, email_to, status
+- `form_fields` — form_id, position, key, label, type (text/email/textarea/select/checkbox/radio/file/date/phone/country), required, options (JSONB), validation
+- `form_submissions` — form_id, payload (JSONB), files (JSONB), ip, ua, status (new/read/archived/spam), assigned_to, notes
+- `seo_pages` — extend existing with og_image, twitter_card, schema_json
+- `revisions` — generic table for `pages`, `page_sections`, `form_definitions` (revision history + rollback)
 
-Targeted sweep (in priority order):
-1. **Home** — `MarqueeStrip`, `MarketplaceSpotlight`, `EventsSection`, `SponsorPlaceholderSection`, `AnniversarySection`, `CountdownTimer` fallback name. Wire each to `useSiteContent(...)` with English fallback (rows already seeded in phase 2).
-2. **Programme pages** — `PillarPage` uses `programme_pillars` + `programme_page_content` + `programme_page_sections`. Audit `Awards`, `Women`, `Youth`, `Trade`, `Culture`, `Civic`, `InnovatorsChallenge`, `SmartChallenge` to ensure they pull from those tables and not from `data/*.ts`. Migrate any leftover hardcoded arrays into seeded DB rows.
-3. **About / EcowasParliament / ParliamentCountry / Timeline / Contact / Stakeholders / Media** — each already partially CMS-driven; finish the last hard-coded blocks (hero copy, stats, CTA strips, contact addresses, social links).
-4. **Navbar / Footer** — link list editor (`site_content` key `nav_links` and `footer_links`) so admin can rename/reorder/add nav items without code.
-5. **Documents / images** — every `<img>` reading from `/src/assets` becomes overridable via a `site_content.*_image_url` row backed by the existing `cms-media` bucket. Re-use the `ImageUploadOrUrl` widget already in `SiteContentModule`.
+All tables get GRANTs + RLS via `is_crm_staff()` for writes, `anon`+`authenticated` select for published rows only.
 
-For each new `site_content` key:
-- Add a row in a small `phase3_content_seeds` migration with `key`, `locale='en'`, sensible defaults.
-- Add a template entry in `SiteContentModule.tsx` so it appears in the admin editor.
-- Update the web component to consume it with a fallback.
+---
 
-## 5. Multi-select / bulk operations everywhere in admin
+## 3. Public site changes (`apps/web`)
 
-Add a reusable `useBulkSelection<T>()` hook + a `BulkActionBar` component (checkbox column, header "select-all" checkbox, sticky action bar with Delete / Publish / Unpublish / Export CSV). Roll it into every list module:
+- New hook `usePage(slug)` → fetches page + sections + items in one query, cached via TanStack Query.
+- Each home/page component refactored from hard-coded copy to a `<SectionRenderer section={…}/>` that maps `kind` to a component (`HeroSection`, `StatsSection`, etc.). Components keep their visuals; props come from DB.
+- Translation files become fallback only (kept for keys not yet in DB).
+- Global typography rule: body copy uses `text-justify hyphens-auto`; headings stay left-aligned.
+- Text normalizer (`lib/text.ts`): strips `—`, `–`, and converts to `, ` or `:` per context; applied at render time so existing DB content also gets sanitized.
+- Forms: `<DynamicForm slug="volunteer"/>` renders from `form_definitions`, posts to a single `submit-form` edge function.
+- `<EditableImage>` reads from `media_library` so the admin can swap any image without code.
 
-- `NewsEditorModule` (articles)
-- `EventsModule` (events + registrations)
-- `TeamModule` (team members)
-- `PartnersModule` (partners + sponsors)
-- `ProgrammePillarsModule` (pillars + sections)
-- `TimelineModule` (events tab)
-- `DocumentsModule`, `MediaKitModule`
-- `InvitationsModule`, `UsersModule` (super admin)
-- `MarketplaceModule`, `StakeholdersModule`, `NominationsModule`
-- `EmailInboxModule` (already partially bulk; harmonize)
+---
 
-Bulk actions are role-gated through existing `usePermissions` checks; destructive actions require an `AlertDialog` confirmation and write to `admin_activity_logs`.
+## 4. Admin changes (`apps/admin`)
 
-## 6. Out of scope for this plan
+New modules under the new shell (Phase 1 already shipped):
 
-- Visual redesign of any page.
-- New authentication flows.
-- Country-page rebuild and 360° tour (handled separately).
+1. **Pages** — list of all public routes, status chips, search, bulk publish/unpublish/duplicate/delete (multi-select checklist).
+2. **Page Editor** — side panel with section list (drag-reorder), per-section inline editor (RichText for prose, repeater for stat/tag/card items, image picker bound to `media_library`), live preview iframe, draft/publish, revision history + rollback.
+3. **Media Library** — grid with multi-select, bulk move/tag/delete, replace-in-place, alt-text editor, used-on counter.
+4. **Form Builder** — create/edit forms, drag-reorder fields, field options editor, email-to + autoresponder, embed-slug generator.
+5. **Form Submissions Inbox** — per form: table with multi-select, bulk mark-read/archive/spam/export-CSV, detail drawer, assign-to, notes, file downloads.
+6. **SEO Manager** — per-page meta, OG image picker, schema.org JSON, sitemap regen trigger.
+7. **Global Settings expansion** — Navbar links, Footer columns, social handles, cookie banner copy, legal pages — all editable.
 
-## Technical breakdown
+Shared additions:
+- `useBulkSelection` already exists → reuse for every list (checkbox column + bulk action bar).
+- Rich text editor (`RichTextEditor` already in repo) reused everywhere; sanitizes dashes on save.
+- Image picker component bound to `media_library` + direct upload to the right Storage bucket.
 
-- **1 SQL migration** (`phase3_quotes_fix_and_content_seeds`):
-  - `UPDATE site_settings` to strip double-encoded quotes.
-  - Insert any new `site_content` keys discovered during audit.
-- **Code edits:**
-  - `apps/admin/src/views/admin/settings/BrandingSettings.tsx` — drop `JSON.stringify` for string values.
-  - `apps/web/src/hooks/useSiteSettings.ts` + admin twin — defensive quote-strip.
-  - `apps/web/src/components/layout/Navbar.tsx` + `Footer.tsx` — alpha-sort programmes, realtime subscription.
-  - Audit + rewire programme pages and homepage components that still hardcode copy.
-  - New `apps/admin/src/hooks/useBulkSelection.ts` and `apps/admin/src/components/crm/shared/BulkActionBar.tsx`; integrate into the ~12 list modules listed above.
-- **Verification:** re-save `Culture.tsx`, confirm build is green, hit the preview to confirm the Navbar/footer no longer show quotes and that toggling a pillar in admin updates the menu live.
+---
 
-## Estimated size
+## 5. Backend (Supabase)
 
-~1 migration, 2 hook tweaks, 1 admin settings fix, 1 new hook + 1 new shared component, ~12 admin module edits, ~6 web component rewires. Shippable in one turn; you can review on preview before approving any follow-up phases.
+Migrations:
+- Create `pages`, `page_sections`, `page_section_items`, `media_library`, `form_definitions`, `form_fields`, `form_submissions`, `revisions` with GRANTs + RLS.
+- Seed: one `pages` row per public route, one `page_sections` row per current section, items populated from current translation files + `site_content`.
+- Seed `form_definitions` for: Contact, Volunteer, Newsletter, Media Accreditation, Sponsor Inquiry, Marketplace Inquiry, Nominations.
+
+Edge functions:
+- `submit-form` — validates against `form_fields`, stores submission, sends notification email via existing Zoho integration, autoresponder to submitter.
+- `publish-page` — flips status, snapshots a revision, invalidates CDN cache.
+- `import-current-content` — one-shot to backfill DB from current translations/components.
+
+---
+
+## 6. Text hygiene + justification
+
+- One-time script (run via edge function) rewrites every text column in `site_content`, `news_articles`, `parliament_content`, `events`, `pillar_*`, `programme_pillars`, `team_members`, `partners`, `sponsors`, replacing `—`/`–` with appropriate punctuation.
+- `RichTextEditor` save hook strips dashes on write.
+- Public site applies `text-justify hyphens-auto` to `.prose` and body paragraphs site-wide (not headings, badges, nav).
+
+---
+
+## 7. Delivery order
+
+1. Migrations + seed (pages/sections/forms/media_library/revisions).
+2. Public site refactor to `usePage` + `SectionRenderer` (home first, then About, Programmes, Parliament, then long tail).
+3. Dash-strip + justification pass.
+4. Admin: Pages list → Page editor → Media Library → Form Builder → Submissions Inbox → SEO Manager → Global Settings.
+5. Edge functions (`submit-form`, `publish-page`).
+6. QA: every public route loads from DB, every form submits to inbox, every image swappable, bulk actions work.
+
+---
+
+## 8. Out of scope (call out)
+
+- No visual redesign of the public site (only typography justify + dash removal).
+- No multi-language editor yet (English only per project memory); structure supports it later.
+- No A/B testing or scheduled publishing in v1 (revisions + manual publish only).
+
+---
+
+## Open questions
+
+1. **Page editor surface**: inline on the live page (click-to-edit overlay) or side-panel editor with iframe preview? Side-panel is faster to build and safer; inline is flashier.
+2. **Revision retention**: keep all revisions forever, or cap at last 20 per page?
+3. **Form submission storage of files**: store in a new private `form-uploads` bucket (recommended) or attach to existing buckets?
+4. **Dash replacement rule**: replace `—` with `,` everywhere, or context-aware (`:` when followed by a clause, `,` otherwise)? Context-aware is better but slower to ship.

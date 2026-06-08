@@ -323,3 +323,14 @@
   margin-bottom: 6px;
   opacity: 0.85;
 }
+
+/* CMS body copy: justified with auto hyphens.
+   Apply via `.cms-body` (paragraphs only — keep headings & nav left-aligned). */
+.cms-body, .cms-body p {
+  text-align: justify;
+  hyphens: auto;
+  text-justify: inter-word;
+}
+.cms-body h1, .cms-body h2, .cms-body h3, .cms-body h4 {
+  text-align: left;
+}
