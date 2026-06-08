@@ -139,6 +139,7 @@ export default function StakeholdersModule() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<StakeholderRow | undefined>();
   const [deleting, setDeleting] = useState<StakeholderRow | undefined>();
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
 
   const { data: stakeholders = [], isLoading } = useQuery<StakeholderRow[]>({
     queryKey: ["stakeholder-profiles"],
@@ -165,6 +166,34 @@ export default function StakeholdersModule() {
     onError: (err: any) => toast({ title: "Error", description: err.message, variant: "destructive" }),
   });
 
+  const bulk = useBulkSelection(stakeholders);
+
+  const bulkDelete = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase.from("stakeholder_profiles").delete().in("id", ids);
+      if (error) throw error;
+    },
+    onSuccess: (_d, ids) => {
+      qc.invalidateQueries({ queryKey: ["stakeholder-profiles"] });
+      bulk.reset();
+      setConfirmBulkDelete(false);
+      toast({ title: `Deleted ${ids.length} stakeholder${ids.length !== 1 ? "s" : ""}` });
+    },
+    onError: (err: any) => toast({ title: "Error", description: err.message, variant: "destructive" }),
+  });
+
+  const bulkToggleActive = useMutation({
+    mutationFn: async ({ ids, is_active }: { ids: string[]; is_active: boolean }) => {
+      const { error } = await supabase.from("stakeholder_profiles").update({ is_active }).in("id", ids);
+      if (error) throw error;
+    },
+    onSuccess: (_d, { ids, is_active }) => {
+      qc.invalidateQueries({ queryKey: ["stakeholder-profiles"] });
+      bulk.reset();
+      toast({ title: `${is_active ? "Showed" : "Hid"} ${ids.length} stakeholder${ids.length !== 1 ? "s" : ""}` });
+    },
+  });
+
   const openCreate = () => { setEditing(undefined); setDialogOpen(true); };
   const openEdit = (s: StakeholderRow) => { setEditing(s); setDialogOpen(true); };
 
@@ -172,6 +201,7 @@ export default function StakeholdersModule() {
     acc[cat] = stakeholders.filter(s => s.category === cat);
     return acc;
   }, {} as Record<string, StakeholderRow[]>);
+
 
   return (
     <div className="space-y-5">
