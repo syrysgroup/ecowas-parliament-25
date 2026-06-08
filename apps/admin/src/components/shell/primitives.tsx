@@ -1,6 +1,108 @@
 import { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
+/**
+ * ModulePage — consistent header + tab strip wrapper for every CRM module.
+ * Use instead of bare PageHeader when a module has tabs or breadcrumbs.
+ */
+export function ModulePage({
+  title,
+  description,
+  icon: Icon,
+  actions,
+  tabs,
+  breadcrumb,
+  children,
+}: {
+  title: string;
+  description?: string;
+  icon?: React.ComponentType<{ className?: string }>;
+  actions?: ReactNode;
+  tabs?: ReactNode;
+  breadcrumb?: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-5">
+      <div className="flex flex-col gap-3">
+        {breadcrumb && (
+          <div className="text-[11px] text-[hsl(var(--text-3))] font-mono tracking-wide">{breadcrumb}</div>
+        )}
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-start gap-2.5 min-w-0">
+            {Icon && (
+              <div className="h-8 w-8 rounded-md bg-[hsl(var(--surface-3))] flex items-center justify-center flex-shrink-0 mt-0.5">
+                <Icon className="h-4 w-4 text-[hsl(var(--brand-green))]" />
+              </div>
+            )}
+            <div className="min-w-0">
+              <h1 className="text-[20px] font-semibold text-[hsl(var(--text-1))] tracking-tight leading-tight truncate">
+                {title}
+              </h1>
+              {description && (
+                <p className="text-[12.5px] text-[hsl(var(--text-3))] mt-0.5">{description}</p>
+              )}
+            </div>
+          </div>
+          {actions && <div className="flex items-center gap-2 flex-shrink-0">{actions}</div>}
+        </div>
+        {tabs && (
+          <div className="border-b border-[hsl(var(--border-subtle))] -mx-6 px-6">
+            <div className="flex items-center gap-1 -mb-px">{tabs}</div>
+          </div>
+        )}
+        {!tabs && <div className="h-px bg-[hsl(var(--border-subtle))]" />}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+/** Tab button used inside ModulePage's `tabs` slot. */
+export function ModuleTab({
+  active, onClick, children,
+}: { active: boolean; onClick: () => void; children: ReactNode }) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "px-3 h-9 text-[13px] font-medium border-b-2 transition-colors",
+        active
+          ? "border-[hsl(var(--brand-green))] text-[hsl(var(--text-1))]"
+          : "border-transparent text-[hsl(var(--text-3))] hover:text-[hsl(var(--text-1))]",
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
+/** Status pill — single-source semantics across modules. */
+export function StatusPill({
+  tone = "default", children,
+}: {
+  tone?: "default" | "success" | "warn" | "danger" | "info" | "brand";
+  children: ReactNode;
+}) {
+  const tones: Record<string, string> = {
+    default: "bg-[hsl(var(--surface-3))] text-[hsl(var(--text-2))] border-[hsl(var(--border-subtle))]",
+    success: "bg-[hsl(var(--brand-green)/0.12)] text-[hsl(var(--brand-green))] border-[hsl(var(--brand-green)/0.30)]",
+    warn:    "bg-[hsl(var(--brand-yellow)/0.12)] text-[hsl(var(--brand-yellow))] border-[hsl(var(--brand-yellow)/0.30)]",
+    danger:  "bg-[hsl(var(--brand-red)/0.12)] text-[hsl(var(--brand-red))] border-[hsl(var(--brand-red)/0.30)]",
+    info:    "bg-blue-500/10 text-blue-400 border-blue-500/30",
+    brand:   "bg-[hsl(var(--brand-green)/0.12)] text-[hsl(var(--brand-green))] border-[hsl(var(--brand-green)/0.30)]",
+  };
+  return (
+    <span className={cn(
+      "inline-flex items-center gap-1 h-5 px-1.5 rounded text-[10.5px] font-medium border tracking-wide",
+      tones[tone],
+    )}>
+      {children}
+    </span>
+  );
+}
+
+
 export function PageHeader({
   icon: Icon,
   title,
