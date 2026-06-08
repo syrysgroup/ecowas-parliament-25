@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import {
   LayoutDashboard, Users, UserPlus, Handshake, CheckSquare, Calendar,
-  Newspaper, Mail, Bell, ArrowRight, Briefcase,
+  Newspaper, Mail, Bell, ArrowRight, Briefcase, Inbox, FileText, HeartHandshake, IdCard,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthContext";
@@ -16,17 +16,26 @@ function useDashboardStats(enabled: boolean) {
     enabled,
     staleTime: 60_000,
     queryFn: async () => {
-      const [usersRes, invitesRes, sponsorsRes, tasksRes] = await Promise.all([
+      const todayIso = new Date().toISOString();
+      const [usersRes, invitesRes, sponsorsRes, tasksRes, submissionsRes, volunteerRes, mediaRes, invoicesRes] = await Promise.all([
         supabase.from("profiles").select("id", { count: "exact", head: true }),
         supabase.from("invitations").select("id", { count: "exact", head: true }).is("accepted_at", null),
         supabase.from("sponsors").select("id", { count: "exact", head: true }).eq("is_published", true),
         supabase.from("tasks").select("id", { count: "exact", head: true }).neq("status", "done"),
+        supabase.from("contact_submissions").select("id", { count: "exact", head: true }).eq("status", "new"),
+        supabase.from("volunteer_applications").select("id", { count: "exact", head: true }).eq("status", "new"),
+        supabase.from("media_accreditations").select("id", { count: "exact", head: true }).eq("status", "pending"),
+        supabase.from("invoices").select("id", { count: "exact", head: true }).eq("status", "overdue").lt("due_date", todayIso),
       ]);
       return {
         users: usersRes.count ?? 0,
         invites: invitesRes.count ?? 0,
         sponsors: sponsorsRes.count ?? 0,
         tasks: tasksRes.count ?? 0,
+        submissions: submissionsRes.count ?? 0,
+        volunteers: volunteerRes.count ?? 0,
+        media: mediaRes.count ?? 0,
+        invoices: invoicesRes.count ?? 0,
       };
     },
   });
