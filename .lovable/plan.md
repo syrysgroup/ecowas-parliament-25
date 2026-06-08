@@ -1,80 +1,94 @@
-# Phase 2 — Full Admin Control of Home, About & Timeline + i18n Fix
+# Plan — Fix quoted name, Culture.tsx error, and finish admin CRUD coverage
 
-Three deliverables in one turn:
-1. **Translation buttons** — audit and fix language switcher on `/web` (and admin if broken).
-2. **Admin coverage sweep** — every string, image, CTA on `/`, `/about`, `/timeline` becomes editable from `/crm`.
-3. **Timeline → DB** — replace the hardcoded 11-event array with a managed `timeline_events` table + admin module.
+## 1. Root cause of the `"ECOWAS Parliament Initiatives"` quotes
 
----
+The DB row `site_settings.site_name` is a JSONB **string** whose actual content is `"ECOWAS Parliament Initiatives"` — the quote characters are part of the string. This happened because `BrandingSettings.tsx` calls `JSON.stringify(name)` and stores the result into a JSONB column, double-encoding it. Every consumer (Navbar, SEOHead, `useSiteSettings.get`) then renders the value with literal quotes.
 
-## 1. Translation buttons audit
+**Fix (3 layers):**
+1. **Data migration** — strip surrounding quotes from any double-encoded string settings:
+   ```sql
+   UPDATE site_settings
+   SET value = to_jsonb(btrim(value #>> '{}', '"'))
+   WHERE jsonb_typeof(value) = 'string'
+     AND value #>> '{}' LIKE '"%"';
+   ```
+2. **`BrandingSettings.tsx`** — stop calling `JSON.stringify(...)` when writing strings to JSONB. Pass the raw string; Supabase encodes it correctly.
+3. **`useSiteSettings.ts` (web + admin)** — defensive: if a returned string still starts and ends with `"`, strip them once. Prevents recurrence if any other writer double-encodes.
 
-Investigate `LanguageSwitcher`/locale toggle in `apps/web` (and `apps/admin` if present):
-- Confirm `I18nProvider` is mounted above the switcher in `App.tsx`.
-- Confirm the click handler calls `setLocale("en"|"fr"|"pt")` and that the value is persisted (localStorage) and re-renders consumers.
-- Verify all three translation files (`en.ts`, `fr.ts`, `pt.ts`) export the same key set — log missing keys.
-- Fix any broken wiring (common cause: button updates state but `useTranslation` reads from a stale module-level variable instead of context).
-- Smoke test: click EN → FR → PT, observe Navbar/Footer/Home hero strings change.
+After this the Navbar, footer, `<title>`, SEO meta, and every page that reads `site_name` will show `ECOWAS Parliament Initiatives` cleanly.
 
-No DB work for this part.
+## 2. Culture.tsx TS17008 error
 
----
+The current `apps/web/src/pages/programmes/Culture.tsx` is only 57 lines and is syntactically valid — there is no unclosed `<Layout>` or `<section>`. The errors at lines 93/196 are from a stale editor/IDE buffer (likely an unsaved revision). I will:
+- Re-read and re-save the file as-is to flush the linter cache.
+- Verify build passes (`tsc` runs automatically on save).
+- If the user actually wants a richer Culture page, propose a separate enhancement — this plan only ensures no compile errors.
 
-## 2. Database migration — `phase2_timeline_and_content_seeds`
+## 3. Programmes menu — dynamic, alpha-sorted, respect hide
 
-Use exactly the SQL the user supplied:
+Today `Navbar.tsx` already queries `programme_pillars`, but it does not enforce alphabetical order and the hide toggle is not consistently respected for menu/footer/home grid.
 
-- `CREATE TABLE public.timeline_events` (month_label, sort_order, country, city, title, description, programme, deliverables[], highlight, is_published, timestamps).
-- GRANTs: `anon SELECT`, `authenticated` full, `service_role` ALL.
-- RLS enabled.
-- Policies:
-  - Public read where `is_published = true`.
-  - Staff (super_admin, admin, content_manager, website_editor) read-all / insert / update.
-  - Delete restricted to super_admin, admin, content_manager.
-- `set_updated_at` trigger + sort/published indexes.
-- Seed the 11 existing 2026 events verbatim.
-- Seed empty `site_content` rows for: `home_marquee`, `home_parliament25`, `home_marketplace`, `home_sponsor_placeholder`, `home_events`, `home_latest_news`, `home_partners_strip`, `timeline_hero`, `timeline_launch_highlights`, `timeline_cta`.
-- Extend existing `anniversary`, `parliament_tour`, `parliament_initiative` rows with new optional keys (`cta_label`, `cta_href`, `image_url`, `hero_image_url`, `intro_eyebrow`) without overwriting existing values.
+**Changes:**
+- Single source of truth: `programme_pillars` table (already exists, with `is_active`, `title`, `route`, `slug`, `display_order`).
+- Navbar dropdown query: `select … where is_active = true order by title asc` (override `display_order` for the menu, per the user's explicit "alphabetical" request). Same change in mobile sheet.
+- Footer programmes list, homepage `ProgrammePillarsSection`, and any `programmes/` route guard (`useProgrammeVisibility`) all read from the same filtered, alpha-sorted list.
+- `App.tsx` keeps the static `/programmes/:slug` route, but `PillarPage` already 404s when `is_active=false`. Confirm `Culture.tsx`, `Civic.tsx`, etc. all go through `useProgrammeVisibility` (most do; audit and fix any that don't).
+- Admin `ProgrammePillarsModule` already supports create/edit/hide; verify the **Eye/EyeOff** toggle flips `is_active` and invalidates the `["programmes-nav"]` query so the web menu updates within ~30 s (or immediately via realtime subscription — add a lightweight `supabase.channel` listener in Navbar).
 
----
+Result: adding a new pillar in admin instantly shows it in the menu (sorted A→Z); hiding it removes it from the menu, footer, homepage grid, and 404s the route.
 
-## 3. Admin (`apps/admin`)
+## 4. Audit: every page / every word editable from admin
 
-### 3a. Extend `SiteContentModule.tsx`
-Add to `SECTION_TEMPLATES` the field definitions for all 10 new keys + the extended fields on the 3 existing keys. Image fields use the existing `ImageUploadOrUrl` widget (uploads to `cms-media`). `home_marquee.items` and `timeline_launch_highlights.items` use a repeater field.
+Goal: no hard-coded copy on `apps/web`. Pass over each public page and ensure it reads from a CMS row (`site_content`, `programme_pillars`, `news_articles`, `events`, `team_members`, `partners`, `sponsors`, `timeline_events`, `parliament_content`, `media_kits`, `documents`, etc.). For anything still hard-coded, add a `site_content` key + admin editor template.
 
-### 3b. New module `TimelineModule.tsx`
-- Group: `CONTENT`. Roles: `super_admin`, `admin`, `content_manager`, `website_editor`.
-- **Tab "Events"** — TanStack table of `timeline_events`, drawer CRUD (RHF + Zod), drag-reorder via `sort_order`, programme dropdown (reuses programme key set), deliverables as chip list, `is_published` + `highlight` toggles, delete confirm.
-- **Tab "Page content"** — three cards bound to `timeline_hero`, `timeline_launch_highlights`, `timeline_cta` (inline editors, reuses `SiteContentModule` field renderer).
-- Register in `crmModules.ts` (`section: "timeline"`, `group: "CONTENT"`) and lazy-load in `CRMDashboard.tsx`.
+Targeted sweep (in priority order):
+1. **Home** — `MarqueeStrip`, `MarketplaceSpotlight`, `EventsSection`, `SponsorPlaceholderSection`, `AnniversarySection`, `CountdownTimer` fallback name. Wire each to `useSiteContent(...)` with English fallback (rows already seeded in phase 2).
+2. **Programme pages** — `PillarPage` uses `programme_pillars` + `programme_page_content` + `programme_page_sections`. Audit `Awards`, `Women`, `Youth`, `Trade`, `Culture`, `Civic`, `InnovatorsChallenge`, `SmartChallenge` to ensure they pull from those tables and not from `data/*.ts`. Migrate any leftover hardcoded arrays into seeded DB rows.
+3. **About / EcowasParliament / ParliamentCountry / Timeline / Contact / Stakeholders / Media** — each already partially CMS-driven; finish the last hard-coded blocks (hero copy, stats, CTA strips, contact addresses, social links).
+4. **Navbar / Footer** — link list editor (`site_content` key `nav_links` and `footer_links`) so admin can rename/reorder/add nav items without code.
+5. **Documents / images** — every `<img>` reading from `/src/assets` becomes overridable via a `site_content.*_image_url` row backed by the existing `cms-media` bucket. Re-use the `ImageUploadOrUrl` widget already in `SiteContentModule`.
 
----
+For each new `site_content` key:
+- Add a row in a small `phase3_content_seeds` migration with `key`, `locale='en'`, sensible defaults.
+- Add a template entry in `SiteContentModule.tsx` so it appears in the admin editor.
+- Update the web component to consume it with a fallback.
 
-## 4. Public web (`apps/web`)
+## 5. Multi-select / bulk operations everywhere in admin
 
-Each component gets `useSiteContent("<key>")` with `cms?.field ?? t("fallback.key")` fallbacks — zero visual change before an editor fills values.
+Add a reusable `useBulkSelection<T>()` hook + a `BulkActionBar` component (checkbox column, header "select-all" checkbox, sticky action bar with Delete / Publish / Unpublish / Export CSV). Roll it into every list module:
 
-Components to rewire:
-- `MarqueeStrip` → `home_marquee.items`
-- `Parliament25Section` → `home_parliament25`
-- `ParliamentTourSpotlight` → `parliament_tour` (image_url, CTA)
-- `MarketplaceSpotlight` → `home_marketplace` (incl. 3 feature pairs)
-- `SponsorPlaceholderSection` → `home_sponsor_placeholder`
-- `EventsSection` header → `home_events`
-- `LatestNews` header → `home_latest_news`
-- `PartnersStrip` → `home_partners_strip`
-- `AnniversarySection` → extended `anniversary` keys
-- `About.tsx` hero → `parliament_initiative.hero_image_url` + `intro_eyebrow`
-- `Timeline.tsx` → `useQuery` against `timeline_events`, hero/stats/gallery/CTA from the three `timeline_*` site_content rows. Filters built from distinct `programme` values returned.
+- `NewsEditorModule` (articles)
+- `EventsModule` (events + registrations)
+- `TeamModule` (team members)
+- `PartnersModule` (partners + sponsors)
+- `ProgrammePillarsModule` (pillars + sections)
+- `TimelineModule` (events tab)
+- `DocumentsModule`, `MediaKitModule`
+- `InvitationsModule`, `UsersModule` (super admin)
+- `MarketplaceModule`, `StakeholdersModule`, `NominationsModule`
+- `EmailInboxModule` (already partially bulk; harmonize)
 
----
+Bulk actions are role-gated through existing `usePermissions` checks; destructive actions require an `AlertDialog` confirmation and write to `admin_activity_logs`.
 
-## Validation
-1. `rg -n 'src="/.*\.(jpg|png|webp|svg)"' apps/web/src/components/home apps/web/src/pages/Timeline.tsx apps/web/src/pages/About.tsx` returns nothing user-facing.
-2. Toggle language buttons → strings change across Navbar, Home, Footer.
-3. Edit a timeline event or any new site_content key in `/crm`, reload public page, change appears without redeploy.
-4. Unpublish an event → disappears from public timeline, still visible in admin.
+## 6. Out of scope for this plan
 
-## Out of scope (Phase 3+)
-Programme-pillar pages, Parliament/360°/country pages, nav/footer link list editor, cookie-consent text, any visual redesign.
+- Visual redesign of any page.
+- New authentication flows.
+- Country-page rebuild and 360° tour (handled separately).
+
+## Technical breakdown
+
+- **1 SQL migration** (`phase3_quotes_fix_and_content_seeds`):
+  - `UPDATE site_settings` to strip double-encoded quotes.
+  - Insert any new `site_content` keys discovered during audit.
+- **Code edits:**
+  - `apps/admin/src/views/admin/settings/BrandingSettings.tsx` — drop `JSON.stringify` for string values.
+  - `apps/web/src/hooks/useSiteSettings.ts` + admin twin — defensive quote-strip.
+  - `apps/web/src/components/layout/Navbar.tsx` + `Footer.tsx` — alpha-sort programmes, realtime subscription.
+  - Audit + rewire programme pages and homepage components that still hardcode copy.
+  - New `apps/admin/src/hooks/useBulkSelection.ts` and `apps/admin/src/components/crm/shared/BulkActionBar.tsx`; integrate into the ~12 list modules listed above.
+- **Verification:** re-save `Culture.tsx`, confirm build is green, hit the preview to confirm the Navbar/footer no longer show quotes and that toggling a pillar in admin updates the menu live.
+
+## Estimated size
+
+~1 migration, 2 hook tweaks, 1 admin settings fix, 1 new hook + 1 new shared component, ~12 admin module edits, ~6 web component rewires. Shippable in one turn; you can review on preview before approving any follow-up phases.
