@@ -200,7 +200,7 @@ function RolePermissionsPanel({
 
           {!canEdit && (
             <div className="flex items-center gap-2 text-[11px] text-[hsl(var(--text-3))]">
-              <Lock size={11} /> View-only — admin or super admin can edit permissions
+              <Lock size={11} /> View-only — only Super Admin can edit permissions
             </div>
           )}
         </>
