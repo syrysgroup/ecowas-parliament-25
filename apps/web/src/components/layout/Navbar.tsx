@@ -1,7 +1,7 @@
 import { useMemo, useState, useRef, useEffect } from "react";					
 import { Link, useLocation } from "react-router-dom";					
 import { Menu, X, ChevronDown } from "lucide-react";					
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";					
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";					
 import { useTranslation, Locale } from "@/lib/i18n";					
@@ -66,18 +66,30 @@ const fallbackProgrammeChildren = [
 { label: t("prog.awards"), to: "/programmes/awards" },
 ];
 
+const queryClient = useQueryClient();
 const { data: programmeRows = [] } = useQuery<ProgrammeNavRow[]>({
 queryKey: ["navbar_programme_pillars"],
 queryFn: async () => {
 const { data, error } = await supabase
 .from("programme_pillars")
 .select("slug,title,route,is_active")
-.eq("is_active", true);
+.eq("is_active", true)
+.order("title", { ascending: true });
 if (error) throw error;
 return (data ?? []) as ProgrammeNavRow[];
 },
-staleTime: 60_000,
+staleTime: 30_000,
 });
+
+useEffect(() => {
+const channel = supabase
+.channel("programme_pillars_nav")
+.on("postgres_changes", { event: "*", schema: "public", table: "programme_pillars" }, () => {
+queryClient.invalidateQueries({ queryKey: ["navbar_programme_pillars"] });
+})
+.subscribe();
+return () => { supabase.removeChannel(channel); };
+}, [queryClient]);
 
 const programmeChildren = useMemo(() => {
 if (!programmeRows.length) return fallbackProgrammeChildren;
