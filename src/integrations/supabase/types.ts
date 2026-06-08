@@ -550,6 +550,33 @@ export type Database = {
           },
         ]
       }
+      content_revisions: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          entity_id: string
+          entity_type: string
+          id: string
+          snapshot: Json
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          entity_id: string
+          entity_type: string
+          id?: string
+          snapshot: Json
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          snapshot?: Json
+        }
+        Relationships: []
+      }
       countries: {
         Row: {
           code: string
@@ -1214,6 +1241,151 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      form_definitions: {
+        Row: {
+          autoresponder_body: string | null
+          autoresponder_subject: string | null
+          created_at: string
+          description: string | null
+          id: string
+          notify_email: string | null
+          slug: string
+          status: string
+          success_message: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          autoresponder_body?: string | null
+          autoresponder_subject?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          notify_email?: string | null
+          slug: string
+          status?: string
+          success_message?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          autoresponder_body?: string | null
+          autoresponder_subject?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          notify_email?: string | null
+          slug?: string
+          status?: string
+          success_message?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      form_fields: {
+        Row: {
+          created_at: string
+          form_id: string
+          help_text: string | null
+          id: string
+          key: string
+          label: string
+          options: Json
+          position: number
+          required: boolean
+          type: string
+          updated_at: string
+          validation: Json
+        }
+        Insert: {
+          created_at?: string
+          form_id: string
+          help_text?: string | null
+          id?: string
+          key: string
+          label: string
+          options?: Json
+          position?: number
+          required?: boolean
+          type: string
+          updated_at?: string
+          validation?: Json
+        }
+        Update: {
+          created_at?: string
+          form_id?: string
+          help_text?: string | null
+          id?: string
+          key?: string
+          label?: string
+          options?: Json
+          position?: number
+          required?: boolean
+          type?: string
+          updated_at?: string
+          validation?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "form_fields_form_id_fkey"
+            columns: ["form_id"]
+            isOneToOne: false
+            referencedRelation: "form_definitions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      form_submissions: {
+        Row: {
+          assigned_to: string | null
+          created_at: string
+          files: Json
+          form_id: string
+          id: string
+          ip: string | null
+          notes: string | null
+          payload: Json
+          status: string
+          updated_at: string
+          user_agent: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          created_at?: string
+          files?: Json
+          form_id: string
+          id?: string
+          ip?: string | null
+          notes?: string | null
+          payload?: Json
+          status?: string
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          created_at?: string
+          files?: Json
+          form_id?: string
+          id?: string
+          ip?: string | null
+          notes?: string | null
+          payload?: Json
+          status?: string
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "form_submissions_form_id_fkey"
+            columns: ["form_id"]
+            isOneToOne: false
+            referencedRelation: "form_definitions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       global_settings: {
         Row: {
@@ -2075,6 +2247,57 @@ export type Database = {
         }
         Relationships: []
       }
+      media_library: {
+        Row: {
+          alt: string | null
+          bucket: string
+          created_at: string
+          credit: string | null
+          height: number | null
+          id: string
+          mime_type: string | null
+          path: string
+          size_bytes: number | null
+          tags: string[]
+          updated_at: string
+          uploaded_by: string | null
+          url: string
+          width: number | null
+        }
+        Insert: {
+          alt?: string | null
+          bucket: string
+          created_at?: string
+          credit?: string | null
+          height?: number | null
+          id?: string
+          mime_type?: string | null
+          path: string
+          size_bytes?: number | null
+          tags?: string[]
+          updated_at?: string
+          uploaded_by?: string | null
+          url: string
+          width?: number | null
+        }
+        Update: {
+          alt?: string | null
+          bucket?: string
+          created_at?: string
+          credit?: string | null
+          height?: number | null
+          id?: string
+          mime_type?: string | null
+          path?: string
+          size_bytes?: number | null
+          tags?: string[]
+          updated_at?: string
+          uploaded_by?: string | null
+          url?: string
+          width?: number | null
+        }
+        Relationships: []
+      }
       message_queue: {
         Row: {
           content_id: string | null
@@ -2141,6 +2364,7 @@ export type Database = {
           excerpt: string | null
           external_links: Json | null
           fact_checked: boolean
+          flyer_image_url: string | null
           id: string
           image_caption: string | null
           location: string | null
@@ -2163,6 +2387,7 @@ export type Database = {
           excerpt?: string | null
           external_links?: Json | null
           fact_checked?: boolean
+          flyer_image_url?: string | null
           id?: string
           image_caption?: string | null
           location?: string | null
@@ -2185,6 +2410,7 @@ export type Database = {
           excerpt?: string | null
           external_links?: Json | null
           fact_checked?: boolean
+          flyer_image_url?: string | null
           id?: string
           image_caption?: string | null
           location?: string | null
@@ -2413,6 +2639,133 @@ export type Database = {
           notif_id?: string
           read_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      page_section_items: {
+        Row: {
+          created_at: string
+          data: Json
+          id: string
+          image_url: string | null
+          position: number
+          section_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          data?: Json
+          id?: string
+          image_url?: string | null
+          position?: number
+          section_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          data?: Json
+          id?: string
+          image_url?: string | null
+          position?: number
+          section_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "page_section_items_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "page_sections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      page_sections: {
+        Row: {
+          created_at: string
+          id: string
+          key: string
+          kind: string
+          page_id: string
+          position: number
+          props: Json
+          updated_at: string
+          visible: boolean
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          key: string
+          kind: string
+          page_id: string
+          position?: number
+          props?: Json
+          updated_at?: string
+          visible?: boolean
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          key?: string
+          kind?: string
+          page_id?: string
+          position?: number
+          props?: Json
+          updated_at?: string
+          visible?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "page_sections_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pages: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          og_image: string | null
+          published_at: string | null
+          route: string
+          seo: Json
+          slug: string
+          status: string
+          title: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          og_image?: string | null
+          published_at?: string | null
+          route: string
+          seo?: Json
+          slug: string
+          status?: string
+          title: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          og_image?: string | null
+          published_at?: string | null
+          route?: string
+          seo?: Json
+          slug?: string
+          status?: string
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
         }
         Relationships: []
       }
