@@ -315,6 +315,46 @@ export default function StakeholdersModule() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <BulkActionBar count={bulk.selectedCount} onClear={bulk.reset}>
+        <Button size="sm" variant="outline"
+          onClick={() => bulkToggleActive.mutate({ ids: bulk.selectedIds, is_active: true })}
+          disabled={bulkToggleActive.isPending}
+          className="h-7 text-xs gap-1 border-emerald-800 text-emerald-400 hover:bg-emerald-950">
+          <Eye size={11} /> Show
+        </Button>
+        <Button size="sm" variant="outline"
+          onClick={() => bulkToggleActive.mutate({ ids: bulk.selectedIds, is_active: false })}
+          disabled={bulkToggleActive.isPending}
+          className="h-7 text-xs gap-1 border-crm-border">
+          <EyeOff size={11} /> Hide
+        </Button>
+        <Button size="sm" variant="destructive"
+          onClick={() => setConfirmBulkDelete(true)}
+          disabled={bulkDelete.isPending}
+          className="h-7 text-xs gap-1">
+          <Trash2 size={11} /> Delete
+        </Button>
+      </BulkActionBar>
+
+      <AlertDialog open={confirmBulkDelete} onOpenChange={setConfirmBulkDelete}>
+        <AlertDialogContent className="bg-crm-card border-crm-border">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-crm-text text-sm">Delete {bulk.selectedCount} stakeholder{bulk.selectedCount !== 1 ? "s" : ""}?</AlertDialogTitle>
+            <AlertDialogDescription className="text-crm-text-muted text-xs">
+              The selected profile{bulk.selectedCount !== 1 ? "s" : ""} will be permanently removed from the public Stakeholders page.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-crm-border text-crm-text text-xs h-8">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => bulkDelete.mutate(bulk.selectedIds)}
+              className="bg-red-600 hover:bg-red-700 text-white text-xs h-8">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
