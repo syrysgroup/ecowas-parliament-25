@@ -53,7 +53,7 @@ const Layout = ({ children, pagePath, seoTitle, seoDescription, seoOgImage, sche
         schemaData={schemaData}
       />
       <Navbar />
-      <main className="flex-1">{children}</main>
+      <main className="flex-1 cms-body">{children}</main>
       <Footer />
     </div>
   );
