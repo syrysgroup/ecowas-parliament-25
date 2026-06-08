@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import {
   LayoutDashboard, Users, UserPlus, Handshake, CheckSquare, Calendar,
-  Newspaper, Mail, Bell, ArrowRight, Briefcase,
+  Newspaper, Mail, Bell, ArrowRight, Briefcase, Inbox, FileText, HeartHandshake, IdCard,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthContext";
@@ -16,17 +16,26 @@ function useDashboardStats(enabled: boolean) {
     enabled,
     staleTime: 60_000,
     queryFn: async () => {
-      const [usersRes, invitesRes, sponsorsRes, tasksRes] = await Promise.all([
+      const todayIso = new Date().toISOString();
+      const [usersRes, invitesRes, sponsorsRes, tasksRes, submissionsRes, volunteerRes, mediaRes, invoicesRes] = await Promise.all([
         supabase.from("profiles").select("id", { count: "exact", head: true }),
         supabase.from("invitations").select("id", { count: "exact", head: true }).is("accepted_at", null),
         supabase.from("sponsors").select("id", { count: "exact", head: true }).eq("is_published", true),
         supabase.from("tasks").select("id", { count: "exact", head: true }).neq("status", "done"),
+        supabase.from("contact_submissions").select("id", { count: "exact", head: true }).eq("status", "new"),
+        supabase.from("volunteer_applications").select("id", { count: "exact", head: true }).eq("status", "new"),
+        supabase.from("media_accreditations").select("id", { count: "exact", head: true }).eq("status", "pending"),
+        supabase.from("invoices").select("id", { count: "exact", head: true }).eq("status", "overdue").lt("due_date", todayIso),
       ]);
       return {
         users: usersRes.count ?? 0,
         invites: invitesRes.count ?? 0,
         sponsors: sponsorsRes.count ?? 0,
         tasks: tasksRes.count ?? 0,
+        submissions: submissionsRes.count ?? 0,
+        volunteers: volunteerRes.count ?? 0,
+        media: mediaRes.count ?? 0,
+        invoices: invoicesRes.count ?? 0,
       };
     },
   });
@@ -129,12 +138,16 @@ export default function DashboardModuleV2({ onNavigate }: { onNavigate: (s: stri
         }
       />
 
-      {/* KPI strip */}
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
-        <StatCard label="Total users" value={stats.data?.users ?? "—"} icon={Users} tone="brand" />
-        <StatCard label="Pending invites" value={stats.data?.invites ?? "—"} icon={UserPlus} tone="warn" />
-        <StatCard label="Active sponsors" value={stats.data?.sponsors ?? "—"} icon={Handshake} tone="default" />
-        <StatCard label="Open tasks" value={stats.data?.tasks ?? "—"} icon={CheckSquare} tone="danger" />
+      {/* KPI strip — operational signals */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-8 gap-3 mb-6">
+        <StatCard label="Open tasks"        value={stats.data?.tasks       ?? "—"} icon={CheckSquare}    tone="brand"   />
+        <StatCard label="Pending invites"   value={stats.data?.invites     ?? "—"} icon={UserPlus}       tone="warn"    />
+        <StatCard label="New submissions"   value={stats.data?.submissions ?? "—"} icon={Inbox}          tone="default" />
+        <StatCard label="Volunteer apps"    value={stats.data?.volunteers  ?? "—"} icon={HeartHandshake} tone="default" />
+        <StatCard label="Media requests"    value={stats.data?.media       ?? "—"} icon={IdCard}         tone="default" />
+        <StatCard label="Overdue invoices"  value={stats.data?.invoices    ?? "—"} icon={FileText}       tone="danger"  />
+        <StatCard label="Active sponsors"   value={stats.data?.sponsors    ?? "—"} icon={Handshake}      tone="default" />
+        <StatCard label="Total users"       value={stats.data?.users       ?? "—"} icon={Users}          tone="default" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">

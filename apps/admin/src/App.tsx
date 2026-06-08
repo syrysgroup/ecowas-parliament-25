@@ -136,7 +136,7 @@ function PresenceTracker() {
 }
 
 const App = () => (
-  <ThemeProvider attribute="class" defaultTheme="system" enableSystem storageKey="ecowas-theme">
+  <ThemeProvider attribute="class" defaultTheme="dark" enableSystem storageKey="ecowas-theme">
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <GlobalSettingsProvider>
