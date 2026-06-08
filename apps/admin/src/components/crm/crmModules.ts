@@ -40,6 +40,8 @@ import {
   Sparkles,
   Briefcase,
   Milestone,
+  FilePlus,
+  ClipboardList,
 } from "lucide-react";
 
 export type ModuleGroup =
@@ -92,6 +94,8 @@ export type ModuleId =
   | "youth-sub-pillars"
   | "sponsor-portal-config"
   | "timeline"
+  | "pages"
+  | "forms"
   | "super-admin";
 
 export interface CRMModule {
@@ -297,6 +301,24 @@ export const CRM_MODULES: CRMModule[] = [
     icon: PanelTop,
     section: "site-content",
     allowedRoles: ["super_admin", "admin"],
+    isStub: false,
+    group: "CONTENT",
+  },
+  {
+    id: "pages",
+    label: "Pages",
+    icon: FilePlus,
+    section: "pages",
+    allowedRoles: ["super_admin", "admin", "website_editor", "communications_officer"],
+    isStub: false,
+    group: "CONTENT",
+  },
+  {
+    id: "forms",
+    label: "Forms",
+    icon: ClipboardList,
+    section: "forms",
+    allowedRoles: ["super_admin", "admin", "website_editor", "communications_officer"],
     isStub: false,
     group: "CONTENT",
   },
