@@ -7,6 +7,12 @@ import {
   Mail, Phone, Globe, MessageSquare, Check, Trash2, Inbox,
   ExternalLink, ChevronDown, ChevronUp, User, Pencil, X,
 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { useBulkSelection } from "@/hooks/useBulkSelection";
+import { BulkActionBar } from "@/components/crm/shared/BulkActionBar";
+import { useToast } from "@/hooks/use-toast";
 
 interface Profile { id: string; full_name: string | null; email: string | null; }
 
@@ -64,6 +70,8 @@ export default function ContactSubmissionsModule() {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [editingNotes, setEditingNotes] = useState<Record<string, string>>({});
   const [savingNotes, setSavingNotes]   = useState<Record<string, boolean>>({});
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
+  const { toast } = useToast();
 
   // Fetch submissions — admins get all, assigned users get only theirs (via RLS)
   const { data: submissions = [], isLoading } = useQuery<Submission[]>({
