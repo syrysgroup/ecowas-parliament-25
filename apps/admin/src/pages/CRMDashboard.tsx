@@ -52,6 +52,8 @@ const LegalPagesModule   = lazy(() => import("@/components/crm/modules/LegalPage
 const YouthSubPillarsModule = lazy(() => import("@/components/crm/modules/YouthSubPillarsModule"));
 const SponsorPortalConfigModule = lazy(() => import("@/components/crm/modules/SponsorPortalConfigModule"));
 const TimelineModule = lazy(() => import("@/components/crm/modules/TimelineModule"));
+const PagesModule = lazy(() => import("@/components/crm/modules/PagesModule"));
+const FormsModule = lazy(() => import("@/components/crm/modules/FormsModule"));
 
 function ModuleLoader() {
   return (
@@ -181,6 +183,8 @@ export default function CRMDashboard() {
       case "youth-sub-pillars":  return <Suspense fallback={<ModuleLoader />}><YouthSubPillarsModule /></Suspense>;
       case "sponsor-portal-config": return <Suspense fallback={<ModuleLoader />}><SponsorPortalConfigModule /></Suspense>;
       case "timeline":               return <Suspense fallback={<ModuleLoader />}><TimelineModule /></Suspense>;
+      case "pages":                  return <Suspense fallback={<ModuleLoader />}><PagesModule /></Suspense>;
+      case "forms":                  return <Suspense fallback={<ModuleLoader />}><FormsModule /></Suspense>;
       default:                   return useShellV2
         ? <DashboardModuleV2 onNavigate={navigateSection} />
         : <DashboardModule onNavigate={navigateSection} />;
