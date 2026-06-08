@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Cookie, X, ShieldCheck } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const CONSENT_KEY = "ecowas_cookie_consent";
 
@@ -18,11 +19,18 @@ export function CookieConsent() {
     setState(stored);
   }, []);
 
+  const logConsent = (choice: "accepted" | "declined") => {
+    supabase.from("cookie_consent_log").insert({
+      choice,
+      user_agent: navigator.userAgent,
+    }).then();
+  };
+
   const accept = () => {
     localStorage.setItem(CONSENT_KEY, "accepted");
     setState("accepted");
     setVisible(false);
-    // Signal consent to GA if loaded
+    logConsent("accepted");
     if (typeof (window as any).gtag === "function") {
       (window as any).gtag("consent", "update", {
         analytics_storage: "granted",
@@ -35,6 +43,7 @@ export function CookieConsent() {
     localStorage.setItem(CONSENT_KEY, "declined");
     setState("declined");
     setVisible(false);
+    logConsent("declined");
   };
 
   if (!visible || state !== null) return null;

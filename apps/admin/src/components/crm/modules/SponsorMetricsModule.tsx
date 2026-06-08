@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { TrendingUp, Eye, Handshake, Clock, Pencil, UserMinus, Plus } from "lucide-react";
+import { TrendingUp, Handshake, Pencil, UserMinus, Plus, Pin, PinOff, Trash2, ChevronDown, ChevronUp, StickyNote } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { inviteUser } from "@/services/inviteUser";
@@ -10,6 +10,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+
+interface SponsorNote {
+  id: string;
+  sponsor_id: string;
+  body: string;
+  is_pinned: boolean;
+  created_by: string | null;
+  created_at: string;
+}
 
 interface SponsorUser {
   id: string;
@@ -169,6 +179,126 @@ function EditSponsorDialog({ sponsor, tier, open, onClose, onTierChange }: {
   );
 }
 
+// ─── Sponsor Notes Panel ──────────────────────────────────────────────────────
+function SponsorNotesPanel({ sponsorId }: { sponsorId: string }) {
+  const qc = useQueryClient();
+  const { toast } = useToast();
+  const [expanded, setExpanded] = useState(false);
+  const [draft, setDraft] = useState("");
+
+  const { data: notes = [] } = useQuery<SponsorNote[]>({
+    queryKey: ["sponsor-notes", sponsorId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("sponsor_notes")
+        .select("*")
+        .eq("sponsor_id", sponsorId)
+        .order("is_pinned", { ascending: false })
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: expanded,
+  });
+
+  const add = useMutation({
+    mutationFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { error } = await supabase.from("sponsor_notes").insert({
+        sponsor_id: sponsorId,
+        body: draft.trim(),
+        created_by: user?.id ?? null,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["sponsor-notes", sponsorId] });
+      setDraft("");
+      toast({ title: "Note added" });
+    },
+    onError: (e: any) => toast({ title: "Failed", description: e.message, variant: "destructive" }),
+  });
+
+  const togglePin = useMutation({
+    mutationFn: async ({ id, is_pinned }: { id: string; is_pinned: boolean }) => {
+      const { error } = await supabase.from("sponsor_notes").update({ is_pinned: !is_pinned }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["sponsor-notes", sponsorId] }),
+  });
+
+  const del = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("sponsor_notes").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["sponsor-notes", sponsorId] }),
+  });
+
+  return (
+    <div className="mt-3 pt-3 border-t border-crm-border">
+      <button
+        onClick={() => setExpanded(v => !v)}
+        className="flex items-center gap-1.5 text-[11px] text-crm-text-dim hover:text-emerald-400 transition-colors"
+      >
+        <StickyNote size={11} />
+        Notes {notes.length > 0 && !expanded && <span className="font-mono">({notes.length})</span>}
+        {expanded ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
+      </button>
+
+      {expanded && (
+        <div className="mt-2 space-y-2">
+          {notes.map(n => (
+            <div key={n.id} className={`bg-crm-surface border rounded-lg px-3 py-2 ${n.is_pinned ? "border-emerald-700/40" : "border-crm-border"}`}>
+              <div className="flex items-start justify-between gap-2">
+                <p className="text-[11px] text-crm-text flex-1 whitespace-pre-wrap">{n.body}</p>
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  <button
+                    onClick={() => togglePin.mutate({ id: n.id, is_pinned: n.is_pinned })}
+                    className="text-crm-text-dim hover:text-emerald-400 transition-colors"
+                    title={n.is_pinned ? "Unpin" : "Pin"}
+                  >
+                    {n.is_pinned ? <PinOff size={11} /> : <Pin size={11} />}
+                  </button>
+                  <button
+                    onClick={() => del.mutate(n.id)}
+                    className="text-crm-text-dim hover:text-red-400 transition-colors"
+                    title="Delete"
+                  >
+                    <Trash2 size={11} />
+                  </button>
+                </div>
+              </div>
+              <p className="text-[9px] text-crm-text-faint font-mono mt-1">
+                {new Date(n.created_at).toLocaleString()}
+                {n.is_pinned && <span className="ml-2 text-emerald-500">pinned</span>}
+              </p>
+            </div>
+          ))}
+
+          <div className="flex gap-2">
+            <Textarea
+              value={draft}
+              onChange={e => setDraft(e.target.value)}
+              placeholder="Add a note visible to this sponsor…"
+              rows={2}
+              className="bg-crm-surface border-crm-border text-crm-text text-xs flex-1 resize-none"
+            />
+            <Button
+              size="sm"
+              disabled={!draft.trim() || add.isPending}
+              onClick={() => add.mutate()}
+              className="bg-emerald-700 hover:bg-emerald-600 text-white text-xs self-end"
+            >
+              {add.isPending ? "…" : "Add"}
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Main ──────────────────────────────────────────────────────────────────────
 export default function SponsorMetricsModule() {
   const { isAdmin, isSuperAdmin } = useAuthContext();
@@ -313,19 +443,6 @@ export default function SponsorMetricsModule() {
                   </div>
 
                   <div className="flex items-center gap-1.5 flex-shrink-0">
-                    <div className="hidden sm:flex gap-2">
-                      {[
-                        { label: "Impressions", icon: Eye },
-                        { label: "Report",      icon: TrendingUp },
-                      ].map(({ label, icon: Icon }) => (
-                        <div key={label} className="flex items-center gap-1 bg-crm-surface border border-crm-border rounded-lg px-2 py-1">
-                          <Icon size={11} className="text-crm-text-dim" />
-                          <span className="text-[10px] text-crm-text-dim">{label}</span>
-                          <span className="text-[10px] text-crm-text-faint font-mono ml-1">—</span>
-                        </div>
-                      ))}
-                    </div>
-
                     {isAdmin && !isConfirming && (
                       <button
                         onClick={() => { setEditTarget(sp); setEditOpen(true); }}
@@ -366,12 +483,7 @@ export default function SponsorMetricsModule() {
                   </div>
                 </div>
 
-                <div className="mt-3 pt-3 border-t border-crm-border flex items-center gap-2">
-                  <Clock size={10} className="text-crm-text-faint" />
-                  <p className="text-[10px] text-crm-text-faint font-mono">
-                    Detailed visibility metrics will be available once sponsor reporting is configured.
-                  </p>
-                </div>
+                {isAdmin && <SponsorNotesPanel sponsorId={sp.id} />}
               </div>
             );
           })}

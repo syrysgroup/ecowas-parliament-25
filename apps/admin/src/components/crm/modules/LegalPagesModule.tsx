@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
-import { Loader2, ExternalLink, Save, History, Bold, Italic, UnderlineIcon, List, ListOrdered, Heading2 } from "lucide-react";
+import { Loader2, ExternalLink, Save, History, Bold, Italic, UnderlineIcon, List, ListOrdered, Heading2, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -173,6 +173,94 @@ function PageEditor({ pageKey }: { pageKey: string }) {
   );
 }
 
+const PAGE_SIZE = 25;
+
+function ConsentLogTab() {
+  const [page, setPage] = useState(0);
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["cookie-consent-log", page],
+    queryFn: async () => {
+      const from = page * PAGE_SIZE;
+      const to = from + PAGE_SIZE - 1;
+      const { data, error, count } = await supabase
+        .from("cookie_consent_log")
+        .select("id, choice, user_agent, created_at", { count: "exact" })
+        .order("created_at", { ascending: false })
+        .range(from, to);
+      if (error) throw error;
+      return { rows: data ?? [], total: count ?? 0 };
+    },
+  });
+
+  const { data: summary } = useQuery({
+    queryKey: ["cookie-consent-summary"],
+    queryFn: async () => {
+      const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+      const { data } = await supabase
+        .from("cookie_consent_log")
+        .select("choice")
+        .gte("created_at", since);
+      const rows = data ?? [];
+      return {
+        accepted: rows.filter(r => r.choice === "accepted").length,
+        declined: rows.filter(r => r.choice === "declined").length,
+      };
+    },
+  });
+
+  const totalPages = Math.ceil((data?.total ?? 0) / PAGE_SIZE);
+
+  return (
+    <div className="space-y-4">
+      {summary && (
+        <div className="flex items-center gap-3 text-xs">
+          <span className="text-crm-text-dim">Last 30 days:</span>
+          <Badge className="bg-emerald-500/20 text-emerald-400 border-0">{summary.accepted} accepted</Badge>
+          <Badge className="bg-red-500/20 text-red-400 border-0">{summary.declined} declined</Badge>
+        </div>
+      )}
+
+      {isLoading ? (
+        <Loader2 className="h-4 w-4 animate-spin mx-auto" />
+      ) : (
+        <div className="space-y-1">
+          {(data?.rows ?? []).length === 0 && (
+            <p className="text-xs text-crm-text-muted text-center py-8">No consent events recorded yet.</p>
+          )}
+          {(data?.rows ?? []).map(r => (
+            <div key={r.id} className="flex items-center gap-3 bg-crm-card border border-crm-border rounded-lg px-3 py-2">
+              <Badge className={`text-[10px] border-0 flex-shrink-0 ${r.choice === "accepted" ? "bg-emerald-500/20 text-emerald-400" : "bg-red-500/20 text-red-400"}`}>
+                {r.choice}
+              </Badge>
+              <span className="text-[10px] font-mono text-crm-text-dim flex-shrink-0">
+                {new Date(r.created_at).toLocaleString()}
+              </span>
+              <span className="text-[10px] text-crm-text-dim truncate min-w-0">
+                {r.user_agent ?? "—"}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between text-xs text-crm-text-dim pt-1">
+          <span>Page {page + 1} of {totalPages} · {data?.total} total</span>
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="icon" className="h-7 w-7" disabled={page === 0} onClick={() => setPage(p => p - 1)}>
+              <ChevronLeft size={13} />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-7 w-7" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}>
+              <ChevronRight size={13} />
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function LegalPagesModule() {
   return (
     <div className="space-y-5">
@@ -183,10 +271,12 @@ export default function LegalPagesModule() {
       <Tabs defaultValue="privacy">
         <TabsList className="bg-crm-surface border border-crm-border h-8">
           {PAGES.map(p => <TabsTrigger key={p.key} value={p.key} className="text-xs h-7">{p.label}</TabsTrigger>)}
+          <TabsTrigger value="consent-log" className="text-xs h-7">Consent Log</TabsTrigger>
         </TabsList>
         {PAGES.map(p => (
           <TabsContent key={p.key} value={p.key} className="mt-4"><PageEditor pageKey={p.key} /></TabsContent>
         ))}
+        <TabsContent value="consent-log" className="mt-4"><ConsentLogTab /></TabsContent>
       </Tabs>
     </div>
   );

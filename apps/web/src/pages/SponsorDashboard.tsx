@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Globe, TrendingUp, Users, Calendar, CheckCircle2, Eye, Info, Download } from "lucide-react";
+import { Globe, TrendingUp, Users, Calendar, CheckCircle2, Eye, Info, Download, StickyNote, Pin } from "lucide-react";
 import { useTranslation } from "@/lib/i18n";
 import { useAuthContext } from "@/contexts/AuthContext";
 
@@ -56,6 +56,21 @@ export default function SponsorDashboard() {
  return data ?? [];
  },
  enabled: !!sponsor?.id,
+ });
+
+ const { data: sponsorNotes = [] } = useQuery<{ id: string; body: string; is_pinned: boolean; created_at: string }[]>({
+ queryKey: ["sponsor-notes-public", user?.id],
+ queryFn: async () => {
+ if (!user?.id) return [];
+ const { data } = await supabase
+ .from("sponsor_notes")
+ .select("id, body, is_pinned, created_at")
+ .eq("sponsor_id", user.id)
+ .order("is_pinned", { ascending: false })
+ .order("created_at", { ascending: false });
+ return data ?? [];
+ },
+ enabled: !!user?.id && !!sponsor,
  });
 
  const enabled = new Set<string>(
@@ -236,6 +251,34 @@ export default function SponsorDashboard() {
  <span className="text-xs text-muted-foreground">{q.status}</span>
  </div>
  <Progress value={q.pct} className="h-2" />
+ </div>
+ ))}
+ </CardContent>
+ </Card>
+ </AnimatedSection>
+ )}
+
+ {sponsorNotes.length > 0 && (
+ <AnimatedSection>
+ <Card>
+ <CardHeader className="pb-3">
+ <CardTitle className="text-sm font-bold flex items-center gap-2">
+ <StickyNote className="h-4 w-4 text-primary" />
+ Updates from your team
+ </CardTitle>
+ </CardHeader>
+ <CardContent className="space-y-3">
+ {sponsorNotes.map(n => (
+ <div key={n.id} className={`p-3 rounded-lg border text-sm ${n.is_pinned ? "border-primary/30 bg-primary/5" : "border-border bg-muted/20"}`}>
+ {n.is_pinned && (
+ <div className="flex items-center gap-1 text-[11px] text-primary font-medium mb-1">
+ <Pin className="h-3 w-3" /> Pinned
+ </div>
+ )}
+ <p className="whitespace-pre-wrap text-foreground">{n.body}</p>
+ <p className="text-[11px] text-muted-foreground mt-1.5">
+ {new Date(n.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+ </p>
  </div>
  ))}
  </CardContent>
