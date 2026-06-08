@@ -1,31 +1,21 @@
 import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, Loader2, Save, ExternalLink } from "lucide-react";
+import { AlertTriangle, Loader2, Save, ExternalLink, Lock, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
+import { useAuthContext } from "@/contexts/AuthContext";
+import {
+  PERM_MODULES,
+  PERM_ROLES,
+  ACTIONS,
+  ALLOWED_ROLES_BY_MODULE,
+} from "../permRegistry";
 
-// ─── Shared constants ─────────────────────────────────────────────────────────
-export const PERM_MODULES = [
-  "dashboard", "tasks", "email-inbox", "comms", "calendar", "documents",
-  "team", "people", "news-editor", "events-manager", "programme-pillars",
-  "stakeholders-mgmt", "media-kit-mgmt", "sponsors-partners", "site-content",
-  "cms", "media-library", "analytics", "geo-analytics", "sponsor-metrics",
-  "finance", "invoices", "seo", "marketing", "newsletter", "contact-submissions",
-  "parliament-ops", "parliament-content", "settings",
-];
+// Re-export so existing imports (RolesModule, etc.) keep working
+export { PERM_MODULES, PERM_ROLES, ACTIONS } from "../permRegistry";
 
-export const PERM_ROLES = [
-  "admin", "moderator", "project_director", "programme_lead",
-  "website_editor", "marketing_manager", "communications_officer",
-  "finance_coordinator", "budget_officer", "logistics_coordinator", "sponsor_manager",
-  "consultant", "staff", "sponsor", "media",
-] as const;
-
-export const ACTIONS = ["can_view", "can_create", "can_edit", "can_delete"] as const;
-
-// ─── PermissionManagerPanel ───────────────────────────────────────────────────
 interface Props {
   /** When provided, renders a link to navigate to the full Roles page */
   onNavigateToRoles?: () => void;
@@ -34,8 +24,10 @@ interface Props {
 export default function PermissionManagerPanel({ onNavigateToRoles }: Props) {
   const { toast } = useToast();
   const qc = useQueryClient();
+  const { isSuperAdmin } = useAuthContext();
   const [perms, setPerms] = useState<Record<string, Record<string, boolean>>>({});
   const [saving, setSaving] = useState(false);
+  const [reseeding, setReseeding] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ["all-role-permissions"],
@@ -48,42 +40,45 @@ export default function PermissionManagerPanel({ onNavigateToRoles }: Props) {
   useEffect(() => {
     if (!data) return;
     const map: Record<string, Record<string, boolean>> = {};
-    (data as any[]).forEach(row => {
-      const key = `${row.role}:${row.module}`;
-      map[key] = {
-        can_view: row.can_view, can_create: row.can_create,
-        can_edit: row.can_edit, can_delete: row.can_delete,
+    (data as any[]).forEach((row) => {
+      map[`${row.role}:${row.module}`] = {
+        can_view: row.can_view,
+        can_create: row.can_create,
+        can_edit: row.can_edit,
+        can_delete: row.can_delete,
       };
     });
     setPerms(map);
   }, [data]);
 
   const toggle = (role: string, module: string, action: string) => {
+    if (!isSuperAdmin) return;
     const key = `${role}:${module}`;
     const current = perms[key] || { can_view: false, can_create: false, can_edit: false, can_delete: false };
     const newVal = !current[action as keyof typeof current];
     let next = { ...current, [action]: newVal };
-    // If unsetting can_view, also unset the other three
     if (action === "can_view" && !newVal) {
       next = { can_view: false, can_create: false, can_edit: false, can_delete: false };
     }
-    // If setting create/edit/delete, also ensure can_view is on
     if (action !== "can_view" && newVal) {
       next.can_view = true;
     }
-    setPerms(prev => ({ ...prev, [key]: next }));
+    setPerms((prev) => ({ ...prev, [key]: next }));
   };
 
   const toggleAllForRole = (role: string) => {
-    const allChecked = PERM_MODULES.every(mod =>
-      ACTIONS.every(action => perms[`${role}:${mod}`]?.[action])
+    if (!isSuperAdmin) return;
+    const allChecked = PERM_MODULES.every((mod) =>
+      ACTIONS.every((action) => perms[`${role}:${mod}`]?.[action]),
     );
-    setPerms(prev => {
+    setPerms((prev) => {
       const next = { ...prev };
-      PERM_MODULES.forEach(mod => {
+      PERM_MODULES.forEach((mod) => {
         next[`${role}:${mod}`] = {
-          can_view: !allChecked, can_create: !allChecked,
-          can_edit: !allChecked, can_delete: !allChecked,
+          can_view: !allChecked,
+          can_create: !allChecked,
+          can_edit: !allChecked,
+          can_delete: !allChecked,
         };
       });
       return next;
@@ -91,38 +86,80 @@ export default function PermissionManagerPanel({ onNavigateToRoles }: Props) {
   };
 
   const handleSave = async () => {
+    if (!isSuperAdmin) return;
     setSaving(true);
     try {
-      const upserts: any[] = [];
+      const rows: any[] = [];
       for (const role of PERM_ROLES) {
-        for (const module of PERM_MODULES) {
-          const key = `${role}:${module}`;
-          const p = perms[key] || { can_view: false, can_create: false, can_edit: false, can_delete: false };
-          upserts.push({
-            role, module,
-            can_view: p.can_view ?? false, can_create: p.can_create ?? false,
-            can_edit: p.can_edit ?? false, can_delete: p.can_delete ?? false,
+        for (const mod of PERM_MODULES) {
+          const p = perms[`${role}:${mod}`] || { can_view: false, can_create: false, can_edit: false, can_delete: false };
+          rows.push({
+            role,
+            module: mod,
+            can_view: !!p.can_view,
+            can_create: !!p.can_create,
+            can_edit: !!p.can_edit,
+            can_delete: !!p.can_delete,
           });
         }
       }
-      for (const role of PERM_ROLES) {
-        const { error: delErr } = await supabase
+
+      // Chunked upsert (atomic per chunk) — safer than DELETE+INSERT
+      const CHUNK = 500;
+      for (let i = 0; i < rows.length; i += CHUNK) {
+        const slice = rows.slice(i, i + CHUNK);
+        const { error } = await supabase
           .from("role_permissions")
-          .delete()
-          .eq("role", role);
-        if (delErr) throw new Error(`Delete failed for ${role}: ${delErr.message}`);
+          .upsert(slice, { onConflict: "role,module" });
+        if (error) throw new Error(error.message);
       }
-      const { error: insErr } = await supabase
-        .from("role_permissions")
-        .insert(upserts);
-      if (insErr) throw new Error(`Insert failed: ${insErr.message}`);
 
       await qc.invalidateQueries({ queryKey: ["all-role-permissions"], exact: false });
       await qc.invalidateQueries({ queryKey: ["role-permissions"], exact: false });
       toast({ title: "Permissions saved" });
     } catch (err: any) {
       toast({ title: "Failed", description: err.message, variant: "destructive" });
-    } finally { setSaving(false); }
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleReseed = async () => {
+    if (!isSuperAdmin) return;
+    setReseeding(true);
+    try {
+      // Add any missing (role, module) rows using defaults from crmModules.ts
+      const toInsert: any[] = [];
+      for (const role of PERM_ROLES) {
+        for (const mod of PERM_MODULES) {
+          if (perms[`${role}:${mod}`]) continue;
+          const allowed = (ALLOWED_ROLES_BY_MODULE[mod] || []).includes(role as any);
+          toInsert.push({
+            role,
+            module: mod,
+            can_view: allowed,
+            can_create: false,
+            can_edit: false,
+            can_delete: false,
+          });
+        }
+      }
+      if (toInsert.length === 0) {
+        toast({ title: "All modules already seeded" });
+        return;
+      }
+      const { error } = await supabase
+        .from("role_permissions")
+        .upsert(toInsert, { onConflict: "role,module", ignoreDuplicates: true });
+      if (error) throw new Error(error.message);
+      await qc.invalidateQueries({ queryKey: ["all-role-permissions"], exact: false });
+      await qc.invalidateQueries({ queryKey: ["role-permissions"], exact: false });
+      toast({ title: `Reseeded ${toInsert.length} missing entries` });
+    } catch (err: any) {
+      toast({ title: "Reseed failed", description: err.message, variant: "destructive" });
+    } finally {
+      setReseeding(false);
+    }
   };
 
   if (isLoading) {
@@ -139,69 +176,113 @@ export default function PermissionManagerPanel({ onNavigateToRoles }: Props) {
         <div className="flex items-start gap-2 p-3 bg-amber-950/40 border border-amber-800 rounded-lg flex-1 min-w-0">
           <AlertTriangle size={12} className="text-amber-400 flex-shrink-0 mt-0.5" />
           <p className="text-[10px] text-amber-300 leading-relaxed">
-            Super Admin always has full access to all modules. Configure permissions for all other roles below.
-            Toggling view off will also remove create/edit/delete access.
+            {isSuperAdmin
+              ? "Super Admin has full access to every module (locked row at the top). Toggle any other role/module combination below. Unchecking View removes Create/Edit/Delete."
+              : "View-only. Only Super Admin can modify the permissions matrix."}
           </p>
         </div>
-        {onNavigateToRoles && (
-          <button
-            onClick={onNavigateToRoles}
-            className="flex items-center gap-1.5 text-[11px] text-emerald-400 hover:text-emerald-300 border border-emerald-800 rounded-lg px-3 py-2 hover:bg-emerald-950/40 transition-colors whitespace-nowrap"
-          >
-            <ExternalLink size={11} /> Full Roles Page
-          </button>
-        )}
+        <div className="flex gap-2">
+          {isSuperAdmin && (
+            <button
+              onClick={handleReseed}
+              disabled={reseeding}
+              className="flex items-center gap-1.5 text-[11px] text-emerald-400 hover:text-emerald-300 border border-emerald-800 rounded-lg px-3 py-2 hover:bg-emerald-950/40 transition-colors whitespace-nowrap disabled:opacity-50"
+              title="Insert missing (role × module) rows using defaults from crmModules.ts"
+            >
+              {reseeding ? <Loader2 size={11} className="animate-spin" /> : <Sparkles size={11} />}
+              Reseed from registry
+            </button>
+          )}
+          {onNavigateToRoles && (
+            <button
+              onClick={onNavigateToRoles}
+              className="flex items-center gap-1.5 text-[11px] text-emerald-400 hover:text-emerald-300 border border-emerald-800 rounded-lg px-3 py-2 hover:bg-emerald-950/40 transition-colors whitespace-nowrap"
+            >
+              <ExternalLink size={11} /> Full Roles Page
+            </button>
+          )}
+        </div>
       </div>
 
-      <div className="overflow-x-auto border border-crm-border rounded-lg">
+      <div className="overflow-x-auto border border-[hsl(var(--border-subtle))] rounded-lg">
         <table className="w-full text-[10px]">
           <thead>
-            <tr className="border-b border-crm-border bg-crm-surface/50">
-              <th className="text-left py-2 px-3 text-crm-text-dim font-semibold sticky left-0 bg-crm-surface/90 z-10 min-w-[130px]">
+            <tr className="border-b border-[hsl(var(--border-subtle))] bg-[hsl(var(--surface-3))]/50">
+              <th className="text-left py-2 px-3 text-[hsl(var(--text-3))] font-semibold sticky left-0 bg-[hsl(var(--surface-3))]/90 z-10 min-w-[140px]">
                 Module
               </th>
-              {PERM_ROLES.map(role => (
-                <th key={role} colSpan={4} className="text-center py-2 px-1 text-crm-text-dim font-semibold">
+              <th
+                colSpan={4}
+                className="text-center py-2 px-1 text-amber-300 font-semibold border-l border-amber-800/60 bg-amber-950/30"
+                title="Super Admin always has full access — locked"
+              >
+                <span className="inline-flex items-center gap-1 capitalize text-[9px]">
+                  <Lock size={9} /> super admin
+                </span>
+              </th>
+              {PERM_ROLES.map((role) => (
+                <th key={role} colSpan={4} className="text-center py-2 px-1 text-[hsl(var(--text-3))] font-semibold">
                   <button
                     onClick={() => toggleAllForRole(role)}
-                    className="hover:text-crm-text transition-colors capitalize text-[9px]"
+                    disabled={!isSuperAdmin}
+                    className="hover:text-[hsl(var(--text-1))] transition-colors capitalize text-[9px] disabled:cursor-not-allowed"
                   >
                     {role.replace(/_/g, " ")}
                   </button>
                 </th>
               ))}
             </tr>
-            <tr className="border-b border-crm-border">
-              <th className="sticky left-0 bg-crm-surface/90 z-10" />
-              {PERM_ROLES.map(role =>
-                ACTIONS.map(action => (
-                  <th key={`${role}-${action}`} className="text-center py-1 px-0.5 text-crm-text-faint text-[7px]">
+            <tr className="border-b border-[hsl(var(--border-subtle))]">
+              <th className="sticky left-0 bg-[hsl(var(--surface-3))]/90 z-10" />
+              {ACTIONS.map((action) => (
+                <th
+                  key={`super-${action}`}
+                  className="text-center py-1 px-0.5 text-amber-400/70 text-[7px] border-l border-amber-800/60 bg-amber-950/20"
+                >
+                  {action.replace("can_", "").charAt(0).toUpperCase() + action.replace("can_", "").slice(1)}
+                </th>
+              ))}
+              {PERM_ROLES.map((role) =>
+                ACTIONS.map((action) => (
+                  <th
+                    key={`${role}-${action}`}
+                    className="text-center py-1 px-0.5 text-[hsl(var(--text-3))] text-[7px]"
+                  >
                     {action.replace("can_", "").charAt(0).toUpperCase() + action.replace("can_", "").slice(1)}
                   </th>
-                ))
+                )),
               )}
             </tr>
           </thead>
           <tbody>
-            {PERM_MODULES.map(module => (
-              <tr key={module} className="border-b border-crm-border/50 hover:bg-crm-surface/50">
-                <td className="py-1.5 px-3 text-crm-text font-medium capitalize sticky left-0 bg-crm-card z-10 text-[10px]">
+            {PERM_MODULES.map((module) => (
+              <tr key={module} className="border-b border-[hsl(var(--border-subtle))]/50 hover:bg-[hsl(var(--surface-3))]/30">
+                <td className="py-1.5 px-3 text-[hsl(var(--text-1))] font-medium capitalize sticky left-0 bg-[hsl(var(--surface-1))] z-10 text-[10px]">
                   {module.replace(/-/g, " ")}
                 </td>
-                {PERM_ROLES.map(role =>
-                  ACTIONS.map(action => {
+                {ACTIONS.map((action) => (
+                  <td
+                    key={`super-${module}-${action}`}
+                    className="text-center py-1.5 px-0.5 border-l border-amber-800/60 bg-amber-950/10"
+                  >
+                    <Checkbox checked={true} disabled className="h-3 w-3 opacity-80" />
+                  </td>
+                ))}
+                {PERM_ROLES.map((role) =>
+                  ACTIONS.map((action) => {
                     const key = `${role}:${module}`;
                     const checked = perms[key]?.[action] ?? false;
                     return (
                       <td key={`${role}-${module}-${action}`} className="text-center py-1.5 px-0.5">
                         <Checkbox
                           checked={checked}
+                          disabled={!isSuperAdmin}
                           onCheckedChange={() => toggle(role, module, action)}
                           className="h-3 w-3"
                         />
                       </td>
                     );
-                  })
+                  }),
                 )}
               </tr>
             ))}
@@ -209,15 +290,17 @@ export default function PermissionManagerPanel({ onNavigateToRoles }: Props) {
         </table>
       </div>
 
-      <Button
-        size="sm"
-        onClick={handleSave}
-        disabled={saving}
-        className="bg-emerald-700 hover:bg-emerald-600 text-white text-xs gap-1.5"
-      >
-        {saving ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
-        Save Permissions
-      </Button>
+      {isSuperAdmin && (
+        <Button
+          size="sm"
+          onClick={handleSave}
+          disabled={saving}
+          className="bg-emerald-700 hover:bg-emerald-600 text-white text-xs gap-1.5"
+        >
+          {saving ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
+          Save Permissions
+        </Button>
+      )}
     </div>
   );
 }
