@@ -691,6 +691,39 @@ export type Database = {
         }
         Relationships: []
       }
+      custom_roles: {
+        Row: {
+          base_role: Database["public"]["Enums"]["app_role"]
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          key: string
+          label: string
+          updated_at: string
+        }
+        Insert: {
+          base_role: Database["public"]["Enums"]["app_role"]
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          key: string
+          label: string
+          updated_at?: string
+        }
+        Update: {
+          base_role?: Database["public"]["Enums"]["app_role"]
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          key?: string
+          label?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       direct_messages: {
         Row: {
           body: string
@@ -4362,6 +4395,8 @@ export type Database = {
         | "logistics_coordinator"
         | "sponsor_manager"
         | "consultant"
+        | "budget_officer"
+        | "staff"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -4504,6 +4539,8 @@ export const Constants = {
         "logistics_coordinator",
         "sponsor_manager",
         "consultant",
+        "budget_officer",
+        "staff",
       ],
     },
   },
