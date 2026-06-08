@@ -384,24 +384,22 @@ export default function RolesModule() {
         const key = `${selectedRole}:${module}`;
         const p = perms[key] || { can_view: false, can_create: false, can_edit: false, can_delete: false };
         return {
-          role: selectedRole, module,
-          can_view: p.can_view ?? false, can_create: p.can_create ?? false,
-          can_edit: p.can_edit ?? false, can_delete: p.can_delete ?? false,
+          role: selectedRole,
+          module,
+          can_view: !!p.can_view,
+          can_create: !!p.can_create,
+          can_edit: !!p.can_edit,
+          can_delete: !!p.can_delete,
         };
       });
-      const { error: delErr } = await supabase
-        .from("role_permissions")
-        .delete()
-        .eq("role", selectedRole);
-      if (delErr) throw new Error(`Delete failed: ${delErr.message}`);
 
-      const { error: insErr } = await supabase
+      // Atomic upsert on (role, module) — no destructive DELETE first.
+      const { error } = await supabase
         .from("role_permissions")
-        .insert(upserts);
-      if (insErr) throw new Error(`Insert failed: ${insErr.message}`);
+        .upsert(upserts, { onConflict: "role,module" });
+      if (error) throw new Error(error.message);
 
       await qc.invalidateQueries({ queryKey: ["all-role-permissions"], exact: false });
-      // exact:false matches ["role-permissions", roles] in usePermissions
       await qc.invalidateQueries({ queryKey: ["role-permissions"], exact: false });
       toast({ title: `Permissions saved for ${CRM_ROLE_META[selectedRole].label}` });
     } catch (err: any) {
