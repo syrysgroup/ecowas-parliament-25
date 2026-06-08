@@ -1,4 +1,6 @@
 import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import Layout from "@/components/layout/Layout";
 import AnimatedSection from "@/components/shared/AnimatedSection";
 import ProgrammeSponsorMarquee from "@/components/shared/ProgrammeSponsorMarquee";
@@ -10,13 +12,30 @@ import { Card, CardContent } from "@/components/ui/card";
 import {
  ArrowLeft, Lightbulb, Rocket, Star, Trophy, Target,
  Leaf, Stethoscope, Landmark, GraduationCap, MapPin, Calendar,
- Users, ArrowRight, Zap, Globe,
+ Users, ArrowRight, Zap, Globe, CalendarDays,
 } from "lucide-react";
 import { useTranslation } from "@/lib/i18n";
 import heroBg from "@/assets/innovators-hero-bg.jpg";
 
 const InnovatorsChallenge = () => {
  const { t } = useTranslation();
+
+ const { data: sub } = useQuery({
+ queryKey: ["youth-sub-pillar", "innovators"],
+ queryFn: async () => {
+ const { data } = await supabase.from("youth_sub_pillars").select("*").eq("slug", "innovators").maybeSingle();
+ return data;
+ },
+ });
+
+ const { data: milestones = [] } = useQuery({
+ queryKey: ["youth-milestones", sub?.id],
+ queryFn: async () => {
+ const { data } = await supabase.from("youth_milestones").select("*").eq("sub_pillar_id", sub!.id).order("position");
+ return data ?? [];
+ },
+ enabled: !!sub?.id,
+ });
 
  const tracks = [
  { title: "AgriTech", desc: "Agricultural technology solutions for food security and sustainable farming across West Africa.", icon: <Leaf className="h-6 w-6" />, color: "from-primary/20 to-primary/5" },
@@ -53,7 +72,7 @@ const InnovatorsChallenge = () => {
  <ProgrammeSponsorMarquee programme="innovators" />
  {/* Hero */}
  <section className="relative min-h-[80vh] flex items-center overflow-hidden">
- <img src={heroBg} alt="" className="absolute inset-0 w-full h-full object-cover" width={1920} height={1080} decoding="async" fetchPriority="high" />
+ <img src={sub?.hero_image_url || heroBg} alt="" className="absolute inset-0 w-full h-full object-cover" width={1920} height={1080} decoding="async" fetchPriority="high" />
  <div className="absolute inset-0 bg-gradient-to-r from-foreground/90 via-foreground/70 to-foreground/40" />
 
  {/* Floating particles */}
@@ -83,16 +102,21 @@ const InnovatorsChallenge = () => {
  <Lightbulb className="h-3 w-3 mr-1" /> ECOWAS Parliament Initiatives @25
  </Badge>
  <h1 className="text-4xl md:text-6xl font-black text-primary-foreground mb-6 animate-slide-up">
- Innovators<br />
- <span className="text-accent">Challenge</span>
+ {sub?.title ? sub.title : (<>Innovators<br /><span className="text-accent">Challenge</span></>)}
  </h1>
  <p className="text-primary-foreground/70 text-lg leading-relaxed mb-8 animate-slide-up" style={{ animationDelay: "0.2s" }}>
- A multi-country startup competition empowering young West African entrepreneurs to build solutions across 5 innovation tracks, from AgriTech to EdTech.
+ {sub?.tagline || "A multi-country startup competition empowering young West African entrepreneurs to build solutions across 5 innovation tracks, from AgriTech to EdTech."}
  </p>
  <div className="flex flex-wrap gap-4 animate-slide-up" style={{ animationDelay: "0.4s" }}>
+ {sub?.cta_url ? (
+ <Button size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90 font-bold" asChild>
+ <a href={sub.cta_url}>{sub.cta_label || "Apply Now"} <ArrowRight className="ml-2 h-4 w-4" /></a>
+ </Button>
+ ) : (
  <Button size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90 font-bold">
  Apply Now <ArrowRight className="ml-2 h-4 w-4" />
  </Button>
+ )}
  <Button size="lg" variant="outline" className="border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10">
  Learn More
  </Button>
@@ -253,6 +277,39 @@ const InnovatorsChallenge = () => {
  </div>
  </div>
  </section>
+
+ {/* Milestones (from DB — shown only when admin has entered data) */}
+ {milestones.length > 0 && (
+ <section className="py-20 bg-background">
+ <div className="container mx-auto px-6">
+ <AnimatedSection>
+ <div className="text-center mb-12">
+ <Badge className="bg-primary/10 text-primary border-primary/20 mb-4"><CalendarDays className="h-3 w-3 mr-1" /> Key Milestones</Badge>
+ <h2 className="text-3xl md:text-4xl font-black">Programme <span className="text-primary">Timeline</span></h2>
+ </div>
+ </AnimatedSection>
+ <div className="relative max-w-2xl mx-auto">
+ <div className="absolute left-5 top-0 bottom-0 w-0.5 bg-border" />
+ {milestones.map((m, i) => (
+ <AnimatedSection key={m.id} delay={i * 80}>
+ <div className="flex gap-4 mb-8">
+ <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold z-10">
+ {i + 1}
+ </div>
+ <div className="bg-card border border-border rounded-xl p-4 flex-1">
+ <div className="flex items-start justify-between gap-2">
+ <p className="font-bold text-sm">{m.title}</p>
+ {m.date && <span className="text-xs text-muted-foreground whitespace-nowrap">{new Date(m.date).toLocaleDateString("en-GB", { month: "short", year: "numeric" })}</span>}
+ </div>
+ {m.description && <p className="text-xs text-muted-foreground mt-1">{m.description}</p>}
+ </div>
+ </div>
+ </AnimatedSection>
+ ))}
+ </div>
+ </div>
+ </section>
+ )}
 
  {/* CTA */}
  <section className="py-20 bg-gradient-to-br from-primary via-primary/95 to-primary/80 text-primary-foreground">

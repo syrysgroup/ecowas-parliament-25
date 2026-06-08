@@ -5,6 +5,7 @@ import { useAuthContext } from "@/contexts/AuthContext";
 import { format, parseISO } from "date-fns";
 import {
   Plus, Pencil, Trash2, Eye, EyeOff, Image, ExternalLink, FormInput, Ban, Search,
+  Users, Download,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -318,11 +319,101 @@ function EventDialog({ open, onClose, event }: { open: boolean; onClose: () => v
   );
 }
 
+interface Registration {
+  id: string;
+  name: string;
+  email: string;
+  country: string | null;
+  organisation: string | null;
+  status: string;
+  created_at: string;
+}
+
+function RegistrationsDialog({ eventId, eventTitle, open, onClose }: {
+  eventId: string; eventTitle: string; open: boolean; onClose: () => void;
+}) {
+  const { data: regs = [], isLoading } = useQuery<Registration[]>({
+    queryKey: ["event-registrations", eventId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("event_registrations")
+        .select("id, name, email, country, organisation, status, created_at")
+        .eq("event_id", eventId)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: open,
+  });
+
+  const exportCSV = () => {
+    const header = "Name,Email,Country,Organisation,Status,Registered At";
+    const rows = regs.map(r =>
+      [r.name, r.email, r.country ?? "", r.organisation ?? "", r.status,
+       new Date(r.created_at).toLocaleString()].map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")
+    );
+    const blob = new Blob([[header, ...rows].join("\n")], { type: "text/csv" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `registrations-${eventId}.csv`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="bg-crm-card border-crm-border text-crm-text max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-sm font-semibold text-crm-text">
+            Registrations — {eventTitle}
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-[11px] text-crm-text-dim">{isLoading ? "…" : `${regs.length} registrant${regs.length !== 1 ? "s" : ""}`}</span>
+          {regs.length > 0 && (
+            <Button size="sm" variant="outline" onClick={exportCSV}
+              className="border-crm-border text-crm-text-muted text-[10px] h-6 px-2 gap-1">
+              <Download size={10} /> Export CSV
+            </Button>
+          )}
+        </div>
+
+        {isLoading ? (
+          <div className="flex items-center justify-center h-24">
+            <div className="w-5 h-5 border-2 border-emerald-700 border-t-emerald-400 rounded-full animate-spin" />
+          </div>
+        ) : regs.length === 0 ? (
+          <p className="text-xs text-crm-text-muted text-center py-8">No registrations yet.</p>
+        ) : (
+          <div className="space-y-1.5">
+            {regs.map(r => (
+              <div key={r.id} className="flex items-center gap-3 bg-crm-surface border border-crm-border rounded-lg px-3 py-2">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-crm-text truncate">{r.name}</p>
+                  <p className="text-[10px] text-crm-text-muted">{r.email}{r.country ? ` · ${r.country}` : ""}{r.organisation ? ` · ${r.organisation}` : ""}</p>
+                </div>
+                <div className="text-right flex-shrink-0">
+                  <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded border ${
+                    r.status === "registered" ? "bg-emerald-950 text-emerald-400 border-emerald-800" : "bg-crm-surface text-crm-text-muted border-crm-border"
+                  }`}>{r.status}</span>
+                  <p className="text-[9px] text-crm-text-faint font-mono mt-0.5">{new Date(r.created_at).toLocaleDateString()}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export default function EventsManagerModule() {
   const { canCreate, canEdit, canDelete } = usePermissions();
   const qc = useQueryClient();
   const [addOpen, setAddOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<EventRow | null>(null);
+  const [regTarget, setRegTarget] = useState<EventRow | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "published" | "draft">("all");
@@ -477,6 +568,13 @@ export default function EventsManagerModule() {
                 </div>
               </div>
               <div className="flex items-center gap-1 p-3 flex-shrink-0">
+                {ev.registration_type === "form" && (
+                  <button onClick={() => setRegTarget(ev)}
+                    className="w-7 h-7 rounded flex items-center justify-center bg-crm-surface border border-crm-border text-crm-text-dim hover:text-emerald-400 transition-colors"
+                    title="View registrations">
+                    <Users size={12} />
+                  </button>
+                )}
                 {canEdit("events-manager") && (
                   <button onClick={() => togglePublish.mutate({ id: ev.id, published: !ev.is_published })}
                     className="w-7 h-7 rounded flex items-center justify-center bg-crm-surface border border-crm-border text-crm-text-dim hover:text-crm-text-secondary transition-colors"
@@ -524,6 +622,14 @@ export default function EventsManagerModule() {
 
       {addOpen && <EventDialog open={addOpen} onClose={() => setAddOpen(false)} />}
       {editTarget && <EventDialog open={!!editTarget} onClose={() => setEditTarget(null)} event={editTarget} />}
+      {regTarget && (
+        <RegistrationsDialog
+          eventId={regTarget.id}
+          eventTitle={regTarget.title}
+          open={!!regTarget}
+          onClose={() => setRegTarget(null)}
+        />
+      )}
     </div>
   );
 }

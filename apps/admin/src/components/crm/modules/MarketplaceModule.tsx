@@ -12,7 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import {
   ShoppingBag, Inbox, MessageSquare, Building2, BarChart3, CheckCircle2, XCircle,
-  Pencil, Trash2, Loader2, Star, Plus, Send, Download,
+  Pencil, Trash2, Loader2, Star, Plus, Send, Download, Tag,
 } from "lucide-react";
 import {
   ResponsiveContainer, LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
@@ -91,12 +91,14 @@ export default function MarketplaceModule() {
           <TabsTrigger value="inquiries"><MessageSquare className="h-4 w-4 mr-1.5" />Inquiries</TabsTrigger>
           <TabsTrigger value="sellers"><Building2 className="h-4 w-4 mr-1.5" />Seller Requests</TabsTrigger>
           <TabsTrigger value="analytics"><BarChart3 className="h-4 w-4 mr-1.5" />Analytics</TabsTrigger>
+          <TabsTrigger value="categories"><Tag className="h-4 w-4 mr-1.5" />Categories</TabsTrigger>
         </TabsList>
         <TabsContent value="listings"><ListingsTab /></TabsContent>
         <TabsContent value="interests"><InterestsTab /></TabsContent>
         <TabsContent value="inquiries"><InquiriesTab /></TabsContent>
         <TabsContent value="sellers"><SellerRequestsTab /></TabsContent>
         <TabsContent value="analytics"><AnalyticsTab /></TabsContent>
+        <TabsContent value="categories"><CategoriesTab /></TabsContent>
       </Tabs>
     </div>
   );
@@ -748,6 +750,143 @@ function AnalyticsTab() {
           </ResponsiveContainer>
         </CardContent></Card>
       </div>
+    </div>
+  );
+}
+
+// ───────────────── Categories Tab ─────────────────
+interface Category { id: string; name: string; slug: string; sort_order: number; created_at: string; }
+
+function slugifySimple(s: string) {
+  return s.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, "").replace(/\s+/g, "-");
+}
+
+function CategoriesTab() {
+  const { toast } = useToast();
+  const [cats, setCats] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState<Category | null>(null);
+  const [showAdd, setShowAdd] = useState(false);
+  const [form, setForm] = useState({ name: "", slug: "", sort_order: "0" });
+  const [saving, setSaving] = useState(false);
+
+  const load = async () => {
+    setLoading(true);
+    const { data } = await supabase.from("marketplace_categories").select("*").order("sort_order").order("name");
+    setCats(data ?? []);
+    setLoading(false);
+  };
+  useEffect(() => { load(); }, []);
+
+  const openAdd = () => {
+    setForm({ name: "", slug: "", sort_order: String(cats.length) });
+    setEditing(null);
+    setShowAdd(true);
+  };
+  const openEdit = (c: Category) => {
+    setForm({ name: c.name, slug: c.slug, sort_order: String(c.sort_order) });
+    setEditing(c);
+    setShowAdd(true);
+  };
+
+  const handleSave = async () => {
+    if (!form.name.trim()) return;
+    setSaving(true);
+    const payload = {
+      name: form.name.trim(),
+      slug: form.slug.trim() || slugifySimple(form.name),
+      sort_order: parseInt(form.sort_order, 10) || 0,
+    };
+    const { error } = editing
+      ? await supabase.from("marketplace_categories").update(payload).eq("id", editing.id)
+      : await supabase.from("marketplace_categories").insert(payload);
+    setSaving(false);
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    toast({ title: editing ? "Category updated" : "Category added" });
+    setShowAdd(false);
+    load();
+  };
+
+  const handleDelete = async (c: Category) => {
+    if (!confirm(`Delete "${c.name}"? Listings in this category will become uncategorised.`)) return;
+    const { error } = await supabase.from("marketplace_categories").delete().eq("id", c.id);
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Category deleted" });
+    load();
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">
+          Categories appear as filters on the public marketplace page. Deleting a category un-categorises its listings.
+        </p>
+        <Button size="sm" className="gap-1" onClick={openAdd}>
+          <Plus className="h-4 w-4" /> Add Category
+        </Button>
+      </div>
+      {loading ? (
+        <div className="flex items-center justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+      ) : (
+        <div className="space-y-2">
+          {cats.map(c => (
+            <div key={c.id} className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card">
+              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <Tag className="h-4 w-4 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-sm">{c.name}</p>
+                <p className="text-xs text-muted-foreground font-mono">{c.slug}</p>
+              </div>
+              <Badge variant="outline" className="text-xs flex-shrink-0">#{c.sort_order}</Badge>
+              <div className="flex gap-1 flex-shrink-0">
+                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEdit(c)}>
+                  <Pencil className="h-3.5 w-3.5" />
+                </Button>
+                <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => handleDelete(c)}>
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            </div>
+          ))}
+          {cats.length === 0 && (
+            <p className="text-center text-muted-foreground py-10 text-sm">No categories yet. Add one to get started.</p>
+          )}
+        </div>
+      )}
+      <Dialog open={showAdd} onOpenChange={v => !v && setShowAdd(false)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{editing ? "Edit Category" : "Add Category"}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="space-y-1.5">
+              <Label>Name</Label>
+              <Input value={form.name} onChange={e => {
+                const name = e.target.value;
+                setForm(f => ({ ...f, name, slug: editing ? f.slug : slugifySimple(name) }));
+              }} placeholder="e.g. Agriculture & Food" />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Slug</Label>
+              <Input value={form.slug} onChange={e => setForm(f => ({ ...f, slug: e.target.value }))} placeholder="agriculture-food" />
+              <p className="text-xs text-muted-foreground">URL-safe identifier. Auto-filled from name.</p>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Sort Order</Label>
+              <Input type="number" value={form.sort_order} onChange={e => setForm(f => ({ ...f, sort_order: e.target.value }))} min="0" />
+              <p className="text-xs text-muted-foreground">Lower number = appears first in filter list.</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAdd(false)}>Cancel</Button>
+            <Button onClick={handleSave} disabled={saving || !form.name.trim()} className="gap-1">
+              {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+              {editing ? "Save Changes" : "Add Category"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -26,6 +26,7 @@ import MediaKit from "./pages/MediaKit";
 import SponsorPortal from "./pages/SponsorPortal";
 import Events from "./pages/Events";
 import Volunteer from "./pages/Volunteer";
+import MediaAccreditation from "./pages/MediaAccreditation";
 import PartnerPage from "./pages/partners/PartnerPage";
 import SponsorPage from "./pages/sponsors/SponsorPage";
 import EventDetail from "./pages/events/EventDetail";
@@ -119,6 +120,7 @@ const App = () => (
               <Route path="/events"             element={<Events />}         />
               <Route path="/events/:id"         element={<EventDetail />}    />
               <Route path="/volunteer"          element={<Volunteer />}      />
+              <Route path="/media-accreditation" element={<MediaAccreditation />} />
               <Route path="/partners/:slug"     element={<PartnerPage />}    />
               <Route path="/sponsors/:slug"     element={<SponsorPage />}    />
               <Route path="/ecowas-parliament"  element={<EcowasParliament />} />

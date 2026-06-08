@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Download, ExternalLink, FileText, ImageIcon, Mic, Mail, Clock } from "lucide-react";
+import { Download, ExternalLink, FileText, ImageIcon, Mic, Mail, Clock, IdCard } from "lucide-react";
 import { useTranslation } from "@/lib/i18n";
 
 interface MediaKitItem {
@@ -100,8 +100,11 @@ export default function MediaKit() {
  <p className="text-sm text-amber-800 dark:text-amber-300">
  <strong>{t("mediaKit.accreditation")}</strong> {t("mediaKit.accreditationDesc")}
  </p>
- <Button asChild variant="link" size="sm" className="text-amber-700 dark:text-amber-400 p-0 h-auto mt-1 text-xs">
- <Link to="/media-portal">Access Accredited Media Portal →</Link>
+ <Button asChild variant="link" size="sm" className="text-amber-700 dark:text-amber-400 p-0 h-auto text-xs gap-1">
+ <Link to="/media-accreditation"><IdCard className="h-3.5 w-3.5" /> Apply for Accreditation →</Link>
+ </Button>
+ <Button asChild variant="link" size="sm" className="text-amber-600 dark:text-amber-500 p-0 h-auto mt-1 text-xs">
+ <Link to="/media-portal">Accredited Media Login →</Link>
  </Button>
  </div>
  </div>

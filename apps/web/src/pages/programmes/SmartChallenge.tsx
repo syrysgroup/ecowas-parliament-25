@@ -1,4 +1,6 @@
 import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import Layout from "@/components/layout/Layout";
 import AnimatedSection from "@/components/shared/AnimatedSection";
 import ProgrammeSponsorMarquee from "@/components/shared/ProgrammeSponsorMarquee";
@@ -10,13 +12,30 @@ import { Card, CardContent } from "@/components/ui/card";
 import {
  ArrowLeft, BrainCircuit, ArrowRight, Trophy, Users, Globe, Target,
  BookOpen, Calculator, FlaskConical, TrendingUp, Landmark, Tv, Shield,
- Award, Zap, Eye, Monitor, Mic, ChevronRight,
+ Award, Zap, Eye, Monitor, Mic, ChevronRight, CalendarDays,
 } from "lucide-react";
 import { useTranslation } from "@/lib/i18n";
 import heroBg from "@/assets/smart-challenge-hero-bg.jpg";
 
 const SmartChallenge = () => {
  const { t } = useTranslation();
+
+ const { data: sub } = useQuery({
+ queryKey: ["youth-sub-pillar", "smart"],
+ queryFn: async () => {
+ const { data } = await supabase.from("youth_sub_pillars").select("*").eq("slug", "smart").maybeSingle();
+ return data;
+ },
+ });
+
+ const { data: milestones = [] } = useQuery({
+ queryKey: ["youth-milestones", sub?.id],
+ queryFn: async () => {
+ const { data } = await supabase.from("youth_milestones").select("*").eq("sub_pillar_id", sub!.id).order("position");
+ return data ?? [];
+ },
+ enabled: !!sub?.id,
+ });
 
  const subjects = [
  { title: "ECOWAS & History", questions: 15, time: "20 min", weight: "×1.5", icon: <Landmark className="h-5 w-5" />, note: "Universal gateway, mandatory minimum threshold" },
@@ -52,7 +71,7 @@ const SmartChallenge = () => {
  <ProgrammeSponsorMarquee programme="smart" />
  {/* Hero */}
  <section className="relative min-h-[80vh] flex items-center overflow-hidden">
- <img src={heroBg} alt="" className="absolute inset-0 w-full h-full object-cover" width={1920} height={1080} decoding="async" fetchPriority="high" />
+ <img src={sub?.hero_image_url || heroBg} alt="" className="absolute inset-0 w-full h-full object-cover" width={1920} height={1080} decoding="async" fetchPriority="high" />
  <div className="absolute inset-0 bg-gradient-to-r from-[hsl(0,0%,8%)]/95 via-[hsl(0,0%,8%)]/80 to-[hsl(0,0%,8%)]/50" />
 
  {/* Animated glow */}
@@ -71,19 +90,24 @@ const SmartChallenge = () => {
  <BrainCircuit className="h-3 w-3 mr-1" /> Powered by SMARTq
  </Badge>
  <h1 className="text-4xl md:text-6xl font-black text-white mb-6 animate-slide-up">
- ECOWAS Parliament Initiatives<br />
- <span className="text-[hsl(50,87%,45%)]">Smart Challenge</span>
+ {sub?.title ? sub.title : (<>ECOWAS Parliament Initiatives<br /><span className="text-[hsl(50,87%,45%)]">Smart Challenge</span></>)}
  </h1>
  <p className="text-white/70 text-lg leading-relaxed mb-4 animate-slide-up" style={{ animationDelay: "0.2s" }}>
- The premier continental academic competition for secondary school students across all 12 ECOWAS member states.
+ {sub?.tagline || "The premier continental academic competition for secondary school students across all 12 ECOWAS member states."}
  </p>
  <p className="text-white/50 text-sm mb-8 animate-slide-up" style={{ animationDelay: "0.3s" }}>
  7 rounds · 4 subjects · Dual-track scoring · Live broadcast finale
  </p>
  <div className="flex flex-wrap gap-4 animate-slide-up" style={{ animationDelay: "0.4s" }}>
+ {sub?.cta_url ? (
+ <Button size="lg" className="bg-[hsl(50,87%,45%)] text-[hsl(0,0%,8%)] hover:bg-[hsl(50,87%,50%)] font-bold" asChild>
+ <a href={sub.cta_url}>{sub.cta_label || "Register Your School"} <ArrowRight className="ml-2 h-4 w-4" /></a>
+ </Button>
+ ) : (
  <Button size="lg" className="bg-[hsl(50,87%,45%)] text-[hsl(0,0%,8%)] hover:bg-[hsl(50,87%,50%)] font-bold">
  Register Your School <ArrowRight className="ml-2 h-4 w-4" />
  </Button>
+ )}
  <Button size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10">
  Watch Trailer
  </Button>
@@ -354,6 +378,39 @@ const SmartChallenge = () => {
  </div>
  </div>
  </section>
+
+ {/* Milestones (from DB — shown only when admin has entered data) */}
+ {milestones.length > 0 && (
+ <section className="py-20 bg-background">
+ <div className="container mx-auto px-6">
+ <AnimatedSection>
+ <div className="text-center mb-12">
+ <Badge className="bg-primary/10 text-primary border-primary/20 mb-4"><CalendarDays className="h-3 w-3 mr-1" /> Key Milestones</Badge>
+ <h2 className="text-3xl md:text-4xl font-black">Programme <span className="text-primary">Timeline</span></h2>
+ </div>
+ </AnimatedSection>
+ <div className="relative max-w-2xl mx-auto">
+ <div className="absolute left-5 top-0 bottom-0 w-0.5 bg-border" />
+ {milestones.map((m, i) => (
+ <AnimatedSection key={m.id} delay={i * 80}>
+ <div className="flex gap-4 mb-8">
+ <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold z-10">
+ {i + 1}
+ </div>
+ <div className="bg-card border border-border rounded-xl p-4 flex-1">
+ <div className="flex items-start justify-between gap-2">
+ <p className="font-bold text-sm">{m.title}</p>
+ {m.date && <span className="text-xs text-muted-foreground whitespace-nowrap">{new Date(m.date).toLocaleDateString("en-GB", { month: "short", year: "numeric" })}</span>}
+ </div>
+ {m.description && <p className="text-xs text-muted-foreground mt-1">{m.description}</p>}
+ </div>
+ </div>
+ </AnimatedSection>
+ ))}
+ </div>
+ </div>
+ </section>
+ )}
 
  {/* CTA */}
  <section className="py-20 bg-gradient-to-br from-accent via-accent/95 to-accent/80 text-accent-foreground">

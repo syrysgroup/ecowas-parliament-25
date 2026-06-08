@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import Layout from "@/components/layout/Layout";
 import AnimatedSection from "@/components/shared/AnimatedSection";
 import { FileText, Eye, X, Globe } from "lucide-react";
@@ -20,7 +22,11 @@ interface DocEntry {
  versions: DocVersion[];
 }
 
-const documents: DocEntry[] = [
+const LANG_LABELS: Record<string, string> = {
+ en: "English", fr: "Français", pt: "Português", ar: "العربية", es: "Español",
+};
+
+const HARDCODED_FALLBACK: DocEntry[] = [
  {
  title: "Press Release, 25th Anniversary Programme Launch",
  type: "Press Release",
@@ -72,10 +78,44 @@ const documents: DocEntry[] = [
 const Documents = () => {
  const { t } = useTranslation();
  const [viewerDoc, setViewerDoc] = useState<{ title: string; url: string } | null>(null);
- const [activeLangs, setActiveLangs] = useState<Record<number, string>>({});
+ const [activeLangs, setActiveLangs] = useState<Record<string, string>>({});
 
- const getActiveLang = (idx: number, doc: DocEntry) =>
- activeLangs[idx] || doc.versions[0]?.lang || "EN";
+ const { data: dbDocuments } = useQuery<DocEntry[]>({
+ queryKey: ["public-documents"],
+ queryFn: async () => {
+ const { data } = await supabase
+ .from("documents")
+ .select("title, category, file_type, file_url, language, created_at")
+ .eq("restricted", false)
+ .order("created_at", { ascending: true });
+ if (!data || data.length === 0) return [];
+
+ // Group rows by title, collecting language variants
+ const grouped = new Map<string, { category: string; rows: typeof data }>();
+ for (const row of data) {
+ if (!grouped.has(row.title)) {
+ grouped.set(row.title, { category: row.category, rows: [] });
+ }
+ grouped.get(row.title)!.rows.push(row);
+ }
+
+ return [...grouped.entries()].map(([title, { category, rows }]) => ({
+ title,
+ type: category,
+ date: new Date(rows[0].created_at).toLocaleDateString("en-GB", { month: "long", year: "numeric" }),
+ versions: rows.map(r => ({
+ lang: r.language.toUpperCase(),
+ label: LANG_LABELS[r.language.toLowerCase()] ?? r.language.toUpperCase(),
+ url: r.file_url ?? "",
+ })).filter(v => v.url),
+ }));
+ },
+ });
+
+ const documents = (dbDocuments && dbDocuments.length > 0) ? dbDocuments : HARDCODED_FALLBACK;
+
+ const getActiveLang = (key: string, doc: DocEntry) =>
+ activeLangs[key] || doc.versions[0]?.lang || "EN";
 
  return (
  <Layout>
@@ -92,10 +132,11 @@ const Documents = () => {
  <div className="container max-w-4xl">
  <div className="space-y-4">
  {documents.map((doc, i) => {
- const lang = getActiveLang(i, doc);
+ const key = doc.title;
+ const lang = getActiveLang(key, doc);
  const activeVersion = doc.versions.find(v => v.lang === lang) || doc.versions[0];
  return (
- <AnimatedSection key={i} delay={i * 80}>
+ <AnimatedSection key={key} delay={i * 80}>
  <div className="p-5 rounded-xl bg-card border border-border shadow-sm hover:shadow-md transition-shadow">
  <div className="flex items-start gap-4">
  <div className="flex-shrink-0 p-3 rounded-lg bg-primary/10">
@@ -114,7 +155,7 @@ const Documents = () => {
  {doc.versions.map(v => (
  <button
  key={v.lang}
- onClick={() => setActiveLangs(prev => ({ ...prev, [i]: v.lang }))}
+ onClick={() => setActiveLangs(prev => ({ ...prev, [key]: v.lang }))}
  className={`px-3 py-1 text-xs font-semibold rounded-md transition-colors ${
  v.lang === lang
  ? "bg-primary text-primary-foreground"
@@ -126,24 +167,22 @@ const Documents = () => {
  ))}
  </div>
 
- {/* View button, inline on sm+, below on mobile */}
  <Button
  variant="default"
  size="sm"
  className="gap-1 w-full sm:hidden"
- onClick={() => setViewerDoc({ title: `${doc.title} (${lang})`, url: activeVersion.url })}
+ onClick={() => setViewerDoc({ title: `${doc.title} (${lang})`, url: activeVersion?.url ?? "" })}
  >
  <Eye className="h-4 w-4" />
  View Document
  </Button>
  </div>
 
- {/* View button, hidden on mobile, shown on sm+ */}
  <Button
  variant="default"
  size="sm"
  className="flex-shrink-0 gap-1 hidden sm:flex"
- onClick={() => setViewerDoc({ title: `${doc.title} (${lang})`, url: activeVersion.url })}
+ onClick={() => setViewerDoc({ title: `${doc.title} (${lang})`, url: activeVersion?.url ?? "" })}
  >
  <Eye className="h-4 w-4" />
  View
@@ -157,7 +196,6 @@ const Documents = () => {
  </div>
  </section>
 
- {/* Document viewer modal */}
  <Dialog open={!!viewerDoc} onOpenChange={() => setViewerDoc(null)}>
  <DialogContent className="max-w-5xl h-[85vh] flex flex-col p-0">
  <DialogHeader className="px-6 pt-6 pb-3 flex-shrink-0">
