@@ -15,8 +15,8 @@ const INVITABLE_ROLES: { value: AppRole; label: string }[] = [
   { value: "communications_officer", label: "Communications Officer" },
   { value: "finance_coordinator",    label: "Finance Coordinator" },
   { value: "logistics_coordinator",  label: "Logistics Coordinator" },
-  { value: "sponsor_manager",        label: "Sponsor Manager" },
-  { value: "sponsor",                label: "Sponsor" },
+  { value: "sponsor_manager",        label: "Partner Manager" },
+  { value: "sponsor",                label: "Partner" },
   { value: "consultant",             label: "Consultant" },
   { value: "budget_officer",         label: "Budget Officer" },
 ];

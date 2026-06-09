@@ -349,9 +349,9 @@ export default function DashboardModule({ onNavigate }: { onNavigate: (s: string
           <Briefcase className="h-7 w-7 text-primary" />
         </div>
         <div>
-          <h2 className="text-xl font-bold text-foreground">Welcome to your Sponsor Portal</h2>
+          <h2 className="text-xl font-bold text-foreground">Welcome to your Partner Portal</h2>
           <p className="text-sm text-muted-foreground mt-1 max-w-xs">
-            Use Sponsor Metrics to view your visibility reports and engagement data.
+            Use Partner Metrics to view your visibility reports and engagement data.
           </p>
         </div>
       </div>

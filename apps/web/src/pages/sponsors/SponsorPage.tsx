@@ -21,11 +21,11 @@ const PROGRAMME_META: Record<string, { label: string; emoji: string }> = {
 
 const TIER_CONFIG: Record<string, { label: string; gradient: string; badge: string; accent: string }> = {
  presenting: { label: "Presenting Sponsor", gradient: "from-primary via-primary/80 to-primary/60", badge: "bg-primary/20 text-primary border-primary/30", accent: "text-primary" },
- platinum: { label: "Platinum Sponsor", gradient: "from-slate-700 via-slate-600 to-slate-500", badge: "bg-slate-100 text-slate-800 border-slate-200", accent: "text-slate-600" },
- gold: { label: "Gold Sponsor", gradient: "from-amber-600 via-amber-500 to-yellow-400", badge: "bg-amber-100 text-amber-800 border-amber-200", accent: "text-amber-600" },
- silver: { label: "Silver Sponsor", gradient: "from-slate-500 via-slate-400 to-slate-300", badge: "bg-slate-100 text-slate-700 border-slate-200", accent: "text-slate-500" },
- bronze: { label: "Bronze Sponsor", gradient: "from-orange-700 via-orange-600 to-orange-400", badge: "bg-orange-100 text-orange-800 border-orange-200", accent: "text-orange-600" },
- standard: { label: "Sponsor", gradient: "from-primary/70 via-primary/50 to-primary/30", badge: "bg-muted text-muted-foreground border-border", accent: "text-muted-foreground" },
+ platinum: { label: "Platinum Partner", gradient: "from-slate-700 via-slate-600 to-slate-500", badge: "bg-slate-100 text-slate-800 border-slate-200", accent: "text-slate-600" },
+ gold: { label: "Gold Partner", gradient: "from-amber-600 via-amber-500 to-yellow-400", badge: "bg-amber-100 text-amber-800 border-amber-200", accent: "text-amber-600" },
+ silver: { label: "Silver Partner", gradient: "from-slate-500 via-slate-400 to-slate-300", badge: "bg-slate-100 text-slate-700 border-slate-200", accent: "text-slate-500" },
+ bronze: { label: "Bronze Partner", gradient: "from-orange-700 via-orange-600 to-orange-400", badge: "bg-orange-100 text-orange-800 border-orange-200", accent: "text-orange-600" },
+ standard: { label: "Partner", gradient: "from-primary/70 via-primary/50 to-primary/30", badge: "bg-muted text-muted-foreground border-border", accent: "text-muted-foreground" },
 };
 
 export default function SponsorPage() {

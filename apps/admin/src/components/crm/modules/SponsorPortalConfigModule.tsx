@@ -40,8 +40,8 @@ export default function SponsorPortalConfigModule() {
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-bold text-crm-text">Sponsor Portal Config</h2>
-          <p className="text-[12px] text-crm-text-muted mt-0.5">Choose which widgets and downloads each sponsor sees on /sponsor-dashboard.</p>
+          <h2 className="text-lg font-bold text-crm-text">Partner Portal Config</h2>
+          <p className="text-[12px] text-crm-text-muted mt-0.5">Choose which widgets and downloads each partner sees on /sponsor-dashboard.</p>
         </div>
         <a href="/sponsor-dashboard" target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[11px] text-crm-text-dim hover:text-emerald-400">
           <ExternalLink size={11} /> Open dashboard

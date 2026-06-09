@@ -11,7 +11,7 @@ const TIERS = {
  gold: { label: "Gold", ribbon: "bg-amber-500 text-white" },
  silver: { label: "Silver", ribbon: "bg-slate-400 text-white" },
  bronze: { label: "Bronze", ribbon: "bg-orange-600 text-white" },
- standard: { label: "Sponsor", ribbon: "bg-muted text-muted-foreground" },
+ standard: { label: "Partner", ribbon: "bg-muted text-muted-foreground" },
 } as const;
 type TierKey = keyof typeof TIERS;
 
@@ -59,7 +59,7 @@ const SponsorsSection = () => {
  <div className="container">
  {/* Header */}
  <AnimatedSection className="mb-10">
- <Badge className="bg-primary/10 text-primary border-primary/20 mb-3">Partners & Sponsors</Badge>
+ <Badge className="bg-primary/10 text-primary border-primary/20 mb-3">Partners</Badge>
  <h2 className="text-3xl md:text-4xl font-black text-foreground">Our Partner Ecosystem</h2>
  <p className="mt-3 text-sm text-muted-foreground max-w-xl">
  Each programme is powered by dedicated partners scoped exclusively to their designated initiative.
@@ -123,7 +123,7 @@ const SponsorsSection = () => {
  </span>
  <div className="flex-1 h-px bg-border" />
  <span className="text-[11px] text-muted-foreground font-medium">
- {tierGroup.sponsors.length} sponsor{tierGroup.sponsors.length !== 1 ? "s" : ""}
+ {tierGroup.sponsors.length} partner{tierGroup.sponsors.length !== 1 ? "s" : ""}
  </span>
  </div>
 
@@ -182,19 +182,19 @@ const SponsorsSection = () => {
  ) : (
  <div className="text-center py-12 bg-muted/20 rounded-2xl border border-dashed border-border">
  <span className="text-4xl block mb-3">{activeMeta.emoji}</span>
- <p className="text-sm text-muted-foreground font-medium">No sponsors confirmed yet for this programme.</p>
+ <p className="text-sm text-muted-foreground font-medium">No partners confirmed yet for this programme.</p>
  </div>
  )}
 
  {/* CTA */}
  <div className="mt-14 text-center py-10 bg-gradient-to-br from-primary/5 via-background/50 to-accent/5 border border-dashed border-primary/20 rounded-2xl">
  <span className="text-3xl block mb-3">{activeMeta.emoji}</span>
- <h3 className="text-xl font-black text-foreground mb-2">Become a Sponsor</h3>
+ <h3 className="text-xl font-black text-foreground mb-2">Become a Partner</h3>
  <p className="text-sm text-muted-foreground mb-5 max-w-md mx-auto">
  Your logo, boldly displayed alongside West Africa's premier parliamentary initiatives.
  </p>
  <Button asChild>
- <Link to="/contact">Enquire about Sponsorship →</Link>
+ <Link to="/contact">Enquire about Partnership →</Link>
  </Button>
  </div>
  </div>

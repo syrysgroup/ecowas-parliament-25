@@ -368,7 +368,7 @@ export default function CompleteProfile() {
  >
  {pageState === "saving"
  ? <><Loader2 size={15} className="animate-spin" /> Saving…</>
- : isSponsor ? "Save & Enter Sponsor Portal" : "Save & Enter CRM"}
+ : isSponsor ? "Save & Enter Partner Portal" : "Save & Enter CRM"}
  </Button>
  </form>
  </>

@@ -272,7 +272,7 @@ export const CRM_MODULES: CRMModule[] = [
   },
   {
     id: "sponsors-partners",
-    label: "Sponsors & Partners",
+    label: "Partners",
     icon: Handshake,
     section: "sponsors-partners",
     allowedRoles: ["super_admin", "admin", "sponsor_manager"],
@@ -383,7 +383,7 @@ export const CRM_MODULES: CRMModule[] = [
   },
   {
     id: "sponsor-portal-config",
-    label: "Sponsor Portal Config",
+    label: "Partner Portal Config",
     icon: Briefcase,
     section: "sponsor-portal-config",
     allowedRoles: ["super_admin", "admin", "sponsor_manager"],
@@ -421,7 +421,7 @@ export const CRM_MODULES: CRMModule[] = [
   },
   {
     id: "sponsor-metrics",
-    label: "Sponsor Metrics",
+    label: "Partner Metrics",
     icon: TrendingUp,
     section: "sponsor-metrics",
     allowedRoles: ["super_admin", "admin", "sponsor_manager", "sponsor"],
@@ -487,7 +487,7 @@ export const CRM_MODULES: CRMModule[] = [
   },
   {
     id: "sponsor-inquiries",
-    label: "Sponsor Inquiries",
+    label: "Partner Inquiries",
     icon: UserCheck,
     section: "sponsor-inquiries",
     allowedRoles: ["super_admin", "admin", "sponsor_manager"],

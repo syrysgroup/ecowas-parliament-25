@@ -35,7 +35,7 @@ const TYPE_CONFIG = {
   expense: { label: "Expense", classes: "bg-red-950 text-red-400 border-red-800" },
 };
 
-const CATEGORIES = ["Venue", "Travel", "Accommodation", "Catering", "Marketing", "Equipment", "Staffing", "Sponsorship", "Other"];
+const CATEGORIES = ["Venue", "Travel", "Accommodation", "Catering", "Marketing", "Equipment", "Staffing", "Partnership", "Other"];
 
 // ─── Budget Item Form Dialog ───────────────────────────────────────────────────
 function BudgetItemDialog({

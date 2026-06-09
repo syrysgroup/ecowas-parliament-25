@@ -65,11 +65,11 @@ const TIER_BADGE: Record<string, string> = {
 };
 
 function buildMailtoLink(inquiry: SponsorInquiry): string {
-  const subject = `Re: Sponsorship Enquiry – ${inquiry.org_name} – ECOWAS Parliament Initiatives`;
+  const subject = `Re: Partnership Enquiry – ${inquiry.org_name} – ECOWAS Parliament Initiatives`;
   const body = [
     `Dear ${inquiry.contact_name},`,
     "",
-    "Thank you for your interest in sponsoring the ECOWAS Parliament Initiatives 25th Anniversary Programme.",
+    "Thank you for your interest in partnering with the ECOWAS Parliament Initiatives 25th Anniversary Programme.",
     "",
     "",
     "─────────────────────────────────────────",
@@ -212,7 +212,7 @@ export default function SponsorInquiriesModule() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h2 className="text-lg font-bold text-crm-text">Sponsor Inquiries</h2>
+          <h2 className="text-lg font-bold text-crm-text">Partner Inquiries</h2>
           <p className="text-[12px] text-crm-text-muted mt-0.5">
             {newCount} new · {callCount > 0 ? `${callCount} call request${callCount !== 1 ? "s" : ""} · ` : ""}{inquiries.length} total
           </p>

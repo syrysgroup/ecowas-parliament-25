@@ -64,7 +64,7 @@ const ProgrammeSponsorsFooter = ({ programme, tiers: staticTiers, title = "Progr
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-emerald-50 dark:bg-emerald-950 mb-4">
             <Handshake size={24} className="text-emerald-600 dark:text-emerald-400" />
           </div>
-          <h2 className="text-xl font-bold text-foreground mb-2">Become a Programme Sponsor</h2>
+          <h2 className="text-xl font-bold text-foreground mb-2">Become a Programme Partner</h2>
           <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
             Partner with ECOWAS Parliament Initiatives to support this programme and gain visibility
             across West Africa's most prestigious parliamentary platform.

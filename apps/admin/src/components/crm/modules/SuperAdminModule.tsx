@@ -78,7 +78,7 @@ const ROLE_CONFIG: Partial<Record<AppRole, {
   super_admin:          { label:"Super Admin",          icon:Crown,    badge:"text-amber-400 bg-amber-950 border-amber-800",     desc:"Full system access — manages users, roles, all content, and system configuration." },
   admin:                { label:"Admin",                icon:ShieldCheck, badge:"text-emerald-400 bg-emerald-950 border-emerald-800", desc:"Manages content, applications, nominations, representatives, and event registrations." },
   moderator:            { label:"Moderator",            icon:Eye,      badge:"text-blue-400 bg-blue-950 border-blue-800",         desc:"Reviews applications, verifies nominees, publishes delegate profiles." },
-  sponsor:              { label:"Sponsor",              icon:Handshake,badge:"text-violet-400 bg-violet-950 border-violet-800",   desc:"Access to Sponsor Dashboard — visibility metrics, event placements, impact reports." },
+  sponsor:              { label:"Partner",              icon:Handshake,badge:"text-violet-400 bg-violet-950 border-violet-800",   desc:"Access to Partner Dashboard — visibility metrics, event placements, impact reports." },
   project_director:     { label:"Project Director",     icon:ShieldCheck, badge:"text-sky-400 bg-sky-950 border-sky-800",           desc:"Full programme oversight — all tasks, calendar, sponsor data, and financials (view)." },
   programme_lead:       { label:"Programme Lead",       icon:Users,    badge:"text-teal-400 bg-teal-950 border-teal-800",         desc:"Manages tasks and calendar for their assigned programme pillar." },
   website_editor:       { label:"Website Editor",       icon:Globe,    badge:"text-orange-400 bg-orange-950 border-orange-800",   desc:"Edits website pages via CMS Editor; content goes through review workflow." },
@@ -104,7 +104,7 @@ const ROUTES = [
   { path:"/team",                label:"Team",                       access:"public",      icon:Users      },
   { path:"/contact",             label:"Contact",                    access:"public",      icon:Mail       },
   { path:"/media-kit",           label:"Media Kit",                  access:"public",      icon:FileText   },
-  { path:"/sponsors",            label:"Sponsor Portal (public)",    access:"public",      icon:Star       },
+  { path:"/sponsors",            label:"Partner Portal (public)",    access:"public",      icon:Star       },
   { path:"/programmes/youth",    label:"Youth Innovation",           access:"public",      icon:Globe      },
   { path:"/programmes/trade",    label:"Trade & SME",                access:"public",      icon:Globe      },
   { path:"/programmes/women",    label:"Women's Empowerment",        access:"public",      icon:Globe      },
@@ -2978,7 +2978,7 @@ export default function SuperAdminModule({ onNavigate }: { onNavigate?: (s: stri
             const label =
               access === "public"     ? "Public routes"
             : access === "admin+"     ? "Staff routes (admin+)"
-            : access === "sponsor"    ? "Sponsor routes"
+            : access === "sponsor"    ? "Partner routes"
             :                           "Super admin only";
             const colour =
               access === "public"     ? "border-emerald-800"

@@ -177,7 +177,7 @@ const SECTION_TEMPLATES: Record<string, { label: string; fields: { key: string; 
     ],
   },
   sponsor_cta: {
-    label: "Become a Sponsor CTA",
+    label: "Become a Partner CTA",
     fields: [
       { key: "title", label: "CTA Title", type: "text" },
       { key: "description", label: "CTA Description", type: "textarea" },
@@ -186,7 +186,7 @@ const SECTION_TEMPLATES: Record<string, { label: string; fields: { key: string; 
     ],
   },
   sponsor_portal_stats: {
-    label: "Sponsor Portal — Impact Stats",
+    label: "Partner Portal — Impact Stats",
     fields: [
       { key: "stat1_value", label: "Stat 1 Value (e.g. 400M+)", type: "text" },
       { key: "stat1_label", label: "Stat 1 Label", type: "text" },
@@ -212,13 +212,13 @@ const SECTION_TEMPLATES: Record<string, { label: string; fields: { key: string; 
     ],
   },
   sponsor_portal_why: {
-    label: "Sponsor Portal — Why Sponsor (JSON array)",
+    label: "Partner Portal — Why Partner (JSON array)",
     fields: [
       { key: "points", label: 'JSON array of {title, desc} objects', type: "textarea" },
     ],
   },
   sponsor_portal_tiers: {
-    label: "Sponsor Portal — Tiers (JSON array)",
+    label: "Partner Portal — Tiers (JSON array)",
     fields: [
       { key: "tiers", label: 'JSON array of tier objects (name, tagline, benefits[], featured, class, badgeClass)', type: "textarea" },
     ],
@@ -343,7 +343,7 @@ const SECTION_TEMPLATES: Record<string, { label: string; fields: { key: string; 
     ],
   },
   home_sponsor_placeholder: {
-    label: "Homepage — Sponsor Placeholder Section",
+    label: "Homepage — Partner Placeholder Section",
     fields: [
       { key: "badge",       label: "Badge", type: "text" },
       { key: "title",       label: "Title", type: "text" },

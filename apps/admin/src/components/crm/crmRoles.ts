@@ -56,7 +56,7 @@ export const CRM_ROLE_META: Record<AppRole, RoleMeta> = {
     tier: 2,
   },
   sponsor_manager: {
-    label: "Sponsor Manager", shortLabel: "SM",
+    label: "Partner Manager", shortLabel: "SM",
     colour: "text-amber-400", bgColour: "bg-amber-950", borderColour: "border-amber-700",
     tier: 2,
   },
@@ -66,7 +66,7 @@ export const CRM_ROLE_META: Record<AppRole, RoleMeta> = {
     tier: 2,
   },
   sponsor: {
-    label: "Sponsor", shortLabel: "SP",
+    label: "Partner", shortLabel: "SP",
     colour: "text-violet-400", bgColour: "bg-violet-950", borderColour: "border-violet-700",
     tier: 3,
   },

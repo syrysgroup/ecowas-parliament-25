@@ -571,7 +571,7 @@ export default function SponsorsManagerModule() {
         {canCreate("sponsors-partners") && (
           <Button size="sm" onClick={() => tab === "sponsors" ? setAddSponsorOpen(true) : setAddPartnerOpen(true)}
             className="bg-emerald-700 hover:bg-emerald-600 text-white text-xs gap-1.5">
-            <Plus size={13} /> Add {tab === "sponsors" ? "Sponsor" : "Partner"}
+            <Plus size={13} /> Add {tab === "sponsors" ? "Partner" : "Partner"}
           </Button>
         )}
       </div>

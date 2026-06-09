@@ -73,7 +73,7 @@ function InviteSponsorDialog({ open, onClose }: { open: boolean; onClose: () => 
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="bg-crm-card border-crm-border text-crm-text max-w-sm">
         <DialogHeader>
-          <DialogTitle className="text-sm font-semibold text-crm-text">Invite Sponsor</DialogTitle>
+          <DialogTitle className="text-sm font-semibold text-crm-text">Invite Partner</DialogTitle>
         </DialogHeader>
         <div className="space-y-3 py-1">
           <div className="space-y-1">
@@ -137,7 +137,7 @@ function EditSponsorDialog({ sponsor, tier, open, onClose, onTierChange }: {
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="bg-crm-card border-crm-border text-crm-text max-w-sm">
         <DialogHeader>
-          <DialogTitle className="text-sm font-semibold text-crm-text">Edit Sponsor</DialogTitle>
+          <DialogTitle className="text-sm font-semibold text-crm-text">Edit Partner</DialogTitle>
         </DialogHeader>
         <div className="space-y-3 py-1">
           <div className="space-y-1">
@@ -328,7 +328,7 @@ export default function SponsorMetricsModule() {
 
       return (profilesRes.data ?? []).map((p: any) => ({
         id: p.id,
-        full_name: p.full_name ?? "Unnamed Sponsor",
+        full_name: p.full_name ?? "Unnamed Partner",
         email: p.email ?? "",
         country: p.country ?? "—",
       }));
@@ -360,15 +360,15 @@ export default function SponsorMetricsModule() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-bold text-crm-text">Sponsor Metrics</h2>
+          <h2 className="text-lg font-bold text-crm-text">Partner Metrics</h2>
           <p className="text-[12px] text-crm-text-muted mt-0.5">
-            Visibility reports and engagement tracking for each sponsor partner
+            Visibility reports and engagement tracking for each partner
           </p>
         </div>
         {isAdmin && (
           <Button size="sm" onClick={() => setInviteOpen(true)}
             className="bg-emerald-700 hover:bg-emerald-600 text-white text-xs gap-1.5">
-            <Plus size={13} /> Add Sponsor
+            <Plus size={13} /> Add Partner
           </Button>
         )}
       </div>

@@ -97,16 +97,16 @@ export default function DashboardModuleV2({ onNavigate }: { onNavigate: (s: stri
       <>
         <PageHeader
           icon={LayoutDashboard}
-          title="Sponsor Portal"
+          title="Partner Portal"
           description="Visibility reports and engagement data."
         />
         <EmptyState
           icon={Briefcase}
           title="Welcome to your portal"
-          description="Use Sponsor Metrics to view visibility reports and engagement data."
+          description="Use Partner Metrics to view visibility reports and engagement data."
           action={
             <Button onClick={() => onNavigate("sponsor-metrics")} className="gap-1.5">
-              Go to Sponsor Metrics <ArrowRight size={14} />
+              Go to Partner Metrics <ArrowRight size={14} />
             </Button>
           }
         />

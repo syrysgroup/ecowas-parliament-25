@@ -34,7 +34,7 @@ interface Submission {
 
 const ENQUIRY_SLUGS = ["general", "press", "sponsorship", "event", "youth", "programme", "government", "other"] as const;
 const ENQUIRY_LABELS: Record<string, string> = {
-  general: "General", press: "Press", sponsorship: "Sponsorship",
+  general: "General", press: "Press", sponsorship: "Partnership",
   event: "Event", youth: "Youth", programme: "Programme",
   government: "Government", other: "Other",
 };
