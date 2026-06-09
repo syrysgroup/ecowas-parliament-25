@@ -254,7 +254,7 @@ function TaskFormFields({
 }
 
 // ─── Create Task Dialog ────────────────────────────────────────────────────────
-function CreateTaskDialog({ open, onClose, profiles }: {
+export function CreateTaskDialog({ open, onClose, profiles }: {
   open: boolean;
   onClose: () => void;
   profiles: any[];
@@ -325,7 +325,7 @@ function CreateTaskDialog({ open, onClose, profiles }: {
 }
 
 // ─── Edit Task Dialog ──────────────────────────────────────────────────────────
-function EditTaskDialog({ task, open, onClose, profiles }: {
+export function EditTaskDialog({ task, open, onClose, profiles }: {
   task: any;
   open: boolean;
   onClose: () => void;

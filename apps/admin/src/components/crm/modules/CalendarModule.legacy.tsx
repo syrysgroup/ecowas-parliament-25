@@ -47,7 +47,7 @@ const EVENT_PILL: Record<string, string> = {
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 // ─── Event Form Sheet ─────────────────────────────────────────────────────────
-function EventFormSheet({
+export function EventFormSheet({
   open, onClose, event, defaultDate,
 }: {
   open: boolean;

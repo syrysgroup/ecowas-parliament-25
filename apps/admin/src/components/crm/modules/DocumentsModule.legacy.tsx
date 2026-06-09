@@ -48,7 +48,7 @@ const LANG_BADGE: Record<string, string> = {
 };
 
 // ─── Add Document Dialog ───────────────────────────────────────────────────────
-function AddDocumentDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function AddDocumentDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { user } = useAuthContext();
   const { toast } = useToast();
   const qc = useQueryClient();
@@ -196,7 +196,7 @@ function AddDocumentDialog({ open, onClose }: { open: boolean; onClose: () => vo
 }
 
 // ─── Edit Document Dialog ──────────────────────────────────────────────────────
-function EditDocumentDialog({ doc, open, onClose }: { doc: Doc; open: boolean; onClose: () => void }) {
+export function EditDocumentDialog({ doc, open, onClose }: { doc: Doc; open: boolean; onClose: () => void }) {
   const qc = useQueryClient();
   const { toast } = useToast();
   const fileRef = useRef<HTMLInputElement>(null);
