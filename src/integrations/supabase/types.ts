@@ -484,6 +484,7 @@ export type Database = {
           assigned_to: string | null
           created_at: string
           email: string | null
+          enquiry_type: string | null
           id: string
           message: string | null
           name: string | null
@@ -497,6 +498,7 @@ export type Database = {
           assigned_to?: string | null
           created_at?: string
           email?: string | null
+          enquiry_type?: string | null
           id?: string
           message?: string | null
           name?: string | null
@@ -510,6 +512,7 @@ export type Database = {
           assigned_to?: string | null
           created_at?: string
           email?: string | null
+          enquiry_type?: string | null
           id?: string
           message?: string | null
           name?: string | null
@@ -574,6 +577,27 @@ export type Database = {
           entity_type?: string
           id?: string
           snapshot?: Json
+        }
+        Relationships: []
+      }
+      cookie_consent_log: {
+        Row: {
+          choice: string
+          created_at: string
+          id: string
+          user_agent: string | null
+        }
+        Insert: {
+          choice: string
+          created_at?: string
+          id?: string
+          user_agent?: string | null
+        }
+        Update: {
+          choice?: string
+          created_at?: string
+          id?: string
+          user_agent?: string | null
         }
         Relationships: []
       }
@@ -3549,6 +3573,87 @@ export type Database = {
         }
         Relationships: []
       }
+      sponsor_inquiries: {
+        Row: {
+          assigned_to: string | null
+          contact_name: string
+          created_at: string
+          email: string
+          id: string
+          message: string | null
+          notes: string | null
+          org_name: string
+          phone: string | null
+          preferred_tier: string | null
+          programmes: string[]
+          request_type: string
+          status: Database["public"]["Enums"]["sponsor_inquiry_status"]
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          contact_name: string
+          created_at?: string
+          email: string
+          id?: string
+          message?: string | null
+          notes?: string | null
+          org_name: string
+          phone?: string | null
+          preferred_tier?: string | null
+          programmes?: string[]
+          request_type?: string
+          status?: Database["public"]["Enums"]["sponsor_inquiry_status"]
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          contact_name?: string
+          created_at?: string
+          email?: string
+          id?: string
+          message?: string | null
+          notes?: string | null
+          org_name?: string
+          phone?: string | null
+          preferred_tier?: string | null
+          programmes?: string[]
+          request_type?: string
+          status?: Database["public"]["Enums"]["sponsor_inquiry_status"]
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
+      sponsor_notes: {
+        Row: {
+          body: string
+          created_at: string
+          created_by: string | null
+          id: string
+          is_pinned: boolean
+          sponsor_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_pinned?: boolean
+          sponsor_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_pinned?: boolean
+          sponsor_id?: string
+        }
+        Relationships: []
+      }
       sponsor_portal_downloads: {
         Row: {
           category: string | null
@@ -4397,6 +4502,12 @@ export type Database = {
         | "consultant"
         | "budget_officer"
         | "staff"
+      sponsor_inquiry_status:
+        | "new"
+        | "contacted"
+        | "qualified"
+        | "converted"
+        | "declined"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -4541,6 +4652,13 @@ export const Constants = {
         "consultant",
         "budget_officer",
         "staff",
+      ],
+      sponsor_inquiry_status: [
+        "new",
+        "contacted",
+        "qualified",
+        "converted",
+        "declined",
       ],
     },
   },
