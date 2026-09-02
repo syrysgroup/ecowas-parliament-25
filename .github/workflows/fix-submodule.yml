@@ -1,0 +1,27 @@
+name: Remove broken submodule entries
+
+on:
+  workflow_dispatch:
+
+  permissions:
+    contents: write
+
+    jobs:
+      fix:
+          runs-on: ubuntu-latest
+              steps:
+                    - name: Checkout without submodules
+                            uses: actions/checkout@v4
+                                    with:
+                                              submodules: false
+                                                        fetch-depth: 0
+
+                                                              - name: Remove dangling gitlink entries
+                                                                      run: |
+                                                                                git config user.name "github-actions[bot]"
+                                                                                          git config user.email "github-actions[bot]@users.noreply.github.com"
+                                                                                                    git rm -r --cached Implementation || true
+                                                                                                              rm -rf Implementation
+                                                                                                                        git commit -m "Remove dangling submodule reference (Implementation)" || echo "Nothing to commit"
+                                                                                                                                  git push origin HEAD:main
+                                                                                                                                  
